@@ -1,0 +1,217 @@
+;===========================================================
+;
+; File    : PlxSdk.inf
+;
+; Abstract: Windows INF for boards with PLX chips
+;
+;===========================================================
+
+
+;===================================================================
+; SHIPPING YOUR PRODUCT
+;
+; Please note that all of the IDs in this INF are reserved for use
+; by PLX, as are all IDs with a Vendor ID of 10B5. If you need to
+; ship a product, it must be assigned a unique ID. Please refer to the
+; PLX SDK Release Notes for additional details in the section entitled
+; "Designating a Device ID before Shipping a Product with a PLX chip".
+;===================================================================
+
+
+;===================================================================
+; NOTES:
+;
+; This file is provided by PLX to install PLX drivers for PLX
+; Reference Design Boards.  It may be used by others for reference
+; purposes.  For those interested in modifying it for their own
+; purposes, it is recommended that you refer to the Microsoft Windows
+; Driver Kit (WDK) documentation, which contains all the information
+; to create and modify INF files.  At the time of this writing, the
+; Windows WDK was available from http://www.microsoft.com/whdc/devtools/wdk.
+;
+;
+; WINDOWS 8/Server 2012 & Beyond
+; ------------------------------
+; With the introduction of Windows 8, Microsoft now requires a digitally
+; signed CATalog file (eg PlxSdk.cat) to be included with INF files.
+; In the past, users were able to modify the PLX INF for their designs
+; with PLX chips. With the new requirements, any modifications to the
+; INF will invalidate the PLX-supplied CATalog file & prevent driver
+; loading. If the INF must be modified, please obtain a Kernel-Mode
+; Code Signing (KMCS) certificate to digitally sign your package. PLX
+; driver binaries are already digitally signed by PLX. Please refer
+; to the Windows WDK for additional information.
+;
+;
+; ADDING AN ENTRY FOR OEM/CUSTOM DEVICES
+; --------------------------------------
+; For those interested in simply adding an entry for their custom
+; board with a custom ID, and planning to use the PLX SDK supplied
+; driver, follow the simple steps below.  Note that additional
+; changes may be required depending upon the device type and any
+; other requirements of custom drivers, etc.  Refer to the
+; Windows WDK for additional information regarding changes.
+;
+; To add a custom device, in the [PLX.Mfg] section, add an entry
+; similar to the existing entries according to the following:
+;
+;  "<My Device Name>" = DDInstall_<PLX_Chip>, PCI\VEN_<Vxxx>&DEV_<Dxxx>
+;
+;  where:
+;
+;    <My Device Name> = Name of device as it will appear in the
+;                       Windows Device Manager.
+;
+;    <PLX_Chip>       = A supported PLX chip type, such as 9054 or 9656.
+;                       This INF file already contains installation
+;                       sections for currently supported PLX chips,
+;                       assuming the PLX supplied driver will be used.
+;
+;    <Vxxx>           = The Vendor ID of your device.  An ID is
+;                       assigned to each member of the PCI SIG.
+;                       10B5 is assigned to and reserved for use by
+;                       PLX Technology.
+;
+;    <Dxxx>           = The Device ID of your device.  Each vendor is
+;                       responsible to managing their own Device IDs.
+;                       PLX maintains a list of all IDs associated with
+;                       a Vendor ID of 10B5.  The list in this INF file
+;                       contains IDs of supported PLX RDKs and the
+;                       default IDs of PLX chips.
+;
+;
+; ADDING AN ENTRY FOR PLX-ASSIGNED SUBSYSTEM ID
+; ---------------------------------------------
+; If you have obtained a PLX-assigned Subsystem ID for shipping your
+; product, then you should create an INF entry to include this ID.
+; The PCI Dev/Ven ID should remain as the default & the SUBSYS_xxx
+; tag added to further identify your device.
+;
+; For example, if PLX assigns a subsystem ID of 3D04h for your design
+; containing a PLX 9656 chip, the INF entry would be similar to:
+;
+;  "ACME Video Decoder" = DDInstall_9656, PCI\VEN_10b5&DEV_9656&SUBSYS_3D0410B5
+;
+;===================================================================
+
+
+
+
+[Version]
+Signature                = $Windows NT$
+Provider                 = %PLX%
+Class                    = Unknown
+ClassGuid                = {4d36e97e-e325-11ce-bfc1-08002be10318}
+DriverVer                = 07/01/2013, 7.1.0.0
+DriverPackageType        = PlugAndPlay
+DriverPackageDisplayName = %PackageName%
+CatalogFile              = PlxSdk.cat
+
+
+
+[Manufacturer]
+%PLX% = PLX.Mfg, NTamd64
+
+;-----------------------------------------------------------
+; Device identification for 32-bit Windows
+;-----------------------------------------------------------
+[PLX.Mfg]
+"XIA xMAP Digital Spectrometer"                = DDInstall_9054, PCI\VEN_10b5&DEV_9054
+"XIA MPX-32D Digitizer and Pulse-Processor"    = DDInstall_9054, PCI\VEN_1c40&DEV_0200
+
+;-----------------------------------------------------------
+; Device identification for 64-bit Windows x64
+;-----------------------------------------------------------
+[PLX.Mfg.NTamd64]
+"XIA xMAP Digital Spectrometer (64-bit)"                = DDInstall_9054, PCI\VEN_10b5&DEV_9054
+"XIA MPX-32D Digitizer and Pulse-Processor (64-bit)"    = DDInstall_9054, PCI\VEN_1c40&DEV_0200
+
+;-----------------------------------------------------------
+; CopyFiles section
+;
+; Flags: 0x00000004 = COPYFLG_NOVERSIONCHECK
+;-----------------------------------------------------------
+
+[CopyFiles_9054]
+Plx9054.sys,,,0x00000004
+
+;-----------------------------------------------------------
+; Driver installation section
+;-----------------------------------------------------------
+
+[DDInstall_9054.NT]
+AddReg    = AddRegistry_9054
+CopyFiles = CopyFiles_9054
+
+
+;-----------------------------------------------------------
+; Device-specific options & registry entries
+;
+; Security settings are added here to override any class security settings
+; imposed on some systems. Refer to "SDDL strings" on MSDN for details.
+;
+; PLX is setting the default access as follows:
+;    GA     -> SY      GENERIC_ALL to OS itself
+;    GA     -> BA      GENERIC_ALL to Administrators
+;    GRGWGX -> BU      READ/WRITE/EXEC to Built-in User Group
+;    GRGWGX -> BG      READ/WRITE/EXEC to Built-in Guest Group
+;-----------------------------------------------------------
+[DDInstall_9054.NT.HW]
+AddReg = AddRegSecurity
+
+
+[AddRegSecurity]
+HKR,,Security,,%PLX_ACCESS_SDDL%
+
+
+;-----------------------------------------------------------
+; AddService section
+;-----------------------------------------------------------
+[DDInstall_9054.NT.Services]
+AddService = Plx9054, 0x00000002, Service_Inst_9054
+
+
+;-----------------------------------------------------------
+; AddRegistry section
+;-----------------------------------------------------------
+[AddRegistry_9054]
+HKLM,System\CurrentControlSet\Services\Plx9054,CommonBufferSize,0x00010003,0x10000
+
+
+;-----------------------------------------------------------
+; Service installation section
+;-----------------------------------------------------------
+[Service_Inst_9054]
+ServiceType    = 1                  ; SERVICE_KERNEL_DRIVER
+StartType      = 3                  ; SERVICE_DEMAND_START
+ErrorControl   = 0                  ; SERVICE_ERROR_IGNORE
+ServiceBinary  = %12%\Plx9054.sys
+
+
+;-----------------------------------------------------------
+; Source file information
+;-----------------------------------------------------------
+
+[SourceDisksNames]
+1 = %InstallDisk%,,,\32-bit
+
+[SourceDisksNames.amd64]
+1 = %InstallDisk%,,,\64-bit
+
+[SourceDisksFiles]
+Plx9054.sys   = 1
+
+[DestinationDirs]
+CopyFiles_ApiDll = 16425       ;16425 = %WinDir%\System32 (supports WOW64)
+DefaultDestDir   = 12          ;12    = Drivers Directory
+
+
+;-----------------------------------------------------------
+; String information
+;-----------------------------------------------------------
+
+[Strings]
+InstallDisk     = "PLX Installation Disk"
+PLX             = "PLX Technology, Inc."
+PLX_ACCESS_SDDL = "D:P(A;;GA;;;SY)(A;;GRGWGX;;;BA)(A;;GRGWGX;;;BU)(A;;GA;;;BG)"
+PackageName     = "PLX SDK Driver Installation Package"

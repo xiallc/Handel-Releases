@@ -1,0 +1,425 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Introduction &mdash; Handel Quick Start Guide: xMAP 1.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/../../shared/jsMath-3.6e/easy/load.js"></script>
+    <link rel="top" title="Handel Quick Start Guide: xMAP 1.1 documentation" href="index.html" />
+    <link rel="next" title="MCA Data Acquisition" href="mca.html" />
+    <link rel="prev" title="&lt;no title&gt;" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="mca.html" title="MCA Data Acquisition"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="&lt;no title&gt;"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Handel Quick Start Guide: xMAP 1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="intended-audience">
+<h2>Intended Audience<a class="headerlink" href="#intended-audience" title="Permalink to this headline">¶</a></h2>
+<p>This document is intended for those users who would like to interface
+to the XIA xMAP hardware using the Handel driver library. Users of the
+Handel driver library should be reasonably familiar with the C
+programming language and this document assumes the same.</p>
+</div>
+<div class="section" id="conventions">
+<h2>Conventions<a class="headerlink" href="#conventions" title="Permalink to this headline">¶</a></h2>
+<p>As each function in Handel is discussed for the first time, look for
+the API note for a detailed description of the routine.</p>
+</div>
+<div class="section" id="sample-code">
+<h2>Sample Code<a class="headerlink" href="#sample-code" title="Permalink to this headline">¶</a></h2>
+<p>The Quick Start Guide includes many inline code examples to illustrate
+how specific features are used. In addition to the inline code
+examples, three sample applications are included with Handel:
+hqsg-xmap.c, hqsg-xmap-preset.c and hqsg-xmap-mapping.c. Precompiled
+versions of the applications (for Windows) are also packaged with
+Handel.</p>
+<p>Each application requires a file called <tt class="file docutils literal"><span class="pre">xmap_reset_std.ini</span></tt> be
+present in the same directory as the application. A sample file is
+included in the distribution, though it will probably need some
+modifications to run with an arbitrary xMAP system.</p>
+<div class="section" id="hqsg-xmap">
+<h3>hqsg-xmap<a class="headerlink" href="#hqsg-xmap" title="Permalink to this headline">¶</a></h3>
+<p>This application walks through all of the steps required to acquire a
+single MCA histogram with 5 seconds worth of data. This is the
+simplest example and shows how to use basic Handel from start to
+finish.</p>
+</div>
+<div class="section" id="hqsg-xmap-preset">
+<h3>hqsg-xmap-preset<a class="headerlink" href="#hqsg-xmap-preset" title="Permalink to this headline">¶</a></h3>
+<p>Preset runs are an important component to most non-mapping xMAP
+applications. This example shows how to setup a preset run and poll
+waiting for the run to complete.</p>
+</div>
+<div class="section" id="hqsg-xmap-mapping">
+<h3>hqsg-xmap-mapping<a class="headerlink" href="#hqsg-xmap-mapping" title="Permalink to this headline">¶</a></h3>
+<p>Mapping applications introduce new terminology and uses of Handel;
+this sample shows how to configure an xMAP module and collect a few
+buffers worth of data. For a real mapping application, the pixel
+advance would occur using either a GATE or SYNC input. Unfortunately,
+configuring GATE or SYNC would make the sample code unnecessarily
+complicated, in addition to requiring a valid GATE/SYNC signal be
+present simply to run the sample. Instead we use the manual pixel
+advance feature on the xMAP running in a separate thread to simulate
+the normal pixel advance. Please keep this caveat in mind when reading
+the sample code.</p>
+</div>
+</div>
+<div class="section" id="understanding-handel">
+<h2>Understanding Handel<a class="headerlink" href="#understanding-handel" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="header-files">
+<h3>Header Files<a class="headerlink" href="#header-files" title="Permalink to this headline">¶</a></h3>
+<p>Before introducing the details of programming with the Handel API, it
+is important to discuss the relevant header files and other external
+details related to Handel. All code intending to call a routine in
+Handel needs to include the file <tt class="file docutils literal"><span class="pre">inc/handel.h</span></tt> as a header. To
+gain access to the constants used to define the various logging
+levels, the file <tt class="file docutils literal"><span class="pre">inc/md_generic.h</span></tt> must be included; additional
+constants (preset run types, mapping mode controls, etc.) are located
+in <tt class="file docutils literal"><span class="pre">inc/handel_constants.h</span></tt>. The last header that should be
+included is <tt class="file docutils literal"><span class="pre">inc/handel_errors.h</span></tt>, which contains all of the
+error codes returned by Handel.</p>
+</div>
+<div class="section" id="error-handling">
+<h3>Error Handling<a class="headerlink" href="#error-handling" title="Permalink to this headline">¶</a></h3>
+<p>A good programming practice with Handel is to compare the returned
+status value with <tt class="xref py py-const docutils literal"><span class="pre">XIA_SUCCESS</span></tt> &#8211; defined in
+<tt class="file docutils literal"><span class="pre">handel_errors.h</span></tt> &#8211; and then process any returned errors before
+proceeding. All Handel routines (except for some of the debugging
+routines) return an integer value indicating success or failure. While
+not discussed in great detail in this document, Handel does provide a
+comprehensive logging and error reporting mechanism that allows an
+error to be traced back to a specific line of code in Handel.</p>
+</div>
+<div class="section" id="thread-safety">
+<h3>Thread Safety<a class="headerlink" href="#thread-safety" title="Permalink to this headline">¶</a></h3>
+<p>Handel is not thread-safe. It is the responsibility of any application
+making Handel calls to ensure that only one thread is allowed to
+access Handel at a time. For an example of how to protect access to
+Handel, see the hqsq-xmap-mapping.c sample code.</p>
+</div>
+<div class="section" id="ini-files">
+<h3>.ini Files<a class="headerlink" href="#ini-files" title="Permalink to this headline">¶</a></h3>
+<p>The last required file external to the actual Handel source code is an
+initialization, or &#8221;.ini&#8221; file. The .ini file defines the setup of
+your system by breaking the configuration down into the following
+categories: detector (<em>[detector definitions]</em>), firmware (<em>[firmware
+definitions]</em>), hardware (<em>[module definitions]</em>) and acquisition
+values (<em>[default definitions]</em> <a class="footnote-reference" href="#id3" id="id1">[1]</a>). Each category in the .ini file
+contains a series of blocks, surrounded by a set of <tt class="docutils literal"><span class="pre">START</span></tt> /
+<tt class="docutils literal"><span class="pre">END</span></tt> delimiters. Each block represents one instance of the logical
+type associated with the category. For instance, each block in
+<em>[detector definitions]</em> represents a physical detector with some
+number of elements. Within each block is a series of key-value pairs
+used to define the configuration.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">XIA provides a tool, the <em>Configuration Wizard</em>, as part of the
+xManager application to generate .ini files based on information
+about your setup. The <em>Configuration Wizard</em> is a great way to
+generate an .ini file, but understanding the specific information
+stored in the .ini file is essential for most developers who use
+Handel.</p>
+</div>
+<div class="section" id="detector-definitions">
+<h4>[detector definitions]<a class="headerlink" href="#detector-definitions" title="Permalink to this headline">¶</a></h4>
+<p>Each block in this section is used to define one physical detector
+made up of 1..N channels.</p>
+<dl class="docutils">
+<dt>alias</dt>
+<dd>Human-readable string naming this detector. Other
+sections, such as <em>[module definitions]</em>, that need to reference the
+detector will do so using this string.</dd>
+<dt>number_of_channels</dt>
+<dd>An integer describing the number of elements
+in your detector. If this value is set to <tt class="docutils literal"><span class="pre">N</span></tt>, the strings
+<tt class="docutils literal"><span class="pre">{alias}:{0}</span></tt> through <tt class="docutils literal"><span class="pre">{alias}:{N</span> <span class="pre">-</span> <span class="pre">1}</span></tt> will be available to map
+detector elements to hardware channels in the <em>[module
+definitions]</em> section.</dd>
+<dt>type</dt>
+<dd>The detector type. Handel currently supports the strings
+<tt class="docutils literal"><span class="pre">reset</span></tt> and <tt class="docutils literal"><span class="pre">rc_feedback</span></tt> detectors and uses the specified
+type to pick the right firmware to download to the xMAP.</dd>
+<dt>type_value</dt>
+<dd>For <tt class="docutils literal"><span class="pre">reset</span></tt> detectors, a double defining the reset
+delay time of the preamplifier(s) in microseconds. For
+<tt class="docutils literal"><span class="pre">rc_feedback</span></tt> detectors, a double defining the RC decay constant
+in microseconds.</dd>
+<dt>channel{n}_gain</dt>
+<dd>The preamplifier gain, as a double, for detector element <tt class="docutils literal"><span class="pre">n</span></tt>
+specified in mV/keV.</dd>
+<dt>channel{n}_polarity</dt>
+<dd>A string defining the polarity of detector element <tt class="docutils literal"><span class="pre">n</span></tt>. Allowed
+values are &#8220;+&#8221; or &#8220;pos&#8221; for a preamplifier whose pulses are
+positive and &#8220;-&#8221; or &#8220;neg&#8221; for one with negative pulses.</dd>
+</dl>
+</div>
+<div class="section" id="firmware-definitions">
+<h4>[firmware definitions]<a class="headerlink" href="#firmware-definitions" title="Permalink to this headline">¶</a></h4>
+<p>Each block in this section defines a reference to a single FDD
+file. FDD files, discussed in more detail below, are a flat file
+containing logical sets of firmware for the xMAP hardware.</p>
+<dl class="docutils">
+<dt>alias</dt>
+<dd>Human-readable string naming this FDD file. Other sections, such
+as <em>[module definitions]</em>, that need to reference the detector
+will do so using this string.</dd>
+<dt>filename</dt>
+<dd>Valid path to the FDD file.</dd>
+<dt>fdd_tmp_path</dt>
+<dd>Valid path to a temporary directory that your application has
+read/write permissions on. Handel will extract individual firmware
+files to this directory for subsequent download to the xMAP
+hardware.</dd>
+</dl>
+</div>
+<div class="section" id="default-definitions">
+<span id="default-definitions-label"></span><h4>[default definitions]<a class="headerlink" href="#default-definitions" title="Permalink to this headline">¶</a></h4>
+<p>All of the acquisition values for each channel are stored in this
+section. Handel auto-generates this section and the user is not
+expected to modify it.</p>
+</div>
+<div class="section" id="module-definitions">
+<span id="module-definitions-label"></span><h4>[module definitions]<a class="headerlink" href="#module-definitions" title="Permalink to this headline">¶</a></h4>
+<p>Each xMAP module is a system gets a separate block in this
+section. The blocks map each xMAP channel to firmware, acquisition
+values and a detector channel, and specify the hardware configuration
+for each module.</p>
+<dl class="docutils">
+<dt>alias</dt>
+<dd>Human-readable string naming this module.</dd>
+<dt>module_type</dt>
+<dd>Always set to <tt class="docutils literal"><span class="pre">xmap</span></tt>.</dd>
+<dt>number_of_channels</dt>
+<dd>Always set to 4.</dd>
+<dt>interface</dt>
+<dd>Always set to <tt class="docutils literal"><span class="pre">pxi</span></tt>.</dd>
+<dt>pci_bus / pci_slot</dt>
+<dd>The PCI bus and slot that this module is connected to. To
+determine the bus value, you can use the Device Manager on
+Windows. As mentioned above, the <em>Configuration Wizard</em> in
+xManager will automatically generate an .ini with the correct bus
+and slot information for all of the xMAP modules attached to a
+computer.</dd>
+<dt>channel{n}_alias</dt>
+<dd>Specifies a global, unique index for channel <tt class="docutils literal"><span class="pre">n</span></tt>, where <tt class="docutils literal"><span class="pre">n</span></tt>
+ranges from 0..3. This value is referenced throughout Handel as
+the <tt class="docutils literal"><span class="pre">detChan</span></tt>.</dd>
+<dt>channel{n}_detector</dt>
+<dd>Associates channel <tt class="docutils literal"><span class="pre">n</span></tt>, where <tt class="docutils literal"><span class="pre">n</span></tt> ranges from 0..3, with a
+specific detector element. The detector element is referenced as
+<tt class="docutils literal"><span class="pre">{alias}:{m}</span></tt> where <tt class="docutils literal"><span class="pre">alias</span></tt> is a valid detector alias and
+<tt class="docutils literal"><span class="pre">m</span></tt> is a valid channel for <tt class="docutils literal"><span class="pre">alias</span></tt>.</dd>
+<dt>firmware_set_chan{n}</dt>
+<dd>Assigns an FDD file to module channel <tt class="docutils literal"><span class="pre">n</span></tt>, where <tt class="docutils literal"><span class="pre">n</span></tt> ranges
+from 0..3. The FDD file is specified as a firmware alias.</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="fdd-files">
+<h3>FDD Files<a class="headerlink" href="#fdd-files" title="Permalink to this headline">¶</a></h3>
+<p>The xMAP has 4 specialized processors that require programming after
+the module has been powered up. The firmware used to program these
+processors is collectively stored in a Firmware Definition Database
+(FDD) file. XIA distributes current versions of the xMAP FDD files
+with both Handel and xManager.</p>
+</div>
+<div class="section" id="detchans">
+<span id="section-detchans-label"></span><h3>detChans<a class="headerlink" href="#detchans" title="Permalink to this headline">¶</a></h3>
+<p>Most routines in Handel accept a <tt class="docutils literal"><span class="pre">detChan</span></tt> integer as the first
+argument. As discussed in <a class="reference internal" href="#module-definitions-label"><em>[module definitions]</em></a>, each xMAP
+channel in the system must be assigned a unique global ID. Handel .ini
+files generated by the <em>Configuration Wizard</em> in xManager follow the
+convention of assigning 0 to the first channel in the first module and
+<tt class="docutils literal"><span class="pre">N</span></tt> - 1, where <tt class="docutils literal"><span class="pre">N</span></tt> is the total number of channels in the system,
+to the last channel in the last module.</p>
+<p>Some routines in Handel &#8211; mostly routines that set a value &#8211; allow
+the special <tt class="docutils literal"><span class="pre">detChan</span></tt> -1 to be passed as an argument. This special
+value represents all of the <tt class="docutils literal"><span class="pre">detChan</span></tt>s in the system and is
+automatically created by Handel when it loads a new .ini file. When
+calling routines like <tt class="docutils literal"><span class="pre">xiaSetAcquisitionValues()</span></tt> the -1 <tt class="docutils literal"><span class="pre">detChan</span></tt>
+is a convenient shortcut that eliminates the need to loop over all
+channels.</p>
+<p>Unfortunately, not all routines accept the -1 <tt class="docutils literal"><span class="pre">detChan</span></tt>. The primary
+situation where one is required to loop over all necessary channels is
+when calling <tt class="docutils literal"><span class="pre">xiaBoardOperation()</span></tt>, specifically with &#8220;apply&#8221; and
+&#8220;mapping_pixel_next&#8221;. Note though that both of these operations only
+need to be called once per module using code like this <a class="footnote-reference" href="#id4" id="id2">[2]</a>:</p>
+<div class="admonition-api admonition">
+<p class="first admonition-title">API</p>
+<dl class="last function">
+<dt id="xiaBoardOperation">
+int <tt class="descname">xiaBoardOperation</tt><big>(</big>int<em>&nbsp;detChan</em>, char<em>&nbsp;*name</em>, void<em>&nbsp;*value</em><big>)</big><a class="headerlink" href="#xiaBoardOperation" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>detChan</strong> &#8211; Single channel to perform the board operation
+on. (-1 detChan is not allowed for this routine.)</li>
+<li><strong>name</strong> &#8211; Board operation to perform.</li>
+<li><strong>value</strong> &#8211; Appropriate typed value for the specified
+operation. Must not be NULL, even if the operation
+does not take a value.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Performs the specified operation on a single-channel.</p>
+</dd></dl>
+
+</div>
+<div class="highlight-c"><div class="highlight"><pre><span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">dummy</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+<span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">TOTAL_CHANNELS_IN_SYSTEM</span><span class="p">;</span> <span class="n">i</span> <span class="o">+=</span> <span class="mi">4</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaBoardOperation</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="s">&quot;apply&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">dummy</span><span class="p">));</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p class="rubric">Footnotes</p>
+<table class="docutils footnote" frame="void" id="id3" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>Unfortunately, the original name for acquisition values was
+&#8220;defaults&#8221;.</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id4" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[2]</a></td><td>This code will be explained in more detail later. The key point
+in this example is that <tt class="docutils literal"><span class="pre">xiaBoardOperation</span></tt> is only being called
+once per module.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Introduction</a><ul>
+<li><a class="reference internal" href="#intended-audience">Intended Audience</a></li>
+<li><a class="reference internal" href="#conventions">Conventions</a></li>
+<li><a class="reference internal" href="#sample-code">Sample Code</a><ul>
+<li><a class="reference internal" href="#hqsg-xmap">hqsg-xmap</a></li>
+<li><a class="reference internal" href="#hqsg-xmap-preset">hqsg-xmap-preset</a></li>
+<li><a class="reference internal" href="#hqsg-xmap-mapping">hqsg-xmap-mapping</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#understanding-handel">Understanding Handel</a><ul>
+<li><a class="reference internal" href="#header-files">Header Files</a></li>
+<li><a class="reference internal" href="#error-handling">Error Handling</a></li>
+<li><a class="reference internal" href="#thread-safety">Thread Safety</a></li>
+<li><a class="reference internal" href="#ini-files">.ini Files</a><ul>
+<li><a class="reference internal" href="#detector-definitions">[detector definitions]</a></li>
+<li><a class="reference internal" href="#firmware-definitions">[firmware definitions]</a></li>
+<li><a class="reference internal" href="#default-definitions">[default definitions]</a></li>
+<li><a class="reference internal" href="#module-definitions">[module definitions]</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#fdd-files">FDD Files</a></li>
+<li><a class="reference internal" href="#detchans">detChans</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">&lt;no title&gt;</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="mca.html"
+                        title="next chapter">MCA Data Acquisition</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/introduction.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="mca.html" title="MCA Data Acquisition"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="&lt;no title&gt;"
+             >previous</a> |</li>
+        <li><a href="index.html">Handel Quick Start Guide: xMAP 1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2010, XIA LLC.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

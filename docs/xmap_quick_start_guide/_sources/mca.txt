@@ -1,0 +1,280 @@
+MCA Data Acquisition
+=======================
+
+Initializing Handel
+-------------------
+
+Before acquiring data with Handel it is necessary to initialize the
+library using an .ini file:
+
+.. code-block:: c
+
+	 CHECK_ERROR(xiaInit("xmap.ini"));
+
+
+.. admonition:: API
+   
+   .. c:function:: int xiaInit(char *ini)
+
+      :param ini: The system configuration.
+
+      Configures Handel to run with the system specified in the .ini file.
+
+Once the initialization is complete, the next step is to call
+``xiaStartSystem()``. This is the first time that Handel attempts to
+communicate with the hardware specified in the .ini
+file. ``xiaInit()``'s job is to prepare Handel for data acquisition,
+while ``xiaStartSystem()``'s is to prepare the
+hardware. ``xiaStartSystem()`` is one of the longest running functions
+in Handel, generally speaking, since it needs to validate the hardware
+configuration supplied in the .ini file, test the communication
+interface (PCI, for the xMAP) and download all of the required
+firmware to the module(s). Like ``xiaInit()``, ``xiaStartSystem()`` is
+easy to use:
+
+.. admonition:: API
+
+   .. c:function:: int xiaStartSystem(void)
+
+   Boots the hardware and downloads the firmware and configuration
+   previously specified in the .ini file loaded via `xiaInit()`.
+
+.. code-block:: c
+
+	 CHECK_ERROR(xiaStartSystem());
+
+Once ``xiaStartSystem()`` is complete, Handel is ready to perform data
+acquisition tasks. ``xiaStartSystem()`` only needs to be called once
+after an .ini file is loaded.
+
+Configuring Data Acquisition
+------------------------------
+
+After ``xiaStartSystem()`` has run, the xMAP system is ready to be
+configured for data acquisition. If the .ini file that was loaded with
+``xiaInit()`` contains a :ref:`default-definitions-label` section,
+then the hardware will be configured using those values. If the
+:ref:`default-definitions-label` section is missing, then Handel uses
+a nominal set of default values. For most systems, the nominal values
+are sufficient to obtain some results from the software, but some of
+the settings should be optimized for actual data acquisition.
+
+Handel provides a comprehensive set of *acquisition values* for
+controlling the settings of each xMAP module [#]_. Most normal MCA
+data acquisition setups will only need to set the handful of values
+described below. Once a working set of acquisition values has been
+created, they can be saved to an .ini file using the function
+``xiaSaveSystem()``.
+
+.. admonition:: API
+
+   .. c:function:: int xiaSaveSystem(char *type, char *ini)
+
+      :param type: Always set to "handel_ini"
+      :param ini: Path and name of an .ini file
+
+   Saves the current configuration as an .ini file suitable for use
+   with `xiaInit()`.
+
+The Handel routines to control acquisition values are
+``xiaSetAcquisitionValues()`` and ``xiaGetAcquisitionValues()``.
+
+.. admonition:: API
+
+   .. c:function:: int xiaSetAcquisitionValues(int detChan, char *name, void *value)
+   .. c:function:: int xiaGetAcquisitionValues(int detChan, char *name, void *value)
+
+      :param detChan: Channel to set/get. (-1 detChan accepted for
+                      `xiaSetAcquisitionValues()` only.)
+      :param name: Acquisition value to set/get.
+      :param value: Variable of type `double` cast into a `void *`.
+
+   Sets/gets the requested acquisition value. Acquisition values must
+   be applied with `xiaBoardOperation()` before the hardware will use
+   them.
+
+The basic setup of an xMAP system involves optimizing the following
+acquisition values for your system:
+
+  * peaking_time
+  * dynamic_range
+  * trigger_threshold
+  * calibration_energy
+
+As an example, we will configure the system with a peaking time of
+16.0 microseconds, a calibration energy of 5900 eV (an Fe-55 source
+emitting Mn K-alpha x-rays), a dynamic range of 47200 eV and a trigger
+threshold of 1000 eV:
+
+.. code-block:: c
+   
+   double pt     = 16.0; /* microseconds */
+   double thresh = 1000.0; /* eV */
+   double calib  = 5900.0; /* eV */
+   double range  = 47200.0; /* eV */
+
+   CHECK_ERROR(xiaSetAcquisitionValues(-1, "peaking_time", &pt));
+   CHECK_ERROR(xiaSetAcquisitionValues(-1, "trigger_threshold", &thresh));
+   CHECK_ERROR(xiaSetAcquisitionValues(-1, "calibration_energy", &calib));
+   CHECK_ERROR(xiaSetAcquisitionValues(-1, "dynamic_range", &range));
+
+Once the acquisition values are set, it is necessary to "apply" them
+using the technique discussed in the :ref:`section-detchans-label`
+section.
+
+Run Control
+-----------
+
+At this point, the hardware is properly configured and ready to
+acquire data. In this section we are interested in starting and
+stopping a normal MCA run and reading out the spectrum data. As one
+might expect the runs are started and stopped using the routines
+``xiaStartRun()`` and ``xiaStopRun()``.
+
+.. admonition:: API
+
+   .. c:function:: int xiaStartRun(int detChan, unsigned short resume)
+
+      :param detChan: Channel(s) to start the run on; -1 detChan
+                      allowed.
+      :param resume: If set to 1, do not clear the MCA before starting
+                     the run.
+
+   The run only needs to be started once per module on the xMAP.
+
+   .. c:function:: int xiaStopRun(int detChan)
+
+      :param detChan: Channel(s) to stop the run on; -1 detChan
+                      allowed.
+
+   The run only needs to be stopped once per module on the xMAP.
+
+The MCA can be read either while the run is active or after it has
+been stopped. The MCA histogram is returned as an array of ``unsigned long`` 
+integers via a call to ``xiaGetRunData()`` [#]_.
+
+.. admonition:: API
+
+    .. c:function:: int xiaGetRunData(int detChan, char *name, void *value)
+
+       :param detChan: The channel to get the data for.
+       :param name: The run data type to return.
+       :param value: Generic pointer to a variable of the appropriate type for
+                     the requested run data type.
+
+    Read the specified run data type and return the data in `value`. The caller
+    is responsible for allocating all memory.
+
+``xiaGetRunData()`` expects an array equal to (or larger) than the requested 
+MCA length. The MCA length is set using the "number_mca_channels" acquisition 
+value and can be read as an ``unsigned long`` by passing the name "mca_length" 
+to ``xiaGetRunData()`` or as a ``double`` from ``xiaGetAcquisitionValues()``.
+With this in mind, a simple data acquisition session has the following basic
+footprint:
+
+.. code-block:: c
+
+   #include <stdlib.h>
+
+   unsigned long *mca = NULL;
+
+   unsigned long mca_length = 0;
+
+   CHECK_ERROR(xiaGetRunData(0, "mca_length", &mca_length));
+
+   mca = malloc(mca_length * sizeof(unsigned long));
+
+   if (!mca) {
+     /* Unable to allocate enough memory. */
+   }
+
+   CHECK_ERROR(xiaStartRun(-1, 0));
+   /* Collect as much data as you want. */
+   CHECK_ERROR(xiaStopRun(-1));
+
+   CHECK_ERROR(xiaGetRunData(0, "mca", mca));
+   /* Do something with the MCA histogram. */
+
+   free(mca);
+
+Preset Runs
+-----------
+
+A common data acquisition technique is to do a "preset" run with a
+fixed metric of either time or events. A normal MCA run is both
+started and stopped by the host software; a preset MCA run is started
+by the host and stopped by the hardware. Allowing the hardware to end
+the run lets the host application repeatedly acquire data with similar
+characteristics.
+
+The xMAP supports four distinct preset run types: realtime, energy
+livetime, events and triggers. The constants used to define these run
+types are in :file:`handel_constants.h`. The realtime
+(:const:`XIA_PRESET_FIXED_REAL`) and energy livetime
+(:const:`XIA_PRESET_FIXED_LIVE`) preset runs instruct the hardware to run until
+the specified realtime/energy livetime has elapsed. These times are
+specified in seconds with a granularity of 320 ns. Even though the
+time granularity is 320 ns, the hardware only checks to see if enough
+time has elapsed every 8 ms.
+
+The output events (:const:`XIA_PRESET_FIXED_EVENTS`) and input events
+(:const:`XIA_PRESET_FIXED_TRIGGERS`) preset runs complete when the
+specified number of input or output events have been collected.
+
+.. code-block:: c
+
+    double preset_realtime = 20.0;
+    double preset_type = XIA_PRESET_FIXED_REAL;
+
+    int dummy = 0;
+    int n_channels_done;
+
+    unsigned long run_active;
+
+
+    CHECK_ERROR(xiaSetAcquisitionValues(-1, "preset_type", &preset_type));
+    CHECK_ERROR(xiaSetAcquisitionValues(-1, "preset_value", &preset_realtime));
+    CHECK_ERROR(xiaBoardOperation(-1, "apply", &dummy));
+
+    CHECK_ERROR(xiaStartRun(-1, 0));
+
+    do {
+        int i;
+
+        n_channels_done = 0;
+        for (i = 0; i < TOTAL_CHANNELS_IN_SYSTEM; i++) {
+	    CHECK_ERROR(xiaGetRunData(i, "run_active", &run_active));
+            if ((run_active & 0x1) == 0) {
+	        n_channels_done++;
+	    }
+	}
+
+	Sleep(1);
+    } while (n_channels_done != TOTAL_CHANNELS_IN_SYSTEM);
+
+    CHECK_ERROR(xiaStopRun(-1));
+
+    /* Read out data here. */
+
+Cleanup
+-------
+
+The last operation that any xMAP application must do is call ``xiaExit()``.
+
+.. admonition:: API
+
+   .. c:function:: int xiaExit(void)
+
+   Release all OS resources used by the current setup.
+
+Once ``xiaExit()`` is called a new system must be loaded with ``xiaInit()`` if
+you want to use Handel again.
+
+.. rubric:: Footnotes
+
+.. [#] A complete list of the available xMAP acquisition values and
+       their defaults can be found in the
+       :ref:`acquisition-values-label` section.
+
+.. [#] A complete list of the available xMAP run data names and their return
+       data types can be found in the :ref:`run-data-label` section.

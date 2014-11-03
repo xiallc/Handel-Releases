@@ -1,0 +1,569 @@
+Mapping Mode
+============
+
+The xMAP is specifically designed to support high-speed mapping
+operations. The current version can store full spectra for each
+mapping pixel (MCA mode), up to 64 non-overlapping SCAs per pixel (SCA
+mode) or time-stamped events (List-mode). In general, the controls are
+the same for each mapping mode variant though different strategies may
+be required for performance reasons.
+
+To better understand how mapping mode works, it is helpful to briefly
+describe how the xMAP's memory is organized. In order to allow for
+continuous mapping data acquisition, the memory is organized into two
+independent banks called buffer 'a' and buffer 'b'. A single bank can
+be read out by the host while the other is filled during data
+acquisition. Each memory bank is 16 bits wide and 1 Mword (2 :sup:`20`
+words) deep. For standard, non-mapping MCA acquisition, these banks
+are combined to form a single 32-bit x 1 Mword bank.
+
+For continuous mapping, the host computer must be able to read out and
+clear an entire buffer for all of the modules in the system in less
+time then it takes to fill one buffer. The minimum pixel dwell time
+for continuous mapping operation is defined by the readout speed, the
+buffer clear time, the number of pixels that can be stored in one
+buffer and the size of the system. As an example, if the system
+contains 4 xMAP modules so that the total transferred data for a
+single buffer is 8 MB [#]_ and the "burst" transfer speed is 25 MB / s
+[#]_, it takes 320 ms to read out a single buffer. If that buffer
+holds data for 64 pixels [#]_, the minimum pixel dwell time that
+allows for continuous mapping is 320 ms / 64 pixels = 5 ms / pixel.
+
+.. _pixel-advance-modes-label:
+
+Pixel Advance Modes
+-------------------
+
+The xMAP supports three modes of pixel advance: GATE, SYNC and host
+control.
+
+GATE
+^^^^
+
+One of the primary methods for advancing the pixel is to use the GATE
+input as a pixel clock, where the pixel number advances on a defined
+edge transition of the input signal. In MCA mode, the GATE signal is
+used to inhibit data acquisition or to coordinate the acquisition with
+an external system. Using the default gate polarity setting, if GATE
+is low then data acquisition is disabled. The polarity is controlled
+with the "input_logic_polarity" acquisition value; to disable data
+acquisition when the GATE is high, set it to 1.0.
+
+For mapping mode, transitions on the GATE signal can be used to
+trigger a pixel advance. Like MCA mode, the default setting is to use
+the high-to-low transition to trigger the pixel advance and,
+similarly, "input_logic_polarity" can be set to 1.0 if the low-to-high
+transition is desired instead. Since the GATE signal requires
+transitions from high-to-low (or low-to-high), there is necessarily a
+transition time between states where data acquisition is
+inhibited. The default setting, controlled with the "gate_ignore"
+acquisition value, is to ignore the data during the transition
+period. However if "gate_ignore" is set to 1.0, data acquisition will
+remain active during the transition.
+
+SYNC
+^^^^
+
+The other primary method of advancing the pixel is to use the SYNC
+input as a pixel clock. Using this method, the pixel will advance for
+every ``N`` positive pulses, where ``N`` is set using the "sync_count"
+acquisition value. ``N`` can range from 1 to 65535. Finally, the
+pulses must be at least 40 ns wide to be recognized by the xMAP.
+
+Host Control
+^^^^^^^^^^^^
+
+Lastly, it is possible to advance the pixel directly in Handel using
+the board operation "mapping_pixel_next". Manually advancing the pixel
+is slower and does not provide good real-time control and, as such, is
+suitable only for debugging and evaluation purposes.
+
+GATE/SYNC Signal Distribution
+-----------------------------
+
+A typical PXI crate backplane is broken into one or more "bus
+segments". Small crates, 8 slots or less, will contain a single bus
+segment, while larger crates can contain as many as 3 bus
+segments. For GATE / SYNC pixel advance, a single module on each bus
+segment is designated as a "master" module. The master module accepts a
+GATE / SYNC logic signal via the LEMO connector on the xMAP front
+panel and routes the signal to the other modules on the bus segment
+using a line on the PXI backplane. Therefore, each bus segment must
+have its own master module and the input LEMO for each master module
+must use the same signal source.
+
+Using Mapping Mode: A Walkthrough
+---------------------------------
+
+Each step is labelled with the mapping modes it supports; no label
+means the step is relevant to all modes.
+
+Enable mapping mode
+^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: c
+
+   double mode = 1.0;
+   CHECK_ERROR(xiaSetAcquisitionValues(-1, "mapping_mode", &mode));
+
+When "mapping_mode" is set greater then 0.0, Handel downloads the proper
+firmware to the xMAP modules. Handel also updates the firmware with
+any mapping-specific acquisition values. To switch back to normal MCA
+data acquisition, set "mapping_mode" to 0.0. The xMAP currently
+supports 3 mapping modes: MCA (1.0), SCA (2.0) and List (3.0).
+
+Set the number of bins in the spectrum (MCA mode)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: c
+   
+   double nBins = 4096.0;
+   CHECK_ERROR(xiaSetAcquisitionValues(-1, "number_mca_channels", &nBins));
+
+The number of bins in the spectrum affects the number of pixels that
+can fit into each buffer.
+
+Set the number of ROIs and their bounds (SCA mode)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: c
+
+   double nSCAs = 2.0;
+   double sca0Lo = 100.0;
+   double sca0Hi = 1000.0;
+   double sca1Lo = 2000.0;
+   double sca1Hi = 2010.0;
+
+   CHECK_ERROR(xiaSetAcquisitionValues(-1, "number_of_scas", &nSCAs));
+   CHECK_ERROR(xiaSetAcquisitionValues(-1, "sca0_lo", &sca0Lo));
+   CHECK_ERROR(xiaSetAcquisitionValues(-1, "sca0_hi", &sca0Hi));
+   CHECK_ERROR(xiaSetAcquisitionValues(-1, "sca1_lo", &sca1Lo));
+   CHECK_ERROR(xiaSetAcquisitionValues(-1, "sca1_hi", &sca1Hi));
+
+SCA mapping mode supports a maximum of 64, non-overlapping SCAs. 
+
+Set the variant (List-mode)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: c
+
+   double variant = 1.0;
+
+   CHECK_ERROR(xiaSetAcquisitionValues(-1, "list_mode_variant", &variant));
+
+List-mode supports three variants: energy plus GATE count (0.0),
+energy plus SYNC count (1.0) and energy plus clock time (2.0). For a
+detailed description of the variants, please consult the xMAP User's
+Manual.
+
+Set the total number of pixels to be acquired in this run (MCA/SCA mode)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: c
+
+   double nMapPixels = 100.0;
+
+   CHECK_ERROR(xiaSetAcquisitionValues(-1, "num_map_pixels", &nMapPixels));
+
+"num_map_pixels" can also be set to 0.0 if data acquisition should
+continue indefinitely.
+
+Set the number of pixels per buffer
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: c
+
+   double nMapPixelsPerBuffer = -1.0;
+   
+   CHECK_ERROR(xiaSetAcquisitionValues(-1, "num_map_pixels_per_buffer", &nMapPixelsPerBuffer));
+   
+Setting "num_map_pixels_per_buffer" to -1.0 instructs the DSP to
+automatically use as many pixels as possible given either the MCA size
+or the number of SCAs. Of course a specific number can be passed in
+for "num_map_pixels_per_buffer" as well. Unfortunately getting the
+actualy number of pixels per buffer requires an additional function
+call:
+
+.. code-block:: c
+
+   double actualMapPixelsPerBuffer = 0.0;
+
+   CHECK_ERROR(xiaGetAcquisitionValues(0, "num_map_pixels_per_buffer", &actualMapPixelsPerBuffer));
+
+If the number of mapping pixels per buffer is set larger then the
+maximum amount the buffer can hold, it will be truncated to the
+maximum value by the DSP.
+
+Configure pixel control
+^^^^^^^^^^^^^^^^^^^^^^^
+
+At the beginning of the run, the pixel number starts at 0 and is
+advanced using one of the techniques discussed in the
+:ref:`pixel-advance-modes-label` section. The examples below only show
+the case where the entire system is on a single bus segment. If the
+xMAP system spans multiple bus segments then additional master modules
+are required with the correct pixel advance mode setting. Also note
+that the master setting is only valid for the first channel in a
+module; settings on all other channels will be ignored.
+
+GATE
+""""
+
+.. code-block:: c
+
+   #include "handel_constants.h"
+
+   double enabled = 1.0;
+   double pixelMode = XIA_MAPPING_CTL_GATE;
+
+   CHECK_ERROR(xiaSetAcquisitionValues(0, "gate_master", &enabled));
+   CHECK_ERROR(xiaSetAcquisitionValues(0, "pixel_advance_mode", &pixelMode));
+
+SYNC
+""""
+
+.. code-block:: c
+
+   #include "handel_constants.h"
+
+   double enabled = 1.0;
+   double pixelMode = XIA_MAPPING_CTL_SYNC;
+   double nTicksPerPixel = 100.0;
+
+   CHECK_ERROR(xiaSetAcquisitionValues(0, "sync_master", &enabled));
+   CHECK_ERROR(xiaSetAcquisitionValues(0, "pixel_advance_mode", &pixelMode));
+   CHECK_ERROR(xiaSetAcquisitionValues(0, "sync_count", &nTicksPerPixel));
+	 
+HOST
+""""
+
+Manual pixel advance from the host is always available and does not
+need to be explicitly configured. To advance the pixel, use the
+following code:
+
+.. code-block:: c
+
+   int dummy = 0;
+
+   CHECK_ERROR(xiaBoardOperation(0, "mapping_pixel_next", &dummy));
+
+Note that the pixel only needs to be advanced once per
+module. Advancing it once per channel (per module) will actually
+advance it **4 times** (per module).
+
+Apply the settings
+^^^^^^^^^^^^^^^^^^
+
+.. code-block:: c
+
+   int dummy = 0;
+
+   CHECK_ERROR(xiaBoardOperation(0, "apply", &dummy));
+
+See also the :ref:`section-detchans-label` section.
+
+Get buffer length (MCA/SCA mode)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+After all of the settings are applied, the xMAP can be queried for the
+size of a returned buffer. This value can then be used to allocate the
+appropriate amount of memory.
+
+.. code-block:: c
+
+   unsigned long bufferLength = 0;
+   unsigned long *buffer = NULL;
+
+   CHECK_ERROR(xiaGetRunData(0, "buffer_len", &bufferLength));
+
+   buffer = malloc(bufferLength * sizeof(unsigned long));
+
+   if (!buffer) {
+       /* Out-of-memory */
+   }
+
+Start the run
+^^^^^^^^^^^^^
+
+.. code-block:: c
+
+   CHECK_ERROR(xiaStartRun(-1, 0));
+
+Monitor the buffer status
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Once the run is started, pixels are added to the first buffer ('a')
+until it is full. To see if the buffer is full, use the following
+code:
+
+.. code-block:: c
+
+   unsigned short isFull = 0;
+
+   while (isFull == 0) {
+       CHECK_ERROR(xiaGetRunData(0, "buffer_full_a", &isFull));
+
+       /* Sleep for a short time here using a routine like Sleep() on win32
+        * or usleep() on linux.
+        */
+   }
+
+Each module in the system should be polled to determine when all of
+the modules are ready to be read.
+
+Read full buffer (MCA/SCA mode)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: c
+
+   /* Assumes that buffer was previously allocated. */
+   CHECK_ERROR(xiaGetRunData(0, "buffer_a", buffer));
+
+Read full list-mode buffer (List-mode)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: c
+
+   unsigned long bufferLength = 0;
+
+	 unsigned long *buffer = NULL;
+
+
+	 CHECK_ERROR(xiaGetRunData(0, "list_buffer_len_a", &bufferLength));
+	 
+	 buffer = malloc(bufferLength * sizeof(unsigned long));
+
+	 if (!buffer) {
+       /* Out-of-memory */
+   }
+
+	 CHECK_ERROR(xiaGetRunData(0, "buffer_a", buffer));
+
+   free(buffer);
+
+Unlike MCA and SCA mapping mode, the length of the list-mode buffer
+varies slightly from read to read.
+    
+
+Signal that the read has completed
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Once a buffer is read, it is important to let the xMAP know that it is
+available to be filled again. Failure to do this in a timely manner
+can potentially cause overrun errors.
+
+.. code-block:: c
+   
+   char currentBuffer = 'a';
+
+   CHECK_ERROR(xiaBoardOperation(0, "buffer_done", &currentBuffer));
+
+Wait for buffer 'b' to fill
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+With buffer 'a' read and signaled as done, the next step is to wait
+for buffer 'b'.
+
+.. code-block:: c
+
+   unsigned short isFull = 0;
+
+   while (isFull == 0) {
+       CHECK_ERROR(xiaGetRunData(0, "buffer_full_b", &isFull));
+
+       /* Sleep for a short time here using a routine like Sleep() on win32
+        * or usleep() on linux.
+        */
+   }
+
+And then continue reading, signaling complete and polling while
+switching between buffers 'a' and 'b'.
+
+Stop the run when all the pixels are collected
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Once all of the pixels have been collected, the run must be stopped as usual.
+
+.. code-block:: c
+
+   CHECK_ERROR(xiaStopRun(-1));
+
+Mapping Tips
+------------
+
+This section describes (and reiterates) various tips and techniques to
+make sure that your mapping application runs smoothly.
+
+#. **Enabling mapping mode updates all parameters**
+   
+   When "mapping_mode" is enabled, all of the relevant acquisition
+   values are downloaded to the hardware. There is no need to set
+   these values again.
+
+#. **Designate one detChan per module as the "mapping channel"**
+
+   Most of the acquisition values related to mapping mode are
+   module-wide settings and do not need to be set on each channel. As
+   an example, the *Configuration Wizard* in xManager uses the first
+   detChan on each module when generating .ini files for use with
+   Handel.
+
+#. **Cache the mapping buffer length**
+
+   For all modes except for list-mode, the mapping buffer length,
+   retrieved by passing "buffer_len" to ``xiaGetRunData()``, only
+   needs to be read once before the mapping run starts; it will not
+   change once the run is active.
+
+#. **Assign a single master module per bus segment**
+
+   For GATE and SYNC pixel advance modes there needs to be exactly one
+   master module of the appropriate type per bus segment.
+
+#. **Check for buffer overruns**
+
+   If the per-pixel dwell time is too short for the xMAP to keep up
+   with, it is possible to overrun one of the buffers. When the
+   mapping buffer is overrun, the additional pixels will accumulate in
+   the last pixel of the last active buffer. To signal that the buffer
+   is overrun the value of the run data type "buffer_overrun" will be
+   set to 1.0. Additional information may be retrieved from the DSP
+   parameters ``MAPERRORS`` and ``BUFMAPERRORS``. ``MAPERRORS`` is the
+   total number of overrruns in the current run and ``BUFMAPERRORS``
+   is the number of overruns in the current buffer.
+
+   In general, once a buffer overrun condition has occurred it can be
+   problematic to reconstruct the data even though nothing has been
+   discarded. XIA recommends treating the buffer overrun condition as
+   an indication that the system needs some more tuning to run with
+   the dwell time that caused the overrun.
+   
+
+Parsing List-mode data buffers
+------------------------------
+
+The list-mode data has some additional complications not found when
+using MCA or SCA mapping mode. After the buffer header the stream of
+event data packets is found. In addition to the normal event packets,
+there are two special record types: end of buffer and rollover. The
+end of buffer record is provided to verify the buffer integrity and is
+inserted once at the end of the buffer [#]_. The rollover record is used to
+indicate when the 32-bits of time/tick are exhausted in the normal
+event data and what the new upper words for those values are. The
+rollover record will appear once per channel per rollover. When
+parsing the buffers it is critical that the rollover records be
+tracked so that the event times can be properly reconstructed.
+
+Below is a heavily annotated code sample that shows how to parse a
+buffer for a single module and print out the channel, time and MCA bin
+for each event.
+
+.. code-block:: c
+
+   /* The returned data from the xMAP is in an array of 16-bit words, but
+    * we often need to convert two words into a 32-bit value.
+    */
+   #define MAKE_WORD32(x, i) (unsigned long)((x)[(i)] | \
+                             ((unsigned long)(x)[(i) + 1] << 16))
+
+   int i;
+
+   unsigned long upperTimeWords[4];
+
+   unsigned long nEventRecords;
+   unsigned long nSpecialRecords;
+   unsigned long totalRecords;
+   unsigned long j; 
+
+
+   /* Assume that the variable buffer is already filled in up to bufferLen
+    * with the header and event data.
+    */
+
+   /* Load the current upper time words from the buffer header. The
+    * upper time words for channel 0 begin at offset 72 in the header.
+    * And each channel has 12 words of data with it, so we need to increment
+    * by that much for each channel.
+    */
+   for (i = 0; i < 4; i++) {
+       upperTimeWords[i] = MAKE_WORD32(buffer, 72 + (i * 12));
+   }
+   
+   /* Get the number of non-special records from the buffer header. */
+   nEventRecords = MAKE_WORD32(buffer, 66);
+
+   /* Get the number of special records from the buffer header. */
+   nSpecialRecords = MAKE_WORD32(buffer, 116);
+
+   nTotalRecords = nEventRecords + nSpecialRecords;
+
+   for (j = 0; j < nTotalRecords; j++) {
+       unsigned short record[3];
+
+       /* Copy each event into its own record for further processing. The
+        * buffer header is 256 words and each record is 3 words.
+        */
+       memcpy(&record[0], &buffer[256 + (j * 3)], 3 * sizeof(unsigned short));
+
+       if (record[0] & 0x8000 > 0) {
+          /* This is a special record. */
+          
+          if (record[0] == 0x8000) {
+             /* We have hit the end of the buffer. */
+             break;
+
+          } else {
+             /* This is a rollover special record. We need to update the 
+              * upper word for the appropriate channel. The channel that
+              * this rollover record describes lives in the lower 4 bits of
+              * the first word of the record. The remaining two words are the
+              * the new upper time words for that channel.
+              */
+             int chan = record[0] & 0x000F;
+             upperTimeWords[chan] = MAKE_WORD32(record, 1);
+          }
+
+       } else {
+          /* Normal event record. The channel is stored in bits 13 and 14 of
+           * the first word and the energy bin is stored in the lower 13 bits.
+           */
+          unsigned short chan = (record[0] & 0x6000) >> 13;
+          unsigned short bin = record[0] & 0x1FFF;
+
+          /* Use double and ldexp() to create a 64-bit value. Not all platforms
+           * support 64-bit integral types.
+           */
+          double timestamp = ldexp((double)upperTimeWords[chan], 32) +
+                             (double)record[1] +
+                             ldexp((double)record[2], 16);
+ 
+          printf("Timestamp %0.1f, Channel %hu, Bin %hu\n", timestamp,
+                 chan, bin);
+       }
+   }
+
+This code is meant to serve as a rough guideline; it is missing many
+validation checks based on the values in the buffer header.
+
+.. rubric:: Footnotes
+
+.. [#] (4 modules) * (1 Mword per module) * (2 bytes per word) = 8 MB
+
+.. [#] Why do we use 25 MB / s when estimating pixel dwell time? 25 MB
+       / s certainly seems slow if you have spent any time with the PXI
+       specification or the documentation for the National
+       Instruments(tm) PXI Remote Control hardware. The initial
+       theoretical transfer speed of 80 MB / s is initially reduced in
+       half when mapping since we are transferring the data as 16-bit
+       words over a 32-bit interface. As such, half of the data is
+       immediately discarded on the host side when doing these
+       transfers. There is also some overhead involved in reading the
+       data out.
+
+.. [#] 64 pixels is the maximum in a buffer when the number of MCA
+       bins is set to 4096.
+
+.. [#] The end of buffer record is the only record that doesn't encode any
+       channel information with it.
+
+

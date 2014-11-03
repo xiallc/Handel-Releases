@@ -1,0 +1,198 @@
+.. _acquisition-values-label:
+
+Acquisition Values
+==================
+
+Filter
+------
+
+**peaking_time**
+    Peaking time of the energy filter, specified in microseconds.
+
+**trigger_threshold**
+    Trigger filter threshold, specified in eV.
+
+**baseline_threshold**
+    Baseline filter threshold, specified in eV.
+
+**energy_threshold**
+    Energy filter threshold, specified in eV.
+
+**gap_time**
+    The gap time of the energy filter, reported in microseconds. Note:
+    This acquisition value is *read-only*. To set the gap time, please
+    see "minimum_gap_time".
+
+**trigger_peaking_time**
+    The peaking time of the trigger filter, specified in microseconds.
+
+**trigger_gap_time**
+    The gap time of the trigger filter, specified in microseconds.
+
+**baseline_average**
+    The number of samples averaged together for the baseline.
+
+**peak_sample_offset{N}** 
+    Sets the peak sampling time offset constant for decimation
+    ``N``. This value is optional and setting it will override the
+    defined offset value in the FDD file. This value is specified in
+    microseconds.
+
+**minimum_gap_time**
+    Sets the minimum gap time for energy filter in microseconds. This
+    value will be used for all decimations.
+
+**maxwidth**
+    Sets the maximum peak width for pile-up inspection in
+    microseconds.
+
+Gain
+----
+
+**dynamic_range**
+    Energy range corresponding to 40% of the total ADC range,
+    specified in eV.
+
+**calibration_energy**
+    Calibration energy, specified in eV.
+
+**adc_percent_rule**
+    Percent of ADC used for a single step with energy equal to the
+    specified calibration energy. This parameter is provided for
+    backwards compatibility with .ini files generated for previous
+    versions of Handel. XIA recommends using "calibration_energy" and
+    "dynamic_range" to set the gain of your xMAP system.
+
+**preamp_gain**
+    Preamplifier gain specified in mV / keV. This value is
+    synchronized with the gains in the [detector definitions] section
+    of the .ini file.
+
+Detector
+--------
+
+**detector_polarity**
+    The input signal polarity, specified as "+", "-", "pos" or
+    "neg". Like "preamp_gain", this value is synchronized with the
+    appropriate entries in the .ini file.
+
+**reset_delay**
+    The amount of time that the processor should wait after the
+    detector resets before processing the input signal, specified in
+    microseconds.
+
+MCA Data Acquisition
+--------------------
+
+**number_mca_channels**
+    The number of bins in the MCA spectrum, specified in bins.
+
+**mca_bin_width**
+    Width of an individual bin in the MCA, specified in eV.
+
+**preset_type**
+    Set the preset run type. See :file:`handel_constants.h` for the
+    constants that can be used.
+
+**preset_value**
+    When a preset run type other then :const:`XIA_PRESET_NONE` is set,
+    this value is either the number of counts or a time (specfied in
+    seconds).
+
+SCA Data Acquisition
+--------------------
+
+**number_of_scas**
+    Sets the number of SCAs.
+
+**sca{N}_[lo|hi]**
+    The SCA limit (low or high) for the requested SCA, ``N``,
+    specified as a bin number. ``N`` ranges from 0 to
+    "number_of_scas" - 1.
+
+Mapping Mode
+------------
+
+**mapping_mode**
+    Toggles between the various mapping modes by switching to the
+    appropriate firmware and downloading the necessary acquisition
+    values. Supported values are: 0.0 = mapping mode disabled, 1.0 =
+    MCA mapping mode, 2.0 = SCA mapping mode, 3.0 = List mode.
+
+**num_map_pixels**
+    Total number of pixels to acquire in the next mapping mode run. If
+    set to 0.0, then the mapping run will continue indefinitely.
+
+**num_map_pixels_per_buffer**
+    The number of pixels stored in each buffer during a mapping mode
+    run. If the value specified is larger then the maximum number of
+    pixels the buffer can hold, it will be rounded down to the
+    maximum. Setting this to -1.0 will automatically set the value to
+    the maximum allowed per buffer.
+
+**input_logic_polarity**
+    Sets the polarity of the logic signal connected via the front
+    panel LEMO to either normal (0.0) or inverted (1.0).
+
+**gate_master**
+    When 1.0, sets the current module as a GATE
+    master. Only one GATE master is needed per PXI bus segment. To
+    clear this setting, set "gate_master" to 0.0. To switch from
+    "gate_master" to a different master, set the other master to 1.0
+    and "gate_master" will be automatically cleared. This setting is
+    only valid for the first channel in a module and is ignored for
+    other channels.
+
+**sync_master**
+    When 1.0, sets the current module as a SYNC master. Only one SYNC master is
+    needed per PXI bus segment. To clear this setting, set
+    "sync_master" to 0.0. To switch from "sync_master" to a different
+    master, set the other master to 1.0 and "sync_master" will be
+    automatically cleared. This setting is only valid for the
+    first channel in a module and is ignored for other channels.
+
+**sync_count**
+    Sets the number of SYNC pulses to use for each pixel. Once
+    "sync_count" pulses have been detected, the pixel is advanced.
+
+**gate_ignore**
+    Determines if data acquisition should continue or be halted during
+    pixel advance while GATE is asserted.
+
+**gate_mode**
+    Determines whether the GATE signal, when asserted, will stop the real time 
+    clock (0.0) or not (1.0). 
+    
+**lbus_master**
+    When 1.0, sets the current module as an LBUS
+    master. Only one LBUS master is needed per PXI bus segment. To
+    clear this setting, set "lbus_master" to 0.0. To switch from
+    "lbus_master" to a different master, set the other master to 1.0
+    and "lbus_master" will be automatically cleared. This setting is
+    only valid for the first channel in a module and is ignored for
+    other channels.
+
+**pixel_advance_mode**
+    Sets the pixel advance mode for mapping mode. The supported types
+    are listed in :file:`handel_constants.h` under
+    ``XIA_MAPPING_CTL_*``. Manual pixel advance using
+    ``xiaBoardOperation()`` is always available and does not need to
+    be set using this acquisition value.
+
+**synchronous_run**
+    This parameter is used in conjunction with "lbus_master" to enable
+    a synchronous data acquisition run.
+
+**buffer_clear_size**
+    Specifies how much of the buffer should be cleared when the
+    "board_done" operation is signalled in mapping mode. The default
+    setting of 0.0 causes the entire buffer to be cleared. Any setting
+    greater than 0.0 causes only that number of words to be
+    cleared. XIA recommends for most applications that the default
+    setting of 0.0 is used as miscalculating the correct length may
+    cause data corruption.
+
+**list_mode_variant**
+    The list mode variant to acquire data with. The allowed variants
+    are energy plus GATE (0.0), energy plus SYNC (1.0) and energy plus
+    clock time (2.0).
