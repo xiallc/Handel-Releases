@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2004 X-ray Instrumentation Associates
- *               2005-2012 XIA LLC
+ *               2005-2015 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms, 
@@ -33,8 +33,6 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * $Id$
- *
  */
 
 
@@ -47,11 +45,6 @@
 #include "md_generic.h"
 
 #include "xia_handel_structures.h"
-
-/*
- *    CAMAC status Register control codes
- */
-#define ALLCHAN              -1
 
 /* If this is compiled by a C++ compiler, make it clear that these are C routines */
 #ifdef __cplusplus

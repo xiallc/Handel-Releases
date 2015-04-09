@@ -55,15 +55,8 @@ typedef int (*setAcquisitionValues_FP)(int, char *, void *, XiaDefaults *,
 									   FirmwareSet *, CurrentFirmware *, char *,
 									   Detector *, int, Module *, int);
 typedef int (*getAcquisitionValues_FP)(int, char *, void *, XiaDefaults *);
-typedef int (*gainOperation_FP)(int detChan, char *name, void *value,
-                                Detector *detector, int detector_chan,
-                                XiaDefaults *defaults,
-								CurrentFirmware *currentFirmware,
-                                char *detectorType, Module *m);
-typedef int (*gainChange_FP)(int detChan, double deltaGain, XiaDefaults *defs,
-							 CurrentFirmware *currentFirmware, char *detType, 
-							 Detector *det, int detector_chan,
-							 Module *m, int modChan);
+typedef int (*gainOperation_FP)(int detChan, char *name, void *value, 
+					Detector *det, int modChan, Module *m, XiaDefaults *defs);		  
 typedef int (*gainCalibrate_FP)(int detChan, Detector *det, int modChan,
 								Module *m, XiaDefaults *defs, double delta);
 typedef int (*startRun_FP)(int detChan, unsigned short resume, XiaDefaults *defs,
@@ -71,13 +64,10 @@ typedef int (*startRun_FP)(int detChan, unsigned short resume, XiaDefaults *defs
 typedef int (*stopRun_FP)(int detChan, Module *m);
 typedef int (*getRunData_FP)(int detChan, char *name, void *value,
 							 XiaDefaults *defs, Module *m);
-typedef int (*setPolarity_FP)(int detChan, Detector *det, int detector_channel,
-							  XiaDefaults *defs, Module *m);
 typedef int (*doSpecialRun_FP)(int detChan, char *name, void *info,
                                XiaDefaults *defaults, Detector *detector,
                                int detector_chan);
 typedef int (*getSpecialRunData_FP)(int, char *, void *, XiaDefaults *);
-typedef int (*setDetectorTypeValue_FP)(int, Detector *, int, XiaDefaults *);
 typedef int (*getParameter_FP)(int, const char *, unsigned short *);
 typedef int (*setParameter_FP)(int, const char *, unsigned short);
 typedef int (*userSetup_FP)(int detChan, XiaDefaults *defaults,
@@ -108,15 +98,12 @@ struct PSLFuncs
   setAcquisitionValues_FP setAcquisitionValues;
   getAcquisitionValues_FP getAcquisitionValues;
   gainOperation_FP        gainOperation;
-  gainChange_FP	          gainChange;
   gainCalibrate_FP        gainCalibrate;
   startRun_FP			  startRun;
   stopRun_FP              stopRun;
   getRunData_FP			  getRunData;
-  setPolarity_FP		  setPolarity;
   doSpecialRun_FP		  doSpecialRun;
   getSpecialRunData_FP	  getSpecialRunData;
-  setDetectorTypeValue_FP setDetectorTypeValue;
   getDefaultAlias_FP	  getDefaultAlias;
   getNumDefaults_FP       getNumDefaults;
   getParameter_FP		  getParameter;
@@ -127,9 +114,9 @@ struct PSLFuncs
   getNumParams_FP         getNumParams;
   getParamData_FP         getParamData;
   getParamName_FP         getParamName;
-    boardOperation_FP     boardOperation;
+  boardOperation_FP       boardOperation;
   freeSCAs_FP             freeSCAs;
-    unHook_FP             unHook;
+  unHook_FP               unHook;
 
 };
 typedef struct PSLFuncs PSLFuncs; 

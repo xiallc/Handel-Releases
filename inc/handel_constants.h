@@ -82,6 +82,7 @@
 #define XIA_LIST_MODE_PMT        16.0
 
 /** microDXP acquisition value "apply" constants **/
+#define AV_MEM_ALL        0x0
 #define AV_MEM_NONE       0x01
 #define AV_MEM_REQ        0x02
 #define AV_MEM_PARSET     0x04

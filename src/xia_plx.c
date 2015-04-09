@@ -3,7 +3,7 @@
  * Copyright (c) 2003 PLX Technology Inc
  *
  * Copyright (c) 2004 X-ray Instrumentation Associates
- *               2005-2014 XIA LLC
+ *               2005-2015 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms,
@@ -411,7 +411,20 @@ static int _plx_remove_slot_from_map(unsigned long idx)
 {
   PLX_STATUS status;
 
-  unsigned long i;
+  unsigned long i;  
+  
+  /* If the handle is registered as a notifier
+   * then we need to unregister it to free up the event handle.
+   */
+  if (V_MAP.registered[idx]) {
+    status = PlxPci_NotificationCancel(&(V_MAP.device[idx]), 
+                                      &(V_MAP.events[idx]));
+                                      
+    if (status != ApiSuccess) {
+      _plx_log_DEBUG("Error unregistering notification of PCI DMA channel");
+      _plx_print_more(status);
+    }
+  }
   
   status = PlxPci_PciBarUnmap(&(V_MAP.device[idx]), (VOID**)&(V_MAP.addr[idx]));
 
@@ -439,8 +452,7 @@ static int _plx_remove_slot_from_map(unsigned long idx)
       return PLX_API;
     }
     
-  } else {
-  
+  } else {    
     free(V_MAP.addr);
     free(V_MAP.device);
     free(V_MAP.events);

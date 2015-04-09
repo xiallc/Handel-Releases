@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2002-2004 X-ray Instrumentation Associates
- *               2005-2013 XIA LLC
+ *               2005-2015 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms, 
@@ -35,6 +35,10 @@
  *
  */
 
+/* Include the VLD header for memory debugging options */
+#ifdef __VLD_MEM_DBG__
+  #include <vld.h>
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -63,7 +67,6 @@
 
 
 HANDEL_STATIC int HANDEL_API xiaInitMemory(void);
-HANDEL_STATIC int HANDEL_API xiaInitHandelDS(void);
 HANDEL_STATIC int HANDEL_API xiaInitDetectorDS(void);
 HANDEL_STATIC int HANDEL_API xiaInitFirmwareSetDS(void);
 HANDEL_STATIC int HANDEL_API xiaInitXiaDefaultsDS(void);
@@ -174,8 +177,9 @@ HANDEL_EXPORT int HANDEL_API xiaInitHandel(void)
   
   /* Arbitrary length here */
   char version[120];
-  
+
   if (!isHandelInit) {
+  
     /* Make sure the everything is working on the Xerxes side of things.
      */
     status = dxp_init_library();
@@ -204,7 +208,7 @@ HANDEL_EXPORT int HANDEL_API xiaInitHandel(void)
     handel_md_puts          = utils->funcs->dxp_md_puts;
     handel_md_wait          = utils->funcs->dxp_md_wait;
     handel_md_fgets         = utils->funcs->dxp_md_fgets;
-
+    
     /* Init the FDD lib here */
     status = xiaFddInitialize();
 
@@ -213,17 +217,19 @@ HANDEL_EXPORT int HANDEL_API xiaInitHandel(void)
       return status;
     }
       
-    isHandelInit = TRUE_;
+    isHandelInit = TRUE_;  
+    
   } else {
+
     /*
-     * User is calling xiaInit to re-initialize Handel,
-     * use this call to close off communications
+     * Most user will be calling xiaInit after xiaInitHandel has already
+     * executed from xiaSetLogLevel. To be safe the connection is always
+     * re-initialized.
      */
-    xiaLogInfo("xiaInitHandel", "Re-initialzing Handel, closing off existing "
-                "connections.");        
-    xiaExit();
+    xiaLogInfo("xiaInitHandel", "Closing off existing connections.");        
+    status = xiaUnHook();
   }
-  
+    
   xiaLogInfo("xiaInitHandel", "Starting Handel");   
   
   /* Initialize the memory of both Handel and Xerxes.
@@ -245,19 +251,47 @@ HANDEL_EXPORT int HANDEL_API xiaInitHandel(void)
 
 /******************************************************************************
  *
- * Routine to initialize the library. This routine modifies the global static
- * variable isHandelInit.
+ * Routine to initialize the data structure
  *
  ******************************************************************************/
 HANDEL_STATIC int HANDEL_API xiaInitMemory(void)
 {
   int status = XIA_SUCCESS;
-  
-  /* Clear the HanDeL data structures */
-  status = xiaInitHandelDS();
-  
-  if (status != XIA_SUCCESS) {
-    xiaLogError("xiaInitHandel", "Unable to clear Data Structures", status);
+
+  xiaLogInfo("xiaInitMemory", "Initializing Handel data structure.");    
+
+  status = xiaInitDetectorDS();
+  if(status != XIA_SUCCESS)
+  {
+    xiaLogError("xiaInitMemory", "Unable to clear the Detector LL", status);
+    return status;
+  }
+
+  status = xiaInitFirmwareSetDS();
+  if(status != XIA_SUCCESS)
+  {
+    xiaLogError("xiaInitMemory", "Unable to clear the FirmwareSet LL", status);
+    return status;
+  }
+
+  status = xiaInitModuleDS();
+  if (status != XIA_SUCCESS)
+  {
+    xiaLogError("xiaInitMemory", "Unable to clear Module LL", status);
+    return status;
+  }
+
+  status = xiaInitDetChanDS();
+  if (status != XIA_SUCCESS)
+  {
+    xiaLogError("xiaInitMemory", "Unable to clear DetChan LL", status);
+    return status;
+  }
+
+  status = xiaInitXiaDefaultsDS();
+  if (status != XIA_SUCCESS)
+  {
+    xiaLogError("xiaInitMemory", "Unable to clear Defaults LL", status);
     return status;
   }
 
@@ -266,8 +300,7 @@ HANDEL_STATIC int HANDEL_API xiaInitMemory(void)
 
 
 /**********
- * Responsible for performing any tasks related to 
- * exiting the library. 
+ * Responsible for performing any tasks related to exiting the library. 
  **********/
 HANDEL_EXPORT int HANDEL_API xiaExit(void)
 {
@@ -279,7 +312,7 @@ HANDEL_EXPORT int HANDEL_API xiaExit(void)
 
   if (status != XIA_SUCCESS) {
     xiaLogError("xiaExit", "Error shutting down communications", status);
-    return status;
+    /* Ignore this status since we're on the way out */
   }
   
   /* Other shutdown procedures go here */
@@ -312,58 +345,6 @@ HANDEL_EXPORT void HANDEL_API xiaGetVersionInfo(int *rel, int *min, int *maj,
   }
 
 }
-
-
-/******************************************************************************
- *
- * Routine to initialize the Detector linked list.
- *
- ******************************************************************************/
-HANDEL_STATIC int HANDEL_API xiaInitHandelDS()
-{
-    int status = XIA_SUCCESS;
-
-    xiaLogInfo("xiaInitHandelDS", "Initializing Handel data structure.");    
-
-    status = xiaInitDetectorDS();
-    if(status != XIA_SUCCESS)
-    {
-      xiaLogError("xiaInitHandelDS", "Unable to clear the Detector LL", status);
-      return status;
-    }
-
-    status = xiaInitFirmwareSetDS();
-    if(status != XIA_SUCCESS)
-    {
-      xiaLogError("xiaInitHandelDS", "Unable to clear the FirmwareSet LL", status);
-      return status;
-    }
-
-    status = xiaInitModuleDS();
-    if (status != XIA_SUCCESS)
-    {
-      xiaLogError("xiaInitHandelDS", "Unable to clear Module LL", status);
-      return status;
-    }
-
-    status = xiaInitDetChanDS();
-    if (status != XIA_SUCCESS)
-    {
-      xiaLogError("xiaInitHandelDS", "Unable to clear DetChan LL", status);
-      return status;
-    }
-
-    status = xiaInitXiaDefaultsDS();
-    if (status != XIA_SUCCESS)
-    {
-      xiaLogError("xiaInitHandelDS", "Unable to clear Defaults LL", status);
-      return status;
-    }
-
-    return status;
-}
-
-
 
 /******************************************************************************
  *
@@ -403,7 +384,7 @@ HANDEL_STATIC int HANDEL_API xiaInitDetectorDS(void)
  *
  ******************************************************************************/
 HANDEL_SHARED int HANDEL_API xiaFreeDetector(Detector *detector)
-/* Detector *detector;					Input: pointer to structure to free	*/
+/* Detector *detector;          Input: pointer to structure to free */
 {
     int status = XIA_SUCCESS;
 
@@ -475,7 +456,7 @@ HANDEL_STATIC int HANDEL_API xiaInitFirmwareSetDS(void)
  *
  ******************************************************************************/
 HANDEL_SHARED int HANDEL_API xiaFreeFirmwareSet(FirmwareSet *firmwareSet)
-/* FirmwareSet *firmwareSet;				Input: pointer to structure to free	*/
+/* FirmwareSet *firmwareSet;        Input: pointer to structure to free */
 {
   int status = XIA_SUCCESS;
 
@@ -539,7 +520,7 @@ HANDEL_SHARED int HANDEL_API xiaFreeFirmwareSet(FirmwareSet *firmwareSet)
  *
  ******************************************************************************/
 HANDEL_SHARED int HANDEL_API xiaFreeFirmware(Firmware *firmware)
-/* Firmware *firmware;				Input: pointer to structure to free	*/
+/* Firmware *firmware;        Input: pointer to structure to free */
 {
   int status = XIA_SUCCESS;
 
@@ -707,8 +688,6 @@ HANDEL_SHARED int HANDEL_API xiaFreeModule(Module *module)
     ASSERT(module != NULL);
 
 
-
-
     switch (module->interface_info->type) {
     default:
       /* Impossible */
@@ -728,35 +707,12 @@ HANDEL_SHARED int HANDEL_API xiaFreeModule(Module *module)
       break;
 #endif /* EXCLUDE_PLX */
 
-#ifndef EXCLUDE_CAMAC	
-    case JORWAY73A:
-    case GENERIC_SCSI:
-      handel_md_free((void *)module->interface_info->info.jorway73a);
-      handel_md_free((void *)module->interface_info);
-      break;
- #endif /* EXCLUDE_CAMAC */
-
-#ifndef EXCLUDE_EPP
-    case EPP:
-    case GENERIC_EPP:
-      handel_md_free((void *)module->interface_info->info.epp);
-      handel_md_free((void *)module->interface_info);
-      break;
-#endif /* EXCLUDE_EPP */
-
 #ifndef EXCLUDE_SERIAL
     case SERIAL:
       handel_md_free((void *)module->interface_info->info.serial);
       handel_md_free((void *)module->interface_info);
       break;
 #endif /* EXCLUDE_SERIAL */
-
-#ifndef EXCLUDE_USB
-    case USB:
-      handel_md_free((void *)module->interface_info->info.usb);
-      handel_md_free((void *)module->interface_info);
-      break;
-#endif /* EXCLUDE_USB */
 
 #ifndef EXCLUDE_USB2
     case USB2:

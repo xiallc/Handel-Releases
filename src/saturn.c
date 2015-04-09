@@ -61,7 +61,7 @@ static double dacpergaindb;
 /* Variable to store the number of DAC counts per unit gain (linear) */
 static double dacpergain;
 /*
- * Store pointers to the proper DLL routines to talk to the CAMAC crate
+ * Pointer to utility functions
  */
 static DXP_MD_IO saturn_md_io;
 static DXP_MD_SET_MAXBLK saturn_md_set_maxblk;
@@ -236,16 +236,6 @@ static int dxp_init_utils(Utils* utils)
 
   return DXP_SUCCESS;
 }
-
-/********------******------*****------******-------******-------******------*****
- * Now begins the routines devoted to atomic operations on DXP cards.  These
- * routines involve reading or writing to a location on the DXP card.  Nothing
- * fancy is done in these routines.  Just single or Block transfers to and from
- * the DXP.  These are the proper way to write to the CSR, etc...instead of using
- * the CAMAC F and A values throughout the code.
- *
- ********------******------*****------******-------******-------******------*****/
-
 
 /******************************************************************************
  * Routine to write data to the TSAR (Transfer Start Address Register)
@@ -501,14 +491,6 @@ static int dxp_clear_LAM(int* ioChan, int* modChan)
   return DXP_SUCCESS;
 }
 
-/********------******------*****------******-------******-------******------*****
- * Now begins the code devoted to routines that look like CAMAC transfers to
- * a preset address to the external world.  They actually write to the TSAR,
- * then the CSR, then finally write the data to the CAMAC bus.  The user need
- * never know
- *
- ********------******------*****------******-------******-------******------*****/
-
 /******************************************************************************
  * Routine to read a single word of data from the DXP
  *
@@ -742,7 +724,7 @@ static int dxp_write_block(int* ioChan, int* modChan, unsigned short* addr,
  * Routine to download the FiPPi configuration
  *
  * This routine downloads the FiPPi program of specifice decimation(number
- * of clocks to sum data over), CAMAC channel and DXP channel.  If -1 for the
+ * of clocks to sum data over), DXP channel.  If -1 for the
  * DXP channel is specified then all channels are downloaded.
  *
  ******************************************************************************/
@@ -1110,7 +1092,7 @@ static int dxp_download_fpga_done(int* modChan, char *name, Board *board)
 /******************************************************************************
  * Routine to download the DSP Program
  *
- * This routine downloads the DSP program to the specified CAMAC slot and
+ * This routine downloads the DSP program to the specified 
  * channel on the DXP.  If -1 for the DXP channel is specified then all
  * channels are downloaded.
  *
@@ -2531,10 +2513,8 @@ static int dxp_write_history(int* ioChan, int* modChan, Board* board,
 }
 
 /******************************************************************************
- * Routine to prepare the DXP4C2X for data readout.
+ * Routine to prepare the board for data readout.
  *
- * This routine will ensure that the board is in a state that
- * allows readout via CAMAC bus.
  *
  ******************************************************************************/
 int dxp_prep_for_readout(int* ioChan, int *modChan)
@@ -2544,19 +2524,11 @@ int dxp_prep_for_readout(int* ioChan, int *modChan)
   UNUSED(ioChan);
   UNUSED(modChan);
 
-  /*
-   *   Nothing needs to be done for the DXP4C2X, the
-   * CAMAC interface does not interfere with normal data taking.
-   */
-
   return DXP_SUCCESS;
 }
 
 /******************************************************************************
- * Routine to prepare the DXP4C2X for data readout.
- *
- * This routine will ensure that the board is in a state that
- * allows readout via CAMAC bus.
+ * Routine to prepare the board for data readout.
  *
  ******************************************************************************/
 int dxp_done_with_readout(int* ioChan, int *modChan, Board *board)
@@ -2568,19 +2540,12 @@ int dxp_done_with_readout(int* ioChan, int *modChan, Board *board)
   UNUSED(modChan);
   UNUSED(board);
 
-  /*
-   * Nothing needs to be done for the DXP4C2X, the CAMAC interface
-   * does not interfere with normal data taking.
-   */
 
   return DXP_SUCCESS;
 }
 
 /******************************************************************************
  * Routine to begin a data taking run.
- *
- * This routine starts a run on the specified CAMAC channel.  It tells the DXP
- * whether to ignore the gate signal and whether to clear the MCA.
  *
  ******************************************************************************/
 static int dxp_begin_run(int* ioChan, int* modChan, unsigned short* gate,
@@ -2640,8 +2605,6 @@ static int dxp_begin_run(int* ioChan, int* modChan, unsigned short* gate,
 
 /******************************************************************************
  * Routine to end a data taking run.
- *
- * This routine ends the run on the specified CAMAC channel.
  *
  ******************************************************************************/
 static int dxp_end_run(int* ioChan, int* modChan, Board *board)
@@ -2760,7 +2723,7 @@ static int dxp_begin_control_task(int* ioChan, int* modChan, short *type,
   sprintf(info_string, "runtasks = %#x\n", runtasks);
   dxp_log_debug("dxp_begin_control_task", info_string);
 
-  if ((*type == CT_ADC) || (*type == CT_SATURN_ADC) ||
+  if ((*type == CT_SATURN_ADC) ||
       (*type == CT_SATURN_BASELINE_HIST) ||
       (*type == CT_SATURN_READ_MEMORY) || (*type == CT_SATURN_WRITE_MEMORY)) {
     /* For baseline history, we just want to change the RUNTASKS variable to stop filling of the history,
@@ -2784,7 +2747,7 @@ static int dxp_begin_control_task(int* ioChan, int* modChan, short *type,
   /* First check if the control task is the ADC readout */
   if (*type==CT_SATURN_SET_ASCDAC) {
     whichtest = WHICHTEST_SET_ASCDAC;
-  } else if ((*type==CT_ADC) || (*type==CT_SATURN_ADC)) {
+  } else if ((*type==CT_SATURN_ADC)) {
     whichtest = WHICHTEST_ACQUIRE_ADC;
     /* Make sure at least the user thinks there is allocated memory */
     if (*length > 1) {
@@ -2907,7 +2870,7 @@ static int dxp_begin_control_task(int* ioChan, int* modChan, short *type,
   } else {
     status=DXP_NOCONTROLTYPE;
     sprintf(info_string,
-            "Unknown control type %d for this DXP4C2X module",*type);
+            "Unknown control type %d for this module",*type);
     dxp_log_error("dxp_begin_control_task",info_string,status);
     return status;
   }
@@ -3057,7 +3020,7 @@ static int dxp_control_task_params(int* ioChan, int* modChan, short *type,
 
   /* Check the control task type */
   if (*type==CT_SATURN_SET_ASCDAC) {}
-  else if ((*type==CT_ADC) || (*type==CT_SATURN_ADC)) {
+  else if (*type==CT_SATURN_ADC) {
     /* length=spectrum length*/
     info[0] = dxp_get_history_length(board->dsp[*modChan], board->params[*modChan]);
     /* Recommend waiting 4ms initially, 400ns*spectrum length */
@@ -3096,7 +3059,7 @@ static int dxp_control_task_params(int* ioChan, int* modChan, short *type,
   } else {
     status=DXP_NOCONTROLTYPE;
     sprintf(info_string,
-            "Unknown control type %d for this DXP4C2X module",*type);
+            "Unknown control type %d for this module",*type);
     dxp_log_error("dxp_control_task_params",info_string,status);
     return status;
   }
@@ -3133,8 +3096,7 @@ static int dxp_control_task_data(int* ioChan, int* modChan, short *type,
   if (*type == CT_SATURN_SET_ASCDAC) {
     /* Do nothing */
 
-  } else if ((*type == CT_ADC) ||
-             (*type == CT_SATURN_ADC) ||
+  } else if ((*type == CT_SATURN_ADC) ||
              (*type == CT_SATURN_BASELINE_HIST) ||
              (*type == CT_SATURN_READ_MEMORY) ||
              (*type == CT_SATURN_WRITE_MEMORY)) {
@@ -3918,8 +3880,8 @@ static int dxp_setup_asc(int* ioChan, int* modChan, int* module, float* adcRule,
  ******************************************************************************/
 static int dxp_calibrate_asc(int* mod, int* camChan, unsigned short* used,
                              Board *board)
-/* int *mod;     Input: Camac Module number to calibrate   */
-/* int *camChan;    Input: Camac pointer       */
+/* int *mod;     Input: Module number to calibrate   */
+/* int *camChan;    Input: channel pointer       */
 /* unsigned short *used;  Input: bitmask of channel numbers to calibrate */
 /* Board *board;    Input: Relavent Board info      */
 {
@@ -3949,8 +3911,8 @@ static int dxp_calibrate_asc(int* mod, int* camChan, unsigned short* used,
  ******************************************************************************/
 static int dxp_calibrate_channel(int* mod, int* camChan, unsigned short* used,
                                  int* calibtask, Board *board)
-/* int *mod;      Input: Camac Module number to calibrate   */
-/* int *camChan;     Input: Camac pointer       */
+/* int *mod;      Input: Module number to calibrate   */
+/* int *camChan;     Input: channel pointer       */
 /* unsigned short *used;   Input: bitmask of channel numbers to calibrate */
 /* int *calibtask;     Input: which calibration function    */
 /* Board *board;     Input: Relavent Board info      */

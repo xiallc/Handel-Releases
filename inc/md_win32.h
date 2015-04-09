@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2004 X-ray Instrumentation Associates
- *               2005-2012 XIA LLC
+ *               2005-2015 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms, 
@@ -33,8 +33,6 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * $Id$
- *
  */
 
 
@@ -51,35 +49,6 @@
 #define MD_IO_WRITE 1
 #define MD_IO_OPEN  2
 #define MD_IO_CLOSE 3
-
-
-#ifndef EXCLUDE_CAMAC
-XIA_MD_STATIC int XIA_MD_API dxp_md_initialize(unsigned int *, char *);
-XIA_MD_STATIC int XIA_MD_API dxp_md_open(char *, int *);
-XIA_MD_STATIC int XIA_MD_API dxp_md_open_bcn(int *, int *, int *, int *);
-XIA_MD_STATIC int XIA_MD_API dxp_md_io(int *camChan, unsigned int *function,
-                                       unsigned long *addr, void *data,
-                                       unsigned int *length);
-XIA_MD_STATIC int XIA_MD_API dxp_md_close(int *camChan);
-#endif /* EXCLUDE_CAMAC */
-
-#ifndef EXCLUDE_EPP
-XIA_MD_STATIC int XIA_MD_API dxp_md_epp_initialize(unsigned int *, char *);
-XIA_MD_STATIC int XIA_MD_API dxp_md_epp_open(char *, int *);
-XIA_MD_STATIC int XIA_MD_API dxp_md_epp_io(int *camChan, unsigned int *function,
-                                           unsigned long *addr, void *data,
-                                           unsigned int *length);
-XIA_MD_STATIC int XIA_MD_API dxp_md_epp_close(int *camChan);
-#endif /* EXCLUDE_EPP */
-
-#ifndef EXCLUDE_USB
-XIA_MD_STATIC int XIA_MD_API dxp_md_usb_initialize(unsigned int *maxMod, char *dllName);
-XIA_MD_STATIC int XIA_MD_API dxp_md_usb_open(char *ioname, int *camChan);
-XIA_MD_STATIC int XIA_MD_API dxp_md_usb_io(int *camChan, unsigned int *function, 
-                                           unsigned long *address, void *data,
-                                           unsigned int *length);
-XIA_MD_STATIC int XIA_MD_API dxp_md_usb_close(int *camChan);
-#endif /* EXCLUDE_USB */
 
 
 #ifndef EXCLUDE_USB2
@@ -122,40 +91,6 @@ XIA_MD_STATIC char * dxp_md_fgets(char *s, int length, FILE *stream);
 XIA_MD_STATIC char * dxp_md_tmp_path(void);
 XIA_MD_STATIC void dxp_md_clear_tmp(void);
 XIA_MD_STATIC char * dxp_md_path_separator(void);
-XIA_MD_STATIC int XIA_MD_API dxp_md_process_msgs(void);
-
-
-#ifndef EXCLUDE_CAMAC
-XIA_MD_IMPORT int XIA_MD_API xia_camxfr(short *camadr, short func, long nbytes, short mode, short *buf);
-XIA_MD_IMPORT int XIA_MD_API xia_caminit(short *buf);
-#endif /* EXCLUDE_CAMAC */
-
-#ifndef EXLCUDE_EPP
-XIA_MD_IMPORT int XIA_MD_API DxpInitPortAddress(int );
-XIA_MD_IMPORT int XIA_MD_API DxpInitEPP(int );
-XIA_MD_IMPORT int XIA_MD_API DxpWriteWord(unsigned short,unsigned short);
-XIA_MD_IMPORT int XIA_MD_API DxpWriteBlock(unsigned short,unsigned short *,int);
-XIA_MD_IMPORT int XIA_MD_API DxpWriteBlocklong(unsigned short,unsigned long *, int);
-XIA_MD_IMPORT int XIA_MD_API DxpReadWord(unsigned short,unsigned short *);
-XIA_MD_IMPORT int XIA_MD_API DxpReadBlock(unsigned short, unsigned short *,int);
-XIA_MD_IMPORT int XIA_MD_API DxpReadBlockd(unsigned short, double *,int);
-XIA_MD_IMPORT int XIA_MD_API DxpReadBlocklong(unsigned short,unsigned long *,int);
-XIA_MD_IMPORT int XIA_MD_API DxpReadBlocklongd(unsigned short, double *,int);
-XIA_MD_IMPORT void XIA_MD_API DxpSetID(unsigned short id);
-XIA_MD_IMPORT int XIA_MD_API DxpWritePort(unsigned short port, unsigned short data);
-XIA_MD_IMPORT int XIA_MD_API DxpReadPort(unsigned short port, unsigned short *data);
-#endif /* EXCLUDE_EPP */
-
-#ifndef EXCLUDE_USB
-XIA_MD_IMPORT int XIA_MD_API xia_usb_open(char *device, HANDLE *hDevice);
-XIA_MD_IMPORT int XIA_MD_API xia_usb_close(HANDLE hDevice);
-XIA_MD_IMPORT int XIA_MD_API xia_usb_read(long address, long nWords,
-                                          char *device, unsigned short *data);
-XIA_MD_IMPORT int XIA_MD_API xia_usb_write(long address, long nWords,
-                                           char *device, unsigned short *data);
-  
-#endif /* EXCLUDE_USB */
-
 
 #ifndef EXCLUDE_SERIAL
 

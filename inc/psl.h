@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2004 X-ray Instrumentation Associates
- *               2005-2012 XIA LLC
+ *               2005-2015 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms, 
@@ -32,8 +32,6 @@
  * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF 
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
- * 
- * $Id$
  *
  */
 
@@ -46,9 +44,6 @@
 #ifndef EXCLUDE_SATURN
 PSL_IMPORT int PSL_API saturn_PSLInit(PSLFuncs *funcs);
 #endif /* EXCLUDE_SATURN */
-#ifndef EXCLUDE_DXP4C2X
-PSL_IMPORT int PSL_API dxp4c2x_PSLInit(PSLFuncs *funcs);
-#endif /* EXCLUDE_DXP4C2X */
 #ifndef EXCLUDE_UDXPS
 PSL_IMPORT int PSL_API udxps_PSLInit(PSLFuncs *funcs);
 #endif /* EXCLUDE_UDXPS */
@@ -61,9 +56,6 @@ PSL_IMPORT int PSL_API xmap_PSLInit(PSLFuncs *funcs);
 #ifndef EXCLUDE_STJ
 PSL_IMPORT int PSL_API stj_PSLInit(PSLFuncs *funcs);
 #endif /* EXCLUDE_STJ */
-#ifndef EXCLUDE_VEGA
-PSL_IMPORT int PSL_API vega_PSLInit(PSLFuncs *funcs);
-#endif /* EXCLUDE_VEGA */
 #ifndef EXCLUDE_MERCURY
 PSL_IMPORT int PSL_API mercury_PSLInit(PSLFuncs *funcs);
 #endif /* EXCLUDE_MERCURY */

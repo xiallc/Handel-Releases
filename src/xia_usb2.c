@@ -84,7 +84,10 @@ static void xia_usb2__dump_ep_desc(xia_usb2_endpoint_descriptor_t *d);
 #endif /* XIA_USB2_DUMP_HELPERS */
 
 
-/* This is the Cypress GUID. We may need to generate our own. */
+/* This is the Device setup class GUID supplied by Cypress to enumerate
+ * USB devices by SetupDiGetClassDevs. The winapi constant 
+ * GUID_DEVINTERFACE_USB_DEVICE should also work.
+ */
 static GUID CYPRESS_GUID = {0xae18aa60, 0x7f6a, 0x11d4,
                             {0x97, 0xdd, 0x0, 0x1, 0x2, 0x29, 0xb9, 0x59}};
 

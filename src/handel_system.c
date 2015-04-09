@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2002-2004 X-ray Instrumentation Associates
- *               2005-2012 XIA LLC
+ *               2005-2015 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms, 
@@ -336,7 +336,7 @@ HANDEL_EXPORT int HANDEL_API xiaDownloadFirmware(int detChan, char *type)
       break;
 		
     case SET:
-      /* We've already verified that there are no infinte loops in the detChan sets 
+      /* We've already verified that there are no infinite loops in the detChan sets 
        * by this point, so we don't need to check the isTagged field
        */
       detChanElem = xiaGetDetChanPtr((unsigned int)detChan);
@@ -839,14 +839,6 @@ HANDEL_SHARED int HANDEL_API xiaLoadPSL(char *boardType, PSLFuncs *funcs)
     status = saturn_PSLInit(funcs);
 #endif /* EXCLUDE_SATURN */   
 
-#ifndef EXCLUDE_DXP4C2X
-  } else if (STREQ(boardType, "dxp4c2x") ||
-             STREQ(boardType, "dxp2x4c") ||
-             STREQ(boardType, "dxp2x")) {
-
-    status = dxp4c2x_PSLInit(funcs);
-#endif /* EXCLUDE_DXP4C2X */
-
 #ifndef EXCLUDE_UDXPS
   } else if (STREQ(boardType, "udxps")) {
 
@@ -877,12 +869,6 @@ HANDEL_SHARED int HANDEL_API xiaLoadPSL(char *boardType, PSLFuncs *funcs)
     status = mercury_PSLInit(funcs);
 #endif /* EXCLUDE_MERCURY */
 
-#ifndef EXCLUDE_VEGA
-  } else if (STREQ(boardType, "vega")) {
-
-    status = vega_PSLInit(funcs);
-#endif /* EXCLUDE_VEGA */
-
   } else {
 	      
     funcs = NULL;
@@ -906,8 +892,7 @@ HANDEL_SHARED int HANDEL_API xiaLoadPSL(char *boardType, PSLFuncs *funcs)
 	
 
 /**********
- * Performs non-persistent operations on the board. Mostly
- * used with the microDXP.
+ * Performs non-persistent operations on the board. 
  **********/
 HANDEL_EXPORT int HANDEL_API xiaBoardOperation(int detChan, char *name, void *value)
 {

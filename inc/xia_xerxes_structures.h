@@ -210,7 +210,7 @@ typedef struct Chan_State Chan_State;
  *	Define a system linked list for all boards in use
  */
 struct Board {
-  /* CAMAC IO channel*/
+  /* IO channel*/
   int ioChan;
   /* Bit packed integer of which channels are used */
   unsigned short used;
@@ -221,8 +221,8 @@ struct Board {
   /* Total number of channels on this board */
   unsigned int nchan;
   /* String passed to the interface library, used to identify the board
-   * or if need to restart the interface, for a typical CAMAC system contains
-   * the SCSI bus number, crate number and slot number.  */
+   * or if need to restart the interface, for a typical system contains
+   * the bus number, crate number and slot number.  */
   char *iostring;
   /* Array to hold misc information about the board state 
    * state[0] = run status (1=run started, 0=no run started)

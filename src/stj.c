@@ -65,7 +65,9 @@ typedef struct _FPGA_downloader {
 } FPGA_downloader_t;
 
 
-/* Store pointers to the proper DLL routines to talk to the CAMAC crate */
+/*
+ * Pointer to utility functions
+ */
 static DXP_MD_IO         stj_md_io;
 static DXP_MD_SET_MAXBLK stj_md_set_maxblk;
 static DXP_MD_GET_MAXBLK stj_md_get_maxblk;

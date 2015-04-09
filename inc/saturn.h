@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2004 X-ray Instrumentation Associates
- *               2005-2012 XIA LLC
+ *               2005-2015 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms, 
@@ -33,7 +33,6 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * $Id$
  *
  */
 
@@ -49,7 +48,6 @@
 /*
  *    
  */
-#define MAXDET				500
 #define PROGRAM_BASE     0x0000
 #define DATA_BASE        0x4000
 #define START_PARAMS     0x4000
@@ -109,7 +107,7 @@
 #define WHICHTEST_WRITE_MEMORY      21
 #define WHICHTEST_RESET             99
 /*
- *    CAMAC status Register control codes
+ *    status Register control codes
  */
 #define ALLCHAN              -1
 #define IGNOREGATE            1
@@ -117,7 +115,7 @@
 #define CLEARMCA              0
 #define UPDATEMCA             1
 /*
- *     CAMAC status Register bit positions
+ *     status Register bit positions
  */
 #define MASK_RUNENABLE    0x0001
 #define MASK_RESETMCA     0x0002
@@ -134,9 +132,9 @@
 #define MASK_UNUSED14     0x4000
 #define MASK_UNUSED15     0x8000
 
-/* Definitions of EPP addresses for the DXP boards 
+/* Definitions of addresses for the DXP boards 
  * F code for write is 1, read is 0
- * A code is the EPP register for the xfer
+ * A code is the register for the xfer
  *    0=Data register,    1=Address register
  *    2=Control register, 3=Status register
  */
@@ -168,5 +166,24 @@
 
 /* For Xerxes only */
 #define REALTIME_CLOCK_TICK    800e-9
+
+/* 
+ * Definitions for SATURN configurations 
+ */
+#define CT_SATURN_SET_ASCDAC        300
+#define CT_SATURN_TRKDAC            302
+#define CT_SATURN_SLOPE_CALIB       303
+#define CT_SATURN_SLEEP_DSP         306
+#define CT_SATURN_PROGRAM_FIPPI     311
+#define CT_SATURN_SET_POLARITY      312
+#define CT_SATURN_CLOSE_INPUT_RELAY 313
+#define CT_SATURN_OPEN_INPUT_RELAY  314
+#define CT_SATURN_RC_BASELINE       315
+#define CT_SATURN_RC_EVENT          316
+#define CT_SATURN_ADC               317
+#define CT_SATURN_BASELINE_HIST     318	/* Special run for Baseline History		*/
+#define CT_SATURN_READ_MEMORY       321
+#define CT_SATURN_WRITE_MEMORY      323
+#define CT_SATURN_RESET             399
 
 #endif						/* Endif for __SATURN_H__ */

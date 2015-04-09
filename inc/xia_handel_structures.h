@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2004 X-ray Instrumentation Associates
- *               2005-2012 XIA LLC
+ *               2005-2015 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms, 
@@ -33,7 +33,6 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * $Id$
  *
  */
 
@@ -390,20 +389,17 @@ typedef struct Module Module;
  * track of which pointer to use via the "type".
  */
 struct HDLInterface {
-  /* Type of interface being defined here...j73a, epp, etc... */
+  /* Type of interface being defined here...usb2, plx, etc... */
   unsigned int type;
 
   /* Pointers to the various interface structures. Only ONE pointer should
    * be valid per Interface structure. For instance, don't try and allocate
-   * memory for both the EPP and JY73A pointers! Use type (declared above)
+   * memory for both the PLX and USB2 pointers! Use type (declared above)
    * to determine which pointer to play with.
    */
   union {
-	  struct Interface_Jy73a  *jorway73a;
-	  struct Interface_Epp    *epp;
 	  struct Interface_Serial *serial;
-	  struct Interface_Usb    *usb;
-	struct Interface_Usb2   *usb2;
+	  struct Interface_Usb2   *usb2;
 	  struct Interface_Plx    *plx;
 	  
 	  /* Add other specific interfaces here */
@@ -416,36 +412,7 @@ typedef struct HDLInterface HDLInterface;
  * SPECIFIC INTERFACES:
  * May move these to a seperate file. Stay tuned.
  *****************************************************************************/
-
-struct Interface_Jy73a {
-    /* SCSI bus # */
-    unsigned int scsi_bus;
-
-    /* The 73a crate #, set with the dial on the front */
-    unsigned int crate_number;
-
-    /* CAMAC crate slot that this module is plugged into */
-    unsigned int slot;
-};
-typedef struct Interface_Jy73a Interface_Jy73a;
-
-
-struct Interface_Epp {
-    /* The address of the EPP port. Typically 0x378 or 0x278. */
-    unsigned int epp_address;
-
-    /* The daisy chain id of the module, IF applicable */
-    unsigned int daisy_chain_id;
-};
-typedef struct Interface_Epp Interface_Epp;
-
-
-struct Interface_Usb {
-    /* The device name of the USB port. */
-    unsigned int device_number;
-};
-typedef struct Interface_Usb Interface_Usb;
-
+ 
 struct Interface_Usb2 {
     /* The device name of the USB2 port. */
     unsigned int device_number;

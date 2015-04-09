@@ -157,6 +157,12 @@ PSL_STATIC int psl__GetCVR(int detChan, char *name, XiaDefaults *defs,
                            void *value);
 PSL_STATIC int psl__GetSVR(int detChan, char *name, XiaDefaults *defs,
                            void *value);
+                           
+/* Gain Operations */
+PSL_STATIC int psl__GainCalibrate(int detChan, Detector *det,
+                                int modChan, Module *m, XiaDefaults *defs,
+                                void *value);
+     
 /* Special Run data */
 PSL_STATIC int pslGetADCTraceLen(int detChan, void *value, XiaDefaults *defs);
 PSL_STATIC int pslGetADCTrace(int detChan, void *value, XiaDefaults *defs);
@@ -505,8 +511,8 @@ static SpecialRunData specialRunData[] =
     {"baseline_history",        psl__GetBaseHistory},
   };
 
-/* These are the allowed bord operations for this hardware */
-static  BoardOperation boardOps[] =
+/* These are the allowed board operations for this hardware */
+static BoardOperation boardOps[] =
   {
     {"apply",              pslApply
     },
@@ -556,6 +562,12 @@ static RunData runData[] =
     { "list_buffer_len_b",    psl__GetListBufferLenB },
     { "mca_events",           psl__GetMCAEvents },
     { "total_output_events",  psl__GetTotalEvents } 
+  };
+
+/* These are the allowed gain operations for this hardware */
+static GainOperation gainOps[] =
+  {
+    {"calibrate",   psl__GainCalibrate},
   };
 
 /* Acquisition values */
@@ -694,6 +706,8 @@ static AcquisitionValue_t ACQ_VALUES[] =
   };
 
 
+  
+  
 #define SCA_LIMIT_STR_LEN 3
 #define DATA_MEMORY_STR_LEN 18
 
@@ -709,15 +723,12 @@ PSL_EXPORT int PSL_API xmap_PSLInit(PSLFuncs *funcs)
   funcs->setAcquisitionValues = pslSetAcquisitionValues;
   funcs->getAcquisitionValues = pslGetAcquisitionValues;
   funcs->gainOperation        = pslGainOperation;
-  funcs->gainChange           = pslGainChange;
   funcs->gainCalibrate        = pslGainCalibrate;
   funcs->startRun             = pslStartRun;
   funcs->stopRun          = pslStopRun;
   funcs->getRunData      = pslGetRunData;
-  funcs->setPolarity      = pslSetPolarity;
   funcs->doSpecialRun      = pslDoSpecialRun;
   funcs->getSpecialRunData = pslGetSpecialRunData;
-  funcs->setDetectorTypeValue = pslSetDetectorTypeValue;
   funcs->getDefaultAlias     = pslGetDefaultAlias;
   funcs->getParameter        = pslGetParameter;
   funcs->setParameter      = pslSetParameter;
@@ -954,30 +965,6 @@ PSL_STATIC int pslGetAcquisitionValues(int detChan, char *name, void *value,
       */
     }
   }
-
-  return XIA_SUCCESS;
-}
-
-
-/** @brief Adjust the gain by the specified amount.
-*
-*/
-PSL_STATIC int pslGainChange(int detChan, double deltaGain,
-                             XiaDefaults *defaults,
-                             CurrentFirmware *currentFirmware,
-                             char *detectorType, Detector *detector,
-                             int detector_chan, Module *m, int modChan)
-{
-  UNUSED(detChan);
-  UNUSED(deltaGain);
-  UNUSED(defaults);
-  UNUSED(currentFirmware);
-  UNUSED(detectorType);
-  UNUSED(detector);
-  UNUSED(detector_chan);
-  UNUSED(m);
-  UNUSED(modChan);
-
 
   return XIA_SUCCESS;
 }
@@ -1325,39 +1312,6 @@ PSL_STATIC int pslGetSpecialRunData(int detChan, char *name, void *value,
 }
 
 
-/** @brief Configures the detector parameters based on the preamplifier type.
-*
-*/
-PSL_STATIC int pslSetDetectorTypeValue(int detChan, Detector *detector,
-                                       int detectorChannel,
-                                       XiaDefaults *defaults)
-{
-  UNUSED(detChan);
-  UNUSED(detector);
-  UNUSED(detectorChannel);
-  UNUSED(defaults);
-
-  return XIA_SUCCESS;
-}
-
-
-/** @brief Sets the preamplifier polarity.
-*
-*/
-PSL_STATIC int pslSetPolarity(int detChan, Detector *detector,
-                              int detectorChannel, XiaDefaults *defaults,
-                              Module *m)
-{
-  UNUSED(detChan);
-  UNUSED(detector);
-  UNUSED(detectorChannel);
-  UNUSED(defaults);
-  UNUSED(m);
-
-  return XIA_SUCCESS;
-}
-
-
 /** @brief Returns a list of the "default" defaults.
 *
 */
@@ -1689,25 +1643,51 @@ PSL_STATIC int pslGetParamName(int detChan, unsigned short index, char *name)
 /** @brief Perform the specified gain operation to the hardware.
 *
 */
-PSL_STATIC int pslGainOperation(int detChan, char *name, void *value,
-                                Detector *detector, int detector_chan,
-                                XiaDefaults *defaults,
-                                CurrentFirmware *currentFirmware,
-                                char *detectorType, Module *m)
+PSL_STATIC int pslGainOperation(int detChan, char *name, void *value, 
+                    Detector *det, int modChan, Module *m, XiaDefaults *defs)
 {
-  UNUSED(detChan);
-  UNUSED(name);
-  UNUSED(value);
-  UNUSED(detector);
-  UNUSED(detector_chan);
-  UNUSED(defaults);
-  UNUSED(currentFirmware);
-  UNUSED(detectorType);
-  UNUSED(m);
+  int status;
+  int i;
 
-  return XIA_SUCCESS;
+  ASSERT(name  != NULL);
+  ASSERT(value != NULL);
+  ASSERT(defs  != NULL);
+  ASSERT(det   != NULL);
+  ASSERT(m     != NULL);
+                                
+  for (i = 0; i < N_ELEMS(gainOps); i++) {
+    if (STREQ(name, gainOps[i].name)) {
+
+      status = gainOps[i].fn(detChan, det, modChan, m, defs, value);
+
+      if (status != XIA_SUCCESS) {
+        sprintf(info_string, "Error doing gain operation '%s' for detChan %d",
+                name, detChan);
+        pslLogError("pslGainOperation", info_string, status);
+        return status;
+      }
+
+      return XIA_SUCCESS;
+    }
+  }
+
+  sprintf(info_string, "Unknown gain operation '%s' for detChan %d", name,
+          detChan);
+  pslLogError("pslGainOperation", info_string, XIA_BAD_NAME);
+
+  return XIA_BAD_NAME;  
 }
 
+/** @brief Wrapper function for pslGainCalibrate
+*
+*/
+PSL_STATIC int psl__GainCalibrate(int detChan, Detector *det,
+                                int modChan, Module *m, XiaDefaults *defs,
+                                void *value)
+{
+  double *deltaGain  = (double *)value;
+  return pslGainCalibrate(detChan, det, modChan, m, defs, *deltaGain);
+}
 
 /** @brief Perform the specified board operation to the hardware.
 *

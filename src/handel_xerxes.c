@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2002-2004 X-ray Instrumentation Associates
- *               2005-2014 XIA LLC
+ *               2005-2015 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms, 
@@ -471,28 +471,6 @@ HANDEL_STATIC int xia__SetupSingleChan(Module *module, unsigned int detChan,
     break;
   }
 
-  status = localFuncs->setPolarity(detChan, detector,
-                                  detector_chan, defaults, module);
-
-  if (status != XIA_SUCCESS) {
-      sprintf(info_string, "Unable to set polarity for detChan %u.",
-              detChan);
-      xiaLogError("xia__SetupSingleChan", info_string, status);
-      return status;
-  }
-
-  status = localFuncs->setDetectorTypeValue(detChan,
-                                           detector, detector_chan,
-                                           defaults);
-
-  if (status != XIA_SUCCESS) {
-      sprintf(info_string, "Unable to set detector type value ('%s' "
-              "detector) for detChan %u.", detectorType,
-              detChan);
-      xiaLogError("xia__SetupSingleChan", info_string, status);
-      return status;
-  }
-
   status = localFuncs->userSetup(detChan, defaults,
                                 firmwareSet, currentFirmware,
                                 detectorType, detector, detector_chan,
@@ -542,26 +520,6 @@ HANDEL_STATIC int xia__CopyInterfString(Module *m, char *interf)
 	return XIA_MISSING_INTERFACE;
 	break;
 
-#ifndef EXCLUDE_CAMAC
-  case JORWAY73A:
-  case GENERIC_SCSI:
-	strcpy(interf, "camacdll.dll");
-	break;
-#endif /* EXCLUDE_CAMAC */
-
-#ifndef EXCLUDE_EPP
-  case EPP:
-  case GENERIC_EPP:
-	sprintf(interf, "%#x", m->interface_info->info.epp->epp_address);
-	break;
-#endif /* EXCLUDE_EPP */
-
-#ifndef EXCLUDE_USB
-  case USB:
-	sprintf(interf, "%u", m->interface_info->info.usb->device_number);
-	break;
-#endif /* EXCLUDE_USB */
-
 #ifndef EXCLUDE_USB2
   case USB2:
     sprintf(interf, "%u", m->interface_info->info.usb2->device_number);
@@ -606,36 +564,6 @@ HANDEL_STATIC int xia__CopyMDString(Module *m, char *md)
 	xiaLogError("xia__CopyMDString", info_string, XIA_MISSING_INTERFACE);
 	return XIA_MISSING_INTERFACE;
 	break;
-
-#ifndef EXCLUDE_CAMAC
-  case JORWAY73A:
-  case GENERIC_SCSI:
-	sprintf(md, "%u%u%02u", m->interface_info->info.jorway73a->scsi_bus, 
-			m->interface_info->info.jorway73a->crate_number,
-			m->interface_info->info.jorway73a->slot);
-	break;
-#endif /* EXCLUDE_CAMAC */
-
-#ifndef EXCLUDE_EPP
-  case EPP:
-  case GENERIC_EPP:
-	/* If default then dont change anything, else tack on a : in front 
-	 * of the string (tells XerXes to 
-	 * treat this as a multi-module EPP chain 
-	 */
-	if (m->interface_info->info.epp->daisy_chain_id == UINT_MAX) {
-	  sprintf(md, "0");
-	} else {
-	  sprintf(md, ":%u", m->interface_info->info.epp->daisy_chain_id);
-	}
-	break;
-#endif /* EXCLUDE_EPP */
-
-#ifndef EXCLUDE_USB
-  case USB:
-	sprintf(md, "%u", m->interface_info->info.usb->device_number);
-	break;
-#endif /* EXCLUDE_USB */
 
 #ifndef EXCLUDE_USB2
   case USB2:

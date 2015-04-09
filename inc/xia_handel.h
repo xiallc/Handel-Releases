@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2004 X-ray Instrumentation Associates
- *               2005-2012 XIA LLC
+ *               2005-2015 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms, 
@@ -32,8 +32,6 @@
  * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF 
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
- *
- * $Id$
  *
  */
 
@@ -76,6 +74,7 @@ HANDEL_EXPORT int HANDEL_API xiaEnableLogOutput(void);
 HANDEL_EXPORT int HANDEL_API xiaSuppressLogOutput(void);
 HANDEL_EXPORT int HANDEL_API xiaSetLogLevel(int level);
 HANDEL_EXPORT int HANDEL_API xiaSetLogOutput(char *filename);
+HANDEL_EXPORT int HANDEL_API xiaCloseLog(void);
 HANDEL_EXPORT int HANDEL_API xiaNewDetector(char *alias);
 HANDEL_EXPORT int HANDEL_API xiaAddDetectorItem(char *alias, char *name, void *value);
 HANDEL_EXPORT int HANDEL_API xiaModifyDetectorItem(char *alias, char *name, void *value);
@@ -102,7 +101,7 @@ HANDEL_EXPORT int HANDEL_API xiaGetNumModules(unsigned int *numModules);
 HANDEL_EXPORT int HANDEL_API xiaGetModules(char *modules[]);
 HANDEL_EXPORT int HANDEL_API xiaGetModules_VB(unsigned int index, char *alias);
 HANDEL_EXPORT int HANDEL_API xiaRemoveModule(char *alias);
-  HANDEL_EXPORT int HANDEL_API xiaModuleFromDetChan(int detChan, char *alias);
+HANDEL_EXPORT int HANDEL_API xiaModuleFromDetChan(int detChan, char *alias);
 HANDEL_EXPORT int HANDEL_API xiaAddChannelSetElem(unsigned int detChanSet, unsigned int newChan);
 HANDEL_EXPORT int HANDEL_API xiaRemoveChannelSetElem(unsigned int detChan, unsigned int chan);
 HANDEL_EXPORT int HANDEL_API xiaRemoveChannelSet(unsigned int detChan);
@@ -113,7 +112,6 @@ HANDEL_EXPORT int HANDEL_API xiaGetAcquisitionValues(int detChan, char *name, vo
 HANDEL_EXPORT int HANDEL_API xiaRemoveAcquisitionValues(int detChan, char *name);
 HANDEL_EXPORT int HANDEL_API xiaUpdateUserParams(int detChan);
 HANDEL_EXPORT int HANDEL_API xiaGainOperation(int detChan, char *name, void *value);
-HANDEL_EXPORT int HANDEL_API xiaGainChange(int detChan, double deltaGain);
 HANDEL_EXPORT int HANDEL_API xiaGainCalibrate(int detChan, double deltaGain);
 HANDEL_EXPORT int HANDEL_API xiaStartRun(int detChan, unsigned short resume);
 HANDEL_EXPORT int HANDEL_API xiaStopRun(int detChan);
@@ -186,6 +184,7 @@ HANDEL_EXPORT int HANDEL_API xiaEnableLogOutput();
 HANDEL_EXPORT int HANDEL_API xiaSuppressLogOutput();
 HANDEL_EXPORT int HANDEL_API xiaSetLogLevel();
 HANDEL_EXPORT int HANDEL_API xiaSetLogOutput();
+HANDEL_EXPORT int HANDEL_API xiaCloseLog();
 HANDEL_EXPORT int HANDEL_API xiaNewDetector();
 HANDEL_EXPORT int HANDEL_API xiaAddDetectorItem();
 HANDEL_EXPORT int HANDEL_API xiaModifyDetectorItem();
@@ -220,8 +219,8 @@ HANDEL_EXPORT int HANDEL_API xiaSetAcquisitionValues();
 HANDEL_EXPORT int HANDEL_API xiaGetAcquisitionValues();
 HANDEL_EXPORT int HANDEL_API xiaRemoveAcquisitionValues();
 HANDEL_EXPORT int HANDEL_API xiaUpdateUserParams();
-HANDEL_EXPORT int HANDEL_API xiaGainChange();
 HANDEL_EXPORT int HANDEL_API xiaGainCalibrate();
+HANDEL_EXPORT int HANDEL_API xiaGainOperation();
 HANDEL_EXPORT int HANDEL_API xiaStartRun();
 HANDEL_EXPORT int HANDEL_API xiaStopRun();
 HANDEL_EXPORT int HANDEL_API xiaGetRunData();
@@ -235,8 +234,8 @@ HANDEL_EXPORT int HANDEL_API xiaGetNumParams();
 HANDEL_EXPORT int HANDEL_API xiaGetParamData();
 HANDEL_EXPORT int HANDEL_API xiaGetParamName();
 HANDEL_EXPORT int HANDEL_API xiaBoardOperation();
-  HANDEL_EXPORT int HANDEL_API xiaMemoryOperation();
-  HANDEL_EXPORT int HANDEL_API xiaCommandOperation();
+HANDEL_EXPORT int HANDEL_API xiaMemoryOperation();
+HANDEL_EXPORT int HANDEL_API xiaCommandOperation();
 HANDEL_EXPORT int HANDEL_API xiaFitGauss();
 HANDEL_EXPORT int HANDEL_API xiaFindPeak();
 HANDEL_EXPORT int HANDEL_API xiaExit();
@@ -334,10 +333,6 @@ DXP_MD_FGETS         handel_md_fgets;
 DXP_MD_ENABLE_LOG    handel_md_enable_log;
 DXP_MD_SUPPRESS_LOG  handel_md_suppress_log;
 DXP_MD_SET_LOG_LEVEL handel_md_set_log_level;
-
-
-#define XIA_BEFORE		0
-#define XIA_AFTER			1
 
 
 /* Memory allocation macro wrappers */

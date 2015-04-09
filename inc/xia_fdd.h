@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2004 X-ray Instrumentation Associates
- *               2005-2012 XIA LLC
+ *               2005-2015 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms, 
@@ -33,7 +33,6 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * $Id$
  *
  */
 
@@ -54,11 +53,6 @@
 #include "xia_common.h"
 
 #include "fdddef.h"
-
-/*
- *    CAMAC status Register control codes
- */
-#define ALLCHAN              -1
 
 
 /*

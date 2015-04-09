@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2012 XIA LLC
+ * Copyright (c) 2005-2015 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms,
@@ -32,7 +32,6 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id$
  *
  */
 
@@ -42,30 +41,35 @@
 
 
 /** FUNCTION POINTERS **/
-typedef int (*SetAcqValue_FP)(int detChan, void *value, FirmwareSet *fs,
+typedef int (*Saturn_SetAcqValue_FP)(int detChan, void *value, FirmwareSet *fs,
                               char *detType, XiaDefaults *defs, double preampGain,
                               Module *m, Detector *det,
                               int detector_chan);
-typedef int (*SynchAcqValue_FP)(int detChan, int det_chan, Module *m,
-                                Detector *det, XiaDefaults *defs);
-
-
+typedef int (*Saturn_SynchAcqValue_FP)(int detChan, int det_chan, Module *m,
+								Detector *det, XiaDefaults *defs);
+typedef int (*Saturn_DoRunData_FP)(int detChan, void *value, XiaDefaults *defs);
 
 /** STRUCTURES **/
 
-/* A generic acquisition value */
-typedef struct _AcquisitionValue
-{
+/* A Saturn specific acquisition value */
+typedef struct _Saturn_AcquisitionValue {
 
-  char *           name;
-  boolean_t        isDefault;
-  boolean_t        isSynch;
-  double           def;
-  SetAcqValue_FP   setFN;
-  SynchAcqValue_FP synchFN;
+  char *           		name;
+  boolean_t        		isDefault;
+  boolean_t        		isSynch;
+  double           		def;
+  Saturn_SetAcqValue_FP setFN;
+  Saturn_SynchAcqValue_FP synchFN;
 
-}
-AcquisitionValue_t;
+} Saturn_AcquisitionValue_t;
+
+
+typedef struct _Saturn_RunData {
+
+  char         		*name;
+  Saturn_DoRunData_FP fn;
+
+} Saturn_RunData;
 
 
 /** MACROS **/

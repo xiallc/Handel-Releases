@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2002-2004 X-ray Instrumentation Associates
- *               2005-2014 XIA LLC
+ *               2005-2015 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms, 
@@ -307,7 +307,6 @@ XERXES_EXPORT int XERXES_API dxp_install_utils(const char *utilname)
   xerxes_md_tmp_path       = util_funcs.dxp_md_tmp_path;
   xerxes_md_clear_tmp      = util_funcs.dxp_md_clear_tmp;
   xerxes_md_path_separator = util_funcs.dxp_md_path_separator;
-  xerxes_md_process_msgs   = util_funcs.dxp_md_process_msgs;
   
   /* Now for the Utils structure */
   if (utils != NULL) {
@@ -341,7 +340,6 @@ XERXES_EXPORT int XERXES_API dxp_install_utils(const char *utilname)
   utils->funcs->dxp_md_tmp_path       = xerxes_md_tmp_path;
   utils->funcs->dxp_md_clear_tmp      = xerxes_md_clear_tmp;
   utils->funcs->dxp_md_path_separator = xerxes_md_path_separator;
-  utils->funcs->dxp_md_process_msgs   = xerxes_md_process_msgs;
   
   return DXP_SUCCESS;
 }
@@ -732,7 +730,6 @@ int XERXES_API dxp_add_system_item(char *ltoken, char **values)
   if ((strncmp(strTmp, "dxp",3)==0) || 
 			(STREQ(strTmp, "xmap"))     	 ||
 			(STREQ(strTmp, "stj"))     	 ||			
-      (STREQ(strTmp, "vega"))       ||
       (STREQ(strTmp, "mercury"))    ||
 	  (strncmp(strTmp, "udxp", 4) == 0)) {
 	/* Load function pointers for local use */
@@ -3009,11 +3006,6 @@ static int XERXES_API dxp_add_btype_library(Board_Info* current)
   /* Allocate the memory for the function pointer structure */
   current->funcs = (Functions *) xerxes_md_alloc(sizeof(Functions));
 
-#ifndef EXCLUDE_DXP4C2X
-	if ((STREQ(current->name,"dxp4c2x")) || (STREQ(current->name,"dxp2x"))) {
-	  dxp_init_dxp4c2x(current->funcs);
-	} else 
-#endif
 #ifndef EXCLUDE_SATURN
 	  if (STREQ(current->name,"dxpx10p")) {
 		dxp_init_saturn(current->funcs);
@@ -3044,11 +3036,6 @@ static int XERXES_API dxp_add_btype_library(Board_Info* current)
             dxp_init_mercury(current->funcs);
           } else
 #endif /* EXCLUDE_MERCURY */
-#ifndef EXCLUDE_VEGA
-          if (STREQ(current->name, "vega")) {
-            dxp_init_vega(current->funcs);
-          } else
-#endif /* EXCLUDE_VEGA */
 				{
 				  status = DXP_UNKNOWN_BTYPE;
 				  sprintf(info_string, "Unknown board type %s: unable to "
@@ -4408,47 +4395,6 @@ int XERXES_API dxp_upload_dspparams(int* detChan)
   return DXP_SUCCESS;
 }
 
-/******************************************************************************
- *
- * Routine to echo the global static arrays.  Returns the number of DXP modules
- * in the system, the array of CAMAC modules, and the array designating which 
- * channels are in use.
- *
- ******************************************************************************/
-int XERXES_API dxp_get_electronics(int* totMod, int ioChan[], int used[])
-	 /* int *totMod;					*/
-	 /* int ioChan[];				*/
-	 /* int used[];					*/
-{
-
-  int mod,status;
-  /* Pointer to the current Board */
-  Board *current = system_head;
-
-  /* If no channels, then nothing to report. */
-	
-  if (numDxpMod==0){
-	status = DXP_NOCHANNELS;
-	dxp_log_error("dxp_get_electronics",
-				  "No DXP modules defined: call dxp_assign_channel, define DXP_MODULE",
-				  status);
-	return status;
-  }
-
-  /* Copy all the data for the user */
-
-  *totMod = numDxpMod;
-  mod = 0;
-  while (current != NULL) {
-	ioChan[mod] = current->ioChan;
-	used[mod] = current->used;
-	/* Bump the pointers */
-	mod++;
-	current = current->next;
-  }
-
-  return DXP_SUCCESS;
-}
 
 /******************************************************************************
  * 
@@ -7227,7 +7173,7 @@ int XERXES_API dxp_det_to_elec(int* detChan, Board** passed, int* dxpChan)
  *
  ******************************************************************************/
 int XERXES_API dxp_elec_to_det(int* ioChan, int* dxpChan, int* detChan)
-	 /* int *ioChan;						Input: CAMAC I/O number				*/
+	 /* int *ioChan;						Input: I/O channel number				*/
 	 /* int *dxpChan;					Input: DXP channel number			*/
 	 /* int *detChan;					Output: detector channel			*/
 {

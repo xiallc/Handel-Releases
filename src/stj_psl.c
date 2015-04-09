@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2004 X-ray Instrumentation Associates
- *               2005-2014 XIA LLC
+ *               2005-2015 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms,
@@ -146,7 +146,15 @@ PSL_STATIC int psl__GetCVR(int detChan, char *name, XiaDefaults *defs,
                            void *value);
 PSL_STATIC int psl__GetSVR(int detChan, char *name, XiaDefaults *defs,
                            void *value);
-                           
+
+/* Gain Operations */
+PSL_STATIC int psl__GainCalibrate(int detChan, Detector *det,
+                                int modChan, Module *m, XiaDefaults *defs,
+                                void *value);
+PSL_STATIC int psl__DigitalGainCalibrate(int detChan,  Detector *det,
+                                int modChan, Module *m, XiaDefaults *defs,
+                                void *value);
+                                
 /* Special Run data */
 PSL_STATIC int pslGetADCTraceLen(int detChan, void *value, XiaDefaults *defs);
 PSL_STATIC int pslGetADCTrace(int detChan, void *value, XiaDefaults *defs);
@@ -411,7 +419,7 @@ static SpecialRun traceTypes[] =
   };
 
 /* These are the allowed special runs */
-static SpecialRun specialRun[] =
+static Stj_SpecialRun specialRun[] =
   {
     {"adjust_offsets",        psl__AdjustOffsets},
     {"begin_bias_scan",       psl__BeginBiasScan},
@@ -433,7 +441,7 @@ static SpecialRunData specialRunData[] =
   };
 
 /* These are the allowed bord operations for this hardware */
-static  BoardOperation boardOps[] =
+static BoardOperation boardOps[] =
   {
     {"apply",              pslApply},
     {"mapping_pixel_next", psl__MapPixelNext},    
@@ -445,6 +453,13 @@ static  BoardOperation boardOps[] =
     {"get_svr",            psl__GetSVR}
   };
 
+/* These are the allowed gain operations for this hardware */
+static GainOperation gainOps[] =
+  {
+    {"calibrate",          psl__GainCalibrate},
+    {"scale_digital_gain", psl__DigitalGainCalibrate},
+  }; 
+  
 /* These are the allowed run data types */
 static RunData runData[] =
   {
@@ -624,15 +639,12 @@ PSL_EXPORT int PSL_API stj_PSLInit(PSLFuncs *funcs)
   funcs->setAcquisitionValues 	= pslSetAcquisitionValues;
   funcs->getAcquisitionValues 	= pslGetAcquisitionValues;
   funcs->gainOperation        	= pslGainOperation;
-  funcs->gainChange           	= pslGainChange;
   funcs->gainCalibrate        	= pslGainCalibrate;
   funcs->startRun             	= pslStartRun;
   funcs->stopRun          			= pslStopRun;
   funcs->getRunData      				= pslGetRunData;
-  funcs->setPolarity      			= pslSetPolarity;
   funcs->doSpecialRun      			= pslDoSpecialRun;
   funcs->getSpecialRunData 			= pslGetSpecialRunData;
-  funcs->setDetectorTypeValue 	= pslSetDetectorTypeValue;
   funcs->getDefaultAlias     		= pslGetDefaultAlias;
   funcs->getParameter        		= pslGetParameter;
   funcs->setParameter      			= pslSetParameter;
@@ -880,27 +892,15 @@ PSL_STATIC int pslGetAcquisitionValues(int detChan, char *name, void *value,
 }
 
 
-/** @brief Adjust the gain by the specified amount.
+/** @brief Wrapper function for pslGainCalibrate
 *
 */
-PSL_STATIC int pslGainChange(int detChan, double deltaGain,
-                             XiaDefaults *defaults,
-                             CurrentFirmware *currentFirmware,
-                             char *detectorType, Detector *detector,
-                             int detector_chan, Module *m, int modChan)
+PSL_STATIC int psl__GainCalibrate(int detChan, Detector *det,
+                                int modChan, Module *m, XiaDefaults *defs,
+                                void *value)
 {
-  UNUSED(detChan);
-  UNUSED(deltaGain);
-  UNUSED(defaults);
-  UNUSED(currentFirmware);
-  UNUSED(detectorType);
-  UNUSED(detector);
-  UNUSED(detector_chan);
-  UNUSED(m);
-  UNUSED(modChan);
-
-
-  return XIA_SUCCESS;
+  double *deltaGain  = (double *)value;
+  return pslGainCalibrate(detChan, det, modChan, m, defs, *deltaGain);
 }
 
 
@@ -952,6 +952,19 @@ PSL_STATIC int pslGainCalibrate(int detChan, Detector *det,
 }
 
 
+/** @brief Wrapper function for digital gain calbiration psl__ScaleDigitalGain.
+*/
+PSL_STATIC int psl__DigitalGainCalibrate(int detChan,  Detector *det,
+                                int modChan, Module *m, XiaDefaults *defs,
+                                void *value)
+{
+  UNUSED(m);
+  UNUSED(modChan);
+  
+  return psl__ScaleDigitalGain(detChan, value,  defs, det);
+}
+
+                                
 /** @brief Calibrates the digital gain using the specified delta.
 *
 * Adjusts the digital gain by the inverse of the specified delta but
@@ -1226,39 +1239,6 @@ PSL_STATIC int pslGetSpecialRunData(int detChan, char *name, void *value,
   pslLogError("pslGetSpecialRunData", info_string, XIA_BAD_NAME);
 
   return XIA_BAD_NAME;
-}
-
-
-/** @brief Configures the detector parameters based on the preamplifier type.
-*
-*/
-PSL_STATIC int pslSetDetectorTypeValue(int detChan, Detector *detector,
-                                       int detectorChannel,
-                                       XiaDefaults *defaults)
-{
-  UNUSED(detChan);
-  UNUSED(detector);
-  UNUSED(detectorChannel);
-  UNUSED(defaults);
-
-  return XIA_SUCCESS;
-}
-
-
-/** @brief Sets the preamplifier polarity.
-*
-*/
-PSL_STATIC int pslSetPolarity(int detChan, Detector *detector,
-                              int detectorChannel, XiaDefaults *defaults,
-                              Module *m)
-{
-  UNUSED(detChan);
-  UNUSED(detector);
-  UNUSED(detectorChannel);
-  UNUSED(defaults);
-  UNUSED(m);
-
-  return XIA_SUCCESS;
 }
 
 
@@ -1696,23 +1676,39 @@ PSL_STATIC int pslGetParamName(int detChan, unsigned short index, char *name)
 /** @brief Perform the specified gain operation to the hardware.
 *
 */
-PSL_STATIC int pslGainOperation(int detChan, char *name, void *value,
-                                Detector *detector, int detector_chan,
-                                XiaDefaults *defaults,
-                                CurrentFirmware *currentFirmware,
-                                char *detectorType, Module *m)
+PSL_STATIC int pslGainOperation(int detChan, char *name, void *value, 
+                    Detector *det, int modChan, Module *m, XiaDefaults *defs)
 {
-  UNUSED(detChan);
-  UNUSED(name);
-  UNUSED(value);
-  UNUSED(detector);
-  UNUSED(detector_chan);
-  UNUSED(defaults);
-  UNUSED(currentFirmware);
-  UNUSED(detectorType);
-  UNUSED(m);
+  int status;
+  int i;
 
-  return XIA_SUCCESS;
+  ASSERT(name  != NULL);
+  ASSERT(value != NULL);
+  ASSERT(defs  != NULL);
+  ASSERT(det   != NULL);
+  ASSERT(m     != NULL);
+                                
+  for (i = 0; i < N_ELEMS(gainOps); i++) {
+    if (STREQ(name, gainOps[i].name)) {
+
+      status = gainOps[i].fn(detChan, det, modChan, m, defs, value);
+
+      if (status != XIA_SUCCESS) {
+        sprintf(info_string, "Error doing gain operation '%s' for detChan %d",
+                name, detChan);
+        pslLogError("pslGainOperation", info_string, status);
+        return status;
+      }
+
+      return XIA_SUCCESS;
+    }
+  }
+
+  sprintf(info_string, "Unknown gain operation '%s' for detChan %d", name,
+          detChan);
+  pslLogError("pslGainOperation", info_string, XIA_BAD_NAME);
+
+  return XIA_BAD_NAME;  
 }
 
 

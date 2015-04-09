@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2004 X-ray Instrumentation Associates
- *               2005-2012 XIA LLC
+ *               2005-2015 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms, 
@@ -32,8 +32,6 @@
  * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF 
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
- *
- * $Id$
  *
  */
 
@@ -74,8 +72,6 @@ typedef struct Xia_Io_Functions Xia_Io_Functions;
  */
 typedef void (*DXP_MD_ERROR_CONTROL)(char *, int *);
 typedef void (*DXP_MD_ERROR)(char *, char *, int *, char *, int);
-
-/* Added new logging func pointers 8/22/01 -- PJF */
 typedef void (*DXP_MD_WARNING)(char *, char *, char *, int);
 typedef void (*DXP_MD_INFO)(char *, char *, char *, int);
 typedef void (*DXP_MD_DEBUG)(char *, char *, char *, int);
@@ -94,7 +90,6 @@ typedef char * (*DXP_MD_FGETS)(char *s, int size, FILE *stream);
 typedef char * (*DXP_MD_TMP_PATH)(void);
 typedef void (*DXP_MD_CLEAR_TMP)(void);
 typedef char * (*DXP_MD_PATH_SEP)(void);
-typedef int (*DXP_MD_PROCESS_MSGS)(void);
 
 struct Xia_Util_Functions {
   DXP_MD_ERROR dxp_md_error;
@@ -115,7 +110,6 @@ struct Xia_Util_Functions {
   DXP_MD_TMP_PATH dxp_md_tmp_path;
   DXP_MD_CLEAR_TMP dxp_md_clear_tmp;
   DXP_MD_PATH_SEP dxp_md_path_separator;
-  DXP_MD_PROCESS_MSGS dxp_md_process_msgs;
 };
 typedef struct Xia_Util_Functions Xia_Util_Functions;
 

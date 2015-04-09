@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2002-2004 X-ray Instrumentation Associates
- *               2005-2012 XIA LLC
+ *               2005-2015 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms, 
@@ -33,7 +33,6 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * $Id$
  *
  */
 
@@ -139,3 +138,21 @@ HANDEL_EXPORT int HANDEL_API xiaSetLogOutput(char *filename)
   
   return XIA_SUCCESS;
 }	
+
+
+/*****************************************************************************
+ *
+ * This routine closes the logging stream
+ *
+ *****************************************************************************/
+HANDEL_EXPORT int HANDEL_API xiaCloseLog(void)
+{
+	if (handel_md_output == NULL) 
+	{ 
+		xiaInitHandel();
+	}
+
+	handel_md_output(NULL);
+
+	return XIA_SUCCESS;
+}

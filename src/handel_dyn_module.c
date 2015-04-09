@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2002-2004 X-ray Instrumentation Associates
- *               2005-2012 XIA LLC
+ *               2005-2015 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms, 
@@ -83,12 +83,6 @@ static ModName_t KNOWN_MODS[] = {
   {"x10p",    "dxpx10p"},
 #endif /* EXCLUDE_SATURN */
 
-#ifndef EXCLUDE_DXP4C2X
-  {"dxp4c2x", "dxp4c2x"},
-  {"dxp2x4x", "dxp4c2x"},
-  {"dxp2x",   "dxp4c2x"},
-#endif /* EXCLUDE_DXP4C2X */
-
 #ifndef EXCLUDE_UDXP
   {"udxps",   "udxps"},
 #endif /* EXCLUDE_UDXP */
@@ -104,10 +98,6 @@ static ModName_t KNOWN_MODS[] = {
 #ifndef EXCLUDE_STJ
   {"stj",    "stj"},
 #endif /* EXCLUDE_STJ */
-
-#ifndef EXCLUDE_VEGA
-  {"vega",   "vega"},
-#endif /* EXCLUDE_VEGA */
 
 #ifndef EXCLUDE_MERCURY
   {"mercury", "mercury"},
@@ -164,20 +154,9 @@ HANDEL_STATIC int  _parseDetectorIdx(char *str, int *idx, char *alias);
  */
 static char *interfaceStr[] = { 
   "none",
-#ifndef EXCLUDE_CAMAC
-  "j73a",
-  "genericSCSI",
-#endif /* EXCLUDE_CAMAC */
-#ifndef EXCLUDE_EPP
-  "epp",
-  "genericEPP",
-#endif /* EXCLUDE_EPP */
 #ifndef EXCLUDE_SERIAL
   "serial",
 #endif /* EXCLUDE_SERIAL */
-#ifndef EXCLUDE_USB
-  "usb",
-#endif /* EXCLUDE_USB */
 #ifndef EXCLUDE_USB2
   "usb2",
 #endif /* EXCLUDE_USB2 */
@@ -189,12 +168,7 @@ static char *interfaceStr[] = {
 /* This array is mainly used to compare names with the possible sub-interface
  * values. This should be update every time a new interface is added.
  */
-static char *subInterfaceStr[10] = {
-  "scsibus_number",
-  "crate_number",
-  "slot",
-  "epp_address",
-  "daisy_chain_id",
+static char *subInterfaceStr[5] = {
   "com_port",
   "baud_rate",
   "device_number",
@@ -210,11 +184,6 @@ static ModItem_t items[] = {
   {"firmware",           _addFirmware,   TRUE_},
   {"default",            _addDefault,    TRUE_},
   {"interface",          _addInterface,  TRUE_},
-  {"scsibus_number",     _addInterface,  TRUE_},
-  {"crate_number",       _addInterface,  TRUE_},
-  {"slot",               _addInterface,  TRUE_},
-  {"epp_address",        _addInterface,  TRUE_},
-  {"daisy_chain_id",     _addInterface,  TRUE_},
   {"device_number",      _addInterface,  TRUE_},
   {"com_port",           _addInterface,  TRUE_},
   {"baud_rate",          _addInterface,  TRUE_},
@@ -470,146 +439,6 @@ HANDEL_STATIC int HANDEL_API xiaProcessInterface(Module *chosen, char *name, voi
 
 
   /* Decide which interface we are going to be working with */
-
-#ifndef EXCLUDE_CAMAC
-  if (STREQ(name, "scsibus_number") ||
-      STREQ(name, "crate_number")   ||
-      STREQ(name, "slot")           ||
-      STREQ(interface, "genericSCSI")    ||
-      STREQ(interface, "j73a"))
-	  {
-      /* Check that this module is really a genericSCSI or j73a */
-      if ((chosen->interface_info->type != GENERIC_SCSI)  &&
-          (chosen->interface_info->type != JORWAY73A)     &&
-          (chosen->interface_info->type != NO_INTERFACE))
-        {
-          status = XIA_WRONG_INTERFACE;
-          sprintf(info_string, "Item %s is not a valid element of the current interface", name);
-          xiaLogError("xiaProcessInterface", info_string, status);
-          return status;
-        }
-
-      /* See if we need to create a new interface */
-      if (chosen->interface_info->type == NO_INTERFACE) 
-        {
-          chosen->interface_info->type = GENERIC_SCSI;
-          chosen->interface_info->info.jorway73a = (Interface_Jy73a *)handel_md_alloc(sizeof(Interface_Jy73a));
-          if (chosen->interface_info->info.jorway73a == NULL)
-            {
-              status = XIA_NOMEM;
-              xiaLogError("xiaProcessInterface", "Unable to allocate memory for chosen->interface_info->info.jorway73a", status);
-              return status;
-            }
-
-          chosen->interface_info->info.jorway73a->scsi_bus     = 0;
-          chosen->interface_info->info.jorway73a->crate_number = 0;
-          chosen->interface_info->info.jorway73a->slot         = 0;
-
-        }
-
-      /* Now go ahead and fill the right field with the right information */
-      if (STREQ(name, "scsibus_number")) {
-	  
-        chosen->interface_info->info.jorway73a->scsi_bus = *((unsigned int *)value);
-	  
-      } else if (STREQ(name, "crate_number")) {
-	  
-        chosen->interface_info->info.jorway73a->crate_number = *((unsigned int *)value);
-	  
-      } else if (STREQ(name, "slot")) {
-	  
-        chosen->interface_info->info.jorway73a->slot = *((unsigned int *)value);
-      }
-	
-	  } else 
-#endif /* EXCLUDE_CAMAC */
-
-#ifndef EXCLUDE_EPP
-		if (STREQ(name, "epp_address")    ||
-		    STREQ(name, "daisy_chain_id") ||
-        STREQ(interface, "genericEPP")     ||
-        STREQ(interface, "epp"))
-		  {
-        /* Check that the module type is correct */
-        if ((chosen->interface_info->type != EPP)           &&
-            (chosen->interface_info->type != GENERIC_EPP)   &&
-            (chosen->interface_info->type != NO_INTERFACE))
-          {
-            status = XIA_WRONG_INTERFACE;
-            sprintf(info_string, "Item %s is not a valid element of the current interface", name);
-            xiaLogError("xiaProcessInterface", info_string, status);
-            return status;
-          }
-	  
-        /* See if we need to create a new interface */
-        if (chosen->interface_info->type == NO_INTERFACE) 
-          {
-            chosen->interface_info->type = GENERIC_EPP;
-            chosen->interface_info->info.epp = (Interface_Epp *)handel_md_alloc(sizeof(Interface_Epp));
-            if (chosen->interface_info->info.epp == NULL)
-              {
-                status = XIA_NOMEM;
-                xiaLogError("xiaProcessInterface", "Unable to allocate memory for chosen->interface_info->info.epp", status);
-                return status;
-              }
-		  
-            chosen->interface_info->info.epp->daisy_chain_id = UINT_MAX;
-            chosen->interface_info->info.epp->epp_address    = 0x0000;
-		  
-          }
-	  
-        if (STREQ(name, "epp_address")) 
-          {
-            chosen->interface_info->info.epp->epp_address = *((unsigned int *)value);
-		  
-          } else if (STREQ(name, "daisy_chain_id")) {
-		  
-          chosen->interface_info->info.epp->daisy_chain_id = *((unsigned int *)value);
-        }
-	  
-      } else 
-#endif /* EXCLUDE_EPP */
-
-#ifndef EXCLUDE_USB
-      if ((STREQ(name, "device_number") && chosen->interface_info->type == USB)
-          || STREQ(interface, "usb"))
-        {
-          /* A bit of hack to deal with USB and USB2 both using the
-           * "device_number" module item.
-           */
-          /* Check that the module type is correct */
-          if ((chosen->interface_info->type != USB)           &&
-              (chosen->interface_info->type != NO_INTERFACE))
-            {
-              status = XIA_WRONG_INTERFACE;
-              sprintf(info_string, "Item %s is not a valid element of the current interface", name);
-              xiaLogError("xiaProcessInterface", info_string, status);
-              return status;
-            }
-	  
-          /* See if we need to create a new interface */
-          if (chosen->interface_info->type == NO_INTERFACE) 
-            {
-              chosen->interface_info->type = USB;
-              chosen->interface_info->info.usb = (Interface_Usb *)handel_md_alloc(sizeof(Interface_Usb));
-              if (chosen->interface_info->info.usb == NULL)
-                {
-                  status = XIA_NOMEM;
-                  xiaLogError("xiaProcessInterface", "Unable to allocate memory for chosen->interface_info->info.usb", status);
-                  return status;
-                }
-		  
-              chosen->interface_info->info.usb->device_number = 0;
-		  
-            }
-	  
-          if (STRNEQ(name, "device_number")) {
-            chosen->interface_info->info.usb->device_number = *((unsigned int *)value);
-          }
-
-	  
-        } else 
-#endif /* EXCLUDE_USB */
 
 #ifndef EXCLUDE_USB2
         if (STREQ(name, "device_number") || STREQ(interface, "usb2")) {
@@ -1462,55 +1291,11 @@ HANDEL_STATIC int HANDEL_API xiaGetIFaceInfo(Module *chosen, char *name, void *v
 
   } else 
 
-#ifndef EXCLUDE_CAMAC
-	  if (chosen->interface_info->type == GENERIC_SCSI ||
-        chosen->interface_info->type == JORWAY73A) {
-		
-      if (STREQ(name, "scsibus_number")) {
-        *((unsigned int *)value) = chosen->interface_info->info.jorway73a->scsi_bus;
-
-      } else if (STREQ(name, "crate_number")) {
-
-        *((unsigned int *)value) = chosen->interface_info->info.jorway73a->crate_number;
-
-      } else if (STREQ(name, "slot")) {
-
-        *((unsigned int *)value) = chosen->interface_info->info.jorway73a->slot;
-      }
-
-    } else 
-#endif /* EXCLUDE_CAMAC */
-
-#ifndef EXCLUDE_EPP
-      if (chosen->interface_info->type == GENERIC_EPP ||
-          chosen->interface_info->type == EPP) {
-	  
-        if (STREQ(name, "epp_address")) {
-          *((unsigned int *)value) = chosen->interface_info->info.epp->epp_address;
-		  
-        } else if (STREQ(name, "daisy_chain_id")) {
-		  
-          *((unsigned int *)value) = chosen->interface_info->info.epp->daisy_chain_id;
-        }
-	  
-      } else 
-#endif /* EXCLUDE_EPP */
-
-#ifndef EXCLUDE_USB
-        if (chosen->interface_info->type == USB) {
-	  
-          if (STREQ(name, "device_number")) {
-            *((unsigned int *)value) = chosen->interface_info->info.usb->device_number;
-          }
-	  
-        } else 
-#endif /* EXCLUDE_USB */
-
 #ifndef EXCLUDE_USB2
         if (chosen->interface_info->type == USB2) {
 	  
           if (STREQ(name, "device_number")) {
-            *((unsigned int *)value) = chosen->interface_info->info.usb->device_number;
+            *((unsigned int *)value) = chosen->interface_info->info.usb2->device_number;
           }
 	  
         } else 

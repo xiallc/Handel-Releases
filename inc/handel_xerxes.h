@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2004 X-ray Instrumentation Associates
- *               2005-2012 XIA LLC
+ *               2005-2015 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms, 
@@ -44,26 +44,9 @@
 
 /** Constants **/
 
-/* This is very, very hacky and will be made
- * more robust soon.
- */
-/*
-#ifdef EXCLUDE_UDXP
-#define KNOWN_BOARDS  6
-#else
-#define KNOWN_BOARDS  8
-#endif
-*/
-
-
-
 static char *SYS_NULL[1]  = { "NULL" };
 
 static char *BOARD_LIST[] = {
-#ifndef EXCLUDE_DXP4C2X
-  "dxp2x",
-  "dxp4c2x",
-#endif /* EXCLUDE_DXP4C2X */
 #ifndef EXCLUDE_SATURN
   "dxpx10p",
 #endif /* EXCLUDE_SATURN */
@@ -79,9 +62,6 @@ static char *BOARD_LIST[] = {
 #ifndef EXCLUDE_STJ
   "stj",
 #endif /* EXCLUDE_STJ */
-#ifndef EXCLUDE_VEGA
-  "vega",
-#endif /* EXCLUDE_VEGA */
 #ifndef EXCLUDE_MERCURY
   "mercury",
 #endif /* EXCLUDE_MERCURY */
@@ -94,20 +74,9 @@ static char *BOARD_LIST[] = {
  */
 static char *INTERF_LIST[] = {
   "bad",
-#ifndef EXCLUDE_CAMAC
-  "CAMAC",
-  "CAMAC",
-#endif /* EXCLUDE_CAMAC */
-#ifndef EXCLUDE_EPP
-  "EPP",
-  "EPP",
-#endif /* EXCLUDE_EPP */
 #ifndef EXCLUDE_SERIAL
   "SERIAL",
 #endif /* EXCLUDE_SERIAL */
-#ifndef EXCLUDE_USB
-  "USB",
-#endif /* EXCLUDE_USB */
 #ifndef EXCLUDE_USB2
   "USB2",
 #endif /* EXCLUDE_USB2 */

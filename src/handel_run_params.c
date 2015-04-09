@@ -630,13 +630,10 @@ HANDEL_EXPORT int HANDEL_API xiaGainOperation(int detChan, char *name, void *val
 {
   int status;
   int elemType;
-  int detector_chan;
 
   unsigned int modChan;
 
-
   char boardType[MAXITEM_LEN];
-  char detectorType[MAXITEM_LEN];
 
   char *boardAlias;
   char *detectorAlias;
@@ -650,8 +647,6 @@ HANDEL_EXPORT int HANDEL_API xiaGainOperation(int detChan, char *name, void *val
   Module *module = NULL;
 
   XiaDefaults *defaults = NULL;
-
-  CurrentFirmware *currentFirmware = NULL;
 
   PSLFuncs localFuncs;
 
@@ -683,32 +678,10 @@ HANDEL_EXPORT int HANDEL_API xiaGainOperation(int detChan, char *name, void *val
 	  module        		= xiaFindModule(boardAlias);
 	  modChan       		= xiaGetModChan((unsigned int)detChan);
 	  detectorAlias 		= module->detector[modChan];
-	  detector_chan 		= module->detector_chan[modChan];
 	  detector      		= xiaFindDetector(detectorAlias);
-	  currentFirmware 	    = &module->currentFirmware[modChan]; 
-
-	  switch (detector->type)
-		{
-		case XIA_DET_RESET:
-		  strcpy(detectorType, "RESET");
-		  break;
-
-		case XIA_DET_RCFEED:
-		  strcpy(detectorType, "RC");
-		  break;
-
-		default:
-		case XIA_DET_UNKNOWN:
-		  status = XIA_MISSING_TYPE;
-		  sprintf(info_string, "No detector type specified for detChan %d", detChan);
-		  xiaLogError("xiaGainOperation", info_string, status);
-		  return status;
-		  break;
-		}
-
+          
 	  status = localFuncs.gainOperation(detChan, name, value, detector,
-                                        detector_chan, defaults,
-                                        currentFirmware, detectorType, module);
+                                        modChan, module, defaults);
 
 	  if (status != XIA_SUCCESS)
 		{
@@ -755,141 +728,6 @@ HANDEL_EXPORT int HANDEL_API xiaGainOperation(int detChan, char *name, void *val
   return XIA_SUCCESS;
 }
   
-
-/*****************************************************************************
- *
- * This routine adjusts the gain by some delta value. The implementation of
- * this is based in XerXes and HanDeL doesn't do too much with it.
- *
- *****************************************************************************/
-HANDEL_EXPORT int HANDEL_API xiaGainChange(int detChan, double deltaGain)
-{
-  int status;
-  int elemType;
-  int detector_chan;
-
-  unsigned int modChan;
-
-  char boardType[MAXITEM_LEN];
-  char detectorType[MAXITEM_LEN];
-
-  char *boardAlias;
-  char *detectorAlias;
-
-  DetChanElement *detChanElem = NULL;
-
-  DetChanSetElem *detChanSetElem = NULL;
-
-  Detector *detector = NULL;
-
-  Module *module = NULL;
-
-  XiaDefaults *defaults = NULL;
-
-  CurrentFirmware *currentFirmware = NULL;
-
-  PSLFuncs localFuncs;
-
-  elemType = xiaGetElemType(detChan);
-
-  switch(elemType)
-	{
-	case SINGLE:
-	  status = xiaGetBoardType(detChan, boardType);
-
-	  if (status != XIA_SUCCESS)
-		{
-		  sprintf(info_string, "Unable to get boardType for detChan %d", detChan);
-		  xiaLogError("xiaGainChange", info_string, status);
-		  return status;
-		}
-
-	  status = xiaLoadPSL(boardType, &localFuncs);
-
-	  if (status != XIA_SUCCESS)
-		{
-		  sprintf(info_string, "Unable to load PSL funcs for detChan %d", detChan);
-		  xiaLogError("xiaGainChange", info_string, status);
-		  return status;
-		}
-
-	  defaults      		= xiaGetDefaultFromDetChan((unsigned int)detChan);
-	  boardAlias    		= xiaGetAliasFromDetChan(detChan);
-	  module        		= xiaFindModule(boardAlias);
-	  modChan       		= xiaGetModChan((unsigned int)detChan);
-	  detectorAlias 		= module->detector[modChan];
-	  detector_chan 		= module->detector_chan[modChan];
-	  detector      		= xiaFindDetector(detectorAlias);
-	  currentFirmware 	    = &module->currentFirmware[modChan]; 
-
-	  switch (detector->type)
-		{
-		case XIA_DET_RESET:
-		  strcpy(detectorType, "RESET");
-		  break;
-
-		case XIA_DET_RCFEED:
-		  strcpy(detectorType, "RC");
-		  break;
-
-		default:
-		case XIA_DET_UNKNOWN:
-		  status = XIA_MISSING_TYPE;
-		  sprintf(info_string, "No detector type specified for detChan %d", detChan);
-		  xiaLogError("xiaGainChange", info_string, status);
-		  return status;
-		  break;
-		}
-
-	  status = localFuncs.gainChange(detChan, deltaGain, defaults,
-                                     currentFirmware, detectorType, detector,
-									 detector_chan, module, modChan);
-
-	  if (status != XIA_SUCCESS)
-		{
-		  sprintf(info_string, "Error changing the gain for detChan %d", detChan);
-		  xiaLogError("xiaGainChange", info_string, status);
-		  return status;
-		}
-
-	  break;
-
-	case SET:
-	  detChanElem = xiaGetDetChanPtr(detChan);
-
-	  detChanSetElem = detChanElem->data.detChanSet;
-
-	  while (detChanSetElem != NULL)
-		{
-		  status = xiaGainChange(detChanSetElem->channel, deltaGain);
-
-		  if (status != XIA_SUCCESS)
-			{
-			  sprintf(info_string, "Error changing the gain for detChan %d", detChan);
-			  xiaLogError("xiaGainChange", info_string, status);
-			  return status;
-			}
-
-		  detChanSetElem = getListNext(detChanSetElem);
-		}
-
-	  break;
-
-	case 999:
-	  status = XIA_INVALID_DETCHAN;
-	  xiaLogError("xiaGainChange", "detChan number is not in the list of valid values ", status);
-	  return status;
-	  break;
-	default:
-	  status = XIA_UNKNOWN;
-	  xiaLogError("xiaGainChange", "Should not be seeing this message", status);
-	  return status;
-	  break;
-	}
-
-  return XIA_SUCCESS;
-}
-
 
 /*****************************************************************************
  *

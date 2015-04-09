@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2004 X-ray Instrumentation Associates
- *               2005-2012 XIA LLC
+ *               2005-2015 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms, 
@@ -33,7 +33,6 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * $Id$
  *
  */
 
@@ -112,7 +111,6 @@
 #define XIA_MISSING_POL			353 /** A polarity value is missing from a Detector element */
 #define XIA_MISSING_GAIN		354 /** A gain value is missing from a Detector element */
 #define XIA_MISSING_INTERFACE		355 /** The interface this channel requires is missing */
-#define XIA_MISSING_ADDRESS		356 /** The epp_address information is missing for this channel */
 #define XIA_INVALID_NUMCHANS		357 /** The wrong number of channels are assigned to this module */
 #define XIA_INCOMPLETE_DEFAULTS 	358 /** Some of the required defaults are missing */
 #define XIA_BINS_OOR			359 /** There are too many or too few bins for this module type */
@@ -133,11 +131,6 @@
 
 /* miscellaneous errors 501-600 */
 #define XIA_UNKNOWN			501
-#define XIA_LOG_LEVEL		502 /** Log level invalid */
-#define XIA_NO_LIST			503 /** List size is zero */
-#define XIA_NO_ELEM			504 /** No data to remove */
-#define XIA_DATA_DUP		505 /** Data already in table */
-#define XIA_REM_ERR			506 /** Unable to remove entry from hash table */
 #define XIA_FILE_TYPE		507 /** Improper file type specified */
 #define XIA_END				508 /** There are no more instances of the name specified. Pos set to end */
 #define XIA_INVALID_STR     509 /** Invalid string format */

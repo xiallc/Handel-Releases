@@ -67,16 +67,9 @@ PSL_STATIC int PSL_API pslSetAcquisitionValues(int detChan, char *name,
 PSL_STATIC int PSL_API pslGetAcquisitionValues(int detChan, char *name,
 											   void *value, 
 											   XiaDefaults *defaults);
-PSL_STATIC int PSL_API pslGainOperation(int detChan, char *name, void *value,
-                                        Detector *detector, int detector_chan,
-                                        XiaDefaults *defaults,
-                                        CurrentFirmware *currentFirmware,
-                                        char *detectorType, Module *m);
-PSL_STATIC int PSL_API pslGainChange(int detChan, double deltaGain, 
-									 XiaDefaults *defaults, 
-									 CurrentFirmware *currentFirmware, 
-									 char *detectorType, Detector *detector,
-                                     int detector_chan, Module *m, int modChan);
+PSL_STATIC int PSL_API pslGainOperation(int detChan, char *name, void *value, 
+										Detector *det, int modChan, Module *m, 
+										XiaDefaults *defs);
 PSL_STATIC int PSL_API pslGainCalibrate(int detChan, Detector *det, int modChan,
 										Module *m, XiaDefaults *defs,
 										double deltaGain);

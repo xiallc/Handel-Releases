@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2004 X-ray Instrumentation Associates
- *               2005-2012 XIA LLC
+ *               2005-2015 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms, 
@@ -33,7 +33,6 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * $Id$
  *
  */
 
@@ -63,7 +62,6 @@ XERXES_IMPORT int XERXES_API dxp_md_init_io(Xia_Io_Functions *funcs, char *type)
  */
 XERXES_IMPORT int XERXES_API dxp_initialize(void);
 XERXES_IMPORT int XERXES_API dxp_init_ds(void);
-XERXES_IMPORT int XERXES_API dxp_set_log_output(char *filename);
 XERXES_IMPORT int XERXES_API dxp_init_boards_ds(void);
 XERXES_IMPORT int XERXES_API dxp_init_library(void);
 XERXES_IMPORT int XERXES_API dxp_install_utils(const char *utilname);
@@ -156,10 +154,6 @@ XERXES_IMPORT int XERXES_API dxp_read_filesymbol(char *, char *);
 XERXES_IMPORT int XERXES_API dxp_locate_system_files(unsigned int *, char **);
 XERXES_IMPORT int XERXES_API dxp_locate_channel_files(int *, unsigned int *, char **);
 XERXES_IMPORT int XERXES_API dxp_lock_resource(int *detChan, short *lock);
-XERXES_IMPORT int XERXES_API dxp_enable_log(void);
-XERXES_IMPORT int XERXES_API dxp_suppress_log(void);
-XERXES_IMPORT int XERXES_API dxp_set_log_level(int *level);
-XERXES_IMPORT int XERXES_API dxp_set_log_output(char *filename);
 
 XERXES_IMPORT int XERXES_API dxp_setup_command(int *detChan, char *name, unsigned int *lenS,
 					       byte_t *send, unsigned int *lenR,
@@ -199,7 +193,6 @@ XERXES_IMPORT int XERXES_API dxp_md_init_io();
  */
 XERXES_IMPORT int XERXES_API dxp_initialize();
 XERXES_IMPORT int XERXES_API dxp_init_ds();
-XERXES_IMPORT int XERXES_API dxp_set_log_output();
 XERXES_IMPORT int XERXES_API dxp_init_boards_ds();
 XERXES_IMPORT int XERXES_API dxp_init_library();
 XERXES_IMPORT int XERXES_API dxp_install_utils();
@@ -276,10 +269,6 @@ XERXES_IMPORT int XERXES_API dxp_read_filesymbol();
 XERXES_IMPORT int XERXES_API dxp_locate_system_files();
 XERXES_IMPORT int XERXES_API dxp_locate_channel_files();
 XERXES_IMPORT int XERXES_API dxp_lock_resource();
-XERXES_IMPORT int XERXES_API dxp_enable_log();
-XERXES_IMPORT int XERXES_API dxp_suppress_log();
-XERXES_IMPORT int XERXES_API dxp_set_log_level();
-XERXES_IMPORT int XERXES_API dxp_set_log_output();
 
 XERXES_IMPORT int XERXES_API dxp_setup_command(); 
 

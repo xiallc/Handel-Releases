@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2002-2004 X-ray Instrumentation Associates
- *               2005-2012 XIA LLC
+ *               2005-2015 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms, 
@@ -33,7 +33,6 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * $Id$
  *
  */
 
@@ -55,7 +54,6 @@ XIA_MD_EXPORT int XIA_MD_API dxp_md_init_util(Xia_Util_Functions *funcs, char *t
 XIA_MD_EXPORT int XIA_MD_API dxp_md_init_io(Xia_Io_Functions *funcs, char *type);
 XIA_MD_SHARED void XIA_MD_API dxp_md_error(char *,char *, int *, char *file, int line);
 
-/* Enhanced logging routines added 8/21/01 -- PJF */
 XIA_MD_SHARED void XIA_MD_API dxp_md_warning(char *routine, char *message, char *file, int line);
 XIA_MD_SHARED void XIA_MD_API dxp_md_info(char *routine, char *message, char *file, int line);
 XIA_MD_SHARED void XIA_MD_API dxp_md_debug(char *routine, char *message, char *file, int line);
@@ -84,7 +82,6 @@ XIA_MD_SHARED int XIA_MD_API dxp_md_enable_log();
 XIA_MD_SHARED int XIA_MD_API dxp_md_suppress_log();
 XIA_MD_SHARED int XIA_MD_API dxp_md_set_log_level();
 XIA_MD_SHARED void XIA_MD_API dxp_md_log();
-
 
 #endif /* _DXP_PROTO_ */
 

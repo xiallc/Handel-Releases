@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2004 X-ray Instrumentation Associates
- *               2005-2014 XIA LLC
+ *               2005-2015 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms, 
@@ -65,18 +65,18 @@ typedef struct _FPGA_downloader {
 } FPGA_downloader_t;
 
 
-/* Store pointers to the proper DLL routines to talk to the CAMAC crate */
+/*
+ * Pointer to utility functions
+ */
 static DXP_MD_IO         xmap_md_io;
 static DXP_MD_SET_MAXBLK xmap_md_set_maxblk;
 static DXP_MD_GET_MAXBLK xmap_md_get_maxblk;
-
-/* Define the utility routines used throughout this library */
-static DXP_MD_LOG   xmap_md_log;
-static DXP_MD_ALLOC xmap_md_alloc;
-static DXP_MD_FREE  xmap_md_free;
-static DXP_MD_PUTS  xmap_md_puts;
-static DXP_MD_WAIT  xmap_md_wait;
-static DXP_MD_FGETS xmap_md_fgets;
+static DXP_MD_LOG        xmap_md_log;
+static DXP_MD_ALLOC      xmap_md_alloc;
+static DXP_MD_FREE       xmap_md_free;
+static DXP_MD_PUTS       xmap_md_puts;
+static DXP_MD_WAIT       xmap_md_wait;
+static DXP_MD_FGETS      xmap_md_fgets;
 
 static char info_string[INFO_LEN];
 

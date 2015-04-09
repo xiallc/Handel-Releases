@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2004 X-ray Instrumentation Associates
- *               2005-2012 XIA LLC
+ *               2005-2015 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms,
@@ -33,7 +33,6 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id$
  *
  */
 
@@ -52,10 +51,7 @@
 
 #include "xia_common.h"
 
-/*
- *    CAMAC status Register control codes
- */
-#define ALLCHAN              -1
+#define ALLCHAN -1
 
 /* If this is compiled by a C++ compiler, make it clear that these are C routines */
 #ifdef __cplusplus
@@ -71,10 +67,6 @@ extern "C"
    */
   XERXES_EXPORT int XERXES_API dxp_initialize(void);
   XERXES_EXPORT int XERXES_API dxp_init_ds(void);
-  XERXES_EXPORT int XERXES_API dxp_enable_log(void);
-  XERXES_EXPORT int XERXES_API dxp_suppress_log(void);
-  XERXES_EXPORT int XERXES_API dxp_set_log_level(int *level);
-  XERXES_EXPORT int XERXES_API dxp_set_log_output(char *filename);
   XERXES_EXPORT int XERXES_API dxp_init_boards_ds(void);
   XERXES_EXPORT int XERXES_API dxp_init_library(void);
   XERXES_EXPORT int XERXES_API dxp_install_utils(const char *utilname);
@@ -191,9 +183,6 @@ extern "C"
   XERXES_EXPORT void XERXES_API dxp_get_version_info(int *rel, int *min,
       int *maj, char *pretty);
 
-#ifndef EXCLUDE_DXP4C2X
-  XERXES_IMPORT int DXP_API dxp_init_dxp4c2x(Functions *funcs);
-#endif /* EXCLUDE_DXP4C2X */
 #ifndef EXCLUDE_SATURN
   XERXES_IMPORT int DXP_API dxp_init_saturn(Functions *funcs);
 #endif /* EXCLUDE_SATURN */
@@ -209,9 +198,6 @@ extern "C"
 #ifndef EXCLUDE_STJ
   XERXES_IMPORT int DXP_API dxp_init_stj(Functions *funcs);
 #endif /* EXCLUDE_STJ */
-#ifndef EXCLUDE_VEGA
-  XERXES_IMPORT int DXP_API dxp_init_vega(Functions *funcs);
-#endif /* EXCLUDE_VEGA */
 #ifndef EXCLUDE_MERCURY
   XERXES_IMPORT int DXP_API dxp_init_mercury(Functions *funcs);
 #endif /* EXCLUDE_MERCURY */
@@ -230,10 +216,6 @@ extern "C"
   */
   XERXES_EXPORT int XERXES_API dxp_initialize();
   XERXES_EXPORT int XERXES_API dxp_init_ds();
-  XERXES_EXPORT int XERXES_API dxp_enable_log();
-  XERXES_EXPORT int XERXES_API dxp_suppress_log();
-  XERXES_EXPORT int XERXES_API dxp_set_log_level();
-  XERXES_EXPORT int XERXES_API dxp_set_log_output();
   XERXES_EXPORT int XERXES_API dxp_init_boards_ds();
   XERXES_EXPORT int XERXES_API dxp_init_library();
   XERXES_EXPORT int XERXES_API dxp_install_utils();
@@ -334,9 +316,6 @@ extern "C"
 
   XERXES_EXPORT int XERXES_API dxp_get_version_info();
 
-#ifndef EXCLUDE_DXP4C2X
-  XERXES_IMPORT int DXP_API dxp_init_dxp4c2x();
-#endif /* EXCLUDE_DXP4C2X */
 #ifndef EXCLUDE_SATURN
   XERXES_IMPORT int DXP_API dxp_init_saturn();
 #endif /* EXCLUDE_SATURN */
@@ -352,9 +331,6 @@ extern "C"
 #ifndef EXCLUDE_STJ
   XERXES_IMPORT int DXP_API dxp_init_stj();
 #endif /* EXCLUDE_STJ */
-#ifndef EXCLUDE_VEGA
-  XERXES_IMPORT int DXP_API dxp_init_vega();
-#endif /* EXCLUDE_VEGA */
 #ifndef EXCLUDE_MERCURY
   XERXES_IMPORT int DXP_API dxp_init_mercury();
 #endif /* EXCLUDE_MERCURY */
@@ -378,8 +354,6 @@ extern "C"
  * Define the utility routines used throughout this library
  */
 
-/* Added new logging routines 8/22/01 -- PJF */
-
 DXP_MD_ERROR xerxes_md_error;
 DXP_MD_WARNING xerxes_md_warning;
 DXP_MD_INFO xerxes_md_info;
@@ -398,7 +372,6 @@ DXP_MD_FGETS xerxes_md_fgets;
 DXP_MD_TMP_PATH xerxes_md_tmp_path;
 DXP_MD_CLEAR_TMP xerxes_md_clear_tmp;
 DXP_MD_PATH_SEP  xerxes_md_path_separator;
-DXP_MD_PROCESS_MSGS xerxes_md_process_msgs;
 
 XERXES_EXPORT Utils *utils;
 
