@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -10,12 +8,12 @@
     
     <title>Mapping Mode &mdash; Handel Quick Start Guide: xMAP 1.1 documentation</title>
     
-    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '',
+        URL_ROOT:    './',
         VERSION:     '1.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
@@ -30,8 +28,8 @@
     <link rel="next" title="Acquisition Values" href="acq_values.html" />
     <link rel="prev" title="MCA Data Acquisition" href="mca.html" /> 
   </head>
-  <body>
-    <div class="related">
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -43,14 +41,14 @@
         <li class="right" >
           <a href="mca.html" title="MCA Data Acquisition"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">Handel Quick Start Guide: xMAP 1.1 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Handel Quick Start Guide: xMAP 1.1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="mapping-mode">
 <h1>Mapping Mode<a class="headerlink" href="#mapping-mode" title="Permalink to this headline">¶</a></h1>
@@ -109,8 +107,8 @@ remain active during the transition.</p>
 <h3>SYNC<a class="headerlink" href="#sync" title="Permalink to this headline">¶</a></h3>
 <p>The other primary method of advancing the pixel is to use the SYNC
 input as a pixel clock. Using this method, the pixel will advance for
-every <tt class="docutils literal"><span class="pre">N</span></tt> positive pulses, where <tt class="docutils literal"><span class="pre">N</span></tt> is set using the &#8220;sync_count&#8221;
-acquisition value. <tt class="docutils literal"><span class="pre">N</span></tt> can range from 1 to 65535. Finally, the
+every <code class="docutils literal"><span class="pre">N</span></code> positive pulses, where <code class="docutils literal"><span class="pre">N</span></code> is set using the &#8220;sync_count&#8221;
+acquisition value. <code class="docutils literal"><span class="pre">N</span></code> can range from 1 to 65535. Finally, the
 pulses must be at least 40 ns wide to be recognized by the xMAP.</p>
 </div>
 <div class="section" id="host-control">
@@ -224,7 +222,7 @@ maximum value by the DSP.</p>
 <h3>Configure pixel control<a class="headerlink" href="#configure-pixel-control" title="Permalink to this headline">¶</a></h3>
 <p>At the beginning of the run, the pixel number starts at 0 and is
 advanced using one of the techniques discussed in the
-<a class="reference internal" href="#pixel-advance-modes-label"><em>Pixel Advance Modes</em></a> section. The examples below only show
+<a class="reference internal" href="#pixel-advance-modes-label"><span>Pixel Advance Modes</span></a> section. The examples below only show
 the case where the entire system is on a single bus segment. If the
 xMAP system spans multiple bus segments then additional master modules
 are required with the correct pixel advance mode setting. Also note
@@ -278,7 +276,7 @@ advance it <strong>4 times</strong> (per module).</p>
 <span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaBoardOperation</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">&quot;apply&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">dummy</span><span class="p">));</span>
 </pre></div>
 </div>
-<p>See also the <a class="reference internal" href="introduction.html#section-detchans-label"><em>detChans</em></a> section.</p>
+<p>See also the <a class="reference internal" href="introduction.html#section-detchans-label"><span>detChans</span></a> section.</p>
 </div>
 <div class="section" id="get-buffer-length-mca-sca-mode">
 <h3>Get buffer length (MCA/SCA mode)<a class="headerlink" href="#get-buffer-length-mca-sca-mode" title="Permalink to this headline">¶</a></h3>
@@ -409,7 +407,7 @@ Handel.</p>
 </li>
 <li><p class="first"><strong>Cache the mapping buffer length</strong></p>
 <p>For all modes except for list-mode, the mapping buffer length,
-retrieved by passing &#8220;buffer_len&#8221; to <tt class="docutils literal"><span class="pre">xiaGetRunData()</span></tt>, only
+retrieved by passing &#8220;buffer_len&#8221; to <code class="docutils literal"><span class="pre">xiaGetRunData()</span></code>, only
 needs to be read once before the mapping run starts; it will not
 change once the run is active.</p>
 </li>
@@ -424,8 +422,8 @@ mapping buffer is overrun, the additional pixels will accumulate in
 the last pixel of the last active buffer. To signal that the buffer
 is overrun the value of the run data type &#8220;buffer_overrun&#8221; will be
 set to 1.0. Additional information may be retrieved from the DSP
-parameters <tt class="docutils literal"><span class="pre">MAPERRORS</span></tt> and <tt class="docutils literal"><span class="pre">BUFMAPERRORS</span></tt>. <tt class="docutils literal"><span class="pre">MAPERRORS</span></tt> is the
-total number of overrruns in the current run and <tt class="docutils literal"><span class="pre">BUFMAPERRORS</span></tt>
+parameters <code class="docutils literal"><span class="pre">MAPERRORS</span></code> and <code class="docutils literal"><span class="pre">BUFMAPERRORS</span></code>. <code class="docutils literal"><span class="pre">MAPERRORS</span></code> is the
+total number of overrruns in the current run and <code class="docutils literal"><span class="pre">BUFMAPERRORS</span></code>
 is the number of overruns in the current buffer.</p>
 <p>In general, once a buffer overrun condition has occurred it can be
 problematic to reconstruct the data even though nothing has been
@@ -579,7 +577,7 @@ channel information with it.</td></tr>
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
@@ -627,12 +625,14 @@ channel information with it.</td></tr>
   <h4>Next topic</h4>
   <p class="topless"><a href="acq_values.html"
                         title="next chapter">Acquisition Values</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="_sources/mapping.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/mapping.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
@@ -649,7 +649,7 @@ channel information with it.</td></tr>
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -661,12 +661,12 @@ channel information with it.</td></tr>
         <li class="right" >
           <a href="mca.html" title="MCA Data Acquisition"
              >previous</a> |</li>
-        <li><a href="index.html">Handel Quick Start Guide: xMAP 1.1 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Handel Quick Start Guide: xMAP 1.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
-    <div class="footer">
+    <div class="footer" role="contentinfo">
         &copy; Copyright 2010, XIA LLC.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>
 </html>

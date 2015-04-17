@@ -261,7 +261,7 @@ PSL_SHARED int pslInvalidate(char *name, XiaDefaults *defs)
   }
 
   /* XXX What if state is modified? */
-  sprintf(info_string, "%p: e->state = %#x", e, e->state);
+  sprintf(info_string, "%s: e->state = %#x", e->name, e->state);
   pslLogDebug("pslInvalidate", info_string);
 
   e->state = AV_STATE_UNKNOWN;

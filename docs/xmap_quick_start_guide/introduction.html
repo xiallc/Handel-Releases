@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -10,12 +8,12 @@
     
     <title>Introduction &mdash; Handel Quick Start Guide: xMAP 1.1 documentation</title>
     
-    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '',
+        URL_ROOT:    './',
         VERSION:     '1.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
@@ -30,8 +28,8 @@
     <link rel="next" title="MCA Data Acquisition" href="mca.html" />
     <link rel="prev" title="&lt;no title&gt;" href="index.html" /> 
   </head>
-  <body>
-    <div class="related">
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -43,14 +41,14 @@
         <li class="right" >
           <a href="index.html" title="&lt;no title&gt;"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">Handel Quick Start Guide: xMAP 1.1 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Handel Quick Start Guide: xMAP 1.1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="introduction">
 <h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
@@ -74,7 +72,7 @@ examples, three sample applications are included with Handel:
 hqsg-xmap.c, hqsg-xmap-preset.c and hqsg-xmap-mapping.c. Precompiled
 versions of the applications (for Windows) are also packaged with
 Handel.</p>
-<p>Each application requires a file called <tt class="file docutils literal"><span class="pre">xmap_reset_std.ini</span></tt> be
+<p>Each application requires a file called <code class="file docutils literal"><span class="pre">xmap_reset_std.ini</span></code> be
 present in the same directory as the application. A sample file is
 included in the distribution, though it will probably need some
 modifications to run with an arbitrary xMAP system.</p>
@@ -112,19 +110,19 @@ the sample code.</p>
 <p>Before introducing the details of programming with the Handel API, it
 is important to discuss the relevant header files and other external
 details related to Handel. All code intending to call a routine in
-Handel needs to include the file <tt class="file docutils literal"><span class="pre">inc/handel.h</span></tt> as a header. To
+Handel needs to include the file <code class="file docutils literal"><span class="pre">inc/handel.h</span></code> as a header. To
 gain access to the constants used to define the various logging
-levels, the file <tt class="file docutils literal"><span class="pre">inc/md_generic.h</span></tt> must be included; additional
+levels, the file <code class="file docutils literal"><span class="pre">inc/md_generic.h</span></code> must be included; additional
 constants (preset run types, mapping mode controls, etc.) are located
-in <tt class="file docutils literal"><span class="pre">inc/handel_constants.h</span></tt>. The last header that should be
-included is <tt class="file docutils literal"><span class="pre">inc/handel_errors.h</span></tt>, which contains all of the
+in <code class="file docutils literal"><span class="pre">inc/handel_constants.h</span></code>. The last header that should be
+included is <code class="file docutils literal"><span class="pre">inc/handel_errors.h</span></code>, which contains all of the
 error codes returned by Handel.</p>
 </div>
 <div class="section" id="error-handling">
 <h3>Error Handling<a class="headerlink" href="#error-handling" title="Permalink to this headline">¶</a></h3>
 <p>A good programming practice with Handel is to compare the returned
-status value with <tt class="xref py py-const docutils literal"><span class="pre">XIA_SUCCESS</span></tt> &#8211; defined in
-<tt class="file docutils literal"><span class="pre">handel_errors.h</span></tt> &#8211; and then process any returned errors before
+status value with <code class="xref py py-const docutils literal"><span class="pre">XIA_SUCCESS</span></code> &#8211; defined in
+<code class="file docutils literal"><span class="pre">handel_errors.h</span></code> &#8211; and then process any returned errors before
 proceeding. All Handel routines (except for some of the debugging
 routines) return an integer value indicating success or failure. While
 not discussed in great detail in this document, Handel does provide a
@@ -146,8 +144,8 @@ your system by breaking the configuration down into the following
 categories: detector (<em>[detector definitions]</em>), firmware (<em>[firmware
 definitions]</em>), hardware (<em>[module definitions]</em>) and acquisition
 values (<em>[default definitions]</em> <a class="footnote-reference" href="#id3" id="id1">[1]</a>). Each category in the .ini file
-contains a series of blocks, surrounded by a set of <tt class="docutils literal"><span class="pre">START</span></tt> /
-<tt class="docutils literal"><span class="pre">END</span></tt> delimiters. Each block represents one instance of the logical
+contains a series of blocks, surrounded by a set of <code class="docutils literal"><span class="pre">START</span></code> /
+<code class="docutils literal"><span class="pre">END</span></code> delimiters. Each block represents one instance of the logical
 type associated with the category. For instance, each block in
 <em>[detector definitions]</em> represents a physical detector with some
 number of elements. Within each block is a series of key-value pairs
@@ -172,24 +170,24 @@ sections, such as <em>[module definitions]</em>, that need to reference the
 detector will do so using this string.</dd>
 <dt>number_of_channels</dt>
 <dd>An integer describing the number of elements
-in your detector. If this value is set to <tt class="docutils literal"><span class="pre">N</span></tt>, the strings
-<tt class="docutils literal"><span class="pre">{alias}:{0}</span></tt> through <tt class="docutils literal"><span class="pre">{alias}:{N</span> <span class="pre">-</span> <span class="pre">1}</span></tt> will be available to map
+in your detector. If this value is set to <code class="docutils literal"><span class="pre">N</span></code>, the strings
+<code class="docutils literal"><span class="pre">{alias}:{0}</span></code> through <code class="docutils literal"><span class="pre">{alias}:{N</span> <span class="pre">-</span> <span class="pre">1}</span></code> will be available to map
 detector elements to hardware channels in the <em>[module
 definitions]</em> section.</dd>
 <dt>type</dt>
 <dd>The detector type. Handel currently supports the strings
-<tt class="docutils literal"><span class="pre">reset</span></tt> and <tt class="docutils literal"><span class="pre">rc_feedback</span></tt> detectors and uses the specified
+<code class="docutils literal"><span class="pre">reset</span></code> and <code class="docutils literal"><span class="pre">rc_feedback</span></code> detectors and uses the specified
 type to pick the right firmware to download to the xMAP.</dd>
 <dt>type_value</dt>
-<dd>For <tt class="docutils literal"><span class="pre">reset</span></tt> detectors, a double defining the reset
+<dd>For <code class="docutils literal"><span class="pre">reset</span></code> detectors, a double defining the reset
 delay time of the preamplifier(s) in microseconds. For
-<tt class="docutils literal"><span class="pre">rc_feedback</span></tt> detectors, a double defining the RC decay constant
+<code class="docutils literal"><span class="pre">rc_feedback</span></code> detectors, a double defining the RC decay constant
 in microseconds.</dd>
 <dt>channel{n}_gain</dt>
-<dd>The preamplifier gain, as a double, for detector element <tt class="docutils literal"><span class="pre">n</span></tt>
+<dd>The preamplifier gain, as a double, for detector element <code class="docutils literal"><span class="pre">n</span></code>
 specified in mV/keV.</dd>
 <dt>channel{n}_polarity</dt>
-<dd>A string defining the polarity of detector element <tt class="docutils literal"><span class="pre">n</span></tt>. Allowed
+<dd>A string defining the polarity of detector element <code class="docutils literal"><span class="pre">n</span></code>. Allowed
 values are &#8220;+&#8221; or &#8220;pos&#8221; for a preamplifier whose pulses are
 positive and &#8220;-&#8221; or &#8220;neg&#8221; for one with negative pulses.</dd>
 </dl>
@@ -229,11 +227,11 @@ for each module.</p>
 <dt>alias</dt>
 <dd>Human-readable string naming this module.</dd>
 <dt>module_type</dt>
-<dd>Always set to <tt class="docutils literal"><span class="pre">xmap</span></tt>.</dd>
+<dd>Always set to <code class="docutils literal"><span class="pre">xmap</span></code>.</dd>
 <dt>number_of_channels</dt>
 <dd>Always set to 4.</dd>
 <dt>interface</dt>
-<dd>Always set to <tt class="docutils literal"><span class="pre">pxi</span></tt>.</dd>
+<dd>Always set to <code class="docutils literal"><span class="pre">pxi</span></code>.</dd>
 <dt>pci_bus / pci_slot</dt>
 <dd>The PCI bus and slot that this module is connected to. To
 determine the bus value, you can use the Device Manager on
@@ -242,16 +240,16 @@ xManager will automatically generate an .ini with the correct bus
 and slot information for all of the xMAP modules attached to a
 computer.</dd>
 <dt>channel{n}_alias</dt>
-<dd>Specifies a global, unique index for channel <tt class="docutils literal"><span class="pre">n</span></tt>, where <tt class="docutils literal"><span class="pre">n</span></tt>
+<dd>Specifies a global, unique index for channel <code class="docutils literal"><span class="pre">n</span></code>, where <code class="docutils literal"><span class="pre">n</span></code>
 ranges from 0..3. This value is referenced throughout Handel as
-the <tt class="docutils literal"><span class="pre">detChan</span></tt>.</dd>
+the <code class="docutils literal"><span class="pre">detChan</span></code>.</dd>
 <dt>channel{n}_detector</dt>
-<dd>Associates channel <tt class="docutils literal"><span class="pre">n</span></tt>, where <tt class="docutils literal"><span class="pre">n</span></tt> ranges from 0..3, with a
+<dd>Associates channel <code class="docutils literal"><span class="pre">n</span></code>, where <code class="docutils literal"><span class="pre">n</span></code> ranges from 0..3, with a
 specific detector element. The detector element is referenced as
-<tt class="docutils literal"><span class="pre">{alias}:{m}</span></tt> where <tt class="docutils literal"><span class="pre">alias</span></tt> is a valid detector alias and
-<tt class="docutils literal"><span class="pre">m</span></tt> is a valid channel for <tt class="docutils literal"><span class="pre">alias</span></tt>.</dd>
+<code class="docutils literal"><span class="pre">{alias}:{m}</span></code> where <code class="docutils literal"><span class="pre">alias</span></code> is a valid detector alias and
+<code class="docutils literal"><span class="pre">m</span></code> is a valid channel for <code class="docutils literal"><span class="pre">alias</span></code>.</dd>
 <dt>firmware_set_chan{n}</dt>
-<dd>Assigns an FDD file to module channel <tt class="docutils literal"><span class="pre">n</span></tt>, where <tt class="docutils literal"><span class="pre">n</span></tt> ranges
+<dd>Assigns an FDD file to module channel <code class="docutils literal"><span class="pre">n</span></code>, where <code class="docutils literal"><span class="pre">n</span></code> ranges
 from 0..3. The FDD file is specified as a firmware alias.</dd>
 </dl>
 </div>
@@ -266,30 +264,30 @@ with both Handel and xManager.</p>
 </div>
 <div class="section" id="detchans">
 <span id="section-detchans-label"></span><h3>detChans<a class="headerlink" href="#detchans" title="Permalink to this headline">¶</a></h3>
-<p>Most routines in Handel accept a <tt class="docutils literal"><span class="pre">detChan</span></tt> integer as the first
-argument. As discussed in <a class="reference internal" href="#module-definitions-label"><em>[module definitions]</em></a>, each xMAP
+<p>Most routines in Handel accept a <code class="docutils literal"><span class="pre">detChan</span></code> integer as the first
+argument. As discussed in <a class="reference internal" href="#module-definitions-label"><span>[module definitions]</span></a>, each xMAP
 channel in the system must be assigned a unique global ID. Handel .ini
 files generated by the <em>Configuration Wizard</em> in xManager follow the
 convention of assigning 0 to the first channel in the first module and
-<tt class="docutils literal"><span class="pre">N</span></tt> - 1, where <tt class="docutils literal"><span class="pre">N</span></tt> is the total number of channels in the system,
+<code class="docutils literal"><span class="pre">N</span></code> - 1, where <code class="docutils literal"><span class="pre">N</span></code> is the total number of channels in the system,
 to the last channel in the last module.</p>
 <p>Some routines in Handel &#8211; mostly routines that set a value &#8211; allow
-the special <tt class="docutils literal"><span class="pre">detChan</span></tt> -1 to be passed as an argument. This special
-value represents all of the <tt class="docutils literal"><span class="pre">detChan</span></tt>s in the system and is
+the special <code class="docutils literal"><span class="pre">detChan</span></code> -1 to be passed as an argument. This special
+value represents all of the <code class="docutils literal"><span class="pre">detChan</span></code>s in the system and is
 automatically created by Handel when it loads a new .ini file. When
-calling routines like <tt class="docutils literal"><span class="pre">xiaSetAcquisitionValues()</span></tt> the -1 <tt class="docutils literal"><span class="pre">detChan</span></tt>
+calling routines like <code class="docutils literal"><span class="pre">xiaSetAcquisitionValues()</span></code> the -1 <code class="docutils literal"><span class="pre">detChan</span></code>
 is a convenient shortcut that eliminates the need to loop over all
 channels.</p>
-<p>Unfortunately, not all routines accept the -1 <tt class="docutils literal"><span class="pre">detChan</span></tt>. The primary
+<p>Unfortunately, not all routines accept the -1 <code class="docutils literal"><span class="pre">detChan</span></code>. The primary
 situation where one is required to loop over all necessary channels is
-when calling <tt class="docutils literal"><span class="pre">xiaBoardOperation()</span></tt>, specifically with &#8220;apply&#8221; and
+when calling <code class="docutils literal"><span class="pre">xiaBoardOperation()</span></code>, specifically with &#8220;apply&#8221; and
 &#8220;mapping_pixel_next&#8221;. Note though that both of these operations only
 need to be called once per module using code like this <a class="footnote-reference" href="#id4" id="id2">[2]</a>:</p>
 <div class="admonition-api admonition">
 <p class="first admonition-title">API</p>
 <dl class="last function">
-<dt id="xiaBoardOperation">
-int <tt class="descname">xiaBoardOperation</tt><big>(</big>int<em>&nbsp;detChan</em>, char<em>&nbsp;*name</em>, void<em>&nbsp;*value</em><big>)</big><a class="headerlink" href="#xiaBoardOperation" title="Permalink to this definition">¶</a></dt>
+<dt id="c.xiaBoardOperation">
+int <code class="descname">xiaBoardOperation</code><span class="sig-paren">(</span>int<em>&nbsp;detChan</em>, char<em>&nbsp;*name</em>, void<em>&nbsp;*value</em><span class="sig-paren">)</span><a class="headerlink" href="#c.xiaBoardOperation" title="Permalink to this definition">¶</a></dt>
 <dd><table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -330,7 +328,7 @@ does not take a value.</li>
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
 <tr><td class="label"><a class="fn-backref" href="#id2">[2]</a></td><td>This code will be explained in more detail later. The key point
-in this example is that <tt class="docutils literal"><span class="pre">xiaBoardOperation</span></tt> is only being called
+in this example is that <code class="docutils literal"><span class="pre">xiaBoardOperation</span></code> is only being called
 once per module.</td></tr>
 </tbody>
 </table>
@@ -342,7 +340,7 @@ once per module.</td></tr>
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
@@ -380,12 +378,14 @@ once per module.</td></tr>
   <h4>Next topic</h4>
   <p class="topless"><a href="mca.html"
                         title="next chapter">MCA Data Acquisition</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="_sources/introduction.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/introduction.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
@@ -402,7 +402,7 @@ once per module.</td></tr>
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -414,12 +414,12 @@ once per module.</td></tr>
         <li class="right" >
           <a href="index.html" title="&lt;no title&gt;"
              >previous</a> |</li>
-        <li><a href="index.html">Handel Quick Start Guide: xMAP 1.1 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Handel Quick Start Guide: xMAP 1.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
-    <div class="footer">
+    <div class="footer" role="contentinfo">
         &copy; Copyright 2010, XIA LLC.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>
 </html>

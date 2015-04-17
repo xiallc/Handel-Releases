@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -10,12 +8,12 @@
     
     <title>Acquisition Values &mdash; Handel Quick Start Guide: xMAP 1.1 documentation</title>
     
-    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '',
+        URL_ROOT:    './',
         VERSION:     '1.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
@@ -30,8 +28,8 @@
     <link rel="next" title="Run Data" href="run_data.html" />
     <link rel="prev" title="Mapping Mode" href="mapping.html" /> 
   </head>
-  <body>
-    <div class="related">
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -43,14 +41,14 @@
         <li class="right" >
           <a href="mapping.html" title="Mapping Mode"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">Handel Quick Start Guide: xMAP 1.1 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Handel Quick Start Guide: xMAP 1.1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="acquisition-values">
 <span id="acquisition-values-label"></span><h1>Acquisition Values<a class="headerlink" href="#acquisition-values" title="Permalink to this headline">¶</a></h1>
@@ -77,7 +75,7 @@ see &#8220;minimum_gap_time&#8221;.</dd>
 <dd>The number of samples averaged together for the baseline.</dd>
 <dt><strong>peak_sample_offset{N}</strong></dt>
 <dd>Sets the peak sampling time offset constant for decimation
-<tt class="docutils literal"><span class="pre">N</span></tt>. This value is optional and setting it will override the
+<code class="docutils literal"><span class="pre">N</span></code>. This value is optional and setting it will override the
 defined offset value in the FDD file. This value is specified in
 microseconds.</dd>
 <dt><strong>minimum_gap_time</strong></dt>
@@ -129,10 +127,10 @@ microseconds.</dd>
 <dt><strong>mca_bin_width</strong></dt>
 <dd>Width of an individual bin in the MCA, specified in eV.</dd>
 <dt><strong>preset_type</strong></dt>
-<dd>Set the preset run type. See <tt class="file docutils literal"><span class="pre">handel_constants.h</span></tt> for the
+<dd>Set the preset run type. See <code class="file docutils literal"><span class="pre">handel_constants.h</span></code> for the
 constants that can be used.</dd>
 <dt><strong>preset_value</strong></dt>
-<dd>When a preset run type other then <tt class="xref py py-const docutils literal"><span class="pre">XIA_PRESET_NONE</span></tt> is set,
+<dd>When a preset run type other then <code class="xref py py-const docutils literal"><span class="pre">XIA_PRESET_NONE</span></code> is set,
 this value is either the number of counts or a time (specfied in
 seconds).</dd>
 </dl>
@@ -143,8 +141,8 @@ seconds).</dd>
 <dt><strong>number_of_scas</strong></dt>
 <dd>Sets the number of SCAs.</dd>
 <dt><strong>sca{N}_[lo|hi]</strong></dt>
-<dd>The SCA limit (low or high) for the requested SCA, <tt class="docutils literal"><span class="pre">N</span></tt>,
-specified as a bin number. <tt class="docutils literal"><span class="pre">N</span></tt> ranges from 0 to
+<dd>The SCA limit (low or high) for the requested SCA, <code class="docutils literal"><span class="pre">N</span></code>,
+specified as a bin number. <code class="docutils literal"><span class="pre">N</span></code> ranges from 0 to
 &#8220;number_of_scas&#8221; - 1.</dd>
 </dl>
 </div>
@@ -202,9 +200,9 @@ only valid for the first channel in a module and is ignored for
 other channels.</dd>
 <dt><strong>pixel_advance_mode</strong></dt>
 <dd>Sets the pixel advance mode for mapping mode. The supported types
-are listed in <tt class="file docutils literal"><span class="pre">handel_constants.h</span></tt> under
-<tt class="docutils literal"><span class="pre">XIA_MAPPING_CTL_*</span></tt>. Manual pixel advance using
-<tt class="docutils literal"><span class="pre">xiaBoardOperation()</span></tt> is always available and does not need to
+are listed in <code class="file docutils literal"><span class="pre">handel_constants.h</span></code> under
+<code class="docutils literal"><span class="pre">XIA_MAPPING_CTL_*</span></code>. Manual pixel advance using
+<code class="docutils literal"><span class="pre">xiaBoardOperation()</span></code> is always available and does not need to
 be set using this acquisition value.</dd>
 <dt><strong>synchronous_run</strong></dt>
 <dd>This parameter is used in conjunction with &#8220;lbus_master&#8221; to enable
@@ -229,7 +227,7 @@ clock time (2.0).</dd>
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
@@ -250,12 +248,14 @@ clock time (2.0).</dd>
   <h4>Next topic</h4>
   <p class="topless"><a href="run_data.html"
                         title="next chapter">Run Data</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="_sources/acq_values.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/acq_values.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
@@ -272,7 +272,7 @@ clock time (2.0).</dd>
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -284,12 +284,12 @@ clock time (2.0).</dd>
         <li class="right" >
           <a href="mapping.html" title="Mapping Mode"
              >previous</a> |</li>
-        <li><a href="index.html">Handel Quick Start Guide: xMAP 1.1 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Handel Quick Start Guide: xMAP 1.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
-    <div class="footer">
+    <div class="footer" role="contentinfo">
         &copy; Copyright 2010, XIA LLC.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>
 </html>
