@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -8,12 +10,12 @@
     
     <title>MCA Data Acquisition &mdash; Handel Quick Start Guide: xMAP 1.1 documentation</title>
     
-    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
+        URL_ROOT:    '',
         VERSION:     '1.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
@@ -28,8 +30,8 @@
     <link rel="next" title="Mapping Mode" href="mapping.html" />
     <link rel="prev" title="Introduction" href="introduction.html" /> 
   </head>
-  <body role="document">
-    <div class="related" role="navigation" aria-label="related navigation">
+  <body>
+    <div class="related">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -41,14 +43,14 @@
         <li class="right" >
           <a href="introduction.html" title="Introduction"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Handel Quick Start Guide: xMAP 1.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Handel Quick Start Guide: xMAP 1.1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body" role="main">
+          <div class="body">
             
   <div class="section" id="mca-data-acquisition">
 <h1>MCA Data Acquisition<a class="headerlink" href="#mca-data-acquisition" title="Permalink to this headline">¶</a></h1>
@@ -62,8 +64,8 @@ library using an .ini file:</p>
 <div class="admonition-api admonition">
 <p class="first admonition-title">API</p>
 <dl class="last function">
-<dt id="c.xiaInit">
-int <code class="descname">xiaInit</code><span class="sig-paren">(</span>char<em>&nbsp;*ini</em><span class="sig-paren">)</span><a class="headerlink" href="#c.xiaInit" title="Permalink to this definition">¶</a></dt>
+<dt id="xiaInit">
+int <tt class="descname">xiaInit</tt><big>(</big>char<em>&nbsp;*ini</em><big>)</big><a class="headerlink" href="#xiaInit" title="Permalink to this definition">¶</a></dt>
 <dd><table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -80,21 +82,21 @@ int <code class="descname">xiaInit</code><span class="sig-paren">(</span>char<em
 
 </div>
 <p>Once the initialization is complete, the next step is to call
-<code class="docutils literal"><span class="pre">xiaStartSystem()</span></code>. This is the first time that Handel attempts to
+<tt class="docutils literal"><span class="pre">xiaStartSystem()</span></tt>. This is the first time that Handel attempts to
 communicate with the hardware specified in the .ini
-file. <code class="docutils literal"><span class="pre">xiaInit()</span></code>&#8216;s job is to prepare Handel for data acquisition,
-while <code class="docutils literal"><span class="pre">xiaStartSystem()</span></code>&#8216;s is to prepare the
-hardware. <code class="docutils literal"><span class="pre">xiaStartSystem()</span></code> is one of the longest running functions
+file. <tt class="docutils literal"><span class="pre">xiaInit()</span></tt>&#8216;s job is to prepare Handel for data acquisition,
+while <tt class="docutils literal"><span class="pre">xiaStartSystem()</span></tt>&#8216;s is to prepare the
+hardware. <tt class="docutils literal"><span class="pre">xiaStartSystem()</span></tt> is one of the longest running functions
 in Handel, generally speaking, since it needs to validate the hardware
 configuration supplied in the .ini file, test the communication
 interface (PCI, for the xMAP) and download all of the required
-firmware to the module(s). Like <code class="docutils literal"><span class="pre">xiaInit()</span></code>, <code class="docutils literal"><span class="pre">xiaStartSystem()</span></code> is
+firmware to the module(s). Like <tt class="docutils literal"><span class="pre">xiaInit()</span></tt>, <tt class="docutils literal"><span class="pre">xiaStartSystem()</span></tt> is
 easy to use:</p>
 <div class="admonition-api admonition">
 <p class="first admonition-title">API</p>
 <dl class="function">
-<dt id="c.xiaStartSystem">
-int <code class="descname">xiaStartSystem</code><span class="sig-paren">(</span>void<span class="sig-paren">)</span><a class="headerlink" href="#c.xiaStartSystem" title="Permalink to this definition">¶</a></dt>
+<dt id="xiaStartSystem">
+int <tt class="descname">xiaStartSystem</tt><big>(</big>void<big>)</big><a class="headerlink" href="#xiaStartSystem" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <p class="last">Boots the hardware and downloads the firmware and configuration
@@ -103,17 +105,17 @@ previously specified in the .ini file loaded via <cite>xiaInit()</cite>.</p>
 <div class="highlight-c"><div class="highlight"><pre><span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaStartSystem</span><span class="p">());</span>
 </pre></div>
 </div>
-<p>Once <code class="docutils literal"><span class="pre">xiaStartSystem()</span></code> is complete, Handel is ready to perform data
-acquisition tasks. <code class="docutils literal"><span class="pre">xiaStartSystem()</span></code> only needs to be called once
+<p>Once <tt class="docutils literal"><span class="pre">xiaStartSystem()</span></tt> is complete, Handel is ready to perform data
+acquisition tasks. <tt class="docutils literal"><span class="pre">xiaStartSystem()</span></tt> only needs to be called once
 after an .ini file is loaded.</p>
 </div>
 <div class="section" id="configuring-data-acquisition">
 <h2>Configuring Data Acquisition<a class="headerlink" href="#configuring-data-acquisition" title="Permalink to this headline">¶</a></h2>
-<p>After <code class="docutils literal"><span class="pre">xiaStartSystem()</span></code> has run, the xMAP system is ready to be
+<p>After <tt class="docutils literal"><span class="pre">xiaStartSystem()</span></tt> has run, the xMAP system is ready to be
 configured for data acquisition. If the .ini file that was loaded with
-<code class="docutils literal"><span class="pre">xiaInit()</span></code> contains a <a class="reference internal" href="introduction.html#default-definitions-label"><span>[default definitions]</span></a> section,
+<tt class="docutils literal"><span class="pre">xiaInit()</span></tt> contains a <a class="reference internal" href="introduction.html#default-definitions-label"><em>[default definitions]</em></a> section,
 then the hardware will be configured using those values. If the
-<a class="reference internal" href="introduction.html#default-definitions-label"><span>[default definitions]</span></a> section is missing, then Handel uses
+<a class="reference internal" href="introduction.html#default-definitions-label"><em>[default definitions]</em></a> section is missing, then Handel uses
 a nominal set of default values. For most systems, the nominal values
 are sufficient to obtain some results from the software, but some of
 the settings should be optimized for actual data acquisition.</p>
@@ -122,12 +124,12 @@ controlling the settings of each xMAP module <a class="footnote-reference" href=
 data acquisition setups will only need to set the handful of values
 described below. Once a working set of acquisition values has been
 created, they can be saved to an .ini file using the function
-<code class="docutils literal"><span class="pre">xiaSaveSystem()</span></code>.</p>
+<tt class="docutils literal"><span class="pre">xiaSaveSystem()</span></tt>.</p>
 <div class="admonition-api admonition">
 <p class="first admonition-title">API</p>
 <dl class="function">
-<dt id="c.xiaSaveSystem">
-int <code class="descname">xiaSaveSystem</code><span class="sig-paren">(</span>char<em>&nbsp;*type</em>, char<em>&nbsp;*ini</em><span class="sig-paren">)</span><a class="headerlink" href="#c.xiaSaveSystem" title="Permalink to this definition">¶</a></dt>
+<dt id="xiaSaveSystem">
+int <tt class="descname">xiaSaveSystem</tt><big>(</big>char<em>&nbsp;*type</em>, char<em>&nbsp;*ini</em><big>)</big><a class="headerlink" href="#xiaSaveSystem" title="Permalink to this definition">¶</a></dt>
 <dd><table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -146,17 +148,17 @@ int <code class="descname">xiaSaveSystem</code><span class="sig-paren">(</span>c
 with <cite>xiaInit()</cite>.</p>
 </div>
 <p>The Handel routines to control acquisition values are
-<code class="docutils literal"><span class="pre">xiaSetAcquisitionValues()</span></code> and <code class="docutils literal"><span class="pre">xiaGetAcquisitionValues()</span></code>.</p>
+<tt class="docutils literal"><span class="pre">xiaSetAcquisitionValues()</span></tt> and <tt class="docutils literal"><span class="pre">xiaGetAcquisitionValues()</span></tt>.</p>
 <div class="admonition-api admonition">
 <p class="first admonition-title">API</p>
 <dl class="function">
-<dt id="c.xiaSetAcquisitionValues">
-int <code class="descname">xiaSetAcquisitionValues</code><span class="sig-paren">(</span>int<em>&nbsp;detChan</em>, char<em>&nbsp;*name</em>, void<em>&nbsp;*value</em><span class="sig-paren">)</span><a class="headerlink" href="#c.xiaSetAcquisitionValues" title="Permalink to this definition">¶</a></dt>
+<dt id="xiaSetAcquisitionValues">
+int <tt class="descname">xiaSetAcquisitionValues</tt><big>(</big>int<em>&nbsp;detChan</em>, char<em>&nbsp;*name</em>, void<em>&nbsp;*value</em><big>)</big><a class="headerlink" href="#xiaSetAcquisitionValues" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
-<dt id="c.xiaGetAcquisitionValues">
-int <code class="descname">xiaGetAcquisitionValues</code><span class="sig-paren">(</span>int<em>&nbsp;detChan</em>, char<em>&nbsp;*name</em>, void<em>&nbsp;*value</em><span class="sig-paren">)</span><a class="headerlink" href="#c.xiaGetAcquisitionValues" title="Permalink to this definition">¶</a></dt>
+<dt id="xiaGetAcquisitionValues">
+int <tt class="descname">xiaGetAcquisitionValues</tt><big>(</big>int<em>&nbsp;detChan</em>, char<em>&nbsp;*name</em>, void<em>&nbsp;*value</em><big>)</big><a class="headerlink" href="#xiaGetAcquisitionValues" title="Permalink to this definition">¶</a></dt>
 <dd><table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -203,7 +205,7 @@ threshold of 1000 eV:</p>
 </pre></div>
 </div>
 <p>Once the acquisition values are set, it is necessary to &#8220;apply&#8221; them
-using the technique discussed in the <a class="reference internal" href="introduction.html#section-detchans-label"><span>detChans</span></a>
+using the technique discussed in the <a class="reference internal" href="introduction.html#section-detchans-label"><em>detChans</em></a>
 section.</p>
 </div>
 <div class="section" id="run-control">
@@ -212,12 +214,12 @@ section.</p>
 acquire data. In this section we are interested in starting and
 stopping a normal MCA run and reading out the spectrum data. As one
 might expect the runs are started and stopped using the routines
-<code class="docutils literal"><span class="pre">xiaStartRun()</span></code> and <code class="docutils literal"><span class="pre">xiaStopRun()</span></code>.</p>
+<tt class="docutils literal"><span class="pre">xiaStartRun()</span></tt> and <tt class="docutils literal"><span class="pre">xiaStopRun()</span></tt>.</p>
 <div class="admonition-api admonition">
 <p class="first admonition-title">API</p>
 <dl class="function">
-<dt id="c.xiaStartRun">
-int <code class="descname">xiaStartRun</code><span class="sig-paren">(</span>int<em>&nbsp;detChan</em>, unsigned short<em>&nbsp;resume</em><span class="sig-paren">)</span><a class="headerlink" href="#c.xiaStartRun" title="Permalink to this definition">¶</a></dt>
+<dt id="xiaStartRun">
+int <tt class="descname">xiaStartRun</tt><big>(</big>int<em>&nbsp;detChan</em>, unsigned short<em>&nbsp;resume</em><big>)</big><a class="headerlink" href="#xiaStartRun" title="Permalink to this definition">¶</a></dt>
 <dd><table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -236,8 +238,8 @@ the run.</li>
 
 <p>The run only needs to be started once per module on the xMAP.</p>
 <dl class="function">
-<dt id="c.xiaStopRun">
-int <code class="descname">xiaStopRun</code><span class="sig-paren">(</span>int<em>&nbsp;detChan</em><span class="sig-paren">)</span><a class="headerlink" href="#c.xiaStopRun" title="Permalink to this definition">¶</a></dt>
+<dt id="xiaStopRun">
+int <tt class="descname">xiaStopRun</tt><big>(</big>int<em>&nbsp;detChan</em><big>)</big><a class="headerlink" href="#xiaStopRun" title="Permalink to this definition">¶</a></dt>
 <dd><table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -255,13 +257,13 @@ allowed.</li>
 <p class="last">The run only needs to be stopped once per module on the xMAP.</p>
 </div>
 <p>The MCA can be read either while the run is active or after it has
-been stopped. The MCA histogram is returned as an array of <code class="docutils literal"><span class="pre">unsigned</span> <span class="pre">long</span></code>
-integers via a call to <code class="docutils literal"><span class="pre">xiaGetRunData()</span></code> <a class="footnote-reference" href="#id4" id="id2">[2]</a>.</p>
+been stopped. The MCA histogram is returned as an array of <tt class="docutils literal"><span class="pre">unsigned</span> <span class="pre">long</span></tt>
+integers via a call to <tt class="docutils literal"><span class="pre">xiaGetRunData()</span></tt> <a class="footnote-reference" href="#id4" id="id2">[2]</a>.</p>
 <div class="admonition-api admonition">
 <p class="first admonition-title">API</p>
 <dl class="function">
-<dt id="c.xiaGetRunData">
-int <code class="descname">xiaGetRunData</code><span class="sig-paren">(</span>int<em>&nbsp;detChan</em>, char<em>&nbsp;*name</em>, void<em>&nbsp;*value</em><span class="sig-paren">)</span><a class="headerlink" href="#c.xiaGetRunData" title="Permalink to this definition">¶</a></dt>
+<dt id="xiaGetRunData">
+int <tt class="descname">xiaGetRunData</tt><big>(</big>int<em>&nbsp;detChan</em>, char<em>&nbsp;*name</em>, void<em>&nbsp;*value</em><big>)</big><a class="headerlink" href="#xiaGetRunData" title="Permalink to this definition">¶</a></dt>
 <dd><table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -281,10 +283,10 @@ the requested run data type.</li>
 <p class="last">Read the specified run data type and return the data in <cite>value</cite>. The caller
 is responsible for allocating all memory.</p>
 </div>
-<p><code class="docutils literal"><span class="pre">xiaGetRunData()</span></code> expects an array equal to (or larger) than the requested
+<p><tt class="docutils literal"><span class="pre">xiaGetRunData()</span></tt> expects an array equal to (or larger) than the requested
 MCA length. The MCA length is set using the &#8220;number_mca_channels&#8221; acquisition
-value and can be read as an <code class="docutils literal"><span class="pre">unsigned</span> <span class="pre">long</span></code> by passing the name &#8220;mca_length&#8221;
-to <code class="docutils literal"><span class="pre">xiaGetRunData()</span></code> or as a <code class="docutils literal"><span class="pre">double</span></code> from <code class="docutils literal"><span class="pre">xiaGetAcquisitionValues()</span></code>.
+value and can be read as an <tt class="docutils literal"><span class="pre">unsigned</span> <span class="pre">long</span></tt> by passing the name &#8220;mca_length&#8221;
+to <tt class="docutils literal"><span class="pre">xiaGetRunData()</span></tt> or as a <tt class="docutils literal"><span class="pre">double</span></tt> from <tt class="docutils literal"><span class="pre">xiaGetAcquisitionValues()</span></tt>.
 With this in mind, a simple data acquisition session has the following basic
 footprint:</p>
 <div class="highlight-c"><div class="highlight"><pre><span class="cp">#include &lt;stdlib.h&gt;</span>
@@ -322,15 +324,15 @@ the run lets the host application repeatedly acquire data with similar
 characteristics.</p>
 <p>The xMAP supports four distinct preset run types: realtime, energy
 livetime, events and triggers. The constants used to define these run
-types are in <code class="file docutils literal"><span class="pre">handel_constants.h</span></code>. The realtime
-(<code class="xref py py-const docutils literal"><span class="pre">XIA_PRESET_FIXED_REAL</span></code>) and energy livetime
-(<code class="xref py py-const docutils literal"><span class="pre">XIA_PRESET_FIXED_LIVE</span></code>) preset runs instruct the hardware to run until
+types are in <tt class="file docutils literal"><span class="pre">handel_constants.h</span></tt>. The realtime
+(<tt class="xref py py-const docutils literal"><span class="pre">XIA_PRESET_FIXED_REAL</span></tt>) and energy livetime
+(<tt class="xref py py-const docutils literal"><span class="pre">XIA_PRESET_FIXED_LIVE</span></tt>) preset runs instruct the hardware to run until
 the specified realtime/energy livetime has elapsed. These times are
 specified in seconds with a granularity of 320 ns. Even though the
 time granularity is 320 ns, the hardware only checks to see if enough
 time has elapsed every 8 ms.</p>
-<p>The output events (<code class="xref py py-const docutils literal"><span class="pre">XIA_PRESET_FIXED_EVENTS</span></code>) and input events
-(<code class="xref py py-const docutils literal"><span class="pre">XIA_PRESET_FIXED_TRIGGERS</span></code>) preset runs complete when the
+<p>The output events (<tt class="xref py py-const docutils literal"><span class="pre">XIA_PRESET_FIXED_EVENTS</span></tt>) and input events
+(<tt class="xref py py-const docutils literal"><span class="pre">XIA_PRESET_FIXED_TRIGGERS</span></tt>) preset runs complete when the
 specified number of input or output events have been collected.</p>
 <div class="highlight-c"><div class="highlight"><pre><span class="kt">double</span> <span class="n">preset_realtime</span> <span class="o">=</span> <span class="mf">20.0</span><span class="p">;</span>
 <span class="kt">double</span> <span class="n">preset_type</span> <span class="o">=</span> <span class="n">XIA_PRESET_FIXED_REAL</span><span class="p">;</span>
@@ -369,17 +371,17 @@ specified number of input or output events have been collected.</p>
 </div>
 <div class="section" id="cleanup">
 <h2>Cleanup<a class="headerlink" href="#cleanup" title="Permalink to this headline">¶</a></h2>
-<p>The last operation that any xMAP application must do is call <code class="docutils literal"><span class="pre">xiaExit()</span></code>.</p>
+<p>The last operation that any xMAP application must do is call <tt class="docutils literal"><span class="pre">xiaExit()</span></tt>.</p>
 <div class="admonition-api admonition">
 <p class="first admonition-title">API</p>
 <dl class="function">
-<dt id="c.xiaExit">
-int <code class="descname">xiaExit</code><span class="sig-paren">(</span>void<span class="sig-paren">)</span><a class="headerlink" href="#c.xiaExit" title="Permalink to this definition">¶</a></dt>
+<dt id="xiaExit">
+int <tt class="descname">xiaExit</tt><big>(</big>void<big>)</big><a class="headerlink" href="#xiaExit" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <p class="last">Release all OS resources used by the current setup.</p>
 </div>
-<p>Once <code class="docutils literal"><span class="pre">xiaExit()</span></code> is called a new system must be loaded with <code class="docutils literal"><span class="pre">xiaInit()</span></code> if
+<p>Once <tt class="docutils literal"><span class="pre">xiaExit()</span></tt> is called a new system must be loaded with <tt class="docutils literal"><span class="pre">xiaInit()</span></tt> if
 you want to use Handel again.</p>
 <p class="rubric">Footnotes</p>
 <table class="docutils footnote" frame="void" id="id3" rules="none">
@@ -387,14 +389,14 @@ you want to use Handel again.</p>
 <tbody valign="top">
 <tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>A complete list of the available xMAP acquisition values and
 their defaults can be found in the
-<a class="reference internal" href="acq_values.html#acquisition-values-label"><span>Acquisition Values</span></a> section.</td></tr>
+<a class="reference internal" href="acq_values.html#acquisition-values-label"><em>Acquisition Values</em></a> section.</td></tr>
 </tbody>
 </table>
 <table class="docutils footnote" frame="void" id="id4" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
 <tr><td class="label"><a class="fn-backref" href="#id2">[2]</a></td><td>A complete list of the available xMAP run data names and their return
-data types can be found in the <a class="reference internal" href="run_data.html#run-data-label"><span>Run Data</span></a> section.</td></tr>
+data types can be found in the <a class="reference internal" href="run_data.html#run-data-label"><em>Run Data</em></a> section.</td></tr>
 </tbody>
 </table>
 </div>
@@ -404,7 +406,7 @@ data types can be found in the <a class="reference internal" href="run_data.html
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
@@ -424,14 +426,12 @@ data types can be found in the <a class="reference internal" href="run_data.html
   <h4>Next topic</h4>
   <p class="topless"><a href="mapping.html"
                         title="next chapter">Mapping Mode</a></p>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/mca.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
-<div id="searchbox" style="display: none" role="search">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mca.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
@@ -448,7 +448,7 @@ data types can be found in the <a class="reference internal" href="run_data.html
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related" role="navigation" aria-label="related navigation">
+    <div class="related">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -460,12 +460,12 @@ data types can be found in the <a class="reference internal" href="run_data.html
         <li class="right" >
           <a href="introduction.html" title="Introduction"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Handel Quick Start Guide: xMAP 1.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Handel Quick Start Guide: xMAP 1.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
-    <div class="footer" role="contentinfo">
+    <div class="footer">
         &copy; Copyright 2010, XIA LLC.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
     </div>
   </body>
 </html>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2012 XIA LLC
+ * Copyright (c) 2007-2015 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms,
@@ -695,7 +695,7 @@ static AcquisitionValue_t ACQ_VALUES[] =
     { "temp_correction",        TRUE_, FALSE_, MERCURY_UPDATE_NEVER, 0.0,
       psl__SetTempCorrection,         psl__GetTempCorrection,     NULL },
 
-    { "peak_mode",           TRUE_, FALSE_, MERCURY_UPDATE_NEVER,  1.0,                   
+    { "peak_mode",           TRUE_, FALSE_, MERCURY_UPDATE_NEVER,  0.0,                   
       psl__SetPeakMode,      psl__GetPeakMode, NULL }, 
 
     { "trigger_output",           TRUE_, FALSE_, MERCURY_UPDATE_NEVER,  0.0,                   
