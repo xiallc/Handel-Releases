@@ -137,11 +137,6 @@ static unsigned long MERCURY_STATS_CHAN_OFFSET[] = {
 DXP_MD_ALLOC  mercury_psl_md_alloc;
 DXP_MD_FREE   mercury_psl_md_free;
 
-#ifdef USE_XIA_MEM_MANAGER
-#include "xia_mem.h"
-#define mercury_psl_md_alloc(n)  xia_mem_malloc((n), __FILE__, __LINE__)
-#define mercury_psl_md_free(ptr) xia_mem_free(ptr)
-#endif /* USE_XIA_MEM_MANAGER */
 
 #endif /* __PSL_MERCURY_H__ */
 

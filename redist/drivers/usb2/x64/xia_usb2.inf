@@ -8,9 +8,9 @@
 Signature="$WINDOWS NT$"
 Class=USB
 ClassGUID={36FC9E60-C465-11CF-8056-444553540000}
-provider=%CYUSB_Provider%
+Provider=%CYUSB_Provider%
 CatalogFile=xia_usb2.cat
-DriverVer=10/17/2011,3.4.7.000
+DriverVer=07/10/2015,3.4.7.2
 
 [SourceDisksNames]
 1=%CYUSB_Install%,,,
@@ -38,6 +38,7 @@ ExcludeFromSelect = *
 %VID_10E9&PID_0801.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0801
 %VID_10E9&PID_0901.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0901
 %VID_10E9&PID_0B01.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0B01
+%VID_20BD&PID_0020.DeviceDesc%=CyUsb, USB\VID_20BD&PID_0020
 
 
 ;for windows 2000 non intel platforms
@@ -51,6 +52,7 @@ ExcludeFromSelect = *
 %VID_10E9&PID_0801.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0801
 %VID_10E9&PID_0901.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0901
 %VID_10E9&PID_0B01.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0B01
+%VID_20BD&PID_0020.DeviceDesc%=CyUsb, USB\VID_20BD&PID_0020
 
 
 ;for x86 platforms
@@ -64,6 +66,7 @@ ExcludeFromSelect = *
 %VID_10E9&PID_0801.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0801
 %VID_10E9&PID_0901.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0901
 %VID_10E9&PID_0B01.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0B01
+%VID_20BD&PID_0020.DeviceDesc%=CyUsb, USB\VID_20BD&PID_0020
 
 
 ;for x64 platforms
@@ -77,6 +80,7 @@ ExcludeFromSelect = *
 %VID_10E9&PID_0801.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0801
 %VID_10E9&PID_0901.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0901
 %VID_10E9&PID_0B01.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0B01
+%VID_20BD&PID_0020.DeviceDesc%=CyUsb, USB\VID_20BD&PID_0020
 
 
 [CYUSB]
@@ -162,7 +166,7 @@ VID_10E9&PID_0742.DeviceDesc="XIA Gemini-2 USB2 Spectrometer"
 VID_10E9&PID_0801.DeviceDesc="XIA Polaris USB2 Spectrometer"
 VID_10E9&PID_0901.DeviceDesc="XIA Vega USB2 Spectrometer"
 VID_10E9&PID_0B01.DeviceDesc="XIA microDXP USB2 Spectrometer"
-
+VID_20BD&PID_0020.DeviceDesc="KETEK DPP2"
 
 CYUSB.GUID="{AE18AA60-7F6A-11d4-97DD-00010229B959}"
 CYUSB_Unused      = "."

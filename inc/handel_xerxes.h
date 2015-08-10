@@ -74,9 +74,16 @@ static char *BOARD_LIST[] = {
  */
 static char *INTERF_LIST[] = {
   "bad",
+#ifndef EXCLUDE_EPP
+  "EPP",
+  "EPP", /* Placeholder to match the GENERIC_EPP entry in xia_module */
+#endif /* EXCLUDE_EPP */
 #ifndef EXCLUDE_SERIAL
   "SERIAL",
 #endif /* EXCLUDE_SERIAL */
+#ifndef EXCLUDE_USB
+  "USB",
+#endif /* EXCLUDE_USB */
 #ifndef EXCLUDE_USB2
   "USB2",
 #endif /* EXCLUDE_USB2 */

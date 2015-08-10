@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2012 XIA LLC
+ * Copyright (c) 2007-2015 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms, 
@@ -32,7 +32,6 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * $Id$
  *
  */
 
@@ -149,13 +148,6 @@ static FILE *dxp_find_file(const char* filename, const char* mode);
   mercury_md_log(MD_INFO, (x), (y), 0, __FILE__, __LINE__)
 #define dxp_log_debug(x, y)     \
 	mercury_md_log(MD_DEBUG, (x), (y), 0, __FILE__, __LINE__)
-
-/* Memory allocation macro wrappers */
-#ifdef USE_XIA_MEM_MANAGER
-#include "xia_mem.h"
-#define mercury_md_alloc(n)  xia_mem_malloc((n), __FILE__, __LINE__)
-#define mercury_md_free(ptr) xia_mem_free(ptr)
-#endif /* USE_XIA_MEM_MANAGER */
 
 static DXP_MD_IO         mercury_md_io;
 static DXP_MD_SET_MAXBLK mercury_md_set_maxblk;

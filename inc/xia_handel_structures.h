@@ -398,7 +398,9 @@ struct HDLInterface {
    * to determine which pointer to play with.
    */
   union {
+	  struct Interface_Epp    *epp;
 	  struct Interface_Serial *serial;
+	  struct Interface_Usb    *usb;
 	  struct Interface_Usb2   *usb2;
 	  struct Interface_Plx    *plx;
 	  
@@ -412,7 +414,23 @@ typedef struct HDLInterface HDLInterface;
  * SPECIFIC INTERFACES:
  * May move these to a seperate file. Stay tuned.
  *****************************************************************************/
- 
+
+struct Interface_Epp {
+    /* The address of the EPP port. Typically 0x378 or 0x278. */
+    unsigned int epp_address;
+
+    /* The daisy chain id of the module, IF applicable */
+    unsigned int daisy_chain_id;
+};
+typedef struct Interface_Epp Interface_Epp;
+
+
+struct Interface_Usb {
+    /* The device name of the USB port. */
+    unsigned int device_number;
+};
+typedef struct Interface_Usb Interface_Usb;
+
 struct Interface_Usb2 {
     /* The device name of the USB2 port. */
     unsigned int device_number;

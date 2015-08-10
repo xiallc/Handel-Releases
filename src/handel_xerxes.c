@@ -520,6 +520,20 @@ HANDEL_STATIC int xia__CopyInterfString(Module *m, char *interf)
 	return XIA_MISSING_INTERFACE;
 	break;
 
+
+#ifndef EXCLUDE_EPP
+  case EPP:
+  case GENERIC_EPP:
+	sprintf(interf, "%#x", m->interface_info->info.epp->epp_address);
+	break;
+#endif /* EXCLUDE_EPP */
+
+#ifndef EXCLUDE_USB
+  case USB:
+	sprintf(interf, "%u", m->interface_info->info.usb->device_number);
+	break;
+#endif /* EXCLUDE_USB */
+
 #ifndef EXCLUDE_USB2
   case USB2:
     sprintf(interf, "%u", m->interface_info->info.usb2->device_number);
@@ -564,6 +578,27 @@ HANDEL_STATIC int xia__CopyMDString(Module *m, char *md)
 	xiaLogError("xia__CopyMDString", info_string, XIA_MISSING_INTERFACE);
 	return XIA_MISSING_INTERFACE;
 	break;
+
+#ifndef EXCLUDE_EPP
+  case EPP:
+  case GENERIC_EPP:
+	/* If default then dont change anything, else tack on a : in front 
+	 * of the string (tells XerXes to 
+	 * treat this as a multi-module EPP chain 
+	 */
+	if (m->interface_info->info.epp->daisy_chain_id == UINT_MAX) {
+	  sprintf(md, "0");
+	} else {
+	  sprintf(md, ":%u", m->interface_info->info.epp->daisy_chain_id);
+	}
+	break;
+#endif /* EXCLUDE_EPP */
+
+#ifndef EXCLUDE_USB
+  case USB:
+	sprintf(md, "%u", m->interface_info->info.usb->device_number);
+	break;
+#endif /* EXCLUDE_USB */
 
 #ifndef EXCLUDE_USB2
   case USB2:

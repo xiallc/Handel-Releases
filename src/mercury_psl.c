@@ -685,7 +685,7 @@ static AcquisitionValue_t ACQ_VALUES[] =
     { "sync_count",            FALSE_, FALSE_, MERCURY_UPDATE_MAPPING, 0.0,
       psl__SetSyncCount,       psl__GetSyncCount, NULL },
 
-    { "gate_ignore",           FALSE_, FALSE_, 
+    { "gate_ignore",           TRUE_, FALSE_, 
                               MERCURY_UPDATE_MAPPING | MERCURY_UPDATE_MCA, 0.0,
       psl__SetGateIgnore,      psl__GetGateIgnore, NULL },
 

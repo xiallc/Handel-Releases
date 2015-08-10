@@ -335,13 +335,6 @@ DXP_MD_SUPPRESS_LOG  handel_md_suppress_log;
 DXP_MD_SET_LOG_LEVEL handel_md_set_log_level;
 
 
-/* Memory allocation macro wrappers */
-#ifdef USE_XIA_MEM_MANAGER
-#include "xia_mem.h"
-#define handel_md_alloc(n)   xia_mem_malloc((n), __FILE__, __LINE__)
-#define handel_md_free(ptr)  xia_mem_free(ptr)
-#endif /* USE_XIA_MEM_MANAGER */
-
 /* Detector-type constants */
 #define XIA_DET_UNKNOWN	0x0000
 #define XIA_DET_RESET	0x0001

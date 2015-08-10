@@ -77,6 +77,37 @@ static char ERROR_STRING[132];
 static unsigned int maxblk=0;
 
 
+#ifndef EXCLUDE_EPP
+/* EPP definitions */
+/* The id variable stores an optional ID number associated with each module 
+ * (initially included for handling multiple EPP modules hanging off the same
+ * EPP address)
+ */
+static unsigned int numEPP    = 0;
+static int eppID[MAXMOD];
+/* variables to store the IO channel information */
+static char *eppName[MAXMOD];
+/* Port stores the port number for each module, only used for the X10P/G200 */
+static unsigned short port;
+
+static unsigned short next_addr = 0;
+
+/* Store the currentID used for Daisy Chain systems */
+static int currentID = -1;
+#endif /* EXCLUDE_EPP */
+
+
+#ifndef EXCLUDE_USB
+/* USB definitions */
+/* The id variable stores an optional ID number associated with each module 
+ */
+static unsigned int numUSB    = 0;
+/* variables to store the IO channel information */
+static char *usbName[MAXMOD];
+
+static long usb_addr=0;
+#endif /* EXCLUDE_USB IO */
+
 #ifndef EXCLUDE_USB2
 /* USB 2.0 definitions */
 /* The id variable stores an optional ID number associated with each module 
@@ -226,6 +257,25 @@ XIA_MD_EXPORT int XIA_MD_API dxp_md_init_io(Xia_Io_Functions* funcs, char* type)
     }
 
 
+#ifndef EXCLUDE_EPP
+    if (STREQ(type, "epp")) {
+	funcs->dxp_md_io         = dxp_md_epp_io;
+	funcs->dxp_md_initialize = dxp_md_epp_initialize;
+	funcs->dxp_md_open       = dxp_md_epp_open;
+	funcs->dxp_md_close      = dxp_md_epp_close;
+    }
+#endif /* EXCLUDE_EPP */
+
+#ifndef EXCLUDE_USB
+    if (STREQ(type, "usb")) 
+	  {
+		funcs->dxp_md_io            = dxp_md_usb_io;
+		funcs->dxp_md_initialize    = dxp_md_usb_initialize;
+		funcs->dxp_md_open          = dxp_md_usb_open;
+		funcs->dxp_md_close         = dxp_md_usb_close;
+	  }
+#endif /* EXCLUDE_USB */
+
 #ifndef EXCLUDE_SERIAL
     if (STREQ(type, "serial")) 
 	  {
@@ -264,6 +314,444 @@ XIA_MD_EXPORT int XIA_MD_API dxp_md_init_io(Xia_Io_Functions* funcs, char* type)
     return DXP_SUCCESS;
 }
 
+
+#ifndef EXCLUDE_EPP
+/*****************************************************************************
+ * 
+ * Initialize the system. 
+ * 
+ *****************************************************************************/
+XIA_MD_STATIC int XIA_MD_API dxp_md_epp_initialize(unsigned int* maxMod, char* dllname)
+/* unsigned int *maxMod;					Input: maximum number of dxp modules allowed */
+/* char *dllname;							Input: name of the DLL						*/
+{
+    int status = DXP_SUCCESS;
+    int rstat = 0;
+
+    /* EPP initialization */
+
+    /* check if all the memory was allocated */
+    if (*maxMod>MAXMOD){
+	status = DXP_NOMEM;
+	sprintf(ERROR_STRING,"Calling routine requests %d maximum modules: only %d available.", 
+		*maxMod, MAXMOD);
+	dxp_md_log_error("dxp_md_epp_initialize",ERROR_STRING,status);
+	return status;
+    }
+
+    /* Zero out the number of modules currently in the system */
+    numEPP = 0;
+
+    /* Initialize the EPP port */
+    rstat = sscanf(dllname,"%hx",&port);			/* PLCF 4pi change, %x to %hx	*/
+    if (rstat!=1) {
+	status = DXP_NOMATCH;
+	dxp_md_log_error("dxp_md_epp_initialize",
+			 "Unable to read the EPP port address",status);
+	return status;
+    }
+													 
+    sprintf(ERROR_STRING, "EPP Port = %#x", port);
+    dxp_md_log_debug("dxp_md_epp_initialize", ERROR_STRING);
+
+    /* Move the call to InitEPP() to the open() routine, this will allow daisy chain IDs to work. 
+     * NOTE: since the port number is stored in a static global, init() better not get called again
+     * with a different port, before the open() call!!!!!
+     */ 
+    /* Call the EPPLIB.DLL routine */	
+    /*  rstat = DxpInitEPP((int)port);*/
+
+
+    /* Check for Success */
+    /*  if (rstat==0) {
+	status = DXP_SUCCESS;
+	} else {
+	status = DXP_INITIALIZE;
+	sprintf(ERROR_STRING,
+	"Unable to initialize the EPP port: rstat=%d",rstat);
+	dxp_md_log_error("dxp_md_epp_initialize", ERROR_STRING,status);
+	return status;
+	}*/
+
+	/* Reset the currentID when the EPP interface is initialized */
+	currentID = -1;
+
+    return status;
+}
+/*****************************************************************************
+ * 
+ * Routine is passed the user defined configuration string *name.  This string
+ * contains all the information needed to point to the proper IO channel by 
+ * future calls to dxp_md_io().  
+ * 
+ *****************************************************************************/
+XIA_MD_STATIC int XIA_MD_API dxp_md_epp_open(char* ioname, int* camChan)
+/* char *ioname;							Input:  string used to specify this IO 
+   channel */
+/* int *camChan;						Output: returns a reference number for
+   this module */
+{
+    unsigned int i;
+    int status=DXP_SUCCESS;
+    int rstat = 0;
+
+    sprintf(ERROR_STRING, "ioname = %s", ioname);
+    dxp_md_log_debug("dxp_md_epp_open", ERROR_STRING);
+
+    /* First loop over the existing names to make sure this module 
+     * was not already configured?  Don't want/need to perform
+     * this operation 2 times. */
+    
+	for(i=0;i<numEPP;i++)
+	  {
+		if(STREQ(eppName[i],ioname)) 
+		  {
+			status=DXP_SUCCESS;
+			*camChan = i;
+			return status;
+		  }
+	  }
+
+    /* Got a new one.  Increase the number existing and assign the global 
+     * information */
+
+    if (eppName[numEPP]!=NULL) 
+	  {
+		dxp_md_free(eppName[numEPP]);
+	  }
+    eppName[numEPP] = (char *) dxp_md_alloc((strlen(ioname)+1)*sizeof(char));
+    strcpy(eppName[numEPP],ioname);
+
+    /* See if this is a multi-module EPP chain, if not set its ID to -1 */
+    if (ioname[0] == ':') 
+	  {
+		sscanf(ioname, ":%d", &(eppID[numEPP]));
+		
+		sprintf(ERROR_STRING, "ID = %i", eppID[numEPP]);
+		dxp_md_log_debug("dxp_md_epp_open", ERROR_STRING);
+		
+		/* Initialize the port address first */
+		rstat = DxpInitPortAddress((int) port);
+		if (rstat != 0) 
+		  {
+			status = DXP_INITIALIZE;
+			sprintf(ERROR_STRING,
+					"Unable to initialize the EPP port address: port=%d", port);
+			dxp_md_log_error("dxp_md_epp_open", ERROR_STRING, status);
+			return status;
+		  }
+		
+		/* Call setID now to setup the port for Initialization */
+		DxpSetID((unsigned short) eppID[numEPP]); 
+		/* No return value
+		   if (rstat != 0) 
+		   {
+		   status = DXP_INITIALIZE;
+		   sprintf(ERROR_STRING,
+		   "Unable to set the EPP Port ID: ID=%d", id[numEPP]);
+		   dxp_md_log_error("dxp_md_epp_open", ERROR_STRING, status);
+		   return status;
+		   }*/
+	  } else {
+		eppID[numEPP] = -1;
+	  }
+	
+    /* Call the EPPLIB routine */	
+    rstat = DxpInitEPP((int)port);
+	
+    /* Check for Success */
+    if (rstat==0) 
+	  {
+		status = DXP_SUCCESS;
+	  } else {
+		status = DXP_INITIALIZE;
+		sprintf(ERROR_STRING,
+				"Unable to initialize the EPP port: rstat=%d",rstat);
+		dxp_md_log_error("dxp_md_epp_open", ERROR_STRING,status);
+		return status;
+	  }
+	
+    *camChan = numEPP++;
+    numMod++;
+
+    return status;
+}
+
+
+/*****************************************************************************
+ * 
+ * This routine performs the IO call to read or write data.  The pointer to 
+ * the desired IO channel is passed as camChan.  The address to write to is
+ * specified by function and address.  The data length is specified by 
+ * length.  And the data itself is stored in data.
+ * 
+ *****************************************************************************/
+XIA_MD_STATIC int XIA_MD_API dxp_md_epp_io(int* camChan, unsigned int* function, 
+					   unsigned long* address, void* data,
+					   unsigned int* length)
+/* int *camChan;				Input: pointer to IO channel to access	*/
+/* unsigned int *function;			Input: XIA EPP function definition	*/
+/* unsigned long *address;			Input: XIA EPP address definition	*/
+/* void *data;		                	I/O:  data read or written		*/
+/* unsigned int *length;			Input: how much data to read or write	*/
+{
+    int rstat = 0; 
+    int status;
+  
+    unsigned int i;
+    
+    unsigned short *us_data = (unsigned short *)data;
+
+    unsigned long *temp=NULL;
+
+    if ((currentID != eppID[*camChan]) && (eppID[*camChan] != -1))
+	  {
+		DxpSetID((unsigned short) eppID[*camChan]);
+		
+		/* Update the currentID */
+		currentID = eppID[*camChan];
+		
+		sprintf(ERROR_STRING, "calling SetID = %i, camChan = %i", eppID[*camChan], *camChan);
+		dxp_md_log_debug("dxp_md_epp_io", ERROR_STRING);
+	  }
+	
+    /* Data*/
+    if (*address==0) {
+	/* Perform short reads and writes if not in program address space */
+	if (next_addr>=0x4000) {
+	    if (*length>1) {
+		if (*function == MD_IO_READ) {
+		    rstat = DxpReadBlock(next_addr, us_data, (int) *length);
+		} else {
+		    rstat = DxpWriteBlock(next_addr, us_data, (int) *length);
+		}
+	    } else {
+		if (*function == MD_IO_READ) {
+		    rstat = DxpReadWord(next_addr, us_data);
+		} else {
+		    rstat = DxpWriteWord(next_addr, us_data[0]);
+		}
+	    }
+	} else {
+	    /* Perform long reads and writes if in program address space (24-bit) */
+	    /* Allocate memory */
+	    temp = (unsigned long *) dxp_md_alloc(sizeof(unsigned short)*(*length));
+	    if (*function == MD_IO_READ) {
+		rstat = DxpReadBlocklong(next_addr, temp, (int) *length/2);
+		/* reverse the byte order for the EPPLIB library */
+		for (i=0;i<*length/2;i++) {
+		    us_data[2*i] = (unsigned short) (temp[i]&0xFFFF);
+		    us_data[2*i+1] = (unsigned short) ((temp[i]>>16)&0xFFFF);
+		}
+	    } else {
+		/* reverse the byte order for the EPPLIB library */
+		for (i=0;i<*length/2;i++) {
+		    temp[i] = ((us_data[2*i]<<16) + us_data[2*i+1]);
+		}
+		rstat = DxpWriteBlocklong(next_addr, temp, (int) *length/2);
+	    }
+	    /* Free the memory */
+	    dxp_md_free(temp);
+	}
+	/* Address port*/
+    } else if (*address==1) {
+	next_addr = *us_data;
+	/* Control port*/
+    } else if (*address==2) {
+	/*		dest = cport;
+	 *length = 1;
+	 */
+	/* Status port*/
+    } else if (*address==3) {
+	/*		dest = sport;
+	 *length = 1;*/
+    } else {
+	sprintf(ERROR_STRING,"Unknown EPP address=%ld",*address);
+	status = DXP_MDIO;
+	dxp_md_log_error("dxp_md_epp_io",ERROR_STRING,status);
+	return status;
+    }
+
+    if (rstat!=0) {
+	status = DXP_MDIO;
+	sprintf(ERROR_STRING,"Problem Performing I/O to Function: %d, address: %#lx",*function, *address);
+	dxp_md_log_error("dxp_md_epp_io",ERROR_STRING,status);
+	sprintf(ERROR_STRING,"Trying to write to internal address: %d, length %d",next_addr, *length);
+	dxp_md_log_error("dxp_md_epp_io",ERROR_STRING,status);
+	return status;
+    }
+	
+    status=DXP_SUCCESS;
+
+    return status;
+}
+
+
+/**********
+ * "Closes" the EPP connection, which means that it does nothing.
+ **********/
+XIA_MD_STATIC int XIA_MD_API dxp_md_epp_close(int *camChan)
+{
+    UNUSED(camChan);
+    
+    return DXP_SUCCESS;
+}
+
+#endif /* EXCLUDE_EPP */
+
+#ifndef EXCLUDE_USB
+/*****************************************************************************
+ * 
+ * Initialize the USB system.  
+ * 
+ *****************************************************************************/
+
+
+XIA_MD_STATIC int XIA_MD_API dxp_md_usb_initialize(unsigned int* maxMod, char* dllname)
+/* unsigned int *maxMod;					Input: maximum number of dxp modules allowed */
+/* char *dllname;							Input: name of the DLL						*/
+{
+    int status = DXP_SUCCESS;
+
+	UNUSED(dllname);
+
+    /* USB initialization */
+
+    /* check if all the memory was allocated */
+    if (*maxMod>MAXMOD)
+	  {
+		status = DXP_NOMEM;
+		sprintf(ERROR_STRING,"Calling routine requests %d maximum modules: only %d available.", 
+				*maxMod, MAXMOD);
+		dxp_md_log_error("dxp_md_usb_initialize",ERROR_STRING,status);
+		return status;
+	  }
+
+    /* Zero out the number of modules currently in the system */
+    numUSB = 0;
+
+    return status;
+}
+/*****************************************************************************
+ * 
+ * Routine is passed the user defined configuration string *name.  This string
+ * contains all the information needed to point to the proper IO channel by 
+ * future calls to dxp_md_io().  
+ * 
+ *****************************************************************************/
+XIA_MD_STATIC int XIA_MD_API dxp_md_usb_open(char* ioname, int* camChan)
+	 /* char *ioname;				 Input:  string used to specify this IO channel */
+	 /* int *camChan;				 Output: returns a reference number for this module */
+{
+  int status=DXP_SUCCESS;
+  unsigned int i;
+
+  /* Temporary name so that we can get the length */
+  char tempName[200];
+  
+  sprintf(ERROR_STRING, "ioname = %s", ioname);
+  dxp_md_log_debug("dxp_md_usb_open", ERROR_STRING);
+  
+  /* First loop over the existing names to make sure this module 
+   * was not already configured?  Don't want/need to perform
+   * this operation 2 times. */
+  
+  for(i=0;i<numUSB;i++)
+	{
+	  if(STREQ(usbName[i],ioname)) 
+		{
+		  status=DXP_SUCCESS;
+		  *camChan = i;
+		  return status;
+		}
+	}
+  
+  /* Got a new one.  Increase the number existing and assign the global 
+   * information */
+  sprintf(tempName, "\\\\.\\ezusb-%s", ioname); 
+  
+  if (usbName[numUSB]!=NULL) 
+	{
+	  dxp_md_free(usbName[numUSB]);
+	}
+  usbName[numUSB] = (char *) dxp_md_alloc((strlen(tempName)+1)*sizeof(char));
+  strcpy(usbName[numUSB],tempName);
+  
+  /*  dxp_md_log_info("dxp_md_usb_open", "Attempting to open usb handel");
+	  if (xia_usb_open(usbName[numUSB], &usbHandle[numUSB]) != 0) 
+	  {
+	  dxp_md_log_info("dxp_md_usb_open", "Unable to open usb handel");
+	  }
+	  sprintf(ERROR_STRING, "device = %s, handle = %i", usbName[numUSB], usbHandle[numUSB]);
+	  dxp_md_log_info("dxp_md_usb_open", ERROR_STRING);
+  */
+    *camChan = numUSB++;
+    numMod++;
+
+    return status;
+}
+
+
+/*****************************************************************************
+ * 
+ * This routine performs the IO call to read or write data.  The pointer to 
+ * the desired IO channel is passed as camChan.  The address to write to is
+ * specified by function and address.  The data length is specified by 
+ * length.  And the data itself is stored in data.
+ * 
+ *****************************************************************************/
+XIA_MD_STATIC int XIA_MD_API dxp_md_usb_io(int* camChan, unsigned int* function, 
+                                            unsigned long* address, void* data,
+                                            unsigned int* length)
+	 /* int *camChan;				Input: pointer to IO channel to access	*/
+	 /* unsigned int *function;		Input: XIA EPP function definition	    */
+	 /* unsigned int *address;		Input: XIA EPP address definition	    */
+	 /* unsigned short *data;		I/O:  data read or written		        */
+	 /* unsigned int *length;		Input: how much data to read or write	*/
+{
+  int rstat = 0; 
+  int status;
+  unsigned short *us_data = (unsigned short *)data;
+  
+  if (*address == 0) 
+	{
+	  if (*function == MD_IO_READ) 
+		{
+		  rstat = xia_usb_read(usb_addr, (long) *length, usbName[*camChan], us_data);
+		} else {
+		  rstat = xia_usb_write(usb_addr, (long) *length, usbName[*camChan], us_data);
+		}
+	} else if (*address ==1) {
+	  usb_addr = (long) us_data[0];
+	}
+
+  if (rstat != 0) 
+	{
+	  status = DXP_MDIO;
+	  sprintf(ERROR_STRING,"Problem Performing USB I/O to Function: %d, address: %ld",*function, *address);
+	  dxp_md_log_error("dxp_md_usb_io",ERROR_STRING,status);
+	  sprintf(ERROR_STRING,"Trying to write to internal address: %#hx, length %d", (int)usb_addr, *length);
+	  dxp_md_log_error("dxp_md_usb_io",ERROR_STRING,status);
+	  return status;
+	}
+  
+  status=DXP_SUCCESS;
+  
+  return status;
+}
+
+
+/**********
+ * "Closes" the USB connection
+ **********/
+XIA_MD_STATIC int XIA_MD_API dxp_md_usb_close(int *camChan)
+{
+    xia_usb_close(1);
+
+    return DXP_SUCCESS;
+}
+
+#endif
 
 
 #ifndef EXCLUDE_SERIAL

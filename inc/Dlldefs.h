@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2004 X-ray Instrumentation Associates
- *               2005-2015 XIA LLC
+ *               2005-2012 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms, 
@@ -33,6 +33,7 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
+ * $Id$
  *
  */
 
@@ -55,7 +56,15 @@
 #define XIA_EXPORT 
 #endif /* _WIN32 */
 
+#ifdef WIN32_EPPLIB_VBA
+#define XIA_API _stdcall
+#else
+
 #ifdef WIN32_SERIAL_VBA
+#define XIA_API _stdcall
+#else
+
+#ifdef WIN32_USBLIB_VBA
 #define XIA_API _stdcall
 #else
 
@@ -67,7 +76,11 @@
 
 #endif /* WIN32_XIA_USB2_VBA */
 
+#endif /* WIN32_USBLIB_VBA */
+
 #endif /* WIN32_SERIAL_VBA */
+
+#endif /* WIN32_EPPLIB_VBA */
 
 
 

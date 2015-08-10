@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2004 X-ray Instrumentation Associates
- *               2005-2012 XIA LLC
+ *               2005-2015 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms, 
@@ -33,7 +33,6 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * $Id$
  *
  */
 
@@ -170,13 +169,6 @@ XERXES_STATIC int dxp_get_num_params(int modChan, Board *b,
 #define dxp_log_warning(x, y)	xmap_md_log(MD_WARNING, (x), (y), 0, __FILE__, __LINE__)
 #define dxp_log_info(x, y)	xmap_md_log(MD_INFO, (x), (y), 0, __FILE__, __LINE__)
 #define dxp_log_debug(x, y)	xmap_md_log(MD_DEBUG, (x), (y), 0, __FILE__, __LINE__)
-
-/* Memory allocation macro wrappers */
-#ifdef USE_XIA_MEM_MANAGER
-#include "xia_mem.h"
-#define xmap_md_alloc(n)  xia_mem_malloc((n), __FILE__, __LINE__)
-#define xmap_md_free(ptr) xia_mem_free(ptr)
-#endif /* USE_XIA_MEM_MANAGER */
 
 /* These constants define the values that dxp_md_plx_io() accepts for the 
  * 'function' argument.

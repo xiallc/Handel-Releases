@@ -373,15 +373,21 @@ XERXES_EXPORT int XERXES_API dxp_init_ds(void)
    * free memory */
   working_btype = NULL;
 	
-  /* CLEAR INFO STRUCTURE */
-	
-  /* Make sure the info structure is empty */
+  /* CLEAR BOARDS,DSP,FIPPI,DEFAULTS LINK LIST */
+  if((status=dxp_init_boards_ds())!=DXP_SUCCESS){
+	sprintf(info_string,"Failed to initialize the boards structures");
+	dxp_log_error("dxp_init_ds",info_string,status);
+	return status;
+  }
+
+  /* CLEAR INFO STRUCTURE */	
   if (info!=NULL) {
 	if (info->preamp  != NULL) xerxes_md_free(info->preamp);
 	if (info->modules != NULL) xerxes_md_free(info->modules);
 	xerxes_md_free(info);
 	info = NULL;
   }
+  
   /* Now allocate memory for the system level information */
   info = (System_Info*) xerxes_md_alloc(sizeof(System_Info));
   info->preamp = NULL;
@@ -389,13 +395,6 @@ XERXES_EXPORT int XERXES_API dxp_init_ds(void)
   info->btypes = NULL;
   info->utils = utils;
   info->status = 0;
-
-  /* CLEAR BOARDS,DSP,FIPPI,DEFAULTS LINK LIST */
-  if((status=dxp_init_boards_ds())!=DXP_SUCCESS){
-	sprintf(info_string,"Failed to initialize the boards structures");
-	dxp_log_error("dxp_init_ds",info_string,status);
-	return status;
-  }
 
   return DXP_SUCCESS;
 }

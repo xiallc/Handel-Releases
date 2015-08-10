@@ -123,11 +123,6 @@ static unsigned long XMAP_STATS_CHAN_OFFSET[] = {
 DXP_MD_ALLOC  xmap_psl_md_alloc;
 DXP_MD_FREE   xmap_psl_md_free;
 
-#ifdef USE_XIA_MEM_MANAGER
-#include "xia_mem.h"
-#define xmap_psl_md_alloc(n)  xia_mem_malloc((n), __FILE__, __LINE__)
-#define xmap_psl_md_free(ptr) xia_mem_free(ptr)
-#endif /* USE_XIA_MEM_MANAGER */
 
 enum master {
     XMAP_GATE_MASTER,

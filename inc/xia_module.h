@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2004 X-ray Instrumentation Associates
- *               2005-2015 XIA LLC
+ *               2005-2012 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms, 
@@ -71,9 +71,16 @@ typedef struct _AddChanType {
 /* Interface */
 enum {
   NO_INTERFACE = 0,
+#ifndef EXCLUDE_EPP
+  EPP,
+  GENERIC_EPP,
+#endif /* EXCLUDE_EPP */
 #ifndef EXCLUDE_SERIAL
   SERIAL,
 #endif /* EXCLUDE_SERIAL */
+#ifndef EXCLUDE_USB
+  USB,
+#endif /* EXCLUDE_USB */
 #ifndef EXCLUDE_USB2
   USB2,
 #endif /* EXCLUDE_USB2 */

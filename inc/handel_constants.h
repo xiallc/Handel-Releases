@@ -98,6 +98,9 @@
 #define AV_MEM_R_ADC    (AV_MEM_REQ | AV_MEM_ADC)
 #define AV_MEM_R_GLB    (AV_MEM_REQ | AV_MEM_GLOB)
 
+/** Supported board features **/
+#define BOARD_SUPPORTS_SCA	0x01
+
 /** UltraLo **/
 enum ElectrodeSize
 {

@@ -383,13 +383,6 @@ XERXES_EXPORT Utils *utils;
 #define dxp_log_debug(x, y)  xerxes_md_log(MD_DEBUG, (x), (y), 0, __FILE__, __LINE__)
 
 
-/* Memory allocation macro wrappers */
-#ifdef USE_XIA_MEM_MANAGER
-#include "xia_mem.h"
-#define xerxes_md_alloc(n)  xia_mem_malloc((n), __FILE__, __LINE__)
-#define xerxes_md_free(ptr) xia_mem_free(ptr)
-#endif /* USE_XIA_MEM_MANAGER */
-
 /* Constants */
 #define MAX_MEM_TYPE_LEN  80
 

@@ -226,7 +226,7 @@ HANDEL_EXPORT int HANDEL_API xiaAddDetectorItem(char *alias, char *name,
 	{
 		chosen->nchan    		= *((unsigned short *) value);
 		chosen->polarity 		= (unsigned short *)
- handel_md_alloc(chosen->nchan*sizeof(unsigned short));
+    handel_md_alloc(chosen->nchan*sizeof(unsigned short));
 		chosen->gain     		= (double *) handel_md_alloc(chosen->nchan*sizeof(double));
 		chosen->typeValue 	= (double *)handel_md_alloc(sizeof(double) * chosen->nchan);
 
@@ -234,6 +234,19 @@ HANDEL_EXPORT int HANDEL_API xiaAddDetectorItem(char *alias, char *name,
 		    (chosen->gain      == NULL) ||
 			(chosen->typeValue == NULL))
 		{
+      if (chosen->polarity) {
+          handel_md_free(chosen->polarity);
+          chosen->polarity = NULL;
+      }
+      if (chosen->gain) {
+          handel_md_free(chosen->gain);
+          chosen->gain = NULL;
+      }
+      if (chosen->typeValue) {
+          handel_md_free(chosen->typeValue);
+          chosen->typeValue = NULL;
+      }
+      
 			status = XIA_NOMEM;
 			xiaLogError("xiaAddDetectorItem", "Unable to allocate memory for detector info", status);
 			return status;

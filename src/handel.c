@@ -316,6 +316,9 @@ HANDEL_EXPORT int HANDEL_API xiaExit(void)
   }
   
   /* Other shutdown procedures go here */
+  status = xiaInitMemory();
+  status = dxp_init_ds();
+  
   return XIA_SUCCESS;
 }
 
@@ -707,12 +710,27 @@ HANDEL_SHARED int HANDEL_API xiaFreeModule(Module *module)
       break;
 #endif /* EXCLUDE_PLX */
 
+#ifndef EXCLUDE_EPP
+    case EPP:
+    case GENERIC_EPP:
+      handel_md_free((void *)module->interface_info->info.epp);
+      handel_md_free((void *)module->interface_info);
+      break;
+#endif /* EXCLUDE_EPP */
+
 #ifndef EXCLUDE_SERIAL
     case SERIAL:
       handel_md_free((void *)module->interface_info->info.serial);
       handel_md_free((void *)module->interface_info);
       break;
 #endif /* EXCLUDE_SERIAL */
+
+#ifndef EXCLUDE_USB
+    case USB:
+      handel_md_free((void *)module->interface_info->info.usb);
+      handel_md_free((void *)module->interface_info);
+      break;
+#endif /* EXCLUDE_USB */
 
 #ifndef EXCLUDE_USB2
     case USB2:

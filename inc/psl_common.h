@@ -166,21 +166,8 @@ typedef struct _AcquisitionValue {
 
 
 /* Memory allocation wrappers */
-
-/* This is obviously a major hack, but the problem that I'm not
- * dealing with here is that this code is shared across all of the
- * PSLs. Each PSL has it's own memory naming convention. In the
- * future, we probably shouldn't allow psl.c to do any memory
- * management, but that is neither here nor there.
- */
-#ifdef USE_XIA_MEM_MANAGER
-#include "xia_mem.h"
-#define MALLOC(n) xia_mem_malloc((n), __FILE__, __LINE__)
-#define FREE(ptr) xia_mem_free(ptr)
-#else
 #define MALLOC(n) utils->funcs->dxp_md_alloc(n)
 #define FREE(ptr) utils->funcs->dxp_md_free(ptr)
-#endif /* USE_XIA_MEM_MANAGER */
 
 
 /* Wrappers around other MD utility routines. */

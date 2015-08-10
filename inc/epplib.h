@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2005-2012 XIA LLC
+ * Copyright (c) 2004 X-ray Instrumentation Associates
+ *               2005-2012 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms, 
@@ -36,70 +37,35 @@
  *
  */
 
-#ifndef __XIA_MEM_PRIVATE_H__
-#define __XIA_MEM_PRIVATE_H__
+#ifndef __EPPLIB_H__
+#define __EPPLIB_H__
+
+
 
 #include "Dlldefs.h"
-#include "xia_common.h"
-
-
-/** Constants **/
-#define MAX_FILE_SIZE 256
-
-
-/** Structures **/
-typedef struct _mem_blk {
-  
-  void   *addr;
-  size_t n;
-
-  char file[MAX_FILE_SIZE];
-  int  line;
-
-  struct _mem_blk *next;
-
-} mem_blk_t;
-
-
-typedef struct _mem_point_elem {
-  
-  void *v;
-  char *key;
-  struct _mem_point_elem *next;
-
-}  mem_point_elem_t;
-
-
-typedef struct _mem_point {
-
-  unsigned int n_slots;
-  unsigned int n_elems;
-  mem_point_elem_t **elems;
-
-} mem_point_t;
-
-typedef mem_point_t * mem_check_pt_t;
-
 
 #ifdef __cplusplus
 extern "C" {
-#endif /* __cplusplus */
+#endif
 
-  XIA_EXPORT void *xia_mem_malloc(size_t n, char *file, int line);
-  XIA_EXPORT void xia_mem_free(void *ptr);
-  XIA_EXPORT void xia_mem_stats(unsigned long *total, unsigned long *current,
-								unsigned long *peak);
-  XIA_EXPORT void xia_mem_checkpoint(mem_check_pt_t *chk_pt);
-  XIA_EXPORT void xia_mem_checkpoint_free(mem_check_pt_t *chk_pt);
-  XIA_EXPORT void xia_mem_checkpoint_cmp(mem_check_pt_t *pt, char *out);
+  XIA_EXPORT int XIA_API DxpInitPortAddress(int );
+  XIA_EXPORT int XIA_API DxpInitEPP(int );
+  XIA_EXPORT int XIA_API DxpWriteWord(unsigned short,unsigned short);
+  XIA_EXPORT int XIA_API DxpWriteBlock(unsigned short,unsigned short *,int);
+  XIA_EXPORT int XIA_API DxpWriteBlocklong(unsigned short,unsigned long *, int);
+  XIA_EXPORT int XIA_API DxpReadWord(unsigned short,unsigned short *);
+  XIA_EXPORT int XIA_API DxpReadBlock(unsigned short, unsigned short *,int);
+  XIA_EXPORT int XIA_API DxpReadBlockd(unsigned short, double *,int);
+  XIA_EXPORT int XIA_API DxpReadBlocklong(unsigned short,unsigned long *,int);
+  XIA_EXPORT int XIA_API DxpReadBlocklongd(unsigned short, double *,int);
+  XIA_EXPORT void XIA_API DxpSetID(unsigned short id);
+  XIA_EXPORT int XIA_API DxpWritePort(unsigned short port, unsigned short data);
+  XIA_EXPORT int XIA_API DxpReadPort(unsigned short port, unsigned short *data);
+  XIA_EXPORT int XIA_API set_addr(unsigned short Input_Data);
 
 #ifdef __cplusplus
 }
-#endif /* __cplusplus */
+#endif
 
-XIA_SHARED mem_point_t *xia_mem_point_create(unsigned int n);
-XIA_SHARED void xia_mem_point_insert(mem_point_t *p, char *key);
-XIA_SHARED void xia_mem_point_free(mem_point_t *p);
-XIA_SHARED boolean_t xia_mem_point_key_exists(mem_point_t *p, char *key);
 
-#endif /* __XIA_MEM_PRIVATE_H__ */
+#endif /* __EPPLIB_H__ */

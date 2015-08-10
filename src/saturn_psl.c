@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2002-2004 X-ray Instrumentation Associates
- *               2005-2015 XIA LLC
+ *               2005-2014 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms,
@@ -187,6 +187,7 @@ PSL_STATIC int pslUpdateFilter(int detChan, double peakingTime,
                                double preampGain, Module *m);
 PSL_STATIC int PSL_API pslUpdateTriggerFilter(int detChan, XiaDefaults *defaults);
 PSL_STATIC boolean_t PSL_API pslIsInterfaceValid(Module *module);
+PSL_STATIC boolean_t PSL_API pslIsEPPAddressValid(Module *module);
 PSL_STATIC boolean_t PSL_API pslIsNumChannelsValid(Module *module);
 PSL_STATIC boolean_t PSL_API pslAreAllDefaultsPresent(XiaDefaults *defaults);
 
@@ -425,16 +426,22 @@ PSL_EXPORT int PSL_API saturn_PSLInit(PSLFuncs *funcs)
 
 /*****************************************************************************
  *
- * This routine validates module information specific to the product
+ * This routine validates module information specific to the dxpsaturn
+ * product:
  *
- * 1) interface should be supported
- * 2) number_of_channels = 1
+ * 1) interface should be of type genericEPP or epp
+ * 2) epp_address should be 0x278 or 0x378
+ * 3) number_of_channels = 1
  *
  *****************************************************************************/
 PSL_STATIC int PSL_API pslValidateModule(Module *module)
 {
   if (!pslIsInterfaceValid(module)) {
     return XIA_MISSING_INTERFACE;
+  }
+
+  if (!pslIsEPPAddressValid(module)) {
+    return XIA_MISSING_ADDRESS;
   }
 
   if (!pslIsNumChannelsValid(module)) {
@@ -477,6 +484,18 @@ PSL_STATIC boolean_t PSL_API pslIsInterfaceValid(Module *module)
 
   ASSERT(module != NULL);
 
+
+#ifndef EXCLUDE_EPP
+  foundValidInterface = (boolean_t) (foundValidInterface ||
+                        (module->interface_info->type == EPP ||
+                         module->interface_info->type == GENERIC_EPP));
+#endif /* EXCLUDE_EPP */
+
+#ifndef EXCLUDE_USB
+  foundValidInterface = (boolean_t) (foundValidInterface ||
+                        (module->interface_info->type == USB));
+#endif /* EXCLUDE_USB */
+
 #ifndef EXCLUDE_USB2
   foundValidInterface = (boolean_t) (foundValidInterface ||
                         (module->interface_info->type == USB2));
@@ -488,6 +507,19 @@ PSL_STATIC boolean_t PSL_API pslIsInterfaceValid(Module *module)
     pslLogError("pslIsInterfaceValid", info_string, XIA_MISSING_INTERFACE);
     return FALSE_;
   }
+
+  return TRUE_;
+}
+
+
+/** @brief Verify that the specified EPP address is valid
+ *
+ * This routine no longer checks any values since add-on EPP cards
+ * use a different set of addresses then integrated EPP ports.
+ */
+PSL_STATIC boolean_t PSL_API pslIsEPPAddressValid(Module *module)
+{
+  UNUSED(module);
 
   return TRUE_;
 }

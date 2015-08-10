@@ -101,12 +101,5 @@ extern FILE *out_stream;
 DXP_MD_ALLOC md_md_alloc;
 DXP_MD_FREE  md_md_free;
 
-/* Memory allocation macro wrappers */
-#ifdef USE_XIA_MEM_MANAGER
-#include "xia_mem.h"
-#define md_md_alloc(n)  xia_mem_malloc((n), __FILE__, __LINE__)
-#define md_md_free(ptr) xia_mem_free(ptr)
-#endif /* USE_XIA_MEM_MANAGER */
-
 
 #endif /* XIA_MD_H */

@@ -154,9 +154,16 @@ HANDEL_STATIC int  _parseDetectorIdx(char *str, int *idx, char *alias);
  */
 static char *interfaceStr[] = { 
   "none",
+#ifndef EXCLUDE_EPP
+  "epp",
+  "genericEPP",
+#endif /* EXCLUDE_EPP */
 #ifndef EXCLUDE_SERIAL
   "serial",
 #endif /* EXCLUDE_SERIAL */
+#ifndef EXCLUDE_USB
+  "usb",
+#endif /* EXCLUDE_USB */
 #ifndef EXCLUDE_USB2
   "usb2",
 #endif /* EXCLUDE_USB2 */
@@ -168,7 +175,10 @@ static char *interfaceStr[] = {
 /* This array is mainly used to compare names with the possible sub-interface
  * values. This should be update every time a new interface is added.
  */
-static char *subInterfaceStr[5] = {
+static char *subInterfaceStr[8] = {
+  "slot",
+  "epp_address",
+  "daisy_chain_id",
   "com_port",
   "baud_rate",
   "device_number",
@@ -184,6 +194,9 @@ static ModItem_t items[] = {
   {"firmware",           _addFirmware,   TRUE_},
   {"default",            _addDefault,    TRUE_},
   {"interface",          _addInterface,  TRUE_},
+  {"slot",               _addInterface,  TRUE_},
+  {"epp_address",        _addInterface,  TRUE_},
+  {"daisy_chain_id",     _addInterface,  TRUE_},
   {"device_number",      _addInterface,  TRUE_},
   {"com_port",           _addInterface,  TRUE_},
   {"baud_rate",          _addInterface,  TRUE_},
@@ -439,6 +452,93 @@ HANDEL_STATIC int HANDEL_API xiaProcessInterface(Module *chosen, char *name, voi
 
 
   /* Decide which interface we are going to be working with */
+
+#ifndef EXCLUDE_EPP
+		if (STREQ(name, "epp_address")    ||
+		    STREQ(name, "daisy_chain_id") ||
+        STREQ(interface, "genericEPP")     ||
+        STREQ(interface, "epp"))
+		  {
+        /* Check that the module type is correct */
+        if ((chosen->interface_info->type != EPP)           &&
+            (chosen->interface_info->type != GENERIC_EPP)   &&
+            (chosen->interface_info->type != NO_INTERFACE))
+          {
+            status = XIA_WRONG_INTERFACE;
+            sprintf(info_string, "Item %s is not a valid element of the current interface", name);
+            xiaLogError("xiaProcessInterface", info_string, status);
+            return status;
+          }
+	  
+        /* See if we need to create a new interface */
+        if (chosen->interface_info->type == NO_INTERFACE) 
+          {
+            chosen->interface_info->type = GENERIC_EPP;
+            chosen->interface_info->info.epp = (Interface_Epp *)handel_md_alloc(sizeof(Interface_Epp));
+            if (chosen->interface_info->info.epp == NULL)
+              {
+                status = XIA_NOMEM;
+                xiaLogError("xiaProcessInterface", "Unable to allocate memory for chosen->interface_info->info.epp", status);
+                return status;
+              }
+		  
+            chosen->interface_info->info.epp->daisy_chain_id = UINT_MAX;
+            chosen->interface_info->info.epp->epp_address    = 0x0000;
+		  
+          }
+	  
+        if (STREQ(name, "epp_address")) 
+          {
+            chosen->interface_info->info.epp->epp_address = *((unsigned int *)value);
+		  
+          } else if (STREQ(name, "daisy_chain_id")) {
+		  
+          chosen->interface_info->info.epp->daisy_chain_id = *((unsigned int *)value);
+        }
+	  
+      } else 
+#endif /* EXCLUDE_EPP */
+
+#ifndef EXCLUDE_USB
+      if ((STREQ(name, "device_number") && chosen->interface_info->type == USB)
+          || STREQ(interface, "usb"))
+        {
+          /* A bit of hack to deal with USB and USB2 both using the
+           * "device_number" module item.
+           */
+          /* Check that the module type is correct */
+          if ((chosen->interface_info->type != USB)           &&
+              (chosen->interface_info->type != NO_INTERFACE))
+            {
+              status = XIA_WRONG_INTERFACE;
+              sprintf(info_string, "Item %s is not a valid element of the current interface", name);
+              xiaLogError("xiaProcessInterface", info_string, status);
+              return status;
+            }
+	  
+          /* See if we need to create a new interface */
+          if (chosen->interface_info->type == NO_INTERFACE) 
+            {
+              chosen->interface_info->type = USB;
+              chosen->interface_info->info.usb = (Interface_Usb *)handel_md_alloc(sizeof(Interface_Usb));
+              if (chosen->interface_info->info.usb == NULL)
+                {
+                  status = XIA_NOMEM;
+                  xiaLogError("xiaProcessInterface", "Unable to allocate memory for chosen->interface_info->info.usb", status);
+                  return status;
+                }
+		  
+              chosen->interface_info->info.usb->device_number = 0;
+		  
+            }
+	  
+          if (STRNEQ(name, "device_number")) {
+            chosen->interface_info->info.usb->device_number = *((unsigned int *)value);
+          }
+
+	  
+        } else 
+#endif /* EXCLUDE_USB */
 
 #ifndef EXCLUDE_USB2
         if (STREQ(name, "device_number") || STREQ(interface, "usb2")) {
@@ -1291,6 +1391,31 @@ HANDEL_STATIC int HANDEL_API xiaGetIFaceInfo(Module *chosen, char *name, void *v
 
   } else 
 
+#ifndef EXCLUDE_EPP
+      if (chosen->interface_info->type == GENERIC_EPP ||
+          chosen->interface_info->type == EPP) {
+	  
+        if (STREQ(name, "epp_address")) {
+          *((unsigned int *)value) = chosen->interface_info->info.epp->epp_address;
+		  
+        } else if (STREQ(name, "daisy_chain_id")) {
+		  
+          *((unsigned int *)value) = chosen->interface_info->info.epp->daisy_chain_id;
+        }
+	  
+      } else 
+#endif /* EXCLUDE_EPP */
+
+#ifndef EXCLUDE_USB
+        if (chosen->interface_info->type == USB) {
+	  
+          if (STREQ(name, "device_number")) {
+            *((unsigned int *)value) = chosen->interface_info->info.usb->device_number;
+          }
+	  
+        } else 
+#endif /* EXCLUDE_USB */
+
 #ifndef EXCLUDE_USB2
         if (chosen->interface_info->type == USB2) {
 	  
@@ -1478,7 +1603,7 @@ HANDEL_STATIC int HANDEL_API xiaGetDetector(Module *chosen, int chan, void *valu
  * This routine retrieves information about the firmware for the specified
  * module. It assumes that name is, at the very least, "firmware_set". An
  * error is reported if it equals "firmware_set_all" since that is not a 
- * valid choice. 
+ * valid choice. Example name "firmware_set_chan0"
  *
  *****************************************************************************/
 HANDEL_STATIC int HANDEL_API xiaGetFirmwareInfo(Module *chosen, char *name, void *value)
@@ -1502,6 +1627,7 @@ HANDEL_STATIC int HANDEL_API xiaGetFirmwareInfo(Module *chosen, char *name, void
   tmpName = (char *)handel_md_alloc((len + 1) * sizeof(char));
   strcpy(tmpName, name);
 	
+  /* get the last section of the name e.g. "_chan0" */
   sidx = strrchr(tmpName, '_');
 	
   if (strncmp(sidx + 1, "chan", 4) != 0) 
@@ -1515,7 +1641,8 @@ HANDEL_STATIC int HANDEL_API xiaGetFirmwareInfo(Module *chosen, char *name, void
       return status;
     }
 
-  chan = atoi(sidx + 4);
+  chan = atoi(sidx + 1 + 4);
+  handel_md_free((void *)tmpName);
 
   if ((unsigned int)chan >= chosen->number_of_channels) 
     {
@@ -1523,8 +1650,6 @@ HANDEL_STATIC int HANDEL_API xiaGetFirmwareInfo(Module *chosen, char *name, void
       sprintf(info_string, "Specified channel is out-of-range");
       xiaLogError("xiaGetFirmwareInfo", info_string, status);
 		
-      handel_md_free((void *)tmpName);
-
       return status;
     }
 

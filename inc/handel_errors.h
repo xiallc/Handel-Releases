@@ -111,6 +111,7 @@
 #define XIA_MISSING_POL			353 /** A polarity value is missing from a Detector element */
 #define XIA_MISSING_GAIN		354 /** A gain value is missing from a Detector element */
 #define XIA_MISSING_INTERFACE		355 /** The interface this channel requires is missing */
+#define XIA_MISSING_ADDRESS		356 /** The epp_address information is missing for this channel */
 #define XIA_INVALID_NUMCHANS		357 /** The wrong number of channels are assigned to this module */
 #define XIA_INCOMPLETE_DEFAULTS 	358 /** Some of the required defaults are missing */
 #define XIA_BINS_OOR			359 /** There are too many or too few bins for this module type */

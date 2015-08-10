@@ -76,6 +76,14 @@ typedef struct _InterfaceWriter {
 static int writePLX(FILE *fp, Module *module);
 #endif /* EXCLUDE_PLX */
 
+#ifndef EXCLUDE_EPP
+static int writeEPP(FILE *fp, Module *module);
+#endif /* EXCLUDE_EPP */
+
+#ifndef EXCLUDE_USB
+static int writeUSB(FILE *fp, Module *module);
+#endif /* EXCLUDE_USB */
+
 #ifndef EXCLUDE_USB2
 static int writeUSB2(FILE *fp, Module *m);
 #endif /* EXCLUDE_USB2 */
@@ -94,6 +102,13 @@ static InterfaceWriters_t INTERFACE_WRITERS[] = {
 #ifndef EXCLUDE_PLX
   {PLX,          writePLX},
 #endif /* EXCLUDE_PLX */
+#ifndef EXCLUDE_EPP
+  {EPP,          writeEPP},
+  {GENERIC_EPP,  writeEPP},
+#endif /* EXCLUDE_PLX */
+#ifndef EXCLUDE_USB
+  {USB,          writeUSB},
+#endif /* EXCLUDE_USB */
 #ifndef EXCLUDE_USB2
   {USB2,         writeUSB2},
 #endif /* EXCLUDE_USB2 */
@@ -1136,9 +1151,14 @@ HANDEL_STATIC int xiaLoadModule(FILE *fp, fpos_t *start, fpos_t *end)
   int status;
   int chanAlias;
 
-  unsigned int pciSlot;
-  unsigned int pciBus;
+    unsigned int pciSlot;
+    unsigned int pciBus;
   unsigned int numChans;
+  unsigned int scsiBus;
+  unsigned int crate;
+  unsigned int slot;
+  unsigned int eppAddr;
+  unsigned int daisyID;
   unsigned int i;
   unsigned int comPort;
   unsigned int baudRate;
@@ -1233,8 +1253,166 @@ HANDEL_STATIC int xiaLoadModule(FILE *fp, fpos_t *start, fpos_t *end)
       xiaLogError("xiaLoadModule", "Unable to load interface", status);
       return status;
     }
+
+  if ((STREQ(interface, "j73a")) ||
+      (STREQ(interface, "genericSCSI")))
+    {
+      status = xiaAddModuleItem(alias, "interface", (void *)interface);
+
+      if (status != XIA_SUCCESS)
+        {
+          sprintf(info_string, "Error adding interface to module %s", alias);
+          xiaLogError("xiaLoadModule", info_string, status);
+          return status;
+        }
+
+      status = xiaFileRA(fp, start, end, "scsibus_number", value);
+
+      if (status != XIA_SUCCESS)
+        {
+          xiaLogError("xiaLoadModule", "Unable to load SCSI bus number", status);
+          return status;
+        }
+
+      sscanf(value, "%u", &scsiBus);
+
+      sprintf(info_string, "scsiBus = %u", scsiBus);
+      xiaLogDebug("xiaLoadModule", info_string);
+
+      status = xiaAddModuleItem(alias, "scsibus_number", (void *)&scsiBus);
+
+      if (status != XIA_SUCCESS)
+        {
+          sprintf(info_string, "Error adding scsi bus number to module %s", alias);
+          xiaLogError("xiaLoadModule", info_string, status);
+          return status;
+        }
+
+      status = xiaFileRA(fp, start, end, "crate_number", value);
+
+      if (status != XIA_SUCCESS)
+        {
+          xiaLogError("xiaLoadModule", "Unable to load crate number", status);
+          return status;
+        }
+
+      sscanf(value, "%u", &crate);
+
+      sprintf(info_string, "crate = %u", crate);
+      xiaLogDebug("xiaLoadModule", info_string);
+
+      status = xiaAddModuleItem(alias, "crate_number", (void *)&crate);
+
+      if (status != XIA_SUCCESS)
+        {
+          sprintf(info_string, "Error adding crate number to module %s", alias);
+          xiaLogError("xiaLoadModule", info_string, status);
+          return status;
+        }
+
+      status = xiaFileRA(fp, start, end, "slot", value);
+
+      if (status != XIA_SUCCESS)
+        {
+          xiaLogError("xiaLoadModule", "Unable to load slot number", status);
+          return status;
+        }
+
+      sscanf(value, "%u", &slot);
+
+      sprintf(info_string, "slot = %u", slot);
+      xiaLogDebug("xiaLoadModule", info_string);
+
+      status = xiaAddModuleItem(alias, "slot", (void *)&slot);
+
+      if (status != XIA_SUCCESS)
+        {
+          sprintf(info_string, "Error adding slot number to module %s", alias);
+          xiaLogError("xiaLoadModule", info_string, status);
+          return status;
+        }
+
+    } else if ((STREQ(interface, "epp")) ||
+               (STREQ(interface, "genericEPP")))
+    {
+      status = xiaFileRA(fp, start, end, "epp_address", value);
+
+      if (status != XIA_SUCCESS)
+        {
+          xiaLogError("xiaLoadModule", "Unable to load EPP address", status);
+          return status;
+        }
+
+      sscanf(value, "%x", &eppAddr);
+
+      sprintf(info_string, "EPP Address = %#x", eppAddr);
+      xiaLogDebug("xiaLoadModule", info_string);
+
+      status = xiaAddModuleItem(alias, "epp_address", (void *)&eppAddr);
+
+      if (status != XIA_SUCCESS)
+        {
+          sprintf(info_string, "Error adding EPP address to module %s", alias);
+          xiaLogError("xiaLoadModule", info_string, status);
+          return status;
+        }
+
+      status = xiaFileRA(fp, start, end, "daisy_chain_id", value);
+
+      /* This is an extremely optional setting, so we really only want to do 
+       * anything if the value actually shows up in the section.
+       */
+      if (status == XIA_SUCCESS)
+        {
+          sscanf(value, "%u", &daisyID);
+ 
+          sprintf(info_string, "Daisy Chain ID = %#x", daisyID);
+          xiaLogDebug("xiaLoadModule", info_string);
+
+          status = xiaAddModuleItem(alias, "daisy_chain_id", (void *)&daisyID);
+
+          if (status != XIA_SUCCESS)
+            {
+              sprintf(info_string, "Error adding daisy chain id to module %s", alias);
+              xiaLogError("xiaLoadModule", info_string, status);
+              return status;
+            }
+        }
+
+    } else if (STREQ(interface, "usb")) {
+	  
+    status = xiaAddModuleItem(alias, "interface", interface);
+
+    if (status != XIA_SUCCESS) {
+      sprintf(info_string, "Error setting interface to '%s' for module "
+              "with alias '%s'", interface, alias);
+      xiaLogError("xiaLoadModule", info_string, status);
+      return status;
+    }
+
+	  status = xiaFileRA(fp, start, end, "device_number", value);
+	  
+	  if (status != XIA_SUCCESS) {
+		
+	    xiaLogError("xiaLoadModule", "Unable to load device number", status);
+	    return status;
+	  }
+
+	  sscanf(value, "%u", &deviceNumber);
+	  
+	  sprintf(info_string, "Device Number = %u", deviceNumber);
+	  xiaLogDebug("xiaLoadModule", info_string);
+	  
+	  status = xiaAddModuleItem(alias, "device_number", (void *)&deviceNumber);
+	  
+	  if (status != XIA_SUCCESS) {
+		
+	    sprintf(info_string, "Error adding Device Number to module %s", alias);
+	    xiaLogError("xiaLoadModule", info_string, status);
+	    return status;
+	  }
     
-  if (STREQ(interface, "usb2")) {
+  } else if (STREQ(interface, "usb2")) {
 
     status = xiaAddModuleItem(alias, "interface", interface);
 
@@ -2170,6 +2348,44 @@ static int writePLX(FILE *fp, Module *module)
   return XIA_SUCCESS;
 }
 #endif /* EXCLUDE_PLX */
+
+
+#ifndef EXCLUDE_EPP
+/** @brief Writes the EPP interface info to the passed in file pointer.
+ *
+ */
+static int writeEPP(FILE *fp, Module *m)
+{
+  ASSERT(fp != NULL);
+  ASSERT(m != NULL);
+
+  
+  fprintf(fp, "interface = epp\n");
+  fprintf(fp, "epp_address = %#x\n", m->interface_info->info.epp->epp_address);
+  fprintf(fp, "daisy_chain_id = %u\n",
+          m->interface_info->info.epp->daisy_chain_id);
+
+  return XIA_SUCCESS;
+}
+#endif /* EXCLUDE_EPP */
+
+
+#ifndef EXCLUDE_USB
+/** @brief Writes the USB interface info to the passed in file pointer.
+ *
+ */
+static int writeUSB(FILE *fp, Module *m)
+{
+  ASSERT(fp != NULL);
+  ASSERT(m != NULL);
+
+
+  fprintf(fp, "interface = usb\n");
+  fprintf(fp, "device_number = %u\n", m->interface_info->info.usb->device_number);
+
+  return XIA_SUCCESS;
+}
+#endif /* EXCLUDE_USB */
 
 
 #ifndef EXCLUDE_USB2

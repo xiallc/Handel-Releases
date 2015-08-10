@@ -116,11 +116,5 @@ DXP_MD_TMP_PATH fdd_md_tmp_path;
 #define xiaFddLogInfo(x, y)		fdd_md_log(MD_INFO, (x), (y), 0, __FILE__, __LINE__)
 #define xiaFddLogDebug(x, y)		fdd_md_log(MD_DEBUG, (x), (y), 0, __FILE__, __LINE__)
 
-/* Memory allocation macro wrappers */
-#ifdef USE_XIA_MEM_MANAGER
-#include "xia_mem.h"
-#define fdd_md_alloc(n)  xia_mem_malloc((n), __FILE__, __LINE__)
-#define fdd_md_free(ptr) xia_mem_free(ptr)
-#endif /* USE_XIA_MEM_MANAGER */
 
 #endif /* __XIA_FDD_H__ */
