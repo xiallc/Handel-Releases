@@ -1,0 +1,658 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Mapping Mode &mdash; Handel Quick Start Guide: xMAP 1.2 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Handel Quick Start Guide: xMAP 1.2 documentation" href="index.html" />
+    <link rel="next" title="Acquisition Values" href="acq_values.html" />
+    <link rel="prev" title="MCA Data Acquisition" href="mca.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="mapping-mode">
+<h1>Mapping Mode<a class="headerlink" href="#mapping-mode" title="Permalink to this headline">¶</a></h1>
+<p>The xMAP is specifically designed to support high-speed mapping
+operations. The current version can store full spectra for each
+mapping pixel (MCA mode), up to 64 non-overlapping SCAs per pixel (SCA
+mode) or time-stamped events (List-mode). In general, the controls are
+the same for each mapping mode variant though different strategies may
+be required for performance reasons.</p>
+<p>To better understand how mapping mode works, it is helpful to briefly
+describe how the xMAP&#8217;s memory is organized. In order to allow for
+continuous mapping data acquisition, the memory is organized into two
+independent banks called buffer &#8216;a&#8217; and buffer &#8216;b&#8217;. A single bank can
+be read out by the host while the other is filled during data
+acquisition. Each memory bank is 16 bits wide and 1 Mword (2 <sup>20</sup>
+words) deep. For standard, non-mapping MCA acquisition, these banks
+are combined to form a single 32-bit x 1 Mword bank.</p>
+<p>For continuous mapping, the host computer must be able to read out and
+clear an entire buffer for all of the modules in the system in less
+time then it takes to fill one buffer. The minimum pixel dwell time
+for continuous mapping operation is defined by the readout speed, the
+buffer clear time, the number of pixels that can be stored in one
+buffer and the size of the system. As an example, if the system
+contains 4 xMAP modules so that the total transferred data for a
+single buffer is 8 MB <a class="footnote-reference" href="#id7" id="id1">[1]</a> and the &#8220;burst&#8221; transfer speed is 25 MB / s
+<a class="footnote-reference" href="#id8" id="id2">[2]</a>, it takes 320 ms to read out a single buffer. If that buffer
+holds data for 64 pixels <a class="footnote-reference" href="#id9" id="id3">[3]</a>, the minimum pixel dwell time that
+allows for continuous mapping is 320 ms / 64 pixels = 5 ms / pixel.</p>
+<div class="section" id="pixel-advance-modes">
+<span id="pixel-advance-modes-label"></span><h2>Pixel Advance Modes<a class="headerlink" href="#pixel-advance-modes" title="Permalink to this headline">¶</a></h2>
+<p>The xMAP supports three modes of pixel advance: GATE, SYNC and host
+control.</p>
+<div class="section" id="gate">
+<h3>GATE<a class="headerlink" href="#gate" title="Permalink to this headline">¶</a></h3>
+<p>One of the primary methods for advancing the pixel is to use the GATE
+input as a pixel clock, where the pixel number advances on a defined
+edge transition of the input signal. In MCA mode, the GATE signal is
+used to inhibit data acquisition or to coordinate the acquisition with
+an external system. Using the default gate polarity setting, if GATE
+is low then data acquisition is disabled. The polarity is controlled
+with the &#8220;input_logic_polarity&#8221; acquisition value; to disable data
+acquisition when the GATE is high, set it to 1.0.</p>
+<p>For mapping mode, transitions on the GATE signal can be used to
+trigger a pixel advance. Like MCA mode, the default setting is to use
+the high-to-low transition to trigger the pixel advance and,
+similarly, &#8220;input_logic_polarity&#8221; can be set to 1.0 if the low-to-high
+transition is desired instead. Since the GATE signal requires
+transitions from high-to-low (or low-to-high), there is necessarily a
+transition time between states where data acquisition is
+inhibited. The default setting, controlled with the &#8220;gate_ignore&#8221;
+acquisition value, is to ignore the data during the transition
+period. However if &#8220;gate_ignore&#8221; is set to 1.0, data acquisition will
+remain active during the transition.</p>
+</div>
+<div class="section" id="sync">
+<h3>SYNC<a class="headerlink" href="#sync" title="Permalink to this headline">¶</a></h3>
+<p>The other primary method of advancing the pixel is to use the SYNC
+input as a pixel clock. Using this method, the pixel will advance for
+every <code class="docutils literal"><span class="pre">N</span></code> positive pulses, where <code class="docutils literal"><span class="pre">N</span></code> is set using the &#8220;sync_count&#8221;
+acquisition value. <code class="docutils literal"><span class="pre">N</span></code> can range from 1 to 65535. Finally, the
+pulses must be at least 40 ns wide to be recognized by the xMAP.</p>
+</div>
+<div class="section" id="host-control">
+<h3>Host Control<a class="headerlink" href="#host-control" title="Permalink to this headline">¶</a></h3>
+<p>Lastly, it is possible to advance the pixel directly in Handel using
+the board operation &#8220;mapping_pixel_next&#8221;. Manually advancing the pixel
+is slower and does not provide good real-time control and, as such, is
+suitable only for debugging and evaluation purposes.</p>
+</div>
+</div>
+<div class="section" id="gate-sync-signal-distribution">
+<h2>GATE/SYNC Signal Distribution<a class="headerlink" href="#gate-sync-signal-distribution" title="Permalink to this headline">¶</a></h2>
+<p>A typical PXI crate backplane is broken into one or more &#8220;bus
+segments&#8221;. Small crates, 8 slots or less, will contain a single bus
+segment, while larger crates can contain as many as 3 bus
+segments. For GATE / SYNC pixel advance, a single module on each bus
+segment is designated as a &#8220;master&#8221; module. The master module accepts a
+GATE / SYNC logic signal via the LEMO connector on the xMAP front
+panel and routes the signal to the other modules on the bus segment
+using a line on the PXI backplane. Therefore, each bus segment must
+have its own master module and the input LEMO for each master module
+must use the same signal source.</p>
+</div>
+<div class="section" id="using-mapping-mode-a-walkthrough">
+<h2>Using Mapping Mode: A Walkthrough<a class="headerlink" href="#using-mapping-mode-a-walkthrough" title="Permalink to this headline">¶</a></h2>
+<p>Each step is labelled with the mapping modes it supports; no label
+means the step is relevant to all modes.</p>
+<div class="section" id="enable-mapping-mode">
+<h3>Enable mapping mode<a class="headerlink" href="#enable-mapping-mode" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c"><div class="highlight"><pre><span class="kt">double</span> <span class="n">mode</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">;</span>
+<span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaSetAcquisitionValues</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s">&quot;mapping_mode&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">mode</span><span class="p">));</span>
+</pre></div>
+</div>
+<p>When &#8220;mapping_mode&#8221; is set greater then 0.0, Handel downloads the proper
+firmware to the xMAP modules. Handel also updates the firmware with
+any mapping-specific acquisition values. To switch back to normal MCA
+data acquisition, set &#8220;mapping_mode&#8221; to 0.0. The xMAP currently
+supports 3 mapping modes: MCA (1.0), SCA (2.0) and List (3.0).</p>
+</div>
+<div class="section" id="set-the-number-of-bins-in-the-spectrum-mca-mode">
+<h3>Set the number of bins in the spectrum (MCA mode)<a class="headerlink" href="#set-the-number-of-bins-in-the-spectrum-mca-mode" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c"><div class="highlight"><pre><span class="kt">double</span> <span class="n">nBins</span> <span class="o">=</span> <span class="mf">4096.0</span><span class="p">;</span>
+<span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaSetAcquisitionValues</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s">&quot;number_mca_channels&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">nBins</span><span class="p">));</span>
+</pre></div>
+</div>
+<p>The number of bins in the spectrum affects the number of pixels that
+can fit into each buffer.</p>
+</div>
+<div class="section" id="set-the-number-of-rois-and-their-bounds-sca-mode">
+<h3>Set the number of ROIs and their bounds (SCA mode)<a class="headerlink" href="#set-the-number-of-rois-and-their-bounds-sca-mode" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c"><div class="highlight"><pre><span class="kt">double</span> <span class="n">nSCAs</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">;</span>
+<span class="kt">double</span> <span class="n">sca0Lo</span> <span class="o">=</span> <span class="mf">100.0</span><span class="p">;</span>
+<span class="kt">double</span> <span class="n">sca0Hi</span> <span class="o">=</span> <span class="mf">1000.0</span><span class="p">;</span>
+<span class="kt">double</span> <span class="n">sca1Lo</span> <span class="o">=</span> <span class="mf">2000.0</span><span class="p">;</span>
+<span class="kt">double</span> <span class="n">sca1Hi</span> <span class="o">=</span> <span class="mf">2010.0</span><span class="p">;</span>
+
+<span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaSetAcquisitionValues</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s">&quot;number_of_scas&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">nSCAs</span><span class="p">));</span>
+<span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaSetAcquisitionValues</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s">&quot;sca0_lo&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sca0Lo</span><span class="p">));</span>
+<span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaSetAcquisitionValues</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s">&quot;sca0_hi&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sca0Hi</span><span class="p">));</span>
+<span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaSetAcquisitionValues</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s">&quot;sca1_lo&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sca1Lo</span><span class="p">));</span>
+<span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaSetAcquisitionValues</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s">&quot;sca1_hi&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sca1Hi</span><span class="p">));</span>
+</pre></div>
+</div>
+<p>SCA mapping mode supports a maximum of 64, non-overlapping SCAs.</p>
+</div>
+<div class="section" id="set-the-variant-list-mode">
+<h3>Set the variant (List-mode)<a class="headerlink" href="#set-the-variant-list-mode" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c"><div class="highlight"><pre><span class="kt">double</span> <span class="n">variant</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">;</span>
+
+<span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaSetAcquisitionValues</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s">&quot;list_mode_variant&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">variant</span><span class="p">));</span>
+</pre></div>
+</div>
+<p>List-mode supports three variants: energy plus GATE count (0.0),
+energy plus SYNC count (1.0) and energy plus clock time (2.0). For a
+detailed description of the variants, please consult the xMAP User&#8217;s
+Manual.</p>
+</div>
+<div class="section" id="set-the-total-number-of-pixels-to-be-acquired-in-this-run-mca-sca-mode">
+<h3>Set the total number of pixels to be acquired in this run (MCA/SCA mode)<a class="headerlink" href="#set-the-total-number-of-pixels-to-be-acquired-in-this-run-mca-sca-mode" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c"><div class="highlight"><pre><span class="kt">double</span> <span class="n">nMapPixels</span> <span class="o">=</span> <span class="mf">100.0</span><span class="p">;</span>
+
+<span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaSetAcquisitionValues</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s">&quot;num_map_pixels&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">nMapPixels</span><span class="p">));</span>
+</pre></div>
+</div>
+<p>&#8220;num_map_pixels&#8221; can also be set to 0.0 if data acquisition should
+continue indefinitely.</p>
+</div>
+<div class="section" id="set-the-number-of-pixels-per-buffer">
+<h3>Set the number of pixels per buffer<a class="headerlink" href="#set-the-number-of-pixels-per-buffer" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c"><div class="highlight"><pre><span class="kt">double</span> <span class="n">nMapPixelsPerBuffer</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">;</span>
+
+<span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaSetAcquisitionValues</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s">&quot;num_map_pixels_per_buffer&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">nMapPixelsPerBuffer</span><span class="p">));</span>
+</pre></div>
+</div>
+<p>Setting &#8220;num_map_pixels_per_buffer&#8221; to -1.0 instructs the DSP to
+automatically use as many pixels as possible given either the MCA size
+or the number of SCAs. Of course a specific number can be passed in
+for &#8220;num_map_pixels_per_buffer&#8221; as well. Unfortunately getting the
+actualy number of pixels per buffer requires an additional function
+call:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="kt">double</span> <span class="n">actualMapPixelsPerBuffer</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
+
+<span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaGetAcquisitionValues</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">&quot;num_map_pixels_per_buffer&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">actualMapPixelsPerBuffer</span><span class="p">));</span>
+</pre></div>
+</div>
+<p>If the number of mapping pixels per buffer is set larger then the
+maximum amount the buffer can hold, it will be truncated to the
+maximum value by the DSP.</p>
+</div>
+<div class="section" id="configure-pixel-control">
+<h3>Configure pixel control<a class="headerlink" href="#configure-pixel-control" title="Permalink to this headline">¶</a></h3>
+<p>At the beginning of the run, the pixel number starts at 0 and is
+advanced using one of the techniques discussed in the
+<a class="reference internal" href="#pixel-advance-modes-label"><span>Pixel Advance Modes</span></a> section. The examples below only show
+the case where the entire system is on a single bus segment. If the
+xMAP system spans multiple bus segments then additional master modules
+are required with the correct pixel advance mode setting. Also note
+that the master setting is only valid for the first channel in a
+module; settings on all other channels will be ignored.</p>
+<div class="section" id="id4">
+<h4>GATE<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h4>
+<div class="highlight-c"><div class="highlight"><pre><span class="cp">#include &quot;handel_constants.h&quot;</span>
+
+<span class="kt">double</span> <span class="n">enabled</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">;</span>
+<span class="kt">double</span> <span class="n">pixelMode</span> <span class="o">=</span> <span class="n">XIA_MAPPING_CTL_GATE</span><span class="p">;</span>
+
+<span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaSetAcquisitionValues</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">&quot;gate_master&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">enabled</span><span class="p">));</span>
+<span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaSetAcquisitionValues</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">&quot;pixel_advance_mode&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">pixelMode</span><span class="p">));</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id5">
+<h4>SYNC<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h4>
+<div class="highlight-c"><div class="highlight"><pre><span class="cp">#include &quot;handel_constants.h&quot;</span>
+
+<span class="kt">double</span> <span class="n">enabled</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">;</span>
+<span class="kt">double</span> <span class="n">pixelMode</span> <span class="o">=</span> <span class="n">XIA_MAPPING_CTL_SYNC</span><span class="p">;</span>
+<span class="kt">double</span> <span class="n">nTicksPerPixel</span> <span class="o">=</span> <span class="mf">100.0</span><span class="p">;</span>
+
+<span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaSetAcquisitionValues</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">&quot;sync_master&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">enabled</span><span class="p">));</span>
+<span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaSetAcquisitionValues</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">&quot;pixel_advance_mode&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">pixelMode</span><span class="p">));</span>
+<span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaSetAcquisitionValues</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">&quot;sync_count&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">nTicksPerPixel</span><span class="p">));</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="host">
+<h4>HOST<a class="headerlink" href="#host" title="Permalink to this headline">¶</a></h4>
+<p>Manual pixel advance from the host is always available and does not
+need to be explicitly configured. To advance the pixel, use the
+following code:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="kt">int</span> <span class="n">dummy</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+<span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaBoardOperation</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">&quot;mapping_pixel_next&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">dummy</span><span class="p">));</span>
+</pre></div>
+</div>
+<p>Note that the pixel only needs to be advanced once per
+module. Advancing it once per channel (per module) will actually
+advance it <strong>4 times</strong> (per module).</p>
+</div>
+</div>
+<div class="section" id="apply-the-settings">
+<h3>Apply the settings<a class="headerlink" href="#apply-the-settings" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c"><div class="highlight"><pre><span class="kt">int</span> <span class="n">dummy</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+<span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaBoardOperation</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">&quot;apply&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">dummy</span><span class="p">));</span>
+</pre></div>
+</div>
+<p>See also the <a class="reference internal" href="introduction.html#section-detchans-label"><span>detChans</span></a> section.</p>
+</div>
+<div class="section" id="get-buffer-length-mca-sca-mode">
+<h3>Get buffer length (MCA/SCA mode)<a class="headerlink" href="#get-buffer-length-mca-sca-mode" title="Permalink to this headline">¶</a></h3>
+<p>After all of the settings are applied, the xMAP can be queried for the
+size of a returned buffer. This value can then be used to allocate the
+appropriate amount of memory.</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">bufferLength</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="kt">unsigned</span> <span class="kt">long</span> <span class="o">*</span><span class="n">buffer</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+
+<span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaGetRunData</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">&quot;buffer_len&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">bufferLength</span><span class="p">));</span>
+
+<span class="n">buffer</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="n">bufferLength</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">));</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">buffer</span><span class="p">)</span> <span class="p">{</span>
+    <span class="cm">/* Out-of-memory */</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="start-the-run">
+<h3>Start the run<a class="headerlink" href="#start-the-run" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c"><div class="highlight"><pre><span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaStartRun</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">));</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="monitor-the-buffer-status">
+<h3>Monitor the buffer status<a class="headerlink" href="#monitor-the-buffer-status" title="Permalink to this headline">¶</a></h3>
+<p>Once the run is started, pixels are added to the first buffer (&#8216;a&#8217;)
+until it is full. To see if the buffer is full, use the following
+code:</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">isFull</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+<span class="k">while</span> <span class="p">(</span><span class="n">isFull</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaGetRunData</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">&quot;buffer_full_a&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">isFull</span><span class="p">));</span>
+
+    <span class="cm">/* Sleep for a short time here using a routine like Sleep() on win32</span>
+<span class="cm">     * or usleep() on linux.</span>
+<span class="cm">     */</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Each module in the system should be polled to determine when all of
+the modules are ready to be read.</p>
+</div>
+<div class="section" id="read-full-buffer-mca-sca-mode">
+<h3>Read full buffer (MCA/SCA mode)<a class="headerlink" href="#read-full-buffer-mca-sca-mode" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c"><div class="highlight"><pre><span class="cm">/* Assumes that buffer was previously allocated. */</span>
+<span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaGetRunData</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">&quot;buffer_a&quot;</span><span class="p">,</span> <span class="n">buffer</span><span class="p">));</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="read-full-list-mode-buffer-list-mode">
+<h3>Read full list-mode buffer (List-mode)<a class="headerlink" href="#read-full-list-mode-buffer-list-mode" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c"><div class="highlight"><pre><span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">bufferLength</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+      <span class="kt">unsigned</span> <span class="kt">long</span> <span class="o">*</span><span class="n">buffer</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+
+
+      <span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaGetRunData</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">&quot;list_buffer_len_a&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">bufferLength</span><span class="p">));</span>
+
+      <span class="n">buffer</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="n">bufferLength</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">));</span>
+
+      <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">buffer</span><span class="p">)</span> <span class="p">{</span>
+    <span class="cm">/* Out-of-memory */</span>
+<span class="p">}</span>
+
+      <span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaGetRunData</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">&quot;buffer_a&quot;</span><span class="p">,</span> <span class="n">buffer</span><span class="p">));</span>
+
+<span class="n">free</span><span class="p">(</span><span class="n">buffer</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Unlike MCA and SCA mapping mode, the length of the list-mode buffer
+varies slightly from read to read.</p>
+</div>
+<div class="section" id="signal-that-the-read-has-completed">
+<h3>Signal that the read has completed<a class="headerlink" href="#signal-that-the-read-has-completed" title="Permalink to this headline">¶</a></h3>
+<p>Once a buffer is read, it is important to let the xMAP know that it is
+available to be filled again. Failure to do this in a timely manner
+can potentially cause overrun errors.</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="kt">char</span> <span class="n">currentBuffer</span> <span class="o">=</span> <span class="sc">&#39;a&#39;</span><span class="p">;</span>
+
+<span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaBoardOperation</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">&quot;buffer_done&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">currentBuffer</span><span class="p">));</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="wait-for-buffer-b-to-fill">
+<h3>Wait for buffer &#8216;b&#8217; to fill<a class="headerlink" href="#wait-for-buffer-b-to-fill" title="Permalink to this headline">¶</a></h3>
+<p>With buffer &#8216;a&#8217; read and signaled as done, the next step is to wait
+for buffer &#8216;b&#8217;.</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">isFull</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+<span class="k">while</span> <span class="p">(</span><span class="n">isFull</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaGetRunData</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">&quot;buffer_full_b&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">isFull</span><span class="p">));</span>
+
+    <span class="cm">/* Sleep for a short time here using a routine like Sleep() on win32</span>
+<span class="cm">     * or usleep() on linux.</span>
+<span class="cm">     */</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>And then continue reading, signaling complete and polling while
+switching between buffers &#8216;a&#8217; and &#8216;b&#8217;.</p>
+</div>
+<div class="section" id="stop-the-run-when-all-the-pixels-are-collected">
+<h3>Stop the run when all the pixels are collected<a class="headerlink" href="#stop-the-run-when-all-the-pixels-are-collected" title="Permalink to this headline">¶</a></h3>
+<p>Once all of the pixels have been collected, the run must be stopped as usual.</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="n">CHECK_ERROR</span><span class="p">(</span><span class="n">xiaStopRun</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">));</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="mapping-tips">
+<h2>Mapping Tips<a class="headerlink" href="#mapping-tips" title="Permalink to this headline">¶</a></h2>
+<p>This section describes (and reiterates) various tips and techniques to
+make sure that your mapping application runs smoothly.</p>
+<ol class="arabic">
+<li><p class="first"><strong>Enabling mapping mode updates all parameters</strong></p>
+<p>When &#8220;mapping_mode&#8221; is enabled, all of the relevant acquisition
+values are downloaded to the hardware. There is no need to set
+these values again.</p>
+</li>
+<li><p class="first"><strong>Designate one detChan per module as the &#8220;mapping channel&#8221;</strong></p>
+<p>Most of the acquisition values related to mapping mode are
+module-wide settings and do not need to be set on each channel. As
+an example, the <em>Configuration Wizard</em> in xManager uses the first
+detChan on each module when generating .ini files for use with
+Handel.</p>
+</li>
+<li><p class="first"><strong>Cache the mapping buffer length</strong></p>
+<p>For all modes except for list-mode, the mapping buffer length,
+retrieved by passing &#8220;buffer_len&#8221; to <code class="docutils literal"><span class="pre">xiaGetRunData()</span></code>, only
+needs to be read once before the mapping run starts; it will not
+change once the run is active.</p>
+</li>
+<li><p class="first"><strong>Assign a single master module per bus segment</strong></p>
+<p>For GATE and SYNC pixel advance modes there needs to be exactly one
+master module of the appropriate type per bus segment.</p>
+</li>
+<li><p class="first"><strong>Check for buffer overruns</strong></p>
+<p>If the per-pixel dwell time is too short for the xMAP to keep up
+with, it is possible to overrun one of the buffers. When the
+mapping buffer is overrun, the additional pixels will accumulate in
+the last pixel of the last active buffer. To signal that the buffer
+is overrun the value of the run data type &#8220;buffer_overrun&#8221; will be
+set to 1.0. Additional information may be retrieved from the DSP
+parameters <code class="docutils literal"><span class="pre">MAPERRORS</span></code> and <code class="docutils literal"><span class="pre">BUFMAPERRORS</span></code>. <code class="docutils literal"><span class="pre">MAPERRORS</span></code> is the
+total number of overrruns in the current run and <code class="docutils literal"><span class="pre">BUFMAPERRORS</span></code>
+is the number of overruns in the current buffer.</p>
+<p>In general, once a buffer overrun condition has occurred it can be
+problematic to reconstruct the data even though nothing has been
+discarded. XIA recommends treating the buffer overrun condition as
+an indication that the system needs some more tuning to run with
+the dwell time that caused the overrun.</p>
+</li>
+</ol>
+</div>
+<div class="section" id="parsing-list-mode-data-buffers">
+<h2>Parsing List-mode data buffers<a class="headerlink" href="#parsing-list-mode-data-buffers" title="Permalink to this headline">¶</a></h2>
+<p>The list-mode data has some additional complications not found when
+using MCA or SCA mapping mode. After the buffer header the stream of
+event data packets is found. In addition to the normal event packets,
+there are two special record types: end of buffer and rollover. The
+end of buffer record is provided to verify the buffer integrity and is
+inserted once at the end of the buffer <a class="footnote-reference" href="#id10" id="id6">[4]</a>. The rollover record is used to
+indicate when the 32-bits of time/tick are exhausted in the normal
+event data and what the new upper words for those values are. The
+rollover record will appear once per channel per rollover. When
+parsing the buffers it is critical that the rollover records be
+tracked so that the event times can be properly reconstructed.</p>
+<p>Below is a heavily annotated code sample that shows how to parse a
+buffer for a single module and print out the channel, time and MCA bin
+for each event.</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="cm">/* The returned data from the xMAP is in an array of 16-bit words, but</span>
+<span class="cm"> * we often need to convert two words into a 32-bit value.</span>
+<span class="cm"> */</span>
+<span class="cp">#define MAKE_WORD32(x, i) (unsigned long)((x)[(i)] | \</span>
+<span class="cp">                          ((unsigned long)(x)[(i) + 1] &lt;&lt; 16))</span>
+
+<span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+
+<span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">upperTimeWords</span><span class="p">[</span><span class="mi">4</span><span class="p">];</span>
+
+<span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">nEventRecords</span><span class="p">;</span>
+<span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">nSpecialRecords</span><span class="p">;</span>
+<span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">totalRecords</span><span class="p">;</span>
+<span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">j</span><span class="p">;</span>
+
+
+<span class="cm">/* Assume that the variable buffer is already filled in up to bufferLen</span>
+<span class="cm"> * with the header and event data.</span>
+<span class="cm"> */</span>
+
+<span class="cm">/* Load the current upper time words from the buffer header. The</span>
+<span class="cm"> * upper time words for channel 0 begin at offset 72 in the header.</span>
+<span class="cm"> * And each channel has 12 words of data with it, so we need to increment</span>
+<span class="cm"> * by that much for each channel.</span>
+<span class="cm"> */</span>
+<span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">upperTimeWords</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">MAKE_WORD32</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="mi">72</span> <span class="o">+</span> <span class="p">(</span><span class="n">i</span> <span class="o">*</span> <span class="mi">12</span><span class="p">));</span>
+<span class="p">}</span>
+
+<span class="cm">/* Get the number of non-special records from the buffer header. */</span>
+<span class="n">nEventRecords</span> <span class="o">=</span> <span class="n">MAKE_WORD32</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="mi">66</span><span class="p">);</span>
+
+<span class="cm">/* Get the number of special records from the buffer header. */</span>
+<span class="n">nSpecialRecords</span> <span class="o">=</span> <span class="n">MAKE_WORD32</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="mi">116</span><span class="p">);</span>
+
+<span class="n">nTotalRecords</span> <span class="o">=</span> <span class="n">nEventRecords</span> <span class="o">+</span> <span class="n">nSpecialRecords</span><span class="p">;</span>
+
+<span class="k">for</span> <span class="p">(</span><span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">nTotalRecords</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">record</span><span class="p">[</span><span class="mi">3</span><span class="p">];</span>
+
+    <span class="cm">/* Copy each event into its own record for further processing. The</span>
+<span class="cm">     * buffer header is 256 words and each record is 3 words.</span>
+<span class="cm">     */</span>
+    <span class="n">memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">record</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">&amp;</span><span class="n">buffer</span><span class="p">[</span><span class="mi">256</span> <span class="o">+</span> <span class="p">(</span><span class="n">j</span> <span class="o">*</span> <span class="mi">3</span><span class="p">)],</span> <span class="mi">3</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">short</span><span class="p">));</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">record</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x8000</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+       <span class="cm">/* This is a special record. */</span>
+
+       <span class="k">if</span> <span class="p">(</span><span class="n">record</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mh">0x8000</span><span class="p">)</span> <span class="p">{</span>
+          <span class="cm">/* We have hit the end of the buffer. */</span>
+          <span class="k">break</span><span class="p">;</span>
+
+       <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+          <span class="cm">/* This is a rollover special record. We need to update the</span>
+<span class="cm">           * upper word for the appropriate channel. The channel that</span>
+<span class="cm">           * this rollover record describes lives in the lower 4 bits of</span>
+<span class="cm">           * the first word of the record. The remaining two words are the</span>
+<span class="cm">           * the new upper time words for that channel.</span>
+<span class="cm">           */</span>
+          <span class="kt">int</span> <span class="n">chan</span> <span class="o">=</span> <span class="n">record</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x000F</span><span class="p">;</span>
+          <span class="n">upperTimeWords</span><span class="p">[</span><span class="n">chan</span><span class="p">]</span> <span class="o">=</span> <span class="n">MAKE_WORD32</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+       <span class="p">}</span>
+
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+       <span class="cm">/* Normal event record. The channel is stored in bits 13 and 14 of</span>
+<span class="cm">        * the first word and the energy bin is stored in the lower 13 bits.</span>
+<span class="cm">        */</span>
+       <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">chan</span> <span class="o">=</span> <span class="p">(</span><span class="n">record</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x6000</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">13</span><span class="p">;</span>
+       <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">bin</span> <span class="o">=</span> <span class="n">record</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x1FFF</span><span class="p">;</span>
+
+       <span class="cm">/* Use double and ldexp() to create a 64-bit value. Not all platforms</span>
+<span class="cm">        * support 64-bit integral types.</span>
+<span class="cm">        */</span>
+       <span class="kt">double</span> <span class="n">timestamp</span> <span class="o">=</span> <span class="n">ldexp</span><span class="p">((</span><span class="kt">double</span><span class="p">)</span><span class="n">upperTimeWords</span><span class="p">[</span><span class="n">chan</span><span class="p">],</span> <span class="mi">32</span><span class="p">)</span> <span class="o">+</span>
+                          <span class="p">(</span><span class="kt">double</span><span class="p">)</span><span class="n">record</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span>
+                          <span class="n">ldexp</span><span class="p">((</span><span class="kt">double</span><span class="p">)</span><span class="n">record</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="mi">16</span><span class="p">);</span>
+
+       <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Timestamp %0.1f, Channel %hu, Bin %hu</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span>
+              <span class="n">chan</span><span class="p">,</span> <span class="n">bin</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>This code is meant to serve as a rough guideline; it is missing many
+validation checks based on the values in the buffer header.</p>
+<p class="rubric">Footnotes</p>
+<table class="docutils footnote" frame="void" id="id7" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>(4 modules) * (1 Mword per module) * (2 bytes per word) = 8 MB</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id8" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[2]</a></td><td>Why do we use 25 MB / s when estimating pixel dwell time? 25 MB
+/ s certainly seems slow if you have spent any time with the PXI
+specification or the documentation for the National
+Instruments(tm) PXI Remote Control hardware. The initial
+theoretical transfer speed of 80 MB / s is initially reduced in
+half when mapping since we are transferring the data as 16-bit
+words over a 32-bit interface. As such, half of the data is
+immediately discarded on the host side when doing these
+transfers. There is also some overhead involved in reading the
+data out.</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id9" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[3]</a></td><td>64 pixels is the maximum in a buffer when the number of MCA
+bins is set to 4096.</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id10" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id6">[4]</a></td><td>The end of buffer record is the only record that doesn&#8217;t encode any
+channel information with it.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Mapping Mode</a><ul>
+<li><a class="reference internal" href="#pixel-advance-modes">Pixel Advance Modes</a><ul>
+<li><a class="reference internal" href="#gate">GATE</a></li>
+<li><a class="reference internal" href="#sync">SYNC</a></li>
+<li><a class="reference internal" href="#host-control">Host Control</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#gate-sync-signal-distribution">GATE/SYNC Signal Distribution</a></li>
+<li><a class="reference internal" href="#using-mapping-mode-a-walkthrough">Using Mapping Mode: A Walkthrough</a><ul>
+<li><a class="reference internal" href="#enable-mapping-mode">Enable mapping mode</a></li>
+<li><a class="reference internal" href="#set-the-number-of-bins-in-the-spectrum-mca-mode">Set the number of bins in the spectrum (MCA mode)</a></li>
+<li><a class="reference internal" href="#set-the-number-of-rois-and-their-bounds-sca-mode">Set the number of ROIs and their bounds (SCA mode)</a></li>
+<li><a class="reference internal" href="#set-the-variant-list-mode">Set the variant (List-mode)</a></li>
+<li><a class="reference internal" href="#set-the-total-number-of-pixels-to-be-acquired-in-this-run-mca-sca-mode">Set the total number of pixels to be acquired in this run (MCA/SCA mode)</a></li>
+<li><a class="reference internal" href="#set-the-number-of-pixels-per-buffer">Set the number of pixels per buffer</a></li>
+<li><a class="reference internal" href="#configure-pixel-control">Configure pixel control</a><ul>
+<li><a class="reference internal" href="#id4">GATE</a></li>
+<li><a class="reference internal" href="#id5">SYNC</a></li>
+<li><a class="reference internal" href="#host">HOST</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#apply-the-settings">Apply the settings</a></li>
+<li><a class="reference internal" href="#get-buffer-length-mca-sca-mode">Get buffer length (MCA/SCA mode)</a></li>
+<li><a class="reference internal" href="#start-the-run">Start the run</a></li>
+<li><a class="reference internal" href="#monitor-the-buffer-status">Monitor the buffer status</a></li>
+<li><a class="reference internal" href="#read-full-buffer-mca-sca-mode">Read full buffer (MCA/SCA mode)</a></li>
+<li><a class="reference internal" href="#read-full-list-mode-buffer-list-mode">Read full list-mode buffer (List-mode)</a></li>
+<li><a class="reference internal" href="#signal-that-the-read-has-completed">Signal that the read has completed</a></li>
+<li><a class="reference internal" href="#wait-for-buffer-b-to-fill">Wait for buffer &#8216;b&#8217; to fill</a></li>
+<li><a class="reference internal" href="#stop-the-run-when-all-the-pixels-are-collected">Stop the run when all the pixels are collected</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#mapping-tips">Mapping Tips</a></li>
+<li><a class="reference internal" href="#parsing-list-mode-data-buffers">Parsing List-mode data buffers</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="mca.html" title="previous chapter">MCA Data Acquisition</a></li>
+      <li>Next: <a href="acq_values.html" title="next chapter">Acquisition Values</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/mapping.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2010-2015 XIA LLC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+      |
+      <a href="_sources/mapping.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

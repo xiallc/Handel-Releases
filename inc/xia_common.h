@@ -56,7 +56,9 @@ typedef unsigned short parameter_t;
 typedef unsigned short flag_t;
 
 #ifdef LINUX
-typedef int             HANDLE;
+#include <stdint.h>
+typedef intptr_t        HANDLE;
+
 typedef unsigned char   UCHAR;
 typedef unsigned short  USHORT;
 typedef unsigned short* PUSHORT;

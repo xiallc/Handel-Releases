@@ -10,7 +10,7 @@ Class=USB
 ClassGUID={36FC9E60-C465-11CF-8056-444553540000}
 Provider=%CYUSB_Provider%
 CatalogFile=xia_usb2.cat
-DriverVer=07/10/2015,3.4.7.2
+DriverVer=11/09/2015,3.4.7.3
 
 [SourceDisksNames]
 1=%CYUSB_Install%,,,

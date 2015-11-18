@@ -1,0 +1,261 @@
+import os.path
+import build_helpers.version
+
+Import('env')
+
+win = env.Bit('windows')
+
+def do_stdcall_and_cdecl_lib(name, lib_inputs, stdcall_defines,
+                             other_inputs=None, other_defines=None,
+                             lib_env=None):
+    """
+    Returns a tuple of the stdcall and cdecl component libraries. Creates
+    cdecl/stdcall-specific versions of the object files.
+    """
+    if lib_env:
+        base = lib_env
+    else:
+        base = env.Clone()
+
+    if other_defines:
+        base.Append(CPPDEFINES=other_defines)
+
+    cdecl_env = base.Clone()
+    inputs = []
+    for i in lib_inputs:
+        inputs.append(cdecl_env.ComponentObject(os.path.basename(
+                    os.path.splitext(str(i))[0]) + '_cdecl', i))
+    if other_inputs:
+        inputs.append(other_inputs)
+    cdecl_lib = cdecl_env.ComponentLibrary(name, inputs, COMPONENT_STATIC=False,
+                                           COMPONENT_LIBRARY_PUBLISH=True)
+    stdcall_lib = []										   
+    if base.Bit('vba'):
+        stdcall_env = base.Clone()
+        stdcall_env.Append(CPPDEFINES=stdcall_defines)
+        inputs = []
+        for i in lib_inputs:
+            inputs.append(stdcall_env.ComponentObject(os.path.basename(
+                        os.path.splitext(str(i))[0]) + '_stdcall', i))
+        if other_inputs:
+            inputs.append(other_inputs)
+        stdcall_lib = stdcall_env.ComponentLibrary(name + '_vba', inputs,
+                                                   COMPONENT_STATIC=False,
+                                                   COMPONENT_LIBRARY_PUBLISH=True)
+    return cdecl_lib, stdcall_lib
+
+
+# Common assert routine used throughout Handel.
+assert_inputs = ['xia_assert.c']
+assert_obj = env.ComponentObject(assert_inputs)
+
+# Common file handle manager
+file_env = env.Clone()
+file_inputs = ['xia_file.c']
+file_lib = env.ComponentLibrary('xiafile', file_inputs + assert_obj,
+                                COMPONENT_STATIC=True,
+                                COMPONENT_LIBRARY_PUBLISH=True)
+
+# Protocol driver libraries
+md_deps = []
+md_libs = []
+md_defs = []
+
+
+if env.Bit('usb'):
+    md_libs.append('xia_usb')
+    usb_inputs = ['xia_usb.c']
+    for lib in do_stdcall_and_cdecl_lib('xia_usb', usb_inputs,
+                                        ['WIN32_USBLIB_VBA']):
+        md_deps.append(lib)
+else:
+    md_defs.append('EXCLUDE_USB')
+
+
+if env.Bit('usb2'):
+    md_libs.append('xia_usb2')
+    usb2_env = env.Clone()
+    if win:
+        usb2_env.Append(LIBS=['setupapi'])
+        usb2_inputs = ['xia_usb2.c']
+    else:
+        usb2_env.Append(LIBS=['libusb'])
+        usb2_inputs = ['xia_usb_linux.c']
+    for lib in do_stdcall_and_cdecl_lib('xia_usb2', usb2_inputs,
+                                        ['WIN32_XIA_USB2_VBA'], assert_obj,
+                                        lib_env=usb2_env):
+        md_deps.append(lib)
+else:
+    md_defs.append('EXCLUDE_USB2')
+
+if env.Bit('serial'):
+    md_libs.append('xia_serial')
+    serial_env = env.Clone()
+    serial_env.Append(LIBS=['cdrvhf32', 'cdrvxf32', 'cdrvdl32'])
+    serial_inputs = ['xia_serial.c']
+    for lib in do_stdcall_and_cdecl_lib('xia_serial', serial_inputs,
+                                        ['WIN32_SERIAL_VBA'], assert_obj,
+                                        lib_env=serial_env):
+        md_deps.append(lib)
+else:
+    md_defs.append('EXCLUDE_SERIAL')
+
+if env.Bit('epp'):
+    md_libs.append('xia_epp')
+    epp_env = env.Clone()
+    epp_env.Append(LIBS=['dlportio'])
+    epp_inputs = ['xia_epp.c']
+    for lib in do_stdcall_and_cdecl_lib('xia_epp', epp_inputs,
+                                        ['WIN32_EPPLIB_VBA'], assert_obj,
+                                        lib_env=epp_env):
+        md_deps.append(lib)
+else:
+    md_defs.append('EXCLUDE_EPP')
+
+if env.Bit('plx'):
+    md_libs.append('xia_plx')
+    plx_env = env.Clone()
+    plx_env.Append(LIBS=['plxapi'])
+    plx_inputs = ['xia_plx.c']
+    for lib in do_stdcall_and_cdecl_lib('xia_plx', plx_inputs,
+                                        ['WIN32_PLXLIB_VBA'], assert_obj,
+                                        lib_env=plx_env):
+        md_deps.append(lib)
+else:
+    md_defs.append('EXCLUDE_PLX')
+
+
+# MD library
+md_inputs = ['md_log.c']
+
+if win:
+    md_inputs.append('md_win32.c')
+elif env.Bit('linux'):
+    md_inputs.append('md_linux.c')
+
+md_env = env.Clone()
+md_env.Append(CPPDEFINES=md_defs)
+md_env.Append(LIBS=md_libs)
+if win:
+    md_env.Append(LIBS=['user32'])
+md_lib = md_env.ComponentLibrary('md', md_inputs + assert_obj,
+                                 COMPONENT_STATIC=True,
+                                 COMPONENT_LIBRARY_PUBLISH=True)
+md_env.Depends(md_lib, md_deps)
+
+
+projects = ['saturn', 'xmap', 'stj', 'mercury', 'udxp', 'udxps']
+
+# DD libraries
+xerxes_handel_defs = []
+xerxes_libs = ['md', 'xiafile']
+xerxes_deps = [md_lib, file_lib]
+device_libs = []
+
+dd_env = env.Clone()
+dd_env.Append(LIBS=['md', 'xiafile'])
+
+if dd_env.Bit('alpha'):
+    dd_env.Append(CPPDEFINES=['XIA_ALPHA'])
+
+# microDXP has a shared object file
+udxp_common_obj = []
+if dd_env.Bit('udxp') or dd_env.Bit('udxps'):
+    udxp_common_inputs = ['udxp_common.c']
+    udxp_common_obj = dd_env.ComponentObject(udxp_common_inputs)
+
+for p in projects:
+    if dd_env.Bit(p):
+        device_libs.append(p)
+        inputs = ["%s.c" % p]
+        lib = dd_env.ComponentLibrary(p, inputs + assert_obj + udxp_common_obj,
+                                      COMPONENT_STATIC=True,
+                                      COMPONENT_LIBRARY_PUBLISH=True)
+        xerxes_deps.append(lib)
+        dd_env.Depends(lib, [md_lib])
+    else:
+        xerxes_handel_defs.append("EXCLUDE_%s" % p.upper())
+
+# Xerxes
+xerxes_env = env.Clone()
+xerxes_env.Append(CPPDEFINES=xerxes_handel_defs)
+xerxes_env.Append(LIBS=xerxes_libs)
+xerxes_env.Append(LIBS=device_libs)
+xerxes_obj = xerxes_env.ComponentObject(['xerxes.c'])
+xerxes_lib = xerxes_env.ComponentLibrary('xerxes',
+                                         xerxes_obj + assert_obj,
+                                         COMPONENT_STATIC=True,
+                                         COMPONENT_LIBRARY_PUBLISH=True)
+xerxes_env.Depends(xerxes_lib, xerxes_deps)
+
+# FDD
+fdd_env = env.Clone()
+fdd_env.Append(LIBS=['md', 'xiafile'])
+fdd_inputs = ['fdd.c']
+fdd_lib = fdd_env.ComponentLibrary('fdd', fdd_inputs + assert_obj,
+                                         COMPONENT_STATIC=True,
+                                         COMPONENT_LIBRARY_PUBLISH=True)
+fdd_env.Depends(fdd_lib, [md_lib])
+                                         
+# PSL
+handel_libs = ['fdd', 'xerxes', 'md', 'xiafile'] # xerxes must precede md on linux!
+handel_deps = [md_lib, xerxes_lib, fdd_lib, file_lib]
+
+psl_env = env.Clone()
+
+if psl_env.Bit('alpha'):
+    psl_env.Append(CPPDEFINES=['XIA_ALPHA'])
+
+psl_env.Append(LIBS=['xerxes', 'fdd'])
+
+xup_obj = []
+if psl_env.Bit('xw') and (psl_env.Bit('udxp') or psl_env.Bit('udxps')):
+    xup_obj = psl_env.ComponentObject('xup.c')
+    psl_env.Append(LIBS=['xw'])
+    handel_libs.append('xw')
+else:
+    psl_env.Append(CPPDEFINES=['EXCLUDE_XUP'])
+
+psl_obj = psl_env.ComponentObject('psl.c')
+
+for p in projects:
+    if psl_env.Bit(p):
+        proj_psl = "%s_psl" % p
+        handel_libs.append(proj_psl)
+        inputs = ["%s.c" % proj_psl]
+        lib = psl_env.ComponentLibrary(proj_psl, inputs + psl_obj + xup_obj +
+                                       assert_obj, COMPONENT_STATIC=True,
+                                       COMPONENT_LIBRARY_PUBLISH=True)
+        handel_deps.append(lib)
+        psl_env.Depends(lib, [xerxes_lib, fdd_lib])
+
+# Handel
+handel_env = env.Clone()
+handel_env.Append(CPPDEFINES=['HANDEL_MAKE_DLL', 'HANDEL_USE_DLL'] +
+                  xerxes_handel_defs)
+if win:
+    handel_env.Append(LIBS=['user32'])
+handel_env.Append(LIBS=xerxes_libs)
+handel_env.Append(LIBS=handel_libs)
+handel_env.Append(LIBS=md_libs)
+handel_env.Append(LIBS=device_libs) # static device libs must come after xerxes on linux!
+handel_inputs = handel_env.Glob('handel*.c')
+
+# Build Handel.rc for DLL version
+rc_cmd = handel_env.Command(['handel.rc'], ['$MAIN_DIR/tools/releaser/version.yml'],
+                           build_helpers.version.generate, build_options=device_libs)
+
+# Add resource file
+handel_resources = []
+if win:
+    handel_resources = handel_env.RES('handel.rc')
+    handel_env.Depends(handel_resources, rc_cmd)
+    handel_deps.append(handel_resources)
+
+handel_cdecl, handel_stdcall = do_stdcall_and_cdecl_lib('handel',
+                                                        handel_inputs,
+                                                        ['WIN32_HANDEL_VBA'],
+                                                        assert_obj + handel_resources,
+                                                        lib_env=handel_env)
+handel_env.Depends(handel_cdecl, handel_deps)
+handel_env.Depends(handel_stdcall, handel_deps)

@@ -141,13 +141,22 @@ XIA_EXPORT int XIA_API xia_usb_open(char *device, HANDLE *hDevice)
 /*---------------------------------------------------------------------------------------*/
 XIA_EXPORT int XIA_API xia_usb2_open(int device_number, HANDLE *hDevice)
 {
-    struct usb_bus                *p;
+    struct usb_bus               *p;
     struct usb_device            *q;
-    int                            found = -1;
-    int                            rv = 0;
+    struct usb_dev_handle        *h;
+    int                           found = -1;
+    int                           rv = 0;
     static int                    first = TRUE;
 
+    sprintf(info_string, "Entry: device_number = %d, static handle = %p", device_number,
+            xia_usb_handle);
+    xiaLogInfo("xia_usb2_open", info_string);
+
     if (xia_usb_handle != NULL) return 0; /* if not first just return, leaving the old device open  */
+
+
+    sprintf(info_string, "No handle");
+    xiaLogInfo("xia_usb2_open", info_string);
 
 
     /* Must be new XIA USB 2.0 card */
@@ -166,23 +175,56 @@ XIA_EXPORT int XIA_API xia_usb2_open(int device_number, HANDLE *hDevice)
                 if ((q->descriptor.idVendor == 0x10e9) && 
                     ((q->descriptor.idProduct == 0x0701) ||
                      (q->descriptor.idProduct == 0x0702) ||
-                     (q->descriptor.idProduct == 0x0703))) {
+                     (q->descriptor.idProduct == 0x0703) ||
+                     (q->descriptor.idProduct == 0x0B01))) {
                     found++;
                     if (found == device_number) {
-                        xia_usb_device = q;
-                        xia_usb_handle = usb_open(xia_usb_device);
-                        if (xia_usb_handle == NULL) {
+                        sprintf(info_string, "Opening device %#x:%#x number %d",
+                                q->descriptor.idVendor,
+                                q->descriptor.idProduct,
+                                found);
+                        xiaLogInfo("xia_usb2_open", info_string);
+
+                        h = usb_open(q);
+                        if (h == NULL) {
+                            sprintf(info_string, "usb_open failed");
+                            xiaLogInfo("xia_usb2_open", info_string);
                             rv = -1;
                         } else {
-                            rv = usb_set_configuration(xia_usb_handle, 
-                                                       xia_usb_device->config[0].bConfigurationValue);
+                            sprintf(info_string, "setting configuration: %hu",
+                                    q->config[0].bConfigurationValue);
+                            xiaLogInfo("xia_usb2_open", info_string);
+
+                            rv = usb_set_configuration(h, q->config[0].bConfigurationValue);
+
+                            /* Testing with a Mercury in Ubuntu 14.04 in
+                             * vmware, setting the configuration fails but the
+                             * device still works. */
+                            /* rv = 0; */
+
                             if (rv == 0) {
-                                rv = usb_claim_interface(xia_usb_handle, 0);
-                                rv = usb_reset(xia_usb_handle);
+                                xiaLogInfo("xia_usb2_open", "claiming the interface");
+
+                                rv = usb_claim_interface(h, 0);
+                                rv = usb_reset(h);
                                 sprintf(info_string, "Found USB 2.0 board, product=0x%x", q->descriptor.idProduct);
                                 xiaLogInfo("xia_usb2_open", info_string);
+
+                                xia_usb_device = q;
+                                xia_usb_handle = h;
+                            } else {
+                                sprintf(info_string, "usb_set_configuration failed: %d", rv);
+                                xiaLogInfo("xia_usb2_open", info_string);
+
+                                usb_close(h);
                             }
                         }
+                    } else {
+                        sprintf(info_string, "Skipping device %#x:%#x id = %d",
+                                q->descriptor.idVendor,
+                                q->descriptor.idProduct,
+                                found);
+                        xiaLogInfo("xia_usb2_open", info_string);
                     }
                 }
                 q = q->next;

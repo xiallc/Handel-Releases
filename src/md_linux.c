@@ -123,7 +123,7 @@ static char *usb2Names[MAXMOD];
 static HANDLE usb2Handles[MAXMOD];
 
 /* The cached target address for the next operation. */
-static int usb2AddrCache[MAXMOD];
+static unsigned long usb2AddrCache[MAXMOD];
 
 #endif /* EXCLUDE_USB2 */
 
@@ -1465,7 +1465,7 @@ XIA_MD_STATIC int  dxp_md_usb2_close(int *camChan)
   status = xia_usb2_close(h);
 
   if (status != XIA_USB2_SUCCESS) {
-    sprintf(ERROR_STRING, "Error closing camChan (%d) with HANDLE = %#x",
+    sprintf(ERROR_STRING, "Error closing camChan (%d) with HANDLE = %#lx",
             *camChan, h);
     dxp_md_log_error("dxp_md_usb2_close", ERROR_STRING, DXP_MDCLOSE);
     return DXP_MDCLOSE;

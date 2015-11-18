@@ -78,9 +78,6 @@ PSL_STATIC int pslStartRun(int detChan, unsigned short resume,
 PSL_STATIC int pslStopRun(int detChan, Module *m);
 PSL_STATIC int PSL_API pslGetRunData(int detChan, char *name, void *value,
 									 XiaDefaults *defaults, Module *m);
-PSL_STATIC int pslSetPolarity(int detChan, Detector *det, int detectorChannel,
-							  XiaDefaults *defs, Module *m);
-PSL_STATIC int PSL_API pslSetDetectorTypeValue(int detChan, Detector *detector, int detectorChannel, XiaDefaults *defaults);
 PSL_STATIC int PSL_API pslGetDefaultAlias(char *alias, char **names,
                                           double *values);
 PSL_STATIC unsigned int PSL_API pslGetNumDefaults(void);
