@@ -4,38 +4,35 @@
  * Copyright (c) 2009-2012 XIA LLC
  * All rights reserved
  *
- * Redistribution and use in source and binary forms, 
- * with or without modification, are permitted provided 
+ * Redistribution and use in source and binary forms,
+ * with or without modification, are permitted provided
  * that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above 
- *     copyright notice, this list of conditions and the 
+ *   * Redistributions of source code must retain the above
+ *     copyright notice, this list of conditions and the
  *     following disclaimer.
- *   * Redistributions in binary form must reproduce the 
- *     above copyright notice, this list of conditions and the 
- *     following disclaimer in the documentation and/or other 
+ *   * Redistributions in binary form must reproduce the
+ *     above copyright notice, this list of conditions and the
+ *     following disclaimer in the documentation and/or other
  *     materials provided with the distribution.
- *   * Neither the name of XIA LLC 
- *     nor the names of its contributors may be used to endorse 
- *     or promote products derived from this software without 
+ *   * Neither the name of XIA LLC
+ *     nor the names of its contributors may be used to endorse
+ *     or promote products derived from this software without
  *     specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND 
- * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
- * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE 
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR 
- * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF 
- * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+ * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+ * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id$
- *
  */
 
 
@@ -75,7 +72,6 @@ static struct usb_dev_handle        *xia_usb_handle = NULL;
 static struct usb_device            *xia_usb_device = NULL;
 
 
-/*---------------------------------------------------------------------------------------*/
 XIA_EXPORT int XIA_API xia_usb_open(char *device, HANDLE *hDevice)
 {
     int                           device_number;
@@ -111,7 +107,7 @@ XIA_EXPORT int XIA_API xia_usb_open(char *device, HANDLE *hDevice)
                         if (xia_usb_handle == NULL) {
                             rv = -1;
                         } else {
-                            rv = usb_set_configuration(xia_usb_handle, 
+                            rv = usb_set_configuration(xia_usb_handle,
                                                        xia_usb_device->config[0].bConfigurationValue);
                             if (rv == 0) {
                                 rv = usb_claim_interface(xia_usb_handle, 0);
@@ -138,7 +134,6 @@ XIA_EXPORT int XIA_API xia_usb_open(char *device, HANDLE *hDevice)
 }
 
 
-/*---------------------------------------------------------------------------------------*/
 XIA_EXPORT int XIA_API xia_usb2_open(int device_number, HANDLE *hDevice)
 {
     struct usb_bus               *p;
@@ -172,11 +167,11 @@ XIA_EXPORT int XIA_API xia_usb2_open(int device_number, HANDLE *hDevice)
         while ((p != NULL) && (xia_usb_handle == NULL) && (rv == 0)) {
             q = p->devices;
             while ((q != NULL) && (xia_usb_handle == NULL) && (rv == 0)) {
-                if ((q->descriptor.idVendor == 0x10e9) && 
-                    ((q->descriptor.idProduct == 0x0701) ||
-                     (q->descriptor.idProduct == 0x0702) ||
-                     (q->descriptor.idProduct == 0x0703) ||
-                     (q->descriptor.idProduct == 0x0B01))) {
+                if ((q->descriptor.idVendor == 0x10e9) &&
+                        ((q->descriptor.idProduct == 0x0701) ||
+                         (q->descriptor.idProduct == 0x0702) ||
+                         (q->descriptor.idProduct == 0x0703) ||
+                         (q->descriptor.idProduct == 0x0B01))) {
                     found++;
                     if (found == device_number) {
                         sprintf(info_string, "Opening device %#x:%#x number %d",
@@ -197,17 +192,25 @@ XIA_EXPORT int XIA_API xia_usb2_open(int device_number, HANDLE *hDevice)
 
                             rv = usb_set_configuration(h, q->config[0].bConfigurationValue);
 
-                            /* Testing with a Mercury in Ubuntu 14.04 in
-                             * vmware, setting the configuration fails but the
-                             * device still works. */
-                            /* rv = 0; */
-
                             if (rv == 0) {
                                 xiaLogInfo("xia_usb2_open", "claiming the interface");
 
                                 rv = usb_claim_interface(h, 0);
+                                if (rv != 0) {
+                                    sprintf(info_string, "error claiming the interface: %d",
+                                            rv);
+                                    xiaLogWarning("xia_usb2_open", info_string);
+                                }
+
                                 rv = usb_reset(h);
-                                sprintf(info_string, "Found USB 2.0 board, product=0x%x", q->descriptor.idProduct);
+                                if (rv != 0) {
+                                    sprintf(info_string, "error resetting: %d",
+                                            rv);
+                                    xiaLogWarning("xia_usb2_open", info_string);
+                                }
+
+                                sprintf(info_string, "Found USB 2.0 board, product=0x%x",
+                                        q->descriptor.idProduct);
                                 xiaLogInfo("xia_usb2_open", info_string);
 
                                 xia_usb_device = q;
@@ -232,7 +235,7 @@ XIA_EXPORT int XIA_API xia_usb2_open(int device_number, HANDLE *hDevice)
             p = p->next;
         }
     }
-    
+
     if ((xia_usb_handle == NULL) || (rv != 0)) {
         *hDevice = 0;
         if (rv == 0) rv = -99;
@@ -243,16 +246,37 @@ XIA_EXPORT int XIA_API xia_usb2_open(int device_number, HANDLE *hDevice)
     return rv;
 }
 
-/*---------------------------------------------------------------------------------------*/
 XIA_EXPORT int XIA_API xia_usb_close(HANDLE hDevice)
 {
     int rv = 0;
-    
-    /* This does a reset of the USB device before closing it.  This is needed for USB2 on Linux
-     * or the next time that XIA software is run it cannot open the device correctly */
+
+    /* This does a reset of the USB device before closing it. This is
+     * needed for USB2 on Linux or the next time that XIA software is
+     * run it cannot open the device correctly.
+     */
     if (hDevice && xia_usb_handle) {
-        rv |= usb_release_interface(xia_usb_handle, 0);
-        rv |= usb_close(xia_usb_handle);
+        int rv_release, rv_close;
+
+        /* This fails with error -22 (not defined in libusb.h?) in a basic
+         * open/close test with a Mercury in Ubuntu 14.04. It passes if there
+         * has been any intervening read operation.
+         */
+        rv_release = usb_release_interface(xia_usb_handle, 0);
+        if (rv_release != 0) {
+            sprintf(info_string, "Failed to release the interface, handle=%p, error=%d",
+                    xia_usb_handle, rv_release);
+            xiaLogWarning("xia_usb_close", info_string);
+        }
+
+        rv_close = usb_close(xia_usb_handle);
+        if (rv_close != 0) {
+            sprintf(info_string, "Failed to close, handle=%p, error=%d",
+                    xia_usb_handle, rv_close);
+            xiaLogWarning("xia_usb_close", info_string);
+        }
+
+        rv = rv_release | rv_close;
+
         xia_usb_handle = NULL;
         xia_usb_device = NULL;
     }
@@ -260,13 +284,11 @@ XIA_EXPORT int XIA_API xia_usb_close(HANDLE hDevice)
     return rv;
 }
 
-/*---------------------------------------------------------------------------------------*/
 XIA_EXPORT int XIA_API xia_usb2_close(HANDLE hDevice)
 {
     return(xia_usb_close(hDevice));
 }
 
-/*---------------------------------------------------------------------------------------*/
 XIA_EXPORT int XIA_API xia_usb_read(long address, long nWords, char *device, unsigned short *buffer)
 {
     int             n_bytes;
@@ -274,7 +296,7 @@ XIA_EXPORT int XIA_API xia_usb_read(long address, long nWords, char *device, uns
     unsigned char   ctrlBuffer[64];        /* [CTRL_SIZE]; */
     unsigned char   lo_address, hi_address, lo_count, hi_count;
     int             rv = 0;
-    
+
     rv = xia_usb_open(device, &hDevice);            /* Get handle to USB device */
     if (rv != 0) {
         sprintf(info_string, "Failed to open device %s", device);
@@ -316,7 +338,6 @@ XIA_EXPORT int XIA_API xia_usb_read(long address, long nWords, char *device, uns
 }
 
 
-/*---------------------------------------------------------------------------------------*/
 XIA_EXPORT int XIA_API xia_usb2_read(HANDLE h, unsigned long addr,
                                      unsigned long n_bytes,
                                      byte_t *buf)
@@ -336,17 +357,17 @@ XIA_EXPORT int XIA_API xia_usb2_read(HANDLE h, unsigned long addr,
     }
 
     if (n_bytes < XIA_USB2_SMALL_READ_PACKET_SIZE) {
-        byte_t big_packet[XIA_USB2_SMALL_READ_PACKET_SIZE];  
+        byte_t big_packet[XIA_USB2_SMALL_READ_PACKET_SIZE];
 
         status = xia_usb2__send_setup_packet(0, addr,
-                                         XIA_USB2_SMALL_READ_PACKET_SIZE,
-                                         XIA_USB2_SETUP_FLAG_READ);
+                                             XIA_USB2_SMALL_READ_PACKET_SIZE,
+                                             XIA_USB2_SETUP_FLAG_READ);
 
         if (status != XIA_USB2_SUCCESS) {
             return status;
         }
 
-        status = usb_bulk_read(xia_usb_handle, XIA_USB2_READ_EP | USB_ENDPOINT_IN, (char*)big_packet, 
+        status = usb_bulk_read(xia_usb_handle, XIA_USB2_READ_EP | USB_ENDPOINT_IN, (char*)big_packet,
                                XIA_USB2_SMALL_READ_PACKET_SIZE, 10000);
         if (status != XIA_USB2_SMALL_READ_PACKET_SIZE) {
             sprintf(info_string, "usb_bulk_read returned %d should be %d", status, XIA_USB2_SMALL_READ_PACKET_SIZE);
@@ -354,14 +375,14 @@ XIA_EXPORT int XIA_API xia_usb2_read(HANDLE h, unsigned long addr,
             return XIA_USB2_XFER;
         }
         memcpy(buf, &big_packet, n_bytes);
-   } else {
+    } else {
         status = xia_usb2__send_setup_packet(0, addr, n_bytes, XIA_USB2_SETUP_FLAG_READ);
 
         if (status != XIA_USB2_SUCCESS) {
             return status;
         }
 
-        status = usb_bulk_read(xia_usb_handle, XIA_USB2_READ_EP | USB_ENDPOINT_IN, (char*)buf, 
+        status = usb_bulk_read(xia_usb_handle, XIA_USB2_READ_EP | USB_ENDPOINT_IN, (char*)buf,
                                n_bytes, 10000);
         if (status != n_bytes) {
             sprintf(info_string, "usb_bulk_read returned %d should be %lu", status, n_bytes);
@@ -373,7 +394,6 @@ XIA_EXPORT int XIA_API xia_usb2_read(HANDLE h, unsigned long addr,
     return XIA_USB2_SUCCESS;
 }
 
-/*---------------------------------------------------------------------------------------*/
 XIA_EXPORT int XIA_API xia_usb_write(long address, long nWords, char *device, unsigned short *buffer)
 {
     int                     n_bytes;
@@ -381,7 +401,7 @@ XIA_EXPORT int XIA_API xia_usb_write(long address, long nWords, char *device, un
     int                     rv = 0;
     unsigned char           ctrlBuffer[64];            /* [CTRL_SIZE]; */
     unsigned char           lo_address, hi_address, lo_count, hi_count;
-    
+
     rv = xia_usb_open(device, &hDevice);            /* Get handle to USB device */
     if (rv != 0) {
         sprintf(info_string, "Failed to open %s", device);
@@ -418,15 +438,14 @@ XIA_EXPORT int XIA_API xia_usb_write(long address, long nWords, char *device, un
         return 15;
     }
     return 0;
-} 
-    
-    
-    
-/*---------------------------------------------------------------------------------------*/
+}
+
+
+
 XIA_EXPORT int XIA_API xia_usb2_write(HANDLE h, unsigned long addr,
                                       unsigned long n_bytes,
                                       byte_t *buf)
-{    
+{
     int     status;
 
     if (xia_usb_handle == NULL) {
@@ -447,7 +466,7 @@ XIA_EXPORT int XIA_API xia_usb2_write(HANDLE h, unsigned long addr,
         return status;
     }
 
-    status = usb_bulk_write(xia_usb_handle, XIA_USB2_WRITE_EP | USB_ENDPOINT_OUT, (char*)buf, 
+    status = usb_bulk_write(xia_usb_handle, XIA_USB2_WRITE_EP | USB_ENDPOINT_OUT, (char*)buf,
                             n_bytes, 10000);
 
     if (status != n_bytes) {
@@ -459,9 +478,8 @@ XIA_EXPORT int XIA_API xia_usb2_write(HANDLE h, unsigned long addr,
     return XIA_USB2_SUCCESS;
 }
 
-/*---------------------------------------------------------------------------------------*/
-/**
- * @brief Sends an XIA-specific setup packet to the "setup" endpoint. This
+/*
+ * Sends an XIA-specific setup packet to the "setup" endpoint. This
  * is the first stage of our two-part process for transferring data to
  * and from the board.
  */
@@ -491,4 +509,3 @@ static int xia_usb2__send_setup_packet(HANDLE h, unsigned long addr,
 
     return XIA_USB2_SUCCESS;
 }
-

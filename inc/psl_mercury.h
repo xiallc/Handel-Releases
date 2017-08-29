@@ -1,44 +1,42 @@
 /*
- * Copyright (c) 2007-2015 XIA LLC
+ * Copyright (c) 2007-2016 XIA LLC
  * All rights reserved
  *
- * Redistribution and use in source and binary forms, 
- * with or without modification, are permitted provided 
+ * Redistribution and use in source and binary forms,
+ * with or without modification, are permitted provided
  * that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above 
- *     copyright notice, this list of conditions and the 
+ *   * Redistributions of source code must retain the above
+ *     copyright notice, this list of conditions and the
  *     following disclaimer.
- *   * Redistributions in binary form must reproduce the 
- *     above copyright notice, this list of conditions and the 
- *     following disclaimer in the documentation and/or other 
+ *   * Redistributions in binary form must reproduce the
+ *     above copyright notice, this list of conditions and the
+ *     following disclaimer in the documentation and/or other
  *     materials provided with the distribution.
- *   * Neither the name of XIA LLC 
- *     nor the names of its contributors may be used to endorse 
- *     or promote products derived from this software without 
+ *   * Neither the name of XIA LLC
+ *     nor the names of its contributors may be used to endorse
+ *     or promote products derived from this software without
  *     specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND 
- * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
- * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE 
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR 
- * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF 
- * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+ * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+ * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
 
 
 #ifndef __PSL_MERCURY_H__
 #define __PSL_MERCURY_H__
 
-/** Constants **/
 #define MIN_MCA_CHANNELS    256.0
 #define MAX_MCA_CHANNELS    16384.0
 #define MIN_SLOWLEN         5
@@ -64,11 +62,14 @@ static unsigned long MERCURY_STATS_CHAN_OFFSET[] = {
   0x0000C0
 };
 
+/* relative offset for each channel in the external memory SCA block */
+#define MERCURY_SCA_CHAN_OFFSET     0x40
+
 /* These values are really low-level but required for the runtime readout
  * since Handel doesn't support it directly in dxp_get_statisitics().
  */
 #define MERCURY_MEMORY_BLOCK_SIZE  256
- 
+
 #define MERCURY_STATS_REALTIME_OFFSET   0x0
 #define MERCURY_STATS_TLIVETIME_OFFSET  0x2
 #define MERCURY_STATS_ELIVETIME_OFFSET  0x4
@@ -131,13 +132,14 @@ static unsigned long MERCURY_STATS_CHAN_OFFSET[] = {
 #define BOARD_SER_NUM   0x10009300
 
 /* Temperature calibration setting */
-#define MERCURY_TEMP_NO_CORRECTION	0
+#define MERCURY_TEMP_NO_CORRECTION  0
 
-/** Memory Management **/
+/* Address to read out USB version */
+#define USB_VERSION_ADDRESS     0x14000000
+
+/* Memory Management */
 DXP_MD_ALLOC  mercury_psl_md_alloc;
 DXP_MD_FREE   mercury_psl_md_free;
 
 
 #endif /* __PSL_MERCURY_H__ */
-
-

@@ -3,37 +3,35 @@
  *               2005-2015 XIA LLC
  * All rights reserved
  *
- * Redistribution and use in source and binary forms, 
- * with or without modification, are permitted provided 
+ * Redistribution and use in source and binary forms,
+ * with or without modification, are permitted provided
  * that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above 
- *     copyright notice, this list of conditions and the 
+ *   * Redistributions of source code must retain the above
+ *     copyright notice, this list of conditions and the
  *     following disclaimer.
- *   * Redistributions in binary form must reproduce the 
- *     above copyright notice, this list of conditions and the 
- *     following disclaimer in the documentation and/or other 
+ *   * Redistributions in binary form must reproduce the
+ *     above copyright notice, this list of conditions and the
+ *     following disclaimer in the documentation and/or other
  *     materials provided with the distribution.
- *   * Neither the name of XIA LLC 
- *     nor the names of its contributors may be used to endorse 
- *     or promote products derived from this software without 
+ *   * Neither the name of XIA LLC
+ *     nor the names of its contributors may be used to endorse
+ *     or promote products derived from this software without
  *     specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND 
- * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
- * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE 
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR 
- * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF 
- * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+ * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+ * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *
  */
 
 
@@ -46,7 +44,7 @@
 #define LATEST_BOARD_TYPE		  "Saturn"
 #define LATEST_BOARD_VERSION		     "D"
 /*
- *    
+ *
  */
 #define PROGRAM_BASE     0x0000
 #define DATA_BASE        0x4000
@@ -64,7 +62,7 @@
 #define GINPUT              1.0		/* Input attenuator Gain	*/
 #define GINPUT_BUFF	        1.0		/* Input buffer Gain		*/
 #define GINVERTING_AMP 3240./499.	/* Inverting Amp Gain		*/
-#define GV_DIVIDER  124.9/498.9		/* Voltage Divider after 
+#define GV_DIVIDER  124.9/498.9		/* Voltage Divider after
 									   Inverting AMP */
 #define GGAINDAC_BUFF       1.0		/* GainDAC buffer Gain		*/
 #define GNYQUIST      422./613.		/* Nyquist Filter Gain		*/
@@ -74,7 +72,7 @@
 #define GAINDAC_BITS		 16
 #define GAINDAC_MIN			-6.
 #define GAINDAC_MAX		    30.
-/* 
+/*
  * Control words for the RUNTASKS parameter
  */
 #define UPDATE_DAC		  0x002
@@ -102,7 +100,7 @@
 #define WHICHTEST_OPEN_INPUT_RELAY  14
 #define WHICHTEST_RC_BASELINE       15
 #define WHICHTEST_RC_EVENT          16
-#define WHICHTEST_BASELINE_HISTORY  
+#define WHICHTEST_BASELINE_HISTORY
 #define WHICHTEST_READ_MEMORY       20
 #define WHICHTEST_WRITE_MEMORY      21
 #define WHICHTEST_RESET             99
@@ -132,7 +130,7 @@
 #define MASK_UNUSED14     0x4000
 #define MASK_UNUSED15     0x8000
 
-/* Definitions of addresses for the DXP boards 
+/* Definitions of addresses for the DXP boards
  * F code for write is 1, read is 0
  * A code is the register for the xfer
  *    0=Data register,    1=Address register
@@ -167,8 +165,8 @@
 /* For Xerxes only */
 #define REALTIME_CLOCK_TICK    800e-9
 
-/* 
- * Definitions for SATURN configurations 
+/*
+ * Definitions for SATURN configurations
  */
 #define CT_SATURN_SET_ASCDAC        300
 #define CT_SATURN_TRKDAC            302

@@ -61,12 +61,15 @@ md_deps = []
 md_libs = []
 md_defs = []
 
+protocols_env = env.Clone()
+protocols_env.Append(COMPONENT_LIBRARY_GROUPS=['protocols'])
 
 if env.Bit('usb'):
     md_libs.append('xia_usb')
     usb_inputs = ['xia_usb.c']
     for lib in do_stdcall_and_cdecl_lib('xia_usb', usb_inputs,
-                                        ['WIN32_USBLIB_VBA']):
+                                        ['WIN32_USBLIB_VBA'],
+					lib_env=protocols_env):
         md_deps.append(lib)
 else:
     md_defs.append('EXCLUDE_USB')
@@ -74,7 +77,7 @@ else:
 
 if env.Bit('usb2'):
     md_libs.append('xia_usb2')
-    usb2_env = env.Clone()
+    usb2_env = protocols_env.Clone()
     if win:
         usb2_env.Append(LIBS=['setupapi'])
         usb2_inputs = ['xia_usb2.c']
@@ -90,7 +93,7 @@ else:
 
 if env.Bit('serial'):
     md_libs.append('xia_serial')
-    serial_env = env.Clone()
+    serial_env = protocols_env.Clone()
     serial_env.Append(LIBS=['cdrvhf32', 'cdrvxf32', 'cdrvdl32'])
     serial_inputs = ['xia_serial.c']
     for lib in do_stdcall_and_cdecl_lib('xia_serial', serial_inputs,
@@ -102,7 +105,7 @@ else:
 
 if env.Bit('epp'):
     md_libs.append('xia_epp')
-    epp_env = env.Clone()
+    epp_env = protocols_env.Clone()
     epp_env.Append(LIBS=['dlportio'])
     epp_inputs = ['xia_epp.c']
     for lib in do_stdcall_and_cdecl_lib('xia_epp', epp_inputs,
@@ -114,7 +117,7 @@ else:
 
 if env.Bit('plx'):
     md_libs.append('xia_plx')
-    plx_env = env.Clone()
+    plx_env = protocols_env.Clone()
     plx_env.Append(LIBS=['plxapi'])
     plx_inputs = ['xia_plx.c']
     for lib in do_stdcall_and_cdecl_lib('xia_plx', plx_inputs,
@@ -242,7 +245,8 @@ handel_env.Append(LIBS=device_libs) # static device libs must come after xerxes 
 handel_inputs = handel_env.Glob('handel*.c')
 
 # Build Handel.rc for DLL version
-rc_cmd = handel_env.Command(['handel.rc'], ['$MAIN_DIR/tools/releaser/version.yml'],
+rc_cmd = handel_env.Command(['handel.rc'], 
+                           ['$MAIN_DIR/tools/releaser/version.yml', '$MAIN_DIR/tools/releaser/changeset.yml'],
                            build_helpers.version.generate, build_options=device_libs)
 
 # Add resource file

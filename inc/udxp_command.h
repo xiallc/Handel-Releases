@@ -3,37 +3,35 @@
  *               2005-2015 XIA LLC
  * All rights reserved
  *
- * Redistribution and use in source and binary forms, 
- * with or without modification, are permitted provided 
+ * Redistribution and use in source and binary forms,
+ * with or without modification, are permitted provided
  * that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above 
- *     copyright notice, this list of conditions and the 
+ *   * Redistributions of source code must retain the above
+ *     copyright notice, this list of conditions and the
  *     following disclaimer.
- *   * Redistributions in binary form must reproduce the 
- *     above copyright notice, this list of conditions and the 
- *     following disclaimer in the documentation and/or other 
+ *   * Redistributions in binary form must reproduce the
+ *     above copyright notice, this list of conditions and the
+ *     following disclaimer in the documentation and/or other
  *     materials provided with the distribution.
- *   * Neither the name of XIA LLC 
- *     nor the names of its contributors may be used to endorse 
- *     or promote products derived from this software without 
+ *   * Neither the name of XIA LLC
+ *     nor the names of its contributors may be used to endorse
+ *     or promote products derived from this software without
  *     specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND 
- * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
- * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE 
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR 
- * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF 
- * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+ * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+ * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *
  */
 
 #ifndef _UDXP_COMMAND_H_
@@ -74,9 +72,13 @@
 #define CMD_START_RUN           0x00
 #define CMD_STOP_RUN            0x01
 #define CMD_READ_MCA            0x02
+#define CMD_READ_SCA            0x04
 #define CMD_READ_STATISTICS     0x06
 #define CMD_SET_PRESET          0x07
 #define CMD_GET_PRESET          0x07
+#define CMD_SNAPSHOT            0x08
+#define CMD_READ_SNAPSHOT_MCA   0x09
+#define CMD_READ_SNAPSHOT_STATS 0x0A
 
 /* Diagnostic Tools */
 #define CMD_READ_BASELINE       0x10
@@ -135,12 +137,13 @@
 #define CMD_GET_RUNTASKS        0x93
 #define CMD_SET_FIPCONTROL      0x94
 #define CMD_GET_FIPCONTROL      0x94
-#define CMD_GET_SCALIMIT		0x97
-#define CMD_SET_SCALIMIT		0x97
-#define CMD_GET_SWGAIN			0x9B
-#define CMD_SET_SWGAIN			0x9B
-#define CMD_GET_DIGITALGAIN		0x9C
-#define CMD_SET_DIGITALGAIN		0x9C
+#define CMD_GET_SCALIMIT        0x97
+#define CMD_SET_SCALIMIT        0x97
+#define CMD_GET_SWGAIN          0x9B
+#define CMD_SET_SWGAIN          0x9B
+#define CMD_GET_DIGITALGAIN     0x9C
+#define CMD_SET_DIGITALGAIN     0x9C
+#define CMD_SET_OFFADC          0x9D
 #define CMD_APPLY               0x9F
 
 /* XIA Setup Commands */
@@ -150,7 +153,7 @@
 #define CMD_READ_FLASH          0xF9
 
 /* This is a special command number used
- * for situations where I need to call 
+ * for situations where I need to call
  * dxp_cmd() with an IO flag set for non-IO
  * operation, like turning on the sniff
  * mode.
@@ -158,7 +161,7 @@
 #define CMD_NOP                 0xFF
 
 /* Another macro used to reduce the amount of
- * code it takes to define the variables for a 
+ * code it takes to define the variables for a
  * RS-232 command. I found myself using a rather
  * consistent format and I was writing a lot of
  * redundant code...
@@ -168,19 +171,16 @@
                   unsigned int lenR = (lr) + RECV_BASE; \
                   byte_t cmd = (c);                     \
                   byte_t send[(ls)];                    \
-                  byte_t receive[(lr) + RECV_BASE]      
+                  byte_t receive[(lr) + RECV_BASE]
 
 #define DEFINE_CMD_ZERO_SEND(c, lr)                     \
                   unsigned int lenS = 0;                \
                   unsigned int lenR = (lr) + RECV_BASE; \
                   byte_t cmd = (c);                     \
-                  byte_t receive[(lr) + RECV_BASE]      
+                  byte_t receive[(lr) + RECV_BASE]
 
 #define OLD_MICRO_CMD(ls, lr)                           \
                   lenS = (ls);                          \
-                  lenR = (lr) + RECV_BASE;              
+                  lenR = (lr) + RECV_BASE;
 
 #endif /* _UDXP_COMMAND_H_ */
-
-
-

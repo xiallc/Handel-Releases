@@ -1,49 +1,53 @@
 /*
  * Copyright (c) 2004 X-ray Instrumentation Associates
- *               2005-2015 XIA LLC
+ *               2005-2016 XIA LLC
  * All rights reserved
  *
- * Redistribution and use in source and binary forms, 
- * with or without modification, are permitted provided 
+ * Redistribution and use in source and binary forms,
+ * with or without modification, are permitted provided
  * that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above 
- *     copyright notice, this list of conditions and the 
+ *   * Redistributions of source code must retain the above
+ *     copyright notice, this list of conditions and the
  *     following disclaimer.
- *   * Redistributions in binary form must reproduce the 
- *     above copyright notice, this list of conditions and the 
- *     following disclaimer in the documentation and/or other 
+ *   * Redistributions in binary form must reproduce the
+ *     above copyright notice, this list of conditions and the
+ *     following disclaimer in the documentation and/or other
  *     materials provided with the distribution.
- *   * Neither the name of XIA LLC 
- *     nor the names of its contributors may be used to endorse 
- *     or promote products derived from this software without 
+ *   * Neither the name of XIA LLC
+ *     nor the names of its contributors may be used to endorse
+ *     or promote products derived from this software without
  *     specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND 
- * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
- * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE 
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR 
- * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF 
- * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+ * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+ * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *
  */
 
 #ifndef _PSL_UDXP_H_
 #define _PSL_UDXP_H_
 
+/*
+ * Function pointers
+ */
 
-/** STRUCTURES **/
 typedef int (*Udxp_GetAcqValue_FP)(int detChan, char *name, XiaDefaults *defs, void *value);
 typedef int (*Udxp_SetAcqValue_FP)(int detChan, char *name, XiaDefaults *defs, void *value);
 typedef int (*Udxp_DoRunData_FP)(int detChan, void *value, XiaDefaults *defs);
+
+/*
+ * Structures
+ */
 
 /* A udxp specific acquisition value */
 typedef struct _Udxp_AcquisitionValue {
@@ -73,7 +77,7 @@ typedef struct _Udxp_RunData {
  * FiPPI # and the PARSET #.
  */
 typedef struct _PeakingTimeRecord {
-    
+
   double         time;
   double         clock;
   unsigned short fippi;
@@ -84,11 +88,14 @@ typedef struct _PeakingTimeRecord {
 
 
 /* Ketek High/Log Gain to Variable Gain lookup table */
-static const double HIGHLOW_GAIN_LUT[2] = 
+static const double HIGHLOW_GAIN_LUT[2] =
 {
-	1.0,
-	2.01
+	2.0,
+	4.02
 };
+
+static const double HIGHLOW_LOWEST_BASEGAIN = 2.423;
+static const double HIGH_LOW_GAIN_SPACING = 6.08;
 
 /* Switch Gain SWGAIN to Variable Gain (V/V) lookup table */
 static const double VARIABLE_GAIN_LUT[16] =
@@ -111,8 +118,13 @@ static const double VARIABLE_GAIN_LUT[16] =
 	23.04
 };
 
+static const double VARIABLE_LOWEST_BASEGAIN = 3.848;
+static const double VARIABLE_GAIN_SPACING = 1.7;
 
-/** CONSTANTS **/
+/*
+ * Constants
+ */
+
 #define BASE_CLOCK_STD    32.0
 
 /* Non-supermicro decay_time clock scaling */
@@ -167,6 +179,8 @@ static const double VARIABLE_GAIN_LUT[16] =
 #define GAIN_TRIM_LINEAR_MAX 2.0
 #define GAIN_LINEAR_MIN      1.0
 #define GAIN_LINEAR_MAX    100.0
+#define GAINTWEAK_MAX		65535
+
 
 #define GAIN_MODE_FIXED     0
 #define GAIN_MODE_VGA       1
@@ -203,6 +217,7 @@ static const double VARIABLE_GAIN_LUT[16] =
 
 #define MIN_BYTES_PER_BIN 1.0
 #define MAX_BYTES_PER_BIN 3.0
+#define RAW_BYTES_PER_BIN 4
 
 /* This is in 16-bit words */
 #define BASELINE_LEN 1024
@@ -212,12 +227,26 @@ static const double VARIABLE_GAIN_LUT[16] =
 #define DEBUG_TRACE_TYPE (N_ELEMS(traceTypes) - 1)
 
 #define MAX_NUM_INTERNAL_SCA 4
-#define MIN_SCA_SUPPORT_CODEREV 0x0406
+#define MAX_NUM_INTERNAL_SCA_HI 16
+
+#define MIN_SCA_SUPPORT_CODEREV 		0x0406
+#define MIN_UPDATED_SCA_CODEREV 		0x0520
+#define MIN_UPDATED_PRESET_CODEREV 		0x0431
+#define MIN_SNAPSHOT_SUPPORT_CODEREV 	0x0431
 
 #define MIN_PULSER_PERIOD 1
 #define MAX_PULSER_PERIOD 255
 
-/** MACROS **/
+#define MAX_RESET_INTERVAL 	255
+#define MAX_DECAY_TIME		65535
+
+/* Scale ratio between pulser period to microseconds */
+#define PULSER_PERIOD_SCALE 40.0
+
+/*
+ * Macros
+ */
+
 #if defined(_MSC_VER) && (_MSC_VER >= 1300)
 #define INVALIDATE_END          \
 __pragma(warning(push))         \
@@ -239,6 +268,3 @@ do {                                                                            
 INVALIDATE_END
 
 #endif /* _PSL_UDXP_H_ */
-
-
-

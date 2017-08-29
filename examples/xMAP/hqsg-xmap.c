@@ -2,43 +2,42 @@
  * This code accompanies the XIA Application Note "Handel Quick Start
  * Guide: xMAP". This sample code shows how to start and manually stop
  * a normal MCA data acquisition run.
- *
- * Copyright (c) 2005-2014 XIA LLC
- * All rights reserved
- *
- * Redistribution and use in source and binary forms, 
- * with or without modification, are permitted provided 
- * that the following conditions are met:
- *
- *   * Redistributions of source code must retain the above 
- *     copyright notice, this list of conditions and the 
- *     following disclaimer.
- *   * Redistributions in binary form must reproduce the 
- *     above copyright notice, this list of conditions and the 
- *     following disclaimer in the documentation and/or other 
- *     materials provided with the distribution.
- *   * Neither the name of XIA LLC 
- *     nor the names of its contributors may be used to endorse 
- *     or promote products derived from this software without 
- *     specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND 
- * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
- * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE 
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR 
- * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF 
- * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
- * SUCH DAMAGE.
- *
- *
  */
 
+/*
+ * Copyright (c) 2005-2015 XIA LLC
+ * All rights reserved
+ *
+ * Redistribution and use in source and binary forms,
+ * with or without modification, are permitted provided
+ * that the following conditions are met:
+ *
+ *   * Redistributions of source code must retain the above
+ *     copyright notice, this list of conditions and the
+ *     following disclaimer.
+ *   * Redistributions in binary form must reproduce the
+ *     above copyright notice, this list of conditions and the
+ *     following disclaimer in the documentation and/or other
+ *     materials provided with the distribution.
+ *   * Neither the name of XIA LLC
+ *     nor the names of its contributors may be used to endorse
+ *     or promote products derived from this software without
+ *     specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+ * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+ * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,6 +58,7 @@ static void CHECK_ERROR(int status);
 int main(int argc, char *argv[])
 {
     int status;
+    int i;
     int ignored = 0;
 
     /* Acquisition Values */
@@ -67,16 +67,24 @@ int main(int argc, char *argv[])
     double calib = 5900.0;
     double dr = 47200.0;
     double mappingMode = 0.0;
+    double numberChannels = 2048;
 
     unsigned long mcaLen = 0;
-
     unsigned long *mca = NULL;
+
+    double nSCAs = 2.0;
+    char scaStr[80];
+
+    double scaLowLimits[]  = {0.0, 1024.0};
+    double scaHighLimits[] = {1023.0, 2047.0};
+
+    double SCAs[2];
 
     if (argc < 2) {
         print_usage();
         exit(1);
     }
-    
+
     /* Setup logging here */
     printf("Configuring the Handel log file.\n");
     xiaSetLogLevel(MD_WARNING);
@@ -95,7 +103,7 @@ int main(int argc, char *argv[])
     printf("Setting the acquisition values.\n");
     status = xiaSetAcquisitionValues(-1, "peaking_time", &pt);
     CHECK_ERROR(status);
-    
+
     status = xiaSetAcquisitionValues(-1, "trigger_threshold", &thresh);
     CHECK_ERROR(status);
 
@@ -105,8 +113,29 @@ int main(int argc, char *argv[])
     status = xiaSetAcquisitionValues(-1, "dynamic_range", &dr);
     CHECK_ERROR(status);
 
+    status = xiaSetAcquisitionValues(-1, "number_mca_channels", &numberChannels);
+    CHECK_ERROR(status);
+
     status = xiaSetAcquisitionValues(-1, "mapping_mode", &mappingMode);
     CHECK_ERROR(status);
+
+
+    /* Set the number of SCAs */
+    printf("-- Set SCAs\n");
+    status = xiaSetAcquisitionValues(-1, "number_of_scas", (void *)&nSCAs);
+    CHECK_ERROR(status);
+
+    /* Set the individual SCA limits */
+    for (i = 0; i < (int)nSCAs; i++) {
+      sprintf(scaStr, "sca%d_lo", i);
+      status = xiaSetAcquisitionValues(-1, scaStr, (void *)&(scaLowLimits[i]));
+      CHECK_ERROR(status);
+
+      sprintf(scaStr, "sca%d_hi", i);
+      status = xiaSetAcquisitionValues(-1, scaStr, (void *)&(scaHighLimits[i]));
+      CHECK_ERROR(status);
+    }
+
 
     /* Apply new acquisition values */
     printf("Applying the acquisition values.\n");
@@ -141,15 +170,23 @@ int main(int argc, char *argv[])
         /* Error allocating memory */
         exit(1);
     }
-    
+
     printf("Reading the MCA.\n");
     status = xiaGetRunData(0, "mca", mca);
     CHECK_ERROR(status);
 
     /* Display the spectrum, write it to a file, etc... */
-    
+
     printf("Release MCA memory.\n");
     free(mca);
+
+    /* Read out the SCAs from the data buffer */
+    status = xiaGetRunData(0, "sca", (void *)SCAs);
+    CHECK_ERROR(status);
+
+    for (i = 0; i < (int)nSCAs; i++) {
+      printf("-- SCA%d = %0f\n", i, SCAs[i]);
+    }
 
     printf("Cleaning up Handel.\n");
     status = xiaExit();
@@ -173,7 +210,6 @@ static void CHECK_ERROR(int status)
         exit(status);
     }
 }
-
 
 
 static void print_usage(void)

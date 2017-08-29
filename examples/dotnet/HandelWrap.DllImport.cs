@@ -61,6 +61,9 @@ namespace XIA.Components
         private static extern int xiaGetModuleItem(string alias, string name, ref int value);
 
         [DllImport("handel.dll", CallingConvention = CallingConvention.Cdecl)]
+        private static extern int xiaGetModuleItem(string alias, string name, ref uint value);
+
+        [DllImport("handel.dll", CallingConvention = CallingConvention.Cdecl)]
         private static extern int xiaGetModuleItem(string alias, string name, StringBuilder value);
 
         [DllImport("handel.dll", CallingConvention = CallingConvention.Cdecl)]
@@ -91,6 +94,9 @@ namespace XIA.Components
         private static extern int xiaGainOperation(int detChan, string name, ref double value);
 
         [DllImport("handel.dll", CallingConvention = CallingConvention.Cdecl)]
+        private static extern int xiaGetRunData(int detChan, string name, ref ushort value);
+
+        [DllImport("handel.dll", CallingConvention = CallingConvention.Cdecl)]
         private static extern int xiaGetRunData(int detChan, string name, ref uint value);
 
         [DllImport("handel.dll", CallingConvention = CallingConvention.Cdecl)]
@@ -109,6 +115,9 @@ namespace XIA.Components
         private static extern int xiaGetRunData(int detChan, string name, double[] value);
 
         [DllImport("handel.dll", CallingConvention = CallingConvention.Cdecl)]
+        private static extern int xiaBoardOperation(int detChan, string name, ref uint value);
+
+        [DllImport("handel.dll", CallingConvention = CallingConvention.Cdecl)]
         private static extern int xiaBoardOperation(int detChan, string name, ref int value);
 
         [DllImport("handel.dll", CallingConvention = CallingConvention.Cdecl)]
@@ -122,9 +131,6 @@ namespace XIA.Components
 
         [DllImport("handel.dll", CallingConvention = CallingConvention.Cdecl)]
         private static extern int xiaBoardOperation(int detChan, string name, StringBuilder value);
-
-        [DllImport("handel.dll", CallingConvention = CallingConvention.Cdecl)]
-        private static extern int xiaBoardOperation(int detChan, string name, ref ulong value);
 
         [DllImport("handel.dll", CallingConvention = CallingConvention.Cdecl)]
         private static extern int xiaBoardOperation(int detChan, string name, ref ushort value);

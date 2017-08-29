@@ -1,0 +1,2138 @@
+v1.2.16
+=======
+
+* [XMAP] Fixed SCA readout regression in 1.2.14.
+
+* [XMAP] [STJ] Log PlxApi error codes in xia_plx.
+
+* [microDXP] Extend preset run limits up to 48 bits (from 32 bits) for
+  devices with CODEREV >= 0x0431.
+
+* [microDXP] Don't stop the run when reading gain_trim.
+
+* Removed several unused structs and functions from Xerxes.
+
+* [microDXP] Add special run data snapshot_mca and snapshot_statistics (and corresponding lengths).
+
+* [microDXP] Validate parset value and return an error if out of range.
+
+XXX Ann DSP params * [microDXP] 
+
+
+v1.2.14
+=======
+
+* [microDXP] Added board operation get_peaking_times to return all peaking times.
+
+* [microDXP] Fix gain mode readout to not incidentally stop an active run.
+
+* [Mercury] Added board operation get_usb_version.
+
+* [Mercury] Removed unsupported serial number readout.
+
+* [Saturn] Fixed SCA readout.
+
+	
+v1.2.13
+=======
+
+* [microDXP] Fixed an error switching between serial and USB2 microDXP boards.
+
+* [microDXP] Added check to acquisition value "preamp_value" range, reset value
+  to maximum allowed if out-of-range.
+  
+* [microDXP] Added special run "adjust_offsets" and acquisition value 
+  "auto_adjust_offset" for ADC offset control.
+  
+* [microDXP] Added support for run data "sca" readout, the availability can be
+  confirmed with "get_board_features" board operation, BOARD_SUPPORTS_UPDATED_SCA
+  bit, see handel_constants.h for a list of board features.
+
+* [microDXP] Fixed an error in variable gain calculation.
+
+* [microDXP] Scale acquisition values "sca_time_off" and "sca_time_on" to 
+  microseconds.
+  
+* [STJ] Added a "bias_dac_enable" acquisition value to denote the STJ Bias DAC 
+  disable status.
+  
+* [STJ] Updated limit for maximum number_mca_channels.
+
+* Updated API documentation and Quickstart Guides.
+   
+* Removed the following exported funtions from the API, they are only needed for 
+  internal initialization of the data structure, and could potentially make the
+  system unstable if used after starting up. Modification to system configuration
+  can be safely done by loading a new configuration file with xiaLoadSystem, then
+  calling xiaStartSystem.
+
+xiaNewDetector
+xiaAddDetectorItem
+xiaModifyDetectorItem
+xiaRemoveDetector
+xiaNewFirmware
+xiaAddFirmwareItem
+xiaModifyFirmwareItem
+xiaRemoveFirmware
+xiaNewModule
+xiaAddModuleItem
+xiaModifyModuleItem
+xiaRemoveModule
+xiaAddChannelSetElem
+xiaRemoveChannelSetElem
+xiaRemoveChannelSet
+xiaDownloadFirmware
+xiaUpdateUserParams
+
+* Removed the deprecated functions xiaFitGauss and xiaFindPeak.
+
+
+v1.2.11
+=======
+
+* Added a Linux environment to the scons build.
+
+* [microDXP] Added the microDXP rev H product ID to Linux usb search.
+
+* [microDXP] Added udxp source files to the source release. Build with --no-udxps
+  --no-xw.
+
+* [usb2] Fixed Linux USB2 to clean up if the initialization does not completely succeed.
+
+
+v1.2.10
+=======
+
+* [microDXP] Added sample code and INI files to the source release.
+
+* [microDXP] Support for 80MHz base clocks.
+
+* [microDXP] Support for starting the system with multiple USB2 devices.
+
+* [microDXP] Fixed the decay time calculation for microDXP Rev G and earlier.
+
+
+v1.2.7
+======
+
+* [microDXP] Fixed gain setting error introduced in v1.2.5.
+
+* Fixed some memory leak on application exit by adding calls to free data 
+  structures in xiaExit.
+
+* [microDXP] Added drivers for KETEK DPP2.
+
+* [microDXP] Removed an unneeded delay after direct USB2 bus data read, this is
+  an 100ms delay which occurred after each spectrum read for USB2 boards.
+
+* [microDXP] Added calculation of underflows and overflows for supermicro.
+
+* [microDXP] Added run data module_statistics_2
+
+* [microDXP] Added support for Ketek High Low gain mode.
+
+* [microDXP] Moved execution of the set acquisition value function to 
+  xiaSetAcquisitionValues, up from BoardOperation "apply". This is needed to 
+  pass in the correct acquisition name if it contains extra parameters (e.g. 
+  "scalo_0"). It will also make the microDXP behave the same as other XIA 
+  devices.
+
+* [microDXP] Added support for setting sca limits and sca related acquisition
+  values: number_of_scas, sca_time_on, sca_time_off, scalo_0, scahi_0, etc..
+
+* [microDXP] Added get_board_features board operation to return bit flags 
+  representing board features, defined in handel_constants.h. Currently 
+  inlcudes BOARD_SUPPORTS_SCA.
+  
+* [microDXP] Added trace_trigger_type and trace_trigger_position acquisition 
+  values
+
+* [Saturn] Added back support for USB1 and EPP Saturn.
+  
+DEPRECATION NOTICES
+
+* [microDXP] The run data all_statistics is now deprecated, replaced by 
+  module_statistics_2.
+
+    
+v1.2.4
+======
+
+* [ultralo] Fixed dual microDXP PIC variant checking issue.
+
+* [Mercury] Set peak_mode default to peak sensing.
+
+
+v1.2.3
+======
+
+* [microDXP] Updated the traceTypes array used for special runs.
+
+* [microDXP] Constrain the acquisition value peaksam_offset as  
+  peaksam_offset <= peaking_time + energy_gap.
+
+* [microDXP] Constrain the DSP parameter PEAKSAM as 
+  0 <= PEAKSAM <= PEAKINT
+  
+* [microDXP] Constrain FASTLEN and FASTGAP as follows:
+  2 <= FASTLEN
+  0 <= FASTGAP
+  FASTLEN + FASTGAP <= 255
+
+* [microDXP] Increased the range of PEAKINT and PEAKSAM to 4095. Corrected the
+  range of the other filter parameters to 1023 from 1024.
+
+* [microDXP] Set filter parameters with the set filter parameter command instead 
+  of the set DSP parameter command, fixing a bug were the settings weren't being
+  applied in the DSP.
+  
+* [microDXP] Refresh peak_mode after setting the parset.
+  
+
+v1.2.2
+======
+
+* Removed support for the following devices: USB1 Saturn, EPP Saturn, CAMAC
+  dxp4c2x, Vega, and CHELSI variant of microDXP.
+
+* Fixed a handle leak issue with the log file not being closed. Now the user can
+  call xiaCloseLog at the end of the applications to clean up the file handle.
+
+* Implemented xiaGainOperation to replace xiaGainCalibrate and xiaGainChange.
+  Removed xiaGainChange, leaving xiaGainCalibrate for backward compatibility.
+  Supported gain operations are "calibrate" for all devices, and
+  "calibrate_gain_trim" for supermicro.
+
+* [microDXP] Added default flag for BoardOperation "apply" to set values of all
+  updated acquisition values.
+
+* [microDXP] Use direct USB readout of ADC traces from the history buffer for
+  supported variants.
+
+* [microDXP] Removed Handel-initiated Windows message pumping after IO
+  transfers to prevent unnecessary event handler reentry in Windows
+  applications. Note: if using the serial module type, the CDRV serial port
+  driver still pumps messages at its discretion during long transfers,
+  noticeably during MCA and ADC trace readout.
+
+* [Mercury] Fixed an issue in multichannel MCA mapping buffer readout.
+
+DEPRECATION NOTICES
+
+* [microDXP] Acquisition values peak_interval and peak_sample are now
+  deprecated, replaced by peakint_offset and peaksam_offset.
+
+
+v1.2.1
+======
+
+* Handel is built with Visual Studio 2010 (vs10) now, the corresponding runtime
+  library msvcr100.dll is included in the released file.
+
+* Build handel.dll with a resource file to enable display of detailed
+  information in Properties dialog.
+
+* All the helper libraries and device layer libraries with no exported functions
+  (e.g. md.dll, xerxes.dll, fdd.dll, xiafile.dll, xmap.dll, xmap_psl.dll), are
+  now built into handel.dll.
+
+* Data type and format string updates to enable building into native 64-bit
+  library. (The 64-bit binaries are not part of the official release yet).
+
+* Removed the exported functions xiaFindPeak and xiaFitGauss
+
+* Removed the header file xia_fdd_structures.h
+
+* Added 64-bit USB2 and PLX drivers.
+
+* [Mercury] Fixed statistics data readout for two-module mercury systems.
+
+* [STJ] Added support for STJ.
+
+* [microDXP] Upgraded COMM-DRV version from v18.2 to v20.2, custom baud rate
+  up to 921K can be set with supported microDXP variant.
+
+* [microDXP] Initial support for the supermicro.
+
+* [xMap] Improved xiaStartSystem time for multi-channel system by only calling
+  apply once per module during start up.
+
+* [xMap] Updated PLX SDK to v7.11, this will require updates to the PLX driver
+  included in the release.
+
+DEPRECATION NOTICES
+
+* This release of Handel will be the last to include support for the following
+  devices: USB1 Saturn, EPP Saturn, CAMAC dxp4c2x, Vega, and CHELSI variant of
+  microDXP.
+
+
+v1.1.11
+=======
+
+* [Mercury] Fixed regression error in Mercury-1 firmware when
+  switching to/from mapping mode.
+
+* [Mercury] Firmware split into OEM/branded versions to handle
+  differences in auxiliary I/O port.
+
+* [Mercury] Cleaned up mapping mode code.
+
+KNOWN ISSUES
+
+* [xMAP] Report of gain scaling issue between data collected in normal MCA
+  mode and MCA mapping mode.
+
+* [xMAP] Report of elapsed time to signal end of preset realtime run
+  scaling with input count rate.
+
+* [Mercury] Report of poor performance when setting SCAs.
+
+
+v1.1.10
+=======
+
+CHANGELOG
+
+* [xMAP] Fixed an issue where acquiring the ADC trace would eventually fail.
+
+* [Mercury] Ported a mapping-mode update change from the xMAP.
+
+* [DXP-2X] Replaced old firmware with the correct version.
+
+
+KNOWN ISSUES
+
+* [xMAP] Report of gain scaling issue between data collected in normal MCA
+  mode and MCA mapping mode.
+
+* [Mercury] Report of poor performance when setting SCAs.
+
+DEPRECATION NOTICES
+
+* The 1.1.x series of Handel will be the last to include official
+  builds compiled with Visual Studio 6. The 1.2.x series will include
+  Visual Studio 9 SP1 and Visual Studio 10 builds. (If you would like
+  us to support other versions of Visual Studio, please let us know.)
+
+* "events" and "events_in_run" are officially deprecated and will be
+  removed in v1.2 of Handel. All product types (except the microDXP)
+  now support the less confusing "mca_events" and
+  "total_output_events" run data types.
+
+* The current form of "module_statistics" is deprecated and will be
+  replaced by the implementation in "module_statistics_2" in v1.2.
+
+* "livetime" is deprecated and will be removed in v1.2 of Handel. All
+  product types (except the microDXP) now support "trigger_livetime"
+  and "energy_livetime". For more information about which livetime to
+  use in your application please consult the following application
+  note: http://apps.xia.com/fogbugz/default.asp?W338
+
+
+PLX DRIVER UPGRADE
+
+* [xMAP] Users are required to upgrade to v6.3.1 of the PLX driver,
+  included with this release. We try to avoid these type of upgrades,
+  but the new version of the PLX driver includes better support for
+  Windows 7.
+
+
+v1.1.7
+=======
+
+* USB Linux driver updated to support 32-bit addressing.
+
+* Removed "channel*_gain" from the module configuration section. In
+  practice this value was never set to anything but 1.0.
+
+* Added "module_statistics_2" which provides the same set of
+  statistics across all products.
+
+* Fixed some format specifiers.
+
+* Improved Cygwin and Linux support to better integrate with
+  applications based on EPICS such as synApps/dxp. (This work would
+  not have been possible without the help of Mark Rivers from the
+  University of Chicago.)
+
+* Increased displayed preamplifier gain precision in .ini files.
+
+* Read-only acquisition values are no longer set programatically on
+  startup.
+
+* "Missing" acquisition values no longer cause WARNING messages, only
+  INFO, to be logged.
+
+* .ini files now opened in binary mode on win32 to avoid problems when
+  the .ini file is created on a platform with different line endings.
+
+* Added "trigger_livetime" and "energy_livetime" statistics.
+
+* Removed dxp_get_statistics() from the Xerxes API.
+
+* All device drivers renamed to xia_[type].dll.
+
+* DSP parameters work again as acquisition values.
+
+* [xMAP] Added "buffer_clear_size" acquisition value.
+
+* [xMAP] Migrated xMAP Quick Start Guide to a new format, included in
+  the release packages and available online at
+  http://www.xia.com/Software/docs/handel/quickstartguide/xmap/index.html
+
+* [xMAP] Added a section on preset runs to the Quick Start Guide.
+
+* [xMAP] The Quick Start Guide now comes with a larger, more complete
+  set of sample code. The binary win32 release packages also include
+  pre-built .exe's based on the sample code.
+
+* [xMAP] Fixed an occasional timeout when switching to mapping mode.
+
+* [xMAP] Simplified the logic to set master mapping modes. Made most
+  mapping-mode acquisition values available by default (instead of
+  optional) to make it easier to write host software that queries
+  those parameters.
+
+* [xMAP] Fixed an iissue when switching between different mapping
+  modes.
+
+* [xMAP] Added "buffer_switch" acquisition value.
+
+* [xMAP] Fixed a performance issue when polling waiting for the buffer
+  done operation to complete.
+
+* [xMAP] Master mode settings have been simplified. Master settings
+  only affect the first channel on a module. To change to a new
+  master, set the appropriate master acquisition value to 1.0. To
+  clear the master setting, either set the master acquisition value to
+  0.0 or enable a different master type by setting it to 1.0.
+
+* [xMAP] Fixed a problem when connecting to multiple modules using
+  Cygwin.
+
+* [xMAP] Disabled support for RC feedback preamplifiers.
+
+* [Saturn] x10.dll and x10p_psl.dll renamed to saturn.dll and
+  saturn_psl.dll.
+
+* [microDXP] Fixed a memory leak when doing direct DMA reads.
+
+* [microDXP] Updated distribution to include all of the required
+  header files; verified that header file constants match the ones
+  used in the sample code in the Quick Start Guide.
+
+* [DXP-2X] Replaced existing DXP-2X driver with a version provided by
+  Mark Rivers.
+
+
+EXPERIMENTAL: NEW FEATURE
+
+* [xMAP] This release contains initial support for list-mode data
+  acquisition, which is implemented as a new mapping mode. The
+  documentation gives an overview of how to acquire list-mode
+  data. Under nominal conditions, list-mode acquisition works well,
+  but during Beta testing under more realistic conditions some issues
+  were identified in the firmware and software. As of this release, we
+  recommend application-specific testing before using list-mode in any
+  critical production applications.
+
+
+KNOWN ISSUES
+
+* [xMAP] Master setting ignored when determining the pixel advance
+  source for systems that have both a GATE and SYNC master module.
+
+
+FIRMWARE CHANGES
+
+xMAP
+
+* Added baseline cut feature to decimation 0 FiPPI (peaking times 2
+  usec and less). By enabling this feature, the baseline cut will
+  ignore any baseline samples out of the acceptable range, leading to
+  better performance at high count rates. Note that for higher
+  decimations, the baseline threshold acts as a de facto baseline cut.
+
+* Addressed an analog tracking problem that caused channels to freeze
+  up (no output counts) at higher rates for some detectors.
+
+* Updated method used to determine when baseline samples are taken
+  after a detected pulse. Pulses with overshoot were creating spurious
+  baseline measurements with the older algorithm.
+
+* Updated FPGA design files to address a rare FPGA configuration
+  problem.
+
+* The DSP initialization process was rearranged to only initialize
+  parameters and settings on command from the host. This addresses
+  errors encountered switching between mapping mode and MCA mode.
+
+* Fixed an issue for preset runs in which if one channel reached the
+  preset value before the others in a module, it continued to get
+  output counts.
+
+Mercury
+
+* Added baseline cut feature to decimation 0 FiPPI (peaking times 2
+  usec and less). By enabling this feature, the baseline cut will
+  ignore any baseline samples out of the acceptable range, leading to
+  better performance at high count rates. Note that for higher
+  decimations, the baseline threshold acts as a de facto baseline cut.
+
+* Addressed an analog tracking problem that caused channels to freeze
+  up (no output counts) at higher rates for some detectors.
+
+* Updated FPGA design files to address a rare FPGA configuration
+  problem.
+
+* Improved baseline sampling algorithms (remove rare spurious samples)
+
+* Implemented the Gate Ignore feature.
+
+* Optimized sampling times for peak sensing energy mode.
+
+* Implement SCA outputs for Mercury boxes
+
+
+v1.0.11
+=======
+
+* Fixed a problem with using NULL as parameter for xiaSetLogOutput, setting the
+  log path to NULL now will direct log output into stdout per specification.
+
+* UDXP library:
+
+  Added support for reading out a statistics snapshot when using the Alpha
+	firmware with the microDXP.
+
+* Mercury library:
+
+	Added adjustment for gain calibration when temperature correction is enabled.
+
+	Added support for storing temperature calibration parameters in the
+	configuration file.
+
+* Mercury firmware:
+
+	 - DSP code modified to use a checksum to check the validity of the
+	 calibration values used for gain restoration
+
+	 - Gain adjustment routine modified to only switch the relays once, even if
+	 multiple adjustment iterations are required
+
+
+v1.0.9
+======
+
+* Enable usblib to build on linux using Mark Rivers' changes.
+
+* Added changes from Mark Rivers so that xia_usb2 works on linux.
+
+* xMap library:
+
+	Fixed problem with SCA mapping when numbers of SCA are not the same for all
+	channels.
+
+* Mercury library:
+
+  Fixed Mercury-4 mapping buffer size calculation.
+
+* UDXP library:
+
+	Added support for new Alpha hardware buffer read scheme.
+
+* Mercury firmware:
+
+   - Added mapping mode system fpga for mercury-4
+
+	 - Added support to restore absolute gain based upon a previous calibration.
+
+	 - Temperature correction support has been extended to work during a run.
+
+
+v1.0.8
+======
+
+* Fixes for compatiblity to with vxWorks' gcc.
+
+* Changes to allow Handel to be built as a static library.
+
+* USB2 IO will now time out after 5 seconds.
+
+* Fixed a memory leak in fippi initialization.
+
+* Mercury Library:
+
+   - Added control of Trigger and Livetime outputs to Handel via acquisition
+     values "trigger_output" and "livetime_output".
+
+* UDXP library:
+
+   - Added support for the builtin pulser on the Alpha motherboard.
+
+   - Added a cache to track the PIC variant value to determine the presence of
+     the microComU.
+
+   - Process Windows message at the end of USB2 commands.
+
+   - Fixed a problem saving master parameter set.
+
+* Saturn library: Fixed error-handling in the memory test routines.
+
+* DXP-2X library: Added support for some acquisition values.
+
+* Merged in Mark Rivers' changes for the md_linux driver.
+
+
+v1.0.6
+======
+
+* Vega library:
+
+   - Updated spectrum reading method according to firmware changes.
+
+   - Added an additional scale factor to make energy coeff scale value more
+     sensible.
+
+   - Implemented statistics with overflows.
+
+   - Added support for ADC trace sample interval.
+
+* Saturn library: Fixed a memory leak in saturn SCA reading and setting.
+
+* xMap firmware:
+
+   - Fixed a disagreement issue between SCA and ROI totals for ROI's
+     that ranged more than 64 bins.
+
+   - Fixed a small glitch impulse a few microseconds after auto-zeroing that can
+     adversely affect the spectrum and statistics.
+
+   - The default xmap_revb.fdd has RESETWAIT increased to 10us. It is intended
+     for use with XMAP revision C (and earlier) hardware. This change will
+     eliminate the non-physical peak from the spectrum and non-physical
+     statistics, but will slightly reduce the output count rate.
+
+   - Added xmap_revd.fdd with RESETWAIT 1us. It is intended for use with XMAP
+     revision D (and later) hardware.
+
+* Mercury4 firmware:
+
+   - Fixed a GAINDAC update issue that caused failures when the peaking time was
+     changed.
+
+   - Fixed a baseline stability issue that caused MCA peaks on some channels to
+     move around during a DAQ run.
+
+
+v1.0.3
+======
+
+* Added SCA support for Mercury/Mercury4.
+
+* Return a sensible error code is RC preamp type is specified for the xMAP
+  or Mercury/Mercury4.
+
+* Added module MCA read for Mercury/Mercury4.
+
+* Combined all of the .inf files for USB2 hardware into a single .inf
+  file.
+
+* Fixed Vega MCA readout.
+
+* Added gated statistics readout for the Vega.
+
+
+v1.0.1
+======
+
+* Mercury4 firmware: Added e2V FDD variant.
+
+* Mercury4 library:
+
+   - Added customer e2v file with Product ID and Name changed to
+  0x0780: e2v x-ray spectrometer.
+
+   - Added peak_mode acquistion value.
+
+* xMap library:
+
+   - Enabled file copying in PLX Driver xmap9054.inf file for support under
+     Windows Vista. Removed unncessary sections about other PLX devices in the
+     inf file.
+
+
+v1.0.0
+======
+
+* UDXP library: Retrieve CPLD version for UDXP and UltraLo 1800
+  motherboard.
+
+* xMap library:
+
+   - Disabled file copying in PLX Driver xmap9054.inf file.
+
+   - Add ability to set peak mode.
+
+* Mercury/4 library: Fixed issue with TRACECHAN being set incorrectly.
+
+* USB2 library: Ask the hardware if it is running at full-speed or
+  high-speed and set the minimum packet size appropriately.
+
+* xMap firmware:
+
+   - Support I2C temperature readout.
+
+   - Fixed issue in decimation 0 reset FiPPI related to output rate.
+
+   - Clear SCA fix.
+
+
+v0.7.0
+======
+
+* xMap library:
+
+  - Performance enhancements for large xMAP systems during start up.
+
+  - Updated PLX driver and library to v5.2, this is a compatibility breaking
+    change, PLX driver v5.2 will not work with Handel version lower than
+    v.0.7.0 and vice versa.
+
+* Mercury library: Initial implementation for support of mercury4.
+
+* Mercury firmware: Added mercury4 firmware.
+
+* UDXP library: Added support for ultralo 1800 USB2.
+
+v0.6.59
+=======
+
+* UDXP library: Support non-default baud rate specified in the ini file.
+
+v0.6.58
+=======
+
+* Vega Library: Fixed counting of total events.
+
+
+v0.6.57
+=======
+
+* UDXP library: Added debugging output for CHELSI in log file.
+
+* UDXP library: Fixed CHELSI buffer read and switch issues which could cause
+  crashes during the run and after the run has stopped.
+
+v0.6.56
+=======
+
+* Vega Library: First official release of the Vega driver framework.
+
+* Removed a call to read dsp parameters before reading out spectrum for better
+  performance.
+
+v0.6.54
+=======
+
+* Mercury library: Add implementation of acquisition values minimum_gap_time.
+
+* Fixed possible memory leak where allocated buffer needs to be freed.
+
+
+v0.6.52
+=======
+
+* Mercury library: Add support to set DSP parameter values with Mercury ini file
+
+* Vega firmware: Updated rbt file to fix spectrum readout.
+
+* xMap firmware:
+
+  - Addresses distortion (baseline history seeding error) for decimation 2
+
+  - Added input-count-rate timer pixel-reset feature.
+
+
+v0.6.51
+=======
+
+* Mercury firmware:
+
+  DSP:
+
+  - Added routine to measure the absolute gain of the analog section.
+
+  - After setting a new gain, measure absolute gain and use as a target gain.
+
+  - Reads temperature from a register in the System FPGA, which is written
+  by the USB microcontroller.
+
+  - A change in temperature greater than a specified amount will set a flag to
+  trigger a gain calibration.
+
+  - If temperature correction is enabled, when the flag is set, the gain will be
+  remeasured, and the gain will be adjusted so that the absolute gain matches
+  the gain measured at the initial calibration. Note that this will only occur
+  while the processor is idle; no correction will be performed during active
+  data collection (this will be added to a subsequent release).
+
+  - A bug in the calculation of the energy filter livetime was corrected. This
+  bug led to incorrect energy filter livetime values, especially when running at
+  low count rates.
+
+  - A minor bug in parameter initialization was fixed, which eliminated a
+  benign memory overwrite.
+
+* Mercury library: Add support to read out temperature from Mercury via
+  xiaBoardOperation get_temperature.
+
+* Mercury library: Add support to control Mercury Temperature correction via
+  acquisition values delta_temp (default 0.5C) and temp_correction (default 0.0).
+
+* Mercury library: Support to read out USB serial number via xiaBoardOperation
+  get_serial_number.
+
+
+v0.6.50
+=======
+
+* Mercury firmware: Fixed occasional hang of start system.
+
+* Mercury firmware: Fixed incorrect statistics for last pixel.
+
+* xMap firmware: Fixed external memory read glitch.
+
+* Saturn firmware: Added roi versions of Saturn rev c firmware.
+
+* Mercury Library: Add support to control gate ignore setting via acquisition
+  value gate_ignore.
+
+* Mercury Library: Add support for xiaGainCalibrate.
+
+* Increased default value for maxwidth from 0.4 to 1.0.
+
+* Print message as Debug and not Error if optional fippi firmware is not found.
+
+* Updated version of Cypress USB driver to 1.8.120.0.
+
+
+v0.6.49
+=======
+
+* xMap library: Fixed a small memory leak.
+
+
+v0.6.48
+=======
+
+* xMap library: Fixed a problem with the SDK makefile added in 0.6.47.
+
+* Saturn library: Added acquisition value "minimum_gap_time".
+
+* Saturn library: Fixed calculation of TRACEWAIT.
+
+* UDXP library: Added custom commands for Alpha firmware.
+
+
+v0.6.47
+=======
+
+* Added SDK specific makefile to make it easier to build handel dll per product
+  from the SDK folder
+
+
+v0.6.46
+=======
+
+* xMap firmware:
+
+  DSP:
+  - Update for faster access to external memory
+  - add support for GATEMODE
+  - put RESETWAIT value under host control
+  - fix calculation of maximum pixels per buffer in SCA mapping mode
+  - fix handling of preset runs for channels 1, 2 and 3 (used values from ch0)
+  - Fix handling of statistics for last mapping pixel in run
+
+  FiPPI:
+  - Implement GATEMODE
+  - Update handling of full output fifo
+  - Improve ASC handling to allow higher throughput
+  - Send out fast triggers to SysFPGA for fast rate counter
+  - Fix baseline hangups
+  - Various rate improvements
+  - Fix baseline sampling bug leading to bad baseline samples at high rates
+
+  SysFPGA:
+  - implement GATEMODE
+  - Improve access speed to external memory (by DSP)
+  - Fix memory read glitches
+  - Implement fast rate counter
+  - add support for SCA mapping
+
+* xMap library: Added makefile for xMap sample code.
+
+* xMap library: Fixed threshold adjustment during gain matching.
+
+* xMap library: Made acquisition values "gate_ignore" and
+  "input_logic_polarity" available under MCA mode.
+
+* xMap library: Added acquisition value "gate_mode".
+
+* Saturn library: Added acquisition value "maxwidth".
+
+* Saturn library: Fixed PID, VID, driver date, driver version of the usb2
+  device driver inf file.
+
+* UDXP library: Added get temperature routine.
+
+
+v0.6.45
+=======
+
+* Saturn firmware: Allows the baseline threshold to be set directly by the
+  host, without going through the automatic baseline threshold setting
+  routine. This addresses failures seen in the automatic basethresh routine.
+
+* Updated Makearch.LINUX to allow building EPP driver on linux.
+
+* Saturn library: Added "baseline_threshold" acquisition value.
+
+
+v0.6.44
+=======
+
+* Mercury library: Added "gate_ignore" to the list of supported acquisition
+  values.
+
+
+v0.6.43
+=======
+
+* Mercury library: Added support to get baseline_history.
+
+* Mercury library: Added "trigger_filter", "baseline_filter", "energy_filter",
+  "baseline_samples", "energy_samples"to list of supported trace types in
+  special runs.
+
+* Mercury library: Added SCA related acquisition values and run data.
+
+* Mercury library: Added mapping related acquisition values, run data types and
+  board operations.
+
+
+v0.6.42
+=======
+
+* xMap library: Expanded allowable number of SCA regions from 32 to 64
+
+* Fixed minor memory leak in the plx driver.
+
+* xMap library: Allow setting mapping_mode to 2 for SCA mapping, and buffer_len
+  run data  will return correct buffer size in SCA mapping mode.
+
+
+v0.6.40
+=======
+
+* Added a flag to the build system to support disabling the system copy
+  command.
+
+
+v0.6.39
+=======
+
+* Use unsigned long integers for xia_usb2 addresses.
+
+* Implemented driver framework for Mercury, including: ADC trace special run,
+  get trace data, get baseline histogram, start and stop run control, get MCA
+  data, get run statistics, preset run, DSP parameters, and basic acquisition
+  values.
+
+* Fixed a small memory leak in DSP parameter handling routine.
+
+
+v0.6.37
+=======
+
+* Fixed a memory leak in the USB2 driver that happened if the Win32 API
+  calls to open the USB2 device failed.
+
+
+v0.6.36
+=======
+
+* Fixed several major memory leaks in the Xerxes board structure.
+
+
+v0.6.35
+=======
+
+* Added missing source file to Saturn source package.
+
+
+v0.6.34
+=======
+
+* Added missing source file to Saturn source package.
+
+
+v0.6.33
+=======
+
+* Added missing USB headers to Saturn source package.
+
+
+v0.6.32
+=======
+
+* Added missing header to Saturn source package.
+
+
+v0.6.31
+=======
+
+* Added missing header to Saturn source package.
+
+
+v0.6.30
+=======
+
+* Added missing header to Saturn source package.
+
+
+v0.6.29
+=======
+
+* Added missing header to Saturn source package.
+
+
+v0.6.28
+=======
+
+* Updated USB2 I/O logic to transfer a minimum of 512 bytes. Transfers
+  smaller then 512 bytes lead to sub-optimal performance.
+
+* Removed spurious debug delay left in Saturn FiPPI download code.
+
+* Fixed file handle leak caused by probes for the presence of xMap
+  firmware.
+
+* Fixed a small memory leak in the FDD library.
+
+* Fixed a small memory leak in the Saturn filter update code.
+
+* Added source to Saturn release package.
+
+* Fixed possible illegal buffer access in generic line read routine.
+
+* Updated Saturn release FDDs.
+
+* Updated xMap release FDDs.
+
+
+**** RELEASE-0_5_5
+
+	 Expanded microDXP driver functionality to support new microManager.
+
+
+**** RELEASE-0_5_4
+
+	 Fixed a bug in the microDXP driver where the wrong acquisition
+	 value name was used when setting the preamplifier type value.
+
+
+**** RELEASE-0_5_3
+
+	 Eliminated a potential problem in the gain calibration in the
+	 Saturn PSL driver.
+
+	 Add the USB driver to the Saturn-only DLL distribution.
+
+	 Saturn driver now accepts 'usb' as a valid interface type.
+
+	 Removed some noisy debugging statements from the MD driver.
+
+	 Fixed bug in microDXP gain trim interpretation.
+
+	 Fixed bug in microDXP PSL driver where the wrong value of bin
+	 width was being used.
+
+	 Added error reporting for serial port overrun issues to the MD
+	 driver.
+
+	 Added ability to set the XUP backup file path as a board
+	 operation to the microDXP PSL driver.
+
+	 Added advanced filter acquisition values to the microDXP driver.
+
+	 Major changes to Makearch.LINUX to support building the CAMAC
+	 driver on Linux. (This work in still in progress and the Linux
+	 build should still be considered to be 'in-flux' at the moment.)
+
+	 plxlib.dll binary removed from release as it is not integrated
+	 into the MD layer yet.
+
+
+**** RELEASE-0_5_0
+
+	 Added new header 'psl_dxp4c2x.h' for the dxp-2x PSL driver
+
+	 Added new board operation for dxp-2x: "get_preset_tick"
+
+	 Major changes to microDXP driver to support microManager v2.0
+	 (See "Programming the microDXP Using Handel" for a complete
+	 description")
+
+	 md_win95 now uses a smarter algorithm for serial port
+	 communications
+
+	 Removed (some) unnecessary debugging messages
+
+	 Implemented new routines in the API:
+
+				 (Handel)
+				 xiaGetVersionInfo()
+				 xiaSetIOPriority()
+
+				 (Xerxes)
+				 dxp_get_version_info()
+				 dxp_set_io_priority()
+
+	 Added 'plxlib' library (Only available, like seriallib, as a
+	 pre-built library on Win32)
+
+	 Started documenting all public Handel routines with Doxygen
+
+	 Modified dxp4c2x driver to not pause in dxp_end_run()
+
+
+**** RELEASE-0_4_6
+
+	 Merged Saturn code from TRUNK that fixed a bug that affected the
+	 40 MHz hardware
+
+
+**** RELEASE-0_4_4
+
+	* src/g200_psl.c (1.13): Added code to account for decimated data
+	  being captured in the FIFO (alpha project).  Implemented using a
+	  'hard-wired' constant FIFO_DECIMATION.
+
+
+**** RELEASE-0_4_3
+
+
+**** RELEASE-0_4_2
+
+	* src/x10p_psl.c (1.23): Reformatted a long comment block to fit on
+	  a 80 character wide screen
+
+	  Fixed a serious bug in pslDoParam() where the value was
+	  incorrectly being cast into a parameter_t/unsigned short where it
+	  should really be cast into a	double and then cast into an
+	  unsigned short. This is the preliminary fix for Bug #39.
+
+
+**** RELEASE-0_4_1
+
+	* t/: handel_run_control_t.c (1.7), handel_run_params_t.c (1.8),
+	  handel_system_t.c (1.4): Fixed Linux compiler warnings.
+
+
+	* t/handel_dyn_module_t.c (1.10): Added some more logic to hack
+	  around a situation where the compilation fails with
+	  EXCLUDE_[type] (or other combinations that activate said EXCLUDE)
+	  defined.
+
+
+
+	* src/xerxes.c (1.15): Fixed error where detChan wasn't being
+	  dereferenced before printing.
+
+
+
+	* t/handel_system_t.c (1.3): Added test for reading/writing blocks
+	  of external memory.
+
+
+
+	* src/xerxes.c (1.14): Initial implementation of
+	  dxp_write_memory().
+
+
+
+	* src/x10p_psl.c (1.21): Removed some unused variables that were
+	  causing warnings.
+
+
+
+	* src/handel_system.c (1.7): Initial support for writing memory in
+	  xiaMemoryOperation().
+
+
+
+	* src/xerxes.c (1.13): Changed to dxp_read_memory() from
+	  dxp_readout_memory().
+
+
+
+	* src/handel_system.c (1.6): Calls dxp_read_memory() instead of
+	  dxp_readout_memory() now.
+
+
+
+	* src/: dxp4c.c (1.8), g200.c (1.11), polaris.c (1.10), udxp.c
+	  (1.7), udxps.c (1.7): Changed to dxp_read_mem(). Added stubs for
+	  dxp_write_mem().
+
+
+
+	* inc/xia_xerxes_structures.h (1.8): Changed to DXP_READ_MEM. Added
+	  DXP_WRITE_MEM.
+
+
+
+	* inc/xia_xerxes.h (1.8): Converted dxp_readout_memory() to
+	  dxp_read_memory(). Added prototypes for dxp_write_memory().
+
+
+
+	* inc/: xia_dxp4c.h (1.7), xia_g200.h (1.9), xia_polaris.h (1.8),
+	  xia_udxp.h (1.7), xia_udxps.h (1.8), xia_x10p.h (1.8): Changed
+	  dxp_read_memory() to dxp_read_mem(). Added dxp_write_mem().
+
+
+
+	* inc/xerxes.h (1.7): Converted dxp_readout_memory() to
+	  dxp_read_memory(). Added prototypes for dxp_write_memory().
+
+
+
+	* inc/handel_errors.h (1.7): Added error code for an invalid string
+	  format.
+
+
+	* inc/handel_constants.h (1.3): Added constant for handel_system
+	  tests.
+
+
+
+	* inc/: handel.h (1.4), xia_handel.h (1.6): Added prototype for
+	  xiaMemoryOperation().
+
+
+
+	* src/xerxes_test.c (1.2): Changed dxp_unit_test() so that it could
+	  be called from the Handel unit test routine as another test.
+
+
+
+	* src/handel_test.c (1.8): Added Xerxes unit testing.
+
+
+
+	* inc/handel_constants.h (1.2): Added XIA_XERXES_TEST_MASK for the
+	  Xerxes unit tests.
+
+
+
+	* inc/: xerxes.h (1.6), xia_xerxes.h (1.7): Changed dxp_unit_test()
+	  prototype so that it could be called from the Handel unit test
+	  routine as another test.
+
+
+
+	* src/x10p_psl.c (1.20): Changed pslUserSetup() to configure all
+	  acquisition values instead of just the "accepted" defaults. [Bug
+	  5]
+
+
+
+	* src/: make_handel.mak (1.17), make_handel_vba.mak (1.12): Updated
+	  dependencies for handel_file.$(OBJ) and handel_test.$(OBJ).
+
+
+
+	* src/handel_test.c (1.7): Moved helper routines that were
+	  contained in the individual test files into the central test
+	  file.
+
+
+
+	* src/handel_file.c (1.4): Added unit test framework.
+
+
+
+	* src/dxp4c2x_psl.c (1.13): Added new debugging statements to track
+	  start and stop of runs.
+
+
+
+
+
+	* inc/xia_handel.h (1.5): Modified xiaUnitTests() prototype to take
+	  an unsigned short instead of argc, argv.
+
+
+
+	* inc/handel_test.h (1.10): Modified RUN macro to make log file
+	  easier to read. Removed HANDEL_API from the unit test prototypes.
+	  Added global helper function prototypes.
+
+
+
+	* inc/handel.h (1.3): Changed xiaUnitTests() prototype to accept an
+	  unsigned short instead of argc and argv.
+
+
+
+	* inc/handel_constants.h (1.1): Initial commit.
+
+
+
+	* t/: handel_detchan_t.c (1.2), handel_dyn_module_t.c (1.8),
+	  handel_run_control_t.c (1.6), handel_run_params_t.c (1.7),
+	  handel_t.c (1.3), xerxes_t.c (1.2): Removed HANDEL_API from the
+	  SHARED routines to prevent a problem where the routines are
+	  assigned to a function pointer that doesn't have SHARED defined.
+
+
+
+	* t/handel_file_t.c (1.1): Initial commit.
+
+
+
+	* t/handel_run_params_t.c (1.6): Added test for "repetitive"
+	  setting of SCA limits. This exposed a problem in _pslDoSCA()
+	  where pslSetDefault() wasn't being called.
+
+
+
+	* t/handel_run_control_t.c (1.5): Removed some DEBUG statements.
+
+
+
+	* src/make_xerxes.mak (1.13): Added xerxes_test to dependencies and
+	  build.
+
+
+
+	* src/handel_test.c (1.6): Modified test order.
+
+
+
+	* src/: dxp4c2x_psl.c (1.12), x10p_psl.c (1.19): Added missing
+	  pslSetDefault() call to _pslDoSCA().
+
+
+
+	* src/xerxes.c (1.11): Modified dxp_read_memory() calling
+	  parameters to better define the use of the routine.
+
+
+
+	* inc/xerxes_test.h (1.1): Initial commit of unit testing framework
+	  for Xerxes.
+
+
+
+	* inc/: xerxes.h (1.5), xia_xerxes.h (1.6): Added unit testing
+	  framework for Xerxes.
+
+
+
+	* src/xerxes_test.c (1.1), t/xerxes_t.c (1.1): Initial commit of
+	  unit testing framework for Xerxes.
+
+
+
+	* src/dxp4c.c (1.7), src/g200.c (1.10), src/polaris.c (1.9),
+	  src/udxp.c (1.6), src/udxps.c (1.6), inc/xia_dxp4c.h (1.6),
+	  inc/xia_g200.h (1.8), inc/xia_polaris.h (1.7), inc/xia_udxp.h
+	  (1.6), inc/xia_udxps.h (1.7), inc/xia_x10p.h (1.7),
+	  inc/xia_xerxes_structures.h (1.7): Modified dxp_read_memory()
+	  calling parameters to better define the use of the routine.
+
+
+
+	* src/x10p_psl.c (1.18): Added 'sca' and 'sca_length' run data
+	  support.
+
+
+
+	* src/dxp4c2x_psl.c (1.11): Changed 'sca_len' to 'sca_length'.
+
+
+
+	* t/handel_run_control_t.c (1.4): Added more SCA tests. Added
+	  Saturn SCA tests.
+
+
+
+	* t/handel_run_params_t.c (1.5): Added a stubbed-out test for
+	  growing the number of SCAs. TBD.
+
+
+
+	* t/handel_run_control_t.c (1.3): Modified tests to reflect changes
+	  to SCA code.
+
+
+
+	* inc/xia_xerxes_structures.h (1.6): Changed function pointer for
+	  DXP_READ_SCA to use unsigned long.
+
+
+
+	* inc/: xerxes.h (1.4), xia_xerxes.h (1.5): Changed prototype for
+	  dxp_readout_sca() to use unsigned long.
+
+
+
+	* inc/handel_test.h (1.9): Minor syntax changes to the RUN() macro.
+
+
+
+	* inc/: xia_dxp4c.h (1.5), xia_g200.h (1.7), xia_polaris.h (1.6),
+	  xia_udxp.h (1.5), xia_udxps.h (1.6), xia_x10p.h (1.6): Modified
+	  dxp_read_sca() prototype to use unsigned long instead of unsigned
+	  short in the return array type.
+
+
+
+	* src/dxp4c2x_psl.c (1.10): Major changes to SCA code to reflect
+	  the philosophy that Handel only returns the portion of the SCA
+	  data buffer defined by "number_of_scas", not the entire buffer as
+	  Xerxes does.
+
+	  Ultimately, pslGetRunData() should pull this data from the Module
+	  structure instead of using the Defaults.
+
+
+
+	* src/xerxes.c (1.10): Modified dxp_readout_sca() to return an
+	  array of unsigned longs.
+
+
+
+	* src/: dxp4c.c (1.6), g200.c (1.9), polaris.c (1.8), udxp.c (1.5),
+	  udxps.c (1.5): Changed sca array from unsigned short to unsigned
+	  long.
+
+
+
+	* t/handel_run_control_t.c (1.2): Added tests for reading out the
+	  SCA data buffer.
+
+
+
+	* inc/: xia_dxp4c.h (1.4), xia_g200.h (1.6), xia_polaris.h (1.5),
+	  xia_udxp.h (1.4), xia_udxps.h (1.5), xia_x10p.h (1.5),
+	  xia_xerxes_structures.h (1.5): Support for dxp_read_sca().
+
+
+
+	* src/xerxes.c (1.9): Initial implementation of dxp_readout_sca().
+
+
+
+	* src/dxp4c2x_psl.c (1.9): Initial implementation of
+	  _pslGetSCAData().
+
+
+
+	* src/: g200.c (1.8), polaris.c (1.7), udxp.c (1.4), udxps.c (1.4):
+	  Added support for dxp_read_sca().
+
+
+
+	* src/dxp4c.c (1.5): Added support for dxp_read_sca().
+
+
+
+	* inc/xia_xerxes_structures.h (1.4): Added function pointer for
+	  DXP_GET_SCA_LENGTH.
+
+
+
+	* inc/xia_xerxes.h (1.4): Added prototypes for dxp_nsca() and
+	  dxp_readout_sca().
+
+
+
+	* inc/xerxes.h (1.3): Added prototypes for dxp_nsca() and
+	  dxp_readout_sca().
+
+
+
+	* inc/handel_test.h (1.8): Added prototype for
+	  xiaHandelRunControlTest().
+
+
+
+	* t/handel_run_control_t.c (1.1): Initial commit.
+
+
+
+	* src/xerxes.c (1.8): Added dxp_nsca() and dxp_readout_sca().
+
+
+
+	* src/make_xerxes.mak (1.12): Added xia_assert.$(OBJ) to link and
+	  xia_assert.h to dependency.
+
+
+
+	* src/: make_handel.mak (1.16), make_handel_vba.mak (1.11): Added
+	  handel_run_control_t.c dependency.
+
+
+
+	* src/handel_test.c (1.5): Added xiaHandelRunControlTest().
+
+
+
+	* src/handel_run_control.c (1.4): Added testing code.
+
+
+
+	* src/dxp4c2x_psl.c (1.8): Initial support for pslGetSCALen().
+
+
+
+	* src/dxp4c.c (1.4), src/g200.c (1.7), src/make_dxp4c.mak (1.12),
+	  src/make_dxp4c2x.mak (1.12), src/make_g200.mak (1.12),
+	  src/make_polaris.mak (1.12), src/make_udxp.mak (1.8),
+	  src/make_udxps.mak (1.8), src/make_x10p.mak (1.12), src/polaris.c
+	  (1.6), src/udxp.c (1.3), src/udxps.c (1.3), inc/xia_dxp4c.h
+	  (1.3), inc/xia_g200.h (1.5), inc/xia_polaris.h (1.4),
+	  inc/xia_udxp.h (1.3), inc/xia_udxps.h (1.4), inc/xia_x10p.h
+	  (1.4): Initial support for dxp_get_sca_length().
+
+
+
+	* t/handel_run_params_t.c (1.4): Major tests for 2X SCA code.
+
+
+
+	* inc/xia_system.h (1.4): Added function pointer for freeSCAs.
+
+
+
+	* inc/handel_test.h (1.7): Added TEST_FAIL() macro.
+
+
+
+	* src/dxp4c2x_psl.c (1.7): Initial SCA support.
+
+
+
+	* src/handel.c (1.6): Heavy modifications to xiaFreeModule() as an
+	  interim solution to issue of free'ing SCAs and detChans.
+
+
+
+	* src/: g200_psl.c (1.12), polaris_psl.c (1.16), udxp_psl.c (1.5),
+	  udxps_psl.c (1.8), x10p_psl.c (1.17): Added new PSL function
+	  pointer freeSCAs.
+
+
+
+	* t/: handel_dyn_module_t.c (1.7), handel_run_params_t.c (1.3):
+	  Major test changes/additions. Added memory leak code to all most
+	  tests.
+
+
+
+	* t/handel_detchan_t.c (1.1): Initial commit.
+
+
+
+	* inc/xia_handel.h (1.4): Changed prototype for
+	  xiaDumpMemoryLeaks(). Added prototype for xiaCleanDetChanList().
+
+
+
+	* inc/handel_test.h (1.6): Changes TEST() macro to not print tests
+	  that pass and to not exit() when a test fails.
+
+
+
+	* inc/handel_errors.h (1.6): Added XIA_BIN_MISMATCH.
+
+
+
+	* src/x10p_psl.c (1.16): Major changes to support SCA code.
+
+
+
+	* src/make_handel.mak (1.15): Modified handel_detchan and
+	  handel_run_params dependencies.
+
+
+
+	* src/handel_test.c (1.4): Added (then commented out)
+	  xiaHandelDetChanTest().
+
+
+
+	* src/handel.c (1.5): Fixed portions of xiaFreeModule() that were
+	  not clearing all of the module memory. Some more work remains to
+	  be done w/r/t removing detChan Sets after a module is removed
+	  from the system.
+
+
+
+	* inc/xia_psl.h (1.5): Added prototype for pslDestroySCAs().
+
+
+
+	* t/handel_dyn_module_t.c (1.6): Modified SCA initialization test.
+
+
+
+	* src/handel_dyn_module.c (1.11): Added initialization of 'sca_lo'
+	  and 'sca_hi' to the channel init routine.
+
+
+
+	* src/x10p_psl.c (1.15), t/handel_run_params_t.c (1.2): Major
+	  changes for the SCA support code.
+
+
+
+	* inc/handel_errors.h (1.5): Added XIA_SCA_OOR error constant.
+
+
+
+	* src/udxp_psl.c (1.4): Replaced MAXSYMBOL_LEN with
+	  MAX_DSP_PARAM_NAME_LEN.
+
+
+
+	* src/handel_dbg.c (1.3): Changed MAXSYMBOL_LEN constant to use the
+	  new MAX_DSP_PARAM_NAME_LEN constant.
+
+
+
+	* src/make_x10p_psl.mak (1.13): Nothing.
+
+
+
+	* src/Makefile (1.14): Moved 'assert' target to the front the build
+	  list.
+
+
+
+	* t/handel_run_params_t.c (1.1): Initial commit.
+
+
+
+	* t/handel_dyn_module_t.c (1.5): Added more 'sca' tests.
+
+
+
+	* inc/handel_test.h (1.5): Added prototype for
+	  xiaHandelRunParamsTest().
+
+
+
+	* inc/xia_handel_structures.h (1.4): Added sca items to Channel_t
+	  structure.
+
+
+
+	* inc/xia_psl.h (1.4): Added prototype for pslGetModChan().
+
+
+
+	* src/handel.c (1.4): Added some doxygen comments.
+
+
+
+	* src/handel_dyn_module.c (1.10): Renamed 'roi' to 'sca'.
+
+
+
+	* src/handel_run_params.c (1.5): Added some headers. #included the
+	  test source code file.
+
+
+
+	* src/handel_test.c (1.3): Added xiaHandelRunParamsTest() to the
+	  unit tests.
+
+
+
+	* src/make_assert.mak (1.1): Initial commit.
+
+
+
+	* src/make_dxp4c2x_psl.mak (1.12): Added assert.$(OBJ) to the link
+	  step and as a dependency of dxp4c2x_psl.
+
+
+
+	* src/make_g200_psl.mak (1.11): Added assert.$(OBJ) to the link
+	  step and as a dependency of polaris_psl.
+
+
+
+	* src/make_handel.mak (1.14): Added assert.$(OBJ) to the link step
+	  and as a dependency of handel.  Added handel_run_params_t.c as a
+	  dependency of handel_run_params.$(OBJ).
+
+
+
+	* src/make_handel_vba.mak (1.10): Added assert.$(OBJ) to the link
+	  step and as a dependency of handel_vba.  Added
+	  handel_run_params_t.c as a dependency of
+	  handel_run_params_vba.$(OBJ).
+
+
+
+	* src/make_polaris_psl.mak (1.13): Added assert.$(OBJ) to the link
+	  step and as a dependency of polaris_psl.$(OBJ).
+
+
+
+	* src/make_udxp_psl.mak (1.8): Added assert.$(OBJ) to the link step
+	  and as a dependency of udxp_psl.$(OBJ).
+
+
+
+	* src/make_udxps_psl.mak (1.8): Added assert.$(OBJ) to the link
+	  step and as a dependency of udxps_psl.$(OBJ).
+
+
+
+	* src/make_x10p_psl.mak (1.12): Added assert.$(OBJ) to the link
+	  step and as a dependency of x10p_psl.$(OBJ).
+
+
+
+	* src/Makefile (1.13): Added target to build common assert object.
+
+
+
+	* src/x10p_psl.c (1.14): Added pslDoNScas(). Added some ASSERTs to
+	  pslSetAcquisitionValues().  Reformatted some code.
+
+
+
+	* src/handel_file.c (1.3): Fixed bug (#127) by adding calls to
+	  fclose() in xiaReadINIFile().
+
+
+
+	* src/g200_psl.c (1.11): Bug fix in boardOperation code...left out
+	  a strtok()
+
+
+
+	* src/handel_xerxes.c (1.5): Added Module pointers to some function
+	  calls.
+
+
+
+	* src/handel_system.c (1.4): Added a TODO comment.
+
+
+
+	* src/handel_run_params.c (1.4): Added Module pointer to some
+	  function calls.
+
+
+
+	* t/handel_dyn_module_t.c (1.4): Added more tests.
+
+
+
+	* src/: dxp4c2x_psl.c (1.6), g200_psl.c (1.10), polaris_psl.c
+	  (1.15), udxp_psl.c (1.3), udxps_psl.c (1.7), x10p_psl.c (1.13):
+	  Made changes to support some routines using Module pointers.
+
+
+
+	* src/: g200.c (1.6), g200_psl.c (1.9): Changes to allow read/write
+	  of registers from the boardOperation routine in Handel
+
+
+
+	* inc/xia_system.h (1.3): Added Module pointer argument to some
+	  function pointer definitions.
+
+
+
+	* inc/xia_psl.h (1.3): Added Module pointer argument to some
+	  function prototypes.
+
+
+
+	* src/handel_dyn_module.c (1.9): Minor bug fix to parsing of module
+	  section of INI files
+
+
+
+	* src/Makefile (1.11): change to silent makes
+
+
+
+	* t/handel_dyn_module_t.c (1.3): Major changes to test new
+	  handel_dyn_module.c.
+
+
+
+	* src/handel_dyn_detector.c (1.3): Added support for "positive" and
+	  "negative" to polarity settings.
+
+
+
+	* src/handel_dyn_module.c (1.8): Major changes.
+
+
+
+	* src/Makearch.WIN32 (1.6): Added __MEM_DBG__ flag to defines.
+
+
+
+	* inc/xia_module.h (1.3), src/make_handel.mak (1.13),
+	  src/make_handel_vba.mak (1.9): Major changes to support new
+	  handel_dyn_module.c.
+
+
+
+	* inc/xia_handel.h (1.3): Added xiaCheckMemory() prototype.
+
+
+
+	* inc/xia_common.h (1.4): Added STRNEQ macro.
+
+
+
+	* inc/handel_test.h (1.4): Modified RUN and TEST macros.
+
+
+
+	* inc/handel_errors.h (1.4): Added new error codes to support
+	  changes to handel_dyn_module.c.
+
+
+
+	* t/handel_dyn_module_t.c (1.2): Added lots of tests.
+
+
+
+	* inc/xia_assert.h (1.1): Initial commit of the ASSERT() macro.
+
+
+
+	* src/xia_assert.c (1.1): Initial commit of the assert
+	  implementation.
+
+
+
+	* src/: make_handel.mak (1.12), make_handel_vba.mak (1.8): Added
+	  assert code to Handel build. Modified some dependencies.
+
+
+
+	* src/handel_dyn_module.c (1.7): Major changes to the
+	  initialization code.
+
+
+
+	* inc/xia_handel_structures.h (1.3): Added Channel structure to
+	  Module structure.
+
+
+
+	* inc/handel_test.h (1.3): TEST() macro now flushes buffers before
+	  running its test. When running the shell through Emacs, the
+	  buffers weren't being flushed very often, which made it difficult
+	  to tell where the tests were failing.
+
+
+
+	* t/handel_dyn_module_t.c (1.1): Initial commit.
+
+
+
+	* t/handel_t.c (1.2): Major changes to work with new testing
+	  framework defined in handel_test.h.
+
+
+
+	* src/make_handel.mak (1.11): (Added): Dependencies on test code to
+	  handel_dyn_module target.
+
+
+
+	* src/handel_test.c (1.2): (Added): xiaHandelDynModuleTest()
+	  (Added): xiaSaveGlobalCtx() xiaRestoreGlobalCtx(). Factored out
+	  into the handel_test code since multiple test files will want to
+	  use it.
+
+
+
+	* src/handel_dyn_module.c (1.6): Initial changes to prepare for
+	  modifications to the Module struct.
+
+	  (Added): _init_module() routine. Currently only used by the unit
+	  tests.  (Included): handel_dyn_module_t.c test code.
+
+
+
+	* inc/handel_test.h (1.2): Cleaned up and redefined the TEST/RUN
+	  macros for use in testing code.
+
+
+
+	* src/x10p_psl.c (1.12): Error in waiting for an ADC trace to
+	  end...it did not depend on the trace length and wait time...this
+	  would cause the routine to prematurely timeout with long ADC
+	  traces
+
+
+
+	* src/xerxes.c (1.7): Bug 114 fixed: empty strings used to report
+	  errors are filled in
+
+
+
+	* src/x10p_psl.c (1.11): Problem with getspecialrundata() not
+	  returning errors
+
+
+
+
+
+**** RELEASE-0_3_2
+
+
+
+	* configs/: Win_ALL_DLL.xia, Win_Saturn_DLL.xia: Added missing
+	files to manifest.
+
+
+
+	* src/x10p.c: Fixed problem related to the problem detailed in bug
+	124. Changed a strlen() to a strlen() + 1.
+
+
+
+	* src/dxp4c2x.c: Fixed Bug 124: dxp_read_one_dspsymbol() was
+	omitting the trailing NULL when copying the specified DSP parameter
+	name to uppercase.
+
+
+
+	* inc/xia_dxp4c2x.h: Added MAX_DSP_PARAM_NAME_LEN constant.
+
+
+v0.2.0
+* Fixed memory leak in Handel
+
+* BETA support for the Handel 2X driver
+
+v0.1.0
+* Saturn changes
+
+* microDXP enhancements
+
+v0.0.9
+* A release only made available as part of the
+  microManager distribution.
+
+* Major changes to Saturn code.
+
+* XUP support for microDXP.
+
+* New serial port driver. Had to remove seriallib source code
+  to comply with new licensing requirements.
+
+v0.0.8
+* Fixed a bug in the Saturn/X10P code involving
+  stopping a run before the run has actually started.
+
+* Fixed a bug in the conditional compilation where
+  the selected board types weren't being excluded
+  from the build.
+
+* Started to add the functionality to read and write
+  certain registers through Xerxes.
+
+* Fixed a crash that occurs when comments are placed in
+  the middle of the PTRR definitions in the .ini file.
+
+* Fixed a crash that occurs when an illegal MMU file is
+  specified.
+
+v0.0.7
+
+* Fixed a major bug in the PSL where
+  48-bit statistic values were incorrectly
+  being converted into 32-bit values.
+
+* xiaSetAcquisitionValues() now returns an
+  error (instead of crashing) when the passed
+  in acquisition value name is NULL.
+
+* xiaGetFirmwareItem() now returns an empty
+  string if the "filename" is requested but
+  isn't defined for the specified firmware.
+  The old behavior was to return an error.
+
+* Moved all common type definitions and
+  macros to xia_common.h.
+
+* "type_value" as a detector item may
+  be modified now using xiaModifyDetectorItem().
+
+* Added md.lib to the distribution for those users
+  who are linking against md.dll directly.
+
+* Added xiaGainOperation() to Handel. This
+  routine is mainly used by the G200 PSL. Other
+  products may use it more in the future.
+
+
+v0.0.6
+
+* Fixed major bug in Xerxes that was
+  causing a crash when the Firmware file
+  locations were specified improperly.
+
+* Fixed an error that was causing a run
+  to seem active in Xerxes when it actually
+  wasn't.
+
+* Added code in the X10P PSL to do the proper
+  BINFACT1 re-calculation when the SLOWLEN
+  is changed.
+
+* Added code to prevent a rare situtation from
+  occuring in Handel where the gain would be
+  rounded out-of-range.
+
+* Handel now uses the special daisy chain syntax
+  when initializing the EPP port through
+  Xerxes.
+
+* Added a check in dxp_assign_channel() for
+  a potentially NULL file pointer.
+
+* Modified camac/epp/serial init and open routines
+  in md_win95.c to use the proper reference
+  indexes.
+
+* Added upper-bound on TRACEWAIT in the X10P PSL.
+
+* X10P PSL now returns the actual TRACEWAIT time
+  in the info array.
+
+* ADC special run in X10P PSL now uses "adc_trace_length"
+  instead of "adc_trace_info" to return the size of the
+  ADC trace buffer. This matches the Handel specification
+  now.
+
+
+v0.0.5
+
+* Lots of internal improvements.
+
+* Fixed bug involving the EPP module
+  string that Handel was passing to
+  Xerxes.
+
+* Migrated EPP code into development tree.
+
+
+v0.0.4
+
+* Removed Read/Write/Modify support for DXP-4C since
+  its CSR doesn't support it.
+
+* The DXP-2X DD now checks to see if a run is active
+  before attempting to download the DSP.
+
+* DXP-4C DSP parameters default to Read/Write access
+  instead of Read-Only access.
+
+* module->gain now initialized in the correct spot.
+
+* Fixed gain limits to better support gamma-ray
+  detectors.
+
+* Changed DXP-2X BUSY timeouts to 5 secs instead of 2.
+
+* Modified minimum TRACEWAIT behavior for the DXP-2X.
+
+* Added preliminary support for the DXP-2X in Handel.
+
+* Added preliminary support for the serial port in
+  the MD layer. (DON'T USE.)
+
+
+v0.0.3
+
+* All instances of dxp_write_csr() use R/W/M when
+  manipulating bits.
+
+* Implemented all preset_* acquisition values for
+  the X10P.
+
+* Added xiaGetParamData(), which supercedes
+  xiaGetParams(). The purpose of this is to
+  support a more robust set of DSP parameter
+  information.
+
+* xiaGetRunData() now supports a "run_active"
+  value.
+
+* Changed Xerxes API to properly reflect the
+  access values, i.e. Read Only = 0 and
+  Read/Write = 1.
+
+* Fixed a missing check of "used" in
+  dxp_dspconfig().
+
+
+v0.0.2
+
+* Added start/stop run calls to pslSetPolarity()
+  to "stick" the POLARITY setting on the X10P.
+
+* Added some paranoid pointer checking to xiaGetMMUName()
+  to prevent a (rare) situation that can occur when the
+  .ini file fails loading.
+
+* Added routines for languages (like VB) that can't pass
+  string arrays to DLLS: xiaGetDetectors_VB(),
+  xiaGetFirmwareSets_VB(), xiaGetModules_VB() and
+  xiaGetParamName()
+
+* Major upgrade to pslGetAcquisitionValues().
+
+* Check firmwareSet->filename for NULL in xiaGetFirmware().
+
+* Added (missing) fclose()s to xiaWriteIniFile().
+
+* Check firmwareSet->mmu for NULL in xiaGetFirmware().
+
+* Added ability to get "num_filter" and "filter_info{n}"
+  from firmware sets.
+
+* Added routines to get system-wide configuration info:
+  xiaGetNumDetectors(), xiaGetDetectors(),
+  xiaGetNumFirmwareSets(), xiaGetFirmwareSets(),
+  xiaGetNumModules(), xiaGetModules(), xiaGetNumParams(),
+  and xiaGetParams().
+
+* Upgraded handling of "enable_gate" acquisition value.
+
+* All Xerxes device drivers upgraded to use the new FPGA
+  configuration routines.

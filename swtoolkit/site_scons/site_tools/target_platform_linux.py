@@ -56,12 +56,16 @@ def generate(env):
   # NOTE: SCons requires the use of this name, which fails gpylint.
   """SCons entry point for this tool."""
 
-  # Use g++
-  env.Tool('g++')
-  env.Tool('gcc')
-  env.Tool('gnulink')
-  env.Tool('ar')
-  env.Tool('as')
+  # Only take time to load tools if we're actually on the platform.
+  # Still, it's faster to not create the linux environment at all in
+  # the scons script.
+  if env['PLATFORM'] != 'win32':
+    # Use g++
+    env.Tool('g++')
+    env.Tool('gcc')
+    env.Tool('gnulink')
+    env.Tool('ar')
+    env.Tool('as')
 
   # Set target platform bits
   env.SetBits('linux', 'posix')

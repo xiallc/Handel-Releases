@@ -1,39 +1,37 @@
 /*
  * Copyright (c) 2004 X-ray Instrumentation Associates
- *               2005-2015 XIA LLC
+ *               2005-2016 XIA LLC
  * All rights reserved
  *
- * Redistribution and use in source and binary forms, 
- * with or without modification, are permitted provided 
+ * Redistribution and use in source and binary forms,
+ * with or without modification, are permitted provided
  * that the following conditions are met:
  *
- *   * Redistributions of source code must retain the above 
- *     copyright notice, this list of conditions and the 
+ *   * Redistributions of source code must retain the above
+ *     copyright notice, this list of conditions and the
  *     following disclaimer.
- *   * Redistributions in binary form must reproduce the 
- *     above copyright notice, this list of conditions and the 
- *     following disclaimer in the documentation and/or other 
+ *   * Redistributions in binary form must reproduce the
+ *     above copyright notice, this list of conditions and the
+ *     following disclaimer in the documentation and/or other
  *     materials provided with the distribution.
- *   * Neither the name of XIA LLC 
- *     nor the names of its contributors may be used to endorse 
- *     or promote products derived from this software without 
+ *   * Neither the name of XIA LLC
+ *     nor the names of its contributors may be used to endorse
+ *     or promote products derived from this software without
  *     specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND 
- * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
- * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE 
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR 
- * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF 
- * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+ * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+ * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *
  */
 
 
@@ -43,20 +41,23 @@
 #include "handel_generic.h"
 #include "xia_common.h"
 
-/** Constants **/
+/*
+ * Constants
+ */
 
 /* These are for the DetChanElements */
 #define SINGLE		0
 #define SET			1
 
 
-/** Structs **/
+/*
+ * Structs
+ */
 
-/**********
- * Represents an individual channel in a module.
+/* Represents an individual channel in a module.
  * Eventually, most of the module items will
  * be moved to this structure.
- **********/
+ */
 typedef struct _Channel {
   unsigned short n_sca;
   unsigned short *sca_lo;
@@ -93,7 +94,7 @@ struct DetChanElement {
 	struct DetChanSetElem *detChanSet;
 
     } data;
-    /* A flag to tell, when iterating, if we have a 
+    /* A flag to tell, when iterating, if we have a
      * cycle in the LL
      */
     boolean_t isTagged;
@@ -107,7 +108,7 @@ typedef struct DetChanElement DetChanElement;
  * Linked-list for the individual elements of a DetChanSet list
  */
 struct DetChanSetElem {
-	
+
     unsigned int channel;
 
     struct DetChanSetElem *next;
@@ -116,7 +117,7 @@ typedef struct DetChanSetElem DetChanSetElem;
 
 
 /*
- * Linked list containing the default DAQ entries. 
+ * Linked list containing the default DAQ entries.
  * name-value pairs only.
  */
 typedef struct _XiaDaqEntry {
@@ -131,11 +132,11 @@ typedef struct _XiaDaqEntry {
 
   /* Value state information. Not used by all products. */
   flag_t state;
-  
+
   /* Pointer to the next entry */
   struct _XiaDaqEntry *next;
 
-} XiaDaqEntry; 
+} XiaDaqEntry;
 
 
 /*
@@ -153,9 +154,9 @@ struct XiaDefaults {
 typedef struct XiaDefaults XiaDefaults;
 
 
-/* 
+/*
  * Define the linked list used to track peaking time ranges for firmware
- * definitions.  Peaking times are specified in nanoseconds. 
+ * definitions.  Peaking times are specified in nanoseconds.
  */
 struct Firmware {
     /* Peaking Time Range Reference */
@@ -173,7 +174,7 @@ struct Firmware {
     /* Point to the Dsp_Info for this definition */
     char *dsp;
     /* Point to the Dsp_Info for this definition */
-    char *user_dsp;	
+    char *user_dsp;
     /* Number of filter parameters */
     unsigned short numFilter;
     /* Array of filter parameters */
@@ -185,10 +186,10 @@ struct Firmware {
 typedef struct Firmware Firmware;
 
 
-/* 
+/*
  * Define a linked list of firmware sets.  These are 'sets' of peaking
  * time definitions that can be referenced within the board structure
- * to allow boards to have arbitrary firmware definitions for arbitrary 
+ * to allow boards to have arbitrary firmware definitions for arbitrary
  * board combinations.
  */
 struct FirmwareSet {
@@ -201,7 +202,7 @@ struct FirmwareSet {
     /* This is the string array of keywords associated with the FDD file */
     char **keywords;
 
-    /* This is the number of keywords. Mainly used as an aid in freeing the 
+    /* This is the number of keywords. Mainly used as an aid in freeing the
      * structure
      */
     unsigned int numKeywords;
@@ -223,7 +224,7 @@ struct FirmwareSet {
 typedef struct FirmwareSet FirmwareSet;
 
 
-/* 
+/*
  * Define a linked list of Detectors.
  */
 struct Detector {
@@ -235,11 +236,11 @@ struct Detector {
 
     /* Array of polarities for all channels
      * 1 = positive
-     * 0 = negative 
+     * 0 = negative
      */
     unsigned short *polarity;
 
-    /* Array of preamp gains for the channels in 
+    /* Array of preamp gains for the channels in
      * mv/KeV.
      */
     double *gain;
@@ -247,7 +248,7 @@ struct Detector {
     /* The type (Reset, RC Feedback, etc...) */
     unsigned short type;
 
-    /* The type specific value such as RESETINT 
+    /* The type specific value such as RESETINT
      * associated with the type.
      */
     double *typeValue;
@@ -268,7 +269,7 @@ struct CurrentFirmware
 
   /* The current "user fippi" that is being used. */
   char currentUserFiPPI[MAXFILENAME_LEN];
- 
+
   /* The current dsp that is being used. */
   char currentDSP[MAXFILENAME_LEN];
 
@@ -287,10 +288,9 @@ struct CurrentFirmware
 typedef struct CurrentFirmware CurrentFirmware;
 
 
-/**********
- * This structure holds information about the status
+/* This structure holds information about the status
  * of multichannel operations.
- **********/
+ */
 typedef struct _MultiChannelState {
     boolean_t *runActive;
 
@@ -371,20 +371,20 @@ struct Module {
 
     MultiChannelState *state;
 
-    /* Indicates if the user setup operations have been applied to this 
+    /* Indicates if the user setup operations have been applied to this
      * module or not.
      */
     boolean_t isSetup;
 
     struct Module *next;
-}; 
+};
 typedef struct Module Module;
 
 
 
 /*
  * If this were an object-program, then Interface would be the base
- * class, but...in this case I use a union to make Interface as 
+ * class, but...in this case I use a union to make Interface as
  * polymorphic as possible, but the programmer still needs to keep
  * track of which pointer to use via the "type".
  */
@@ -403,17 +403,16 @@ struct HDLInterface {
 	  struct Interface_Usb    *usb;
 	  struct Interface_Usb2   *usb2;
 	  struct Interface_Plx    *plx;
-	  
+
 	  /* Add other specific interfaces here */
   } info;
 };
 typedef struct HDLInterface HDLInterface;
 
 
-/*****************************************************************************
- * SPECIFIC INTERFACES:
- * May move these to a seperate file. Stay tuned.
- *****************************************************************************/
+/*
+ * Specific interfaces
+ */
 
 struct Interface_Epp {
     /* The address of the EPP port. Typically 0x378 or 0x278. */
@@ -450,7 +449,7 @@ typedef struct Interface_Serial Interface_Serial;
 typedef struct Interface_Plx {
   /* The PCI bus that the slot is on */
   byte_t bus;
-  
+
   /* The PCI slot that the module is plugged into */
   byte_t slot;
 

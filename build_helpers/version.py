@@ -41,39 +41,50 @@ from __future__ import with_statement
 
 import yaml
 import datetime
-
+import subprocess
+import os.path
 
 def generate(target, source, env):
     """
     Generates a version header file suitable for use with Handel. env should
     contain a path to the version metadata (in YAML format) at the key
     'version_metadata'.
-    """
+    """  
     version = None
     with open(str(source[0]), 'r') as f:
-        version = yaml.load(f)
-
+        version = yaml.load(f)    
+    
     assert(version != None)
-
-    if not version.has_key('string') or not version['string'] :
-        version['string'] = 'release'
-     
+   
+    hgstring = None
+    if os.path.isfile(str(source[1])) :
+        with open(str(source[1]), 'r') as f:
+            hgstring = yaml.load(f)['versionstring']
+    
+    assert(hgstring != None)
+    
     save_file = str(target[0])
     
     if 'xia_version.h' in save_file:
-        write_version_h(save_file, version)
+        write_version_h(save_file, version, hgstring)
     elif 'handel.rc' in save_file:
         build_options = ','.join(env['build_options'])
-        write_handel_rc(save_file, version, build_options)
+        write_handel_rc(save_file, version, hgstring, build_options)
     else:
         print("Unsupprted target %s " % save_file)
         assert(False)
 
-
-def write_handel_rc(file, version, build_options):
-    version_cs = "%s,%s,%s,%s" % (version['major'], version['minor'], version['revision'], version['build'])
-    version_ps = "%s.%s.%s - %s" % (version['major'], version['minor'], version['revision'], version['string'])
-	
+def get_hg_changeset():
+    return subprocess.check_output(['hg', 'par', '--template', '{node|short}'])
+    
+    
+def write_handel_rc(file, version, hgstring, build_options):
+    version_cs = "%s,%s,%s" % (version['major'], version['minor'], version['revision'])
+    if hgstring != "":
+        version_ps = "%s.%s.%s - %s" % (version['major'], version['minor'], version['revision'], hgstring)
+    else:
+        version_ps = "%s.%s.%s" % (version['major'], version['minor'], version['revision'])
+    
     with open(file, 'w') as f:
 
         f.write("#define HANDEL_FILEVERSION %s\n" % version_cs)
@@ -118,7 +129,7 @@ END
 """)
 
 
-def write_version_h(file, version):
+def write_version_h(file, version, hgstring):
     with open(file, 'w') as f:
         f.write("/* xia_version.h -- DO NOT MODIFY\n")
         f.write(" *\n")
@@ -137,23 +148,42 @@ def write_version_h(file, version):
         f.write("#define HANDEL_MINOR_VERSION %s\n" % version['minor'])
         f.write("#define HANDEL_RELEASE_VERSION %s\n" % version['revision'])
         f.write("\n")
-        f.write("#define VERSION_STRING \"%s\"\n" % version['string'])
+        f.write("#define VERSION_STRING \"%s\"\n" % hgstring)
         f.write("\n")
         f.write("#endif /* __XIA_VERSION_H__ */\n")
         f.write("\n")
-
+    
         
-def increment_build(version_yml):
+def update_hg_changeset(version_yml, hg_yml):
     """
-	Auto increment the build number in the version yaml file
-	"""
-    version = None
-    with open(version_yml, 'r') as f:
-        version = yaml.load(f)
+    Update the mercurial changeset in the hg_yml file, add an optional
+    version string tag from "string" field in version_yml, this will
+    trigger a rebuild if changeset was updated
+    """    
+    if os.path.isfile(version_yml) :
+        with open(version_yml, 'r') as f:
+            version = yaml.load(f)
+    
+    versionstring = version.get('string', "")
+    
+    if versionstring != "":
+        versionstring += (" " + get_hg_changeset())
+    else:
+        versionstring = get_hg_changeset()
+        
+    set_version_string(hg_yml, versionstring)
+            
+def set_version_string(hg_yml, newstring):
 
-    assert(version != None)
-    version['build'] = int(version['build']) + 1
-	
-    with open(version_yml, 'w') as f:
-        f.write( yaml.dump(version))
-		
+    hgstring = {'versionstring':""}
+
+    if os.path.isfile(hg_yml) :
+        with open(hg_yml, 'r') as f:
+            hgstring = yaml.load(f)
+    
+    versionstring = hgstring.get('versionstring',"") 
+            
+    if versionstring != newstring:
+        hgstring['versionstring'] =  newstring
+        with open(hg_yml, 'w') as f:
+            f.write( yaml.dump(hgstring))

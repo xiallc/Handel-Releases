@@ -7,7 +7,7 @@ Class=USB
 ClassGUID={36FC9E60-C465-11CF-8056-444553540000}
 Provider=%PROVIDER%
 CatalogFile=xia_usb2.cat
-DriverVer=07/10/2015,1.8.120.2
+DriverVer=03/15/2016,1.8.120.3
 
 [SourceDisksNames]
 1=%CYUSB_INSTALL%,,,
@@ -35,6 +35,8 @@ CyUsb.spd = 1
 %VID_10E9&PID_0B01.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0B01
 ; KETEK DPP2
 %VID_20BD&PID_0020.DeviceDesc%=CyUsb, USB\VID_20BD&PID_0020
+; PCPMB
+%VID_10E9&PID_0C01.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0C01
 
 [DestinationDirs]
 CyUsbME.Files.Ext = 10,System32\Drivers
@@ -95,4 +97,5 @@ VID_10E9&PID_0901.DeviceDesc="XIA Vega USB2 Spectrometer"
 VID_10E9&PID_0A01.DeviceDesc="XIA UltraLo-1800 Alpha Particle Counter"
 VID_10E9&PID_0B01.DeviceDesc="XIA microDXP USB2 Spectrometer"
 VID_20BD&PID_0020.DeviceDesc="KETEK DPP2"
+VID_10E9&PID_0C01.DeviceDesc="Proportional Counter Motherboard USB2 Spectrometer"
 CyUsb.SvcDesc="XIA LLC USB2 Driver"

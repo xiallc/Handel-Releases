@@ -31,8 +31,6 @@
  * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *
  */
 
 #include <stdio.h>
@@ -45,12 +43,13 @@
 #include "xia_assert.h"
 
 
-/** Private functions **/
+/* Private functions */
 static void xia__add_handle(FILE *fp, char *file, int line);
 static void xia__remove_handle(FILE *fp);
+static FILE *xia__open_home(const char* filename, const char* mode, const char* env);
 
 
-/** Global variables **/
+/* Global variables */
 
 /* If this library wants to become thread-safe, this variable
  * needs to be handled carefully. (Currently, it is not handled carefully
@@ -59,19 +58,20 @@ static void xia__remove_handle(FILE *fp);
 static xia_file_handle_t *FILE_HANDLES = NULL;
 
 
-/** @brief Opens a file stream.
+/*
+ * Opens a file stream.
  *
- * Opens a file stream with the requested @a mode. The allowed modes are
- * the smae as those of the standard C library function @c fopen(). This function
- * is the same as @c fopen(), except that it tracks when the file was opened
- * via. the @a file and @a line parameters. This function is typically wrapped
+ * Opens a file stream with the requested mode. The allowed modes are
+ * the same as those of the standard C library function fopen(). This function
+ * is the same as fopen(), except that it tracks when the file was opened
+ * via. the file and line parameters. This function is typically wrapped
  * in a macro like so:
  *
  * @code
  * #define FOPEN(name, mode) xia_fopen(name, mode, __FILE__, __LINE__)
  * @endcode
  *
- * This routine returns @c NULL if @c fopen() fails or if any of the passed
+ * This routine returns NULL if fopen() fails or if any of the passed
  * in arguments are invalid.
  */
 XIA_SHARED FILE *xia_fopen(const char *name, const char *mode, char *file,
@@ -94,8 +94,8 @@ XIA_SHARED FILE *xia_fopen(const char *name, const char *mode, char *file,
 }
 
 
-/** @brief Returns the number of open file handles
- *
+/*
+ * Returns the number of open file handles
  */
 XIA_SHARED int xia_num_open_handles(void)
 {
@@ -112,10 +112,11 @@ XIA_SHARED int xia_num_open_handles(void)
 }
 
 
-/** @brief Prints a list of the open file handles to the
- * specified @a stream.
+/*
+ * Prints a list of the open file handles to the
+ * specified stream.
  *
- * It is an unchecked exception to pass a @c NULL stream to this function.
+ * It is an unchecked exception to pass a NULL stream to this function.
  */
 XIA_SHARED void xia_print_open_handles(FILE *stream)
 {
@@ -131,8 +132,8 @@ XIA_SHARED void xia_print_open_handles(FILE *stream)
 }
 
 
-/** @brief Prints a list of the open file handles to stdout
- *
+/*
+ * Prints a list of the open file handles to stdout
  */
 XIA_SHARED void xia_print_open_handles_stdout(void)
 {
@@ -140,10 +141,11 @@ XIA_SHARED void xia_print_open_handles_stdout(void)
 }
 
 
-/** @brief Close an open file handle.
+/*
+ * Close an open file handle.
  *
- * Removes the specified @a fp from the handles list. It is an unchecked
- * exception to pass a @c NULL file pointer into this routine.
+ * Removes the specified fp from the handles list. It is an unchecked
+ * exception to pass a NULL file pointer into this routine.
  */
 XIA_SHARED int xia_fclose(FILE *fp)
 {
@@ -154,7 +156,8 @@ XIA_SHARED int xia_fclose(FILE *fp)
 }
 
 
-/** @brief Adds a @c FILE pointer to the global list.
+/*
+ * Adds a FILE pointer to the global list.
  *
  * Any memory allocation failures that occur during this process are treated
  * as unchecked exceptions.
@@ -180,8 +183,8 @@ static void xia__add_handle(FILE *fp, char *file, int line)
 }
 
 
-/** @brief Remove the handle reference containing @a fp from the list.
- *
+/*
+ * Remove the handle reference containing fp from the list.
  */
 static void xia__remove_handle(FILE *fp)
 {
@@ -214,4 +217,64 @@ static void xia__remove_handle(FILE *fp)
 
     /* This means that we couldn't find the pointer in our list of handles. */
     FAIL();
+}
+
+
+/*
+ * Find and open given file, returns a FILE handle
+ * Try to open the file directly first.
+ * Then try to open the file in the directory pointed to by XIAHOME or DXPHOME
+ 
+ * const char *filename;    Input: filename to open  
+ * const char *mode;        Input: Mode to use when opening 
+ *
+ */
+XIA_SHARED FILE *xia_find_file(const char* filename, const char* mode)
+{
+    FILE *fp = NULL;
+    ASSERT(filename != NULL);
+
+    /* Try to open file directly */
+    if((fp = xia_file_open(filename, mode)) != NULL) {
+        return fp;
+    }
+
+    /* Try to open the file with the path XIAHOME */
+    if((fp = xia__open_home(filename, mode, "XIAHOME")) != NULL) {
+        return fp;
+    }
+
+    /* Try to open the file with the path DXPHOME */
+    if((fp = xia__open_home(filename, mode, "DXPHOME")) != NULL) {
+        return fp;
+    }
+   
+    return NULL;
+}
+
+/*
+ * Try to open the file with the path specified in env
+ */
+static FILE *xia__open_home(const char* filename, const char* mode, const char* env)
+{
+    FILE *fp = NULL;
+    size_t filenameLen = 0;
+
+    char *home = getenv(env);
+    char *name = NULL;
+    
+    if (home != NULL) {
+        filenameLen = strlen(home) + strlen(filename) + 2;
+        name = (char *) malloc(sizeof(char) * filenameLen);                                       
+
+        if (!name) return NULL;
+
+        sprintf(name, "%s/%s", home, filename);
+        fp = xia_file_open(name, mode);
+
+        free(name);
+        return fp;
+    }
+    
+    return NULL;
 }
