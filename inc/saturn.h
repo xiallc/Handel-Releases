@@ -107,7 +107,6 @@
 /*
  *    status Register control codes
  */
-#define ALLCHAN              -1
 #define IGNOREGATE            1
 #define USEGATE               0
 #define CLEARMCA              0

@@ -28,7 +28,7 @@
 #define CMD_START_RUN           0x00
 #define CMD_STOP_RUN            0x01
 #define CMD_READ_DSP_PARAMS     0x42
-#define CMD_RW_DSP_PARAM        0x43
+#define CMD_WRITE_DSP_DATA_MEM  0x45
 #define CMD_READ_DSP_DATA_MEM   0x45
 #define CMD_READ_SERIAL_NUM     0x48
 #define CMD_FIPPI_CONFIG        0x81
@@ -52,7 +52,7 @@ static DXP_MD_PUTS        udxp_md_puts;
 static DXP_MD_WAIT        udxp_md_wait;
 
 static int dxp_init_dspparams(int ioChan, int modChan, Board *board);
-                                
+
 static byte_t bytesPerBin = 3;
 
 char info_string[INFO_LEN];
@@ -207,7 +207,7 @@ static int dxp_download_fpgaconfig(int* ioChan, int* modChan, char *name, Board*
         io_normal |= IO_USB;
     }
 
-    status = dxp_command(*ioChan, udxp_md_io, CMD_FIPPI_CONFIG, lenS,
+    status = dxp_command(*ioChan, *modChan, udxp_md_io, CMD_FIPPI_CONFIG, lenS,
                          send, lenR, receive, io_normal);
 
     if (status != DXP_SUCCESS) {
@@ -269,22 +269,28 @@ static int dxp_download_fpga_done(int* modChan, char *name, Board *board)
  *
  * DSP code doesn't need to be downloaded to the board for the microDXP.
  *
- * We use this hook to read and initialize the microDXP's DSP parameter 
+ * We use this hook to read and initialize the microDXP's DSP parameter
  * data structure
  */
 static int dxp_download_dspconfig(int* ioChan, int* modChan, Board *board)
 {
     int status;
+    int udxpModChan = 0;
 
-    status = dxp_init_dspparams(*ioChan, *modChan, board);
+    UNUSED(modChan);
+    
+    /* Xerxes only calls this hook once per module. */
+    ASSERT(*modChan == ALLCHAN);
+   
+    status = dxp_init_dspparams(*ioChan, udxpModChan, board);
 
     if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error initializing DSP parameters for "
-                "ioChan %d", ioChan);
+                "ioChan %d", *ioChan);
         dxp_log_error("dxp_download_dspconfig", info_string, status);
         return status;
     }
-    
+
     return DXP_SUCCESS;
 }
 
@@ -356,8 +362,8 @@ static int dxp_loc(char name[], Dsp_Info* dsp, unsigned short* address)
 
     sprintf(info_string, "Unknown symbol '%s' in DSP parameter list", name);
     dxp_log_error("dxp_loc", info_string, DXP_NOSYMBOL);
-    
-    return DXP_NOSYMBOL; 
+
+    return DXP_NOSYMBOL;
 }
 
 /*
@@ -367,17 +373,17 @@ static int dxp_loc(char name[], Dsp_Info* dsp, unsigned short* address)
 static int dxp_init_dspparams(int ioChan, int modChan, Board *board)
 {
     int status;
-    
+
     unsigned int param_array_size;
     unsigned int nsymbol;
-        
+
     unsigned int lenS   = 1;
     unsigned int lenR   = 10;
     unsigned int strLen = 0;
     unsigned int i;
 
     byte_t io_normal = IS_USB ? (IO_NORMAL | IO_USB) : IO_NORMAL;
-    
+
     byte_t cmd = CMD_READ_DSP_PARAMS;
 
     byte_t send[1];
@@ -386,19 +392,17 @@ static int dxp_init_dspparams(int ioChan, int modChan, Board *board)
     byte_t *names = NULL;
 
     char *ptr = NULL;
-    
-    UNUSED(modChan);
 
-    /* When called from xerxes the modChan is set to allchan which we should 
-     * ignore, instead always use modChan = 0 for per-board parameter storage 
-     */    
+    /* When called from xerxes the modChan is set to allchan which we should
+     * ignore, instead always use modChan = 0 for per-board parameter storage
+     */
     ASSERT(PARAMS(board) != NULL);
     ASSERT(PARAMS(board)->parameters != NULL);
-    ASSERT(PARAMS(board)->maxsymlen > 0);    
-    ASSERT(PARAMS(board)->maxsym > 0);    
-   
+    ASSERT(PARAMS(board)->maxsymlen > 0);
+    ASSERT(PARAMS(board)->maxsym > 0);
+
     send[0] = (byte_t)1;
-    status = dxp_command(ioChan, udxp_md_io, cmd,
+    status = dxp_command(ioChan, modChan, udxp_md_io, cmd,
                         lenS, send, lenR, receive, io_normal);
 
     if (status != DXP_SUCCESS) {
@@ -422,7 +426,7 @@ static int dxp_init_dspparams(int ioChan, int modChan, Board *board)
     lenR = strLen + 5 + RECV_BASE;
     send[0] = (byte_t)0;
 
-    status = dxp_command(ioChan, udxp_md_io, cmd,
+    status = dxp_command(ioChan, modChan, udxp_md_io, cmd,
                         lenS, send, lenR, names, io_normal);
 
     if (status != DXP_SUCCESS) {
@@ -432,12 +436,13 @@ static int dxp_init_dspparams(int ioChan, int modChan, Board *board)
         dxp_log_error("dxp_init_dspparams", info_string, status);
         return status;
     }
-    
+
     nsymbol = (unsigned int)(receive[5] | (unsigned int)receive[6] << 8);
 
-    sprintf(info_string, "Initialized %d DSP parameters", nsymbol);
+    sprintf(info_string, "Initialized %d DSP parameters for channel %d, dsp %s",
+                    nsymbol, ioChan, board->dsp[0]->filename);
     dxp_log_debug("dxp_init_dspparams", info_string);
-    
+
     /* Parse in names list */
     ptr = (char *)(names + 9);
     for (i = 0; i < nsymbol; i++) {
@@ -447,24 +452,24 @@ static int dxp_init_dspparams(int ioChan, int modChan, Board *board)
         ptr++;
     }
 
-    udxp_md_free((void *)names);   
+    udxp_md_free((void *)names);
 
     /* For microDXP the delayed parsing of DSP parameter information means
      * the global param data will not be initialized until now
      */
-    for (i = 0; i < board->nchan; i++) {    
+    for (i = 0; i < board->nchan; i++) {
         if (board->params[i] != NULL) {
             udxp_md_free(board->params[i]);
             board->params[i] = NULL;
         }
-        
+
         board->dsp[i]->params->nsymbol = (unsigned short)nsymbol;
-        
-        param_array_size = nsymbol * sizeof(unsigned short);        
+
+        param_array_size = nsymbol * sizeof(unsigned short);
         board->params[i] = (unsigned short *)udxp_md_alloc(param_array_size);
         memset(board->params[i], 0, param_array_size);
     }
-    
+
    return DXP_SUCCESS;
 
 }
@@ -478,18 +483,19 @@ static int dxp_modify_dspsymbol(int* ioChan, int* modChan, char* name,
 {
     int status;
 
-    unsigned int lenS = 4;
-    unsigned int lenR = 8;
+    unsigned int lenS = 6;
+    unsigned int lenR = 1 + RECV_BASE;
 
     unsigned short addr = 0x0000;
 
     byte_t io_normal = IO_NORMAL;
 
-    byte_t send[4];
-    byte_t receive[8];
+    byte_t cmd = CMD_WRITE_DSP_DATA_MEM;
+
+    byte_t send[6];
+    byte_t receive[1 + RECV_BASE];
 
     UNUSED(modChan);
-    UNUSED(value);
     UNUSED(board);
 
     /* Get index of symbol */
@@ -503,29 +509,28 @@ static int dxp_modify_dspsymbol(int* ioChan, int* modChan, char* name,
     }
 
     send[0] = 0x01;
-    send[1] = (byte_t)addr;
-    send[2] = (byte_t)(*value & 0xFF);
-    send[3] = (byte_t)(((*value) >> 8) & 0xFF);
+    send[1] = 0x01;
+    send[2] = LO_BYTE(addr);
+    send[3] = HI_BYTE(addr);
+    send[4] = LO_BYTE(*value);
+    send[5] = HI_BYTE(*value);
 
     /* Write new value to the board */
     if (IS_USB) {
         io_normal |= IO_USB;
     }
 
-    status = dxp_command(*ioChan, udxp_md_io, CMD_RW_DSP_PARAM,
+    status = dxp_command(*ioChan, *modChan, udxp_md_io, cmd,
                          lenS, send, lenR, receive, io_normal);
 
     if (status != DXP_SUCCESS) {
-        dxp_log_error("dxp_modify_dspsymbol",
-                      "Error executing command",
+        dxp_log_error("dxp_modify_dspsymbol", "Error writing to DSP memory",
                       status);
-
         return status;
-
     }
 
     if (receive[4] != 0) {
-        dxp_log_error("dxp_modify_dspsymbol", 
+        dxp_log_error("dxp_modify_dspsymbol",
                         "Board reported an error condition", status);
         return status;
     }
@@ -537,28 +542,25 @@ static int dxp_modify_dspsymbol(int* ioChan, int* modChan, char* name,
 /*
  * Read a single parameter of the DSP.  Pass the symbol name, module
  * pointer and channel number.  Returns the value read using the variable value.
- * If the symbol name has the 0/1 dropped from the end, then the 32-bit
- * value is created from the 0/1 contents.  e.g. zigzag0 and zigzag1 exist
- * as a 32 bit number called zigzag.  if this routine is called with just
- * zigzag, then the 32 bit number is returned, else the 16 bit value
- * for zigzag0 or zigzag1 is returned depending on what was passed as *name.
  */
 static int dxp_read_dspsymbol(int* ioChan, int* modChan, char* name,
                               Board *board, double* value)
 {
     int status;
 
-    unsigned int lenS = 2;
+    unsigned int lenS = 4;
     unsigned int lenR = 3 + RECV_BASE;
 
     byte_t io_normal = IS_USB ? (IO_NORMAL | IO_USB) : IO_NORMAL;
 
-    byte_t send[2];
+    byte_t cmd = CMD_READ_DSP_DATA_MEM;
+
+    byte_t send[4];
     byte_t receive[3 + RECV_BASE];
 
     unsigned short addr = 0x0000;
 
-    UNUSED(modChan);
+    UNUSED(ioChan);
 
     status = dxp_loc(name, board->dsp[0], &addr);
 
@@ -569,9 +571,11 @@ static int dxp_read_dspsymbol(int* ioChan, int* modChan, char* name,
     }
 
     send[0] = 0x00;
-    send[1] = (byte_t)(addr & 0xFF);
+    send[1] = 0x01;
+    send[2] = LO_BYTE(addr);
+    send[3] = HI_BYTE(addr);
 
-    status = dxp_command(*ioChan, udxp_md_io, CMD_RW_DSP_PARAM,
+    status = dxp_command(*ioChan, *modChan, udxp_md_io, cmd,
                          lenS, send, lenR, receive, io_normal);
 
     if (status != DXP_SUCCESS) {
@@ -588,11 +592,11 @@ static int dxp_read_dspsymbol(int* ioChan, int* modChan, char* name,
     }
 
     *value = (double)((double) receive[5] +
-                      ((double) receive[6] * 256.));
+                     ((double) receive[6] * 256.));
 
-    sprintf(info_string, "%s = %0.0f @ %hu", name, *value, addr);
+    sprintf(info_string, "ioChan %d, %s = %0.0f @ %hu", *ioChan, name, *value, addr);
     dxp_log_debug("dxp_read_dspsymbol", info_string);
-                          
+
     return DXP_SUCCESS;
 }
 
@@ -609,17 +613,17 @@ static int dxp_read_dspparams(int* ioChan, int* modChan, Board *board,
     int status;
 
     byte_t io_normal = IS_USB ? (IO_NORMAL | IO_USB) : IO_NORMAL;
-    
-  
+
+
     unsigned int lenS = 4;
     unsigned int lenR;
     unsigned int maxLenR = 65 + RECV_BASE;
     unsigned int maxWordsPerTransfer = 32;
-    
+
     unsigned int addr;
     unsigned int nParams;
     unsigned int nFullReads;
-    
+
     byte_t cmd = CMD_READ_DSP_DATA_MEM;
 
     byte_t send[4];
@@ -628,16 +632,16 @@ static int dxp_read_dspparams(int* ioChan, int* modChan, Board *board,
     byte_t *finalR = NULL;
 
     unsigned short *data = (unsigned short *)params;
-    
+
     UNUSED(modChan);
-           
-    ASSERT(PARAMS(board) != NULL); 
+
+    ASSERT(PARAMS(board) != NULL);
     ASSERT(PARAMS(board)->nsymbol > 0);
 
     nParams = PARAMS(board)->nsymbol;
 
     nFullReads = (unsigned int)floor((double)(nParams / maxWordsPerTransfer));
-    
+
     /* Do the full reads first */
     for (addr = 0x0000; addr < (nFullReads * maxWordsPerTransfer);
             addr += maxWordsPerTransfer) {
@@ -646,7 +650,7 @@ static int dxp_read_dspparams(int* ioChan, int* modChan, Board *board,
         send[2] = LO_BYTE(addr);
         send[3] = HI_BYTE(addr);
 
-        status = dxp_command(*ioChan, udxp_md_io, cmd, lenS, send,
+        status = dxp_command(*ioChan, *modChan, udxp_md_io, cmd, lenS, send,
                                 maxLenR, maxR, io_normal);
 
         if (status != DXP_SUCCESS) {
@@ -672,9 +676,9 @@ static int dxp_read_dspparams(int* ioChan, int* modChan, Board *board,
         return status;
     }
 
-    status = dxp_command(*ioChan, udxp_md_io, cmd, lenS, send,
+    status = dxp_command(*ioChan, *modChan, udxp_md_io, cmd, lenS, send,
                         lenR, finalR, io_normal);
-                        
+
     if (status != DXP_SUCCESS) {
         udxp_md_free(finalR);
         dxp_log_error("dxp_read_dspparams", "Error reading DSP data memory", status);
@@ -831,7 +835,7 @@ static int dxp_begin_run(int* ioChan, int* modChan, unsigned short* gate,
         io_normal |= IO_USB;
     }
 
-    status = dxp_command(*ioChan, udxp_md_io, CMD_START_RUN,
+    status = dxp_command(*ioChan, *modChan, udxp_md_io, CMD_START_RUN,
                          lenS, send, lenR, receive, io_normal);
 
     if (status != DXP_SUCCESS) {
@@ -882,7 +886,7 @@ static int dxp_end_run(int* ioChan, int* modChan, Board *board)
         io_normal |= IO_USB;
     }
 
-    status = dxp_command(*ioChan, udxp_md_io, CMD_STOP_RUN,
+    status = dxp_command(*ioChan, *modChan, udxp_md_io, CMD_STOP_RUN,
                          lenS, NULL, lenR, receive, io_normal);
 
     if (status != DXP_SUCCESS) {
@@ -1061,6 +1065,7 @@ XERXES_STATIC int dxp_read_mem(int *ioChan, int *modChan, Board *board,
 
     unsigned short *us_data = NULL;
 
+    UNUSED(board);
 
     ASSERT(name != NULL);
     ASSERT(offset != NULL);
@@ -1069,7 +1074,6 @@ XERXES_STATIC int dxp_read_mem(int *ioChan, int *modChan, Board *board,
     ASSERT(modChan != NULL);
     ASSERT(base != NULL);
     ASSERT(data != NULL);
-    ASSERT((*modChan) == 0);
 
 
     if (!STREQ(name, "direct")) {
@@ -1096,7 +1100,7 @@ XERXES_STATIC int dxp_read_mem(int *ioChan, int *modChan, Board *board,
         return DXP_NOMEM;
     }
 
-    status = dxp_usb_read_block(board->detChan[*modChan], udxp_md_io, *base,
+    status = dxp_usb_read_block(*ioChan, *modChan, udxp_md_io, *base,
                                 *offset, us_data);
 
 
@@ -1169,7 +1173,7 @@ XERXES_STATIC int dxp_write_mem(int *ioChan, int *modChan, Board *board,
         us_data[i] = (unsigned short)(data[i] & 0xFFFF);
     }
 
-    status = dxp_usb_write_block(*ioChan, udxp_md_io, *base, *offset, us_data);
+    status = dxp_usb_write_block(*ioChan, *modChan, udxp_md_io, *base, *offset, us_data);
 
     udxp_md_free(us_data);
 
@@ -1217,7 +1221,7 @@ XERXES_STATIC int dxp_read_reg(int *ioChan, int *modChan, char *name,
 /*
  * This routine simply calls the dxp_command() routine.
  */
-XERXES_STATIC int XERXES_API dxp_do_cmd(int *ioChan, byte_t cmd, unsigned int lenS,
+XERXES_STATIC int XERXES_API dxp_do_cmd(int *ioChan, int modChan, byte_t cmd, unsigned int lenS,
                                         byte_t *send, unsigned int lenR, byte_t *receive)
 {
     int status;
@@ -1228,7 +1232,7 @@ XERXES_STATIC int XERXES_API dxp_do_cmd(int *ioChan, byte_t cmd, unsigned int le
         ioFlags |= IO_USB;
     }
 
-    status = dxp_command(*ioChan, udxp_md_io, cmd, lenS, send,
+    status = dxp_command(*ioChan, modChan, udxp_md_io, cmd, lenS, send,
                          lenR, receive, ioFlags);
 
     if (status != DXP_SUCCESS) {
@@ -1271,7 +1275,6 @@ XERXES_STATIC int dxp_get_symbol_by_index(int modChan, unsigned short index,
     ASSERT(board != NULL);
     ASSERT(index < PARAMS(board)->nsymbol);
 
-    /* Determine if the index represents a global or per-channel parameter. */
     strncpy(name, PARAMS(board)->parameters[index].pname, MAX_DSP_PARAM_NAME_LEN);
 
     return DXP_SUCCESS;
@@ -1282,7 +1285,7 @@ XERXES_STATIC int dxp_get_num_params(int modChan, Board *board,
                                      unsigned short *n_params)
 {
     UNUSED(modChan);
-    
+
     ASSERT(board != NULL);
     ASSERT(n_params != NULL);
 

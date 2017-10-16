@@ -97,37 +97,32 @@ static char info_string[INFO_LEN];
 /*
  *  Head of Linked list of Interfaces
  */
-Interface *iface_head = NULL;
-
-/*
- *  Structure containing pointers to machine dependent routines
- */
-Utils *utils = NULL;
+static Interface *iface_head = NULL;
 
 /*
  *  Structure to contain the board types in the system
  */
-Board_Info *btypes_head = NULL;
+static Board_Info *btypes_head = NULL;
 
 /*
  *	Define the Head of the linked list of items in the system
  */
-Board *system_head = NULL;
+static Board *system_head = NULL;
 
 /*
  *	Define a global structure for system level information
  */
-System_Info *info = NULL;
+static System_Info *info = NULL;
 
 /*
  *	Define the head of the DSP linked list
  */
-Dsp_Info *dsp_head = NULL;
+static Dsp_Info *dsp_head = NULL;
 
 /*
  *	Define the head of the FIPPI linked list
  */
-Fippi_Info *fippi_head = NULL;
+static Fippi_Info *fippi_head = NULL;
 
 /*
  * Define global static variables to hold the information
@@ -263,7 +258,7 @@ XERXES_STATIC int dxp_init_info()
         info->utils = utils;
         info->status = 0;
     }
-        
+
     return DXP_SUCCESS;
 }
 
@@ -446,7 +441,7 @@ int XERXES_API dxp_add_system_item(char *ltoken, char **values)
     int status=DXP_SUCCESS;
     size_t len;
     unsigned int j;
-        
+
     char *strTmp = '\0';
 
     strTmp = (char *)xerxes_md_alloc((strlen(ltoken) + 1) * sizeof(char));
@@ -476,9 +471,9 @@ int XERXES_API dxp_add_system_item(char *ltoken, char **values)
             xerxes_md_free((void *)strTmp);
             strTmp = NULL;
             return DXP_SUCCESS;
-        }      
+        }
     } else if (STREQ(strTmp,"modules")) {
-        status = dxp_init_info();        
+        status = dxp_init_info();
         /* Now copy the filename for the modules configuration file */
         info->modules = (char *) xerxes_md_alloc((len+1)*sizeof(char));
         /* Copy the filename into the structure.  End the string with
@@ -526,7 +521,7 @@ int dxp_add_board_item(char *ltoken, char **values)
 
     sprintf(info_string, "Adding board item %s, value '%s'", ltoken, values[0]);
     dxp_log_debug("dxp_add_board_item", info_string);
-    
+
     /*
      * Now Identify the entry type
      */
@@ -673,7 +668,7 @@ int dxp_add_board_item(char *ltoken, char **values)
         working_board->btype   = working_btype;
         working_board->iface   = working_iface;
         working_board->is_full_reboot = FALSE_;
-        
+
         memset(working_board->state, 0, sizeof(working_board->state));
 
         working_board->btype->funcs->dxp_init_driver(working_iface);
@@ -721,7 +716,7 @@ int dxp_add_board_item(char *ltoken, char **values)
 
         /* system_dsp is optional but must be initialized */
         working_board->system_dsp = NULL;
-        
+
         numDxpMod++;
 
     } else if (STREQ(ltoken, "dsp")) {
@@ -806,7 +801,7 @@ int dxp_add_board_item(char *ltoken, char **values)
             return DXP_UNKNOWN_BTYPE;
         }
 
-        status = dxp_add_fippi(values[0], working_btype, 
+        status = dxp_add_fippi(values[0], working_btype,
                                &(working_board->system_fippi));
 
         if (status != DXP_SUCCESS) {
@@ -947,8 +942,8 @@ static int XERXES_API dxp_free_board(Board* board)
 
     /* Remove the system dsp reference*/
     if (board->system_dsp != NULL)
-        board->system_dsp = NULL;  
-    
+        board->system_dsp = NULL;
+
     /* Free the Fippi Array*/
     if (board->fippi!=NULL)
         xerxes_md_free(board->fippi);
@@ -1490,7 +1485,7 @@ XERXES_STATIC int dxp_add_dsp(char* filename, Board_Info* board,
     }
 
     new_dsp->next = NULL;
-    
+
     sprintf(info_string, "Added dsp maxsym = %u, n_per_chan_symbols = %u",
             new_dsp->params->maxsym, new_dsp->params->n_per_chan_symbols);
     dxp_log_debug("dxp_add_dsp", info_string);
@@ -1505,7 +1500,7 @@ XERXES_STATIC int dxp_add_dsp(char* filename, Board_Info* board,
  * Routine to Load a FIPPI configuration file into the Fippi_Info linked list
  * or find the matching member of the list and return a pointer to it
  */
-static int XERXES_API dxp_add_fippi(char* filename, Board_Info* board, 
+static int XERXES_API dxp_add_fippi(char* filename, Board_Info* board,
                                     Fippi_Info** fippi)
 /* char *filename;					Input: filename of the FIPPI program	*/
 /* Board_Info *board;				Input: need the type of board		*/
@@ -1539,11 +1534,11 @@ static int XERXES_API dxp_add_fippi(char* filename, Board_Info* board,
     }
 
     (*fippi)->next = NULL;
-    
+
     /* Now allocate memory and fill the program information
      * with the driver routine */
     (*fippi)->filename = xerxes_md_alloc(strlen(filename) + 1);
-    
+
     if ((*fippi)->filename == NULL) {
         sprintf(info_string, "Error allocating %d bytes for '*fippi->filename'",
                 strlen(filename) + 1);
@@ -1555,7 +1550,7 @@ static int XERXES_API dxp_add_fippi(char* filename, Board_Info* board,
 
     /* Fill in the default lengths */
     status = board->funcs->dxp_get_fipinfo(*fippi);
-    
+
     if (status != DXP_SUCCESS ) {
         dxp_free_fippi(*fippi);
         dxp_log_error("dxp_add_fippi", "Unable to get FIPPI information", status);
@@ -1564,7 +1559,7 @@ static int XERXES_API dxp_add_fippi(char* filename, Board_Info* board,
 
     /* Finish allocating memory */
     if ((*fippi)->maxproglen > 0) {
-        
+
         /* need to keep proglen up to date if data is allocated here */
         (*fippi)->proglen = (*fippi)->maxproglen;
         (*fippi)->data = (unsigned short *)
@@ -1575,7 +1570,7 @@ static int XERXES_API dxp_add_fippi(char* filename, Board_Info* board,
             sprintf(info_string, "Error allocating %lu bytes for '*fippi->data'",
                     (*fippi)->maxproglen * sizeof(unsigned short));
             dxp_log_error("dxp_add_fippi", info_string, DXP_NOMEM);
-            return DXP_NOMEM;        
+            return DXP_NOMEM;
         }
     }
 
@@ -1595,7 +1590,8 @@ static int XERXES_API dxp_add_fippi(char* filename, Board_Info* board,
     }
 
     return DXP_SUCCESS;
-    
+
+
 }
 
 /*
@@ -1702,7 +1698,7 @@ XERXES_EXPORT int XERXES_API dxp_user_setup(void)
     }
 
     current = system_head;
-    
+
     /* The per-module configurations are done here. Only configurations that
      * are applicable to every module should be done here. Hardware specific
      * procedures should be farmed out to the individual device driver.
@@ -1923,7 +1919,7 @@ int XERXES_API dxp_upload_dspparams(int* detChan)
 {
     int status;
     int ioChan, modChan;
-    
+
     /* Pointer to the chosen Board */
     Board *chosen=NULL;
 
@@ -1949,7 +1945,7 @@ int XERXES_API dxp_upload_dspparams(int* detChan)
     /* Loop over the parameters requested, writing each value[] to addr[]. */
     status = chosen->btype->funcs->dxp_read_dspparams(&ioChan, &modChan,
                     chosen, chosen->params[modChan]);
-        
+
     if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error reading parameters from detector %d", *detChan);
         dxp_log_error("dxp_upload_dspparams",info_string,status);
@@ -3272,6 +3268,7 @@ XERXES_EXPORT int XERXES_API dxp_cmd(int *detChan, byte_t *cmd, unsigned int *le
      */
 
     int status;
+	int ioChan;
     int modChan;
 
 
@@ -3286,18 +3283,11 @@ XERXES_EXPORT int XERXES_API dxp_cmd(int *detChan, byte_t *cmd, unsigned int *le
         return status;
     }
 
-    /*before = GetTickCount();*/
+	ioChan = chosen->ioChan;
 
     /* Use detChan to enable channel selection of USB udxp */
-    status = chosen->btype->funcs->dxp_do_cmd(detChan, *cmd, *lenS,
+    status = chosen->btype->funcs->dxp_do_cmd(&ioChan, modChan, *cmd, *lenS,
                                               send, *lenR, receive);
-
-    /*    after = GetTickCount();*/
-
-    /*
-    sprintf(info_string, "dT = %lf", (double)((after - before) / 1000.0));
-    dxp_log_debug("dxp_cmd", info_string);
-    */
 
     if (status != DXP_SUCCESS) {
         dxp_log_error("dxp_cmd", "Command error", status);

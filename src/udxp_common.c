@@ -47,12 +47,10 @@ int dxp_verify_response(byte_t cmd, unsigned int lenS, byte_t *send,
                         unsigned int lenR, byte_t *receive);
 
 int dxp_usb2_set_address_cache(int ioChan, DXP_MD_IO udxp_io, unsigned long address);
-int dxp_usb2_direct_read(int ioChan, DXP_MD_IO udxp_io, unsigned long address,
-                         byte_t cmd, unsigned int lenR, byte_t *receive);
-int dxp_usb2_reset_bus(int ioChan, DXP_MD_IO udxp_io);
 
-int dxp_usb2_reticulate_address(int ioChan, byte_t *cmd, unsigned long *addr,
-                                boolean_t *is_direct);
+int dxp_usb2_reset_bus(int ioChan, int modChan, DXP_MD_IO udxp_io);
+
+int dxp_usb2_reticulate_address(int modChan, byte_t *cmd, unsigned long *addr);
 
 static int dxp__update_version_cache(int ioChan, DXP_MD_IO io,
                                      boolean_t is_usb,
@@ -188,40 +186,22 @@ XERXES_SHARED int dxp_build_cmdstr(byte_t cmd, unsigned short len, byte_t *data,
  * that no gross errors have occurred. More complex
  * error checking is left to the calling routine.
  */
-XERXES_SHARED int dxp_command(int ioChan, DXP_MD_IO udxp_io, byte_t cmd,
+XERXES_SHARED int dxp_command(int ioChan, int modChan, DXP_MD_IO udxp_io, byte_t cmd,
                               unsigned int lenS, byte_t *send,
                               unsigned int lenR, byte_t *receive,
                               byte_t ioFlags)
 {
     int status;
 
-#ifdef XIA_ALPHA
-    int prevIoChan;
-#endif /* XIA_ALPHA */
-
     unsigned long address = 0;
 
-    boolean_t directRead = FALSE_;
-
     Xia_Util_Functions funcs;
-
 
     ASSERT(lenR >= RECV_BASE);
     ASSERT(receive != NULL);
 
 
     dxp_md_init_util(&funcs, NULL);
-
-    /* For the Alpha, we always communicate with a single ioChan since there
-     * is only one physical USB connection. This is not true for the
-     * microComU version.
-     * Note: the VERSION_CACHE is never filled in for the second microDXP
-     * board on the Alpha.
-     */
-#ifdef XIA_ALPHA
-    prevIoChan = ioChan;
-    ioChan = 0;
-#endif /* XIA_ALPHA */
 
     /* This should only be updated once per microDXP. */
     if (VERSION_CACHE[ioChan][PIC_VARIANT] == UDXP_VERSION_NOT_READ) {
@@ -238,56 +218,32 @@ XERXES_SHARED int dxp_command(int ioChan, DXP_MD_IO udxp_io, byte_t cmd,
         }
     }
 
-#ifdef XIA_ALPHA
-    ioChan = prevIoChan;
-#endif /* XIA_ALPHA */
-
     if (IS_USB(ioFlags)) {
-        status = dxp_usb2_reticulate_address(ioChan, &cmd, &address, &directRead);
+        status = dxp_usb2_reticulate_address(modChan, &cmd, &address);
 
         if (status != DXP_SUCCESS) {
             sprintf(INFO_STRING, "Error updating the address for a USB transfer "
-                    "for ioChan %d", ioChan);
+                    "for ioChan %d, modChan %d", ioChan, modChan);
             udxpc_log_error("dxp_command", INFO_STRING, status);
             return status;
         }
-
-        /* ignore the channel information here since for usb udxp the detChan is
-           encoded in the new address */
-#ifdef XIA_ALPHA
-        ioChan = 0;
-#endif /* XIA_ALPHA */
     }
 
-    if (IS_USB(ioFlags) && directRead) {
+    status = dxp_send_command(ioChan, udxp_io, address, cmd, lenS, send, ioFlags);
 
-        status = dxp_usb2_direct_read(ioChan, udxp_io, address, cmd, lenR, receive);
+    if (status != DXP_SUCCESS) {
+        sprintf(INFO_STRING, "Error sending command %#x to ioChan %d",
+                cmd, ioChan);
+        udxpc_log_error("dxp_command", INFO_STRING, status);
+        return status;
+    }
 
-        if (status != DXP_SUCCESS) {
-            sprintf(INFO_STRING, "Error reading data of command %#x from ioChan %d,"
-                    " address %#lux",
-                    cmd, ioChan, address);
-            udxpc_log_error("dxp_command", INFO_STRING, status);
-            return status;
-        }
+    status = dxp_read_response(ioChan, udxp_io, address, lenR, receive, ioFlags);
 
-    } else {
-        status = dxp_send_command(ioChan, udxp_io, address, cmd, lenS, send, ioFlags);
-
-        if (status != DXP_SUCCESS) {
-            sprintf(INFO_STRING, "Error sending command %#x to ioChan %d",
-                    cmd, ioChan);
-            udxpc_log_error("dxp_command", INFO_STRING, status);
-            return status;
-        }
-
-        status = dxp_read_response(ioChan, udxp_io, address, lenR, receive, ioFlags);
-
-        if (status != DXP_SUCCESS) {
-            sprintf(INFO_STRING, "Error reading response from ioChan %d", ioChan);
-            udxpc_log_error("dxp_command", INFO_STRING, status);
-            return status;
-        }
+    if (status != DXP_SUCCESS) {
+        sprintf(INFO_STRING, "Error reading response from ioChan %d", ioChan);
+        udxpc_log_error("dxp_command", INFO_STRING, status);
+        return status;
     }
 
     /* Verify response even for usb2 right now */
@@ -307,7 +263,7 @@ XERXES_SHARED int dxp_command(int ioChan, DXP_MD_IO udxp_io, byte_t cmd,
  * Only supported by USB2 dxp
  * This function can be accessed from the psl with dxp_read_memory
  */
-XERXES_SHARED int dxp_usb_read_block(int ioChan, DXP_MD_IO udxp_io,
+XERXES_SHARED int dxp_usb_read_block(int ioChan, int modChan, DXP_MD_IO udxp_io,
                                      unsigned long addr, unsigned long n, unsigned short *data)
 {
 
@@ -317,7 +273,7 @@ XERXES_SHARED int dxp_usb_read_block(int ioChan, DXP_MD_IO udxp_io,
     unsigned long a = DXP_A_IO;
     unsigned int dataWords = (unsigned int) n;
 
-    unsigned long usbaddress = addr;
+    unsigned long usbaddress = addr | ((unsigned long)modChan) << 16;
     int usbchan = ioChan;
 
     Xia_Util_Functions funcs;
@@ -325,14 +281,6 @@ XERXES_SHARED int dxp_usb_read_block(int ioChan, DXP_MD_IO udxp_io,
     dxp_md_init_util(&funcs, NULL);
     ASSERT(data != NULL);
 
-#ifdef XIA_ALPHA
-    /* Encode the ioChan information in Byte 2 device ID
-       this is needed for calls from dxp_read_memory */
-    usbaddress = addr | ((unsigned long) ioChan) << 16;
-    /* ignore the channel information here since there's only one usb bus for
-       usb udxp */
-    usbchan = 0;
-#endif /* XIA_ALPHA */
 
     status = dxp_usb2_set_address_cache(usbchan, udxp_io, usbaddress);
 
@@ -343,7 +291,7 @@ XERXES_SHARED int dxp_usb_read_block(int ioChan, DXP_MD_IO udxp_io,
     }
 
     status = udxp_io(&usbchan, &serial_read, &a, (void *)data, &dataWords);
-    status += dxp_usb2_reset_bus(ioChan, udxp_io);
+    status += dxp_usb2_reset_bus(ioChan, modChan, udxp_io);
 
     if (status != DXP_SUCCESS) {
         sprintf(INFO_STRING, "Error reading %lu words from ioChan %d", n, ioChan);
@@ -355,7 +303,7 @@ XERXES_SHARED int dxp_usb_read_block(int ioChan, DXP_MD_IO udxp_io,
 }
 
 
-XERXES_SHARED int dxp_usb_write_block(int ioChan, DXP_MD_IO udxp_io,
+XERXES_SHARED int dxp_usb_write_block(int ioChan, int modChan, DXP_MD_IO udxp_io,
                                       unsigned long addr, unsigned long n,
                                       unsigned short *data)
 {
@@ -368,7 +316,7 @@ XERXES_SHARED int dxp_usb_write_block(int ioChan, DXP_MD_IO udxp_io,
 
     Xia_Util_Functions funcs;
 
-    unsigned long usbaddress = addr;
+    unsigned long usbaddress = addr | ((unsigned long)modChan) << 16;
     int usbchan = ioChan;
 
     ASSERT(udxp_io);
@@ -380,11 +328,6 @@ XERXES_SHARED int dxp_usb_write_block(int ioChan, DXP_MD_IO udxp_io,
     ASSERT(data);
 
     dxp_md_init_util(&funcs, NULL);
-
-#ifdef XIA_ALPHA
-    usbaddress = addr | ((unsigned long) ioChan) << 16;
-    usbchan = 0;
-#endif /* XIA_ALPHA */
 
     status = dxp_usb2_set_address_cache(usbchan, udxp_io, usbaddress);
 
@@ -416,48 +359,18 @@ XERXES_SHARED int dxp_usb_write_block(int ioChan, DXP_MD_IO udxp_io,
 
 
 /*
- * For the specified command, modify the transfer address for USB targets
- * and check if this command and channel support direct reads. Older hardware
- * without a CPLD do not support direct reads even if it is attached to a USB
- * controller.
- *
- * This routine has no way of checking if the specified ioChan is attached
- * to a USB controller or not.
+ * For the specified command, modify the transfer address for USB
+ * targets. In general the device ID (modChan) goes in the high word
+ * and a given UART is selected in the low word by command type.
  */
-int dxp_usb2_reticulate_address(int ioChan, byte_t *cmd, unsigned long *addr,
-                                boolean_t *is_direct)
+int dxp_usb2_reticulate_address(int modChan, byte_t *cmd, unsigned long *addr)
 {
-#ifdef XIA_ALPHA
-    /* Encode the ioChan information in Byte 2 device ID */
-    unsigned long high_word = ((unsigned long) ioChan) << 16;
-#else
-    unsigned long high_word = 0;
-#endif /* XIA_ALPHA */
-
+    /* Encode the device ID in Byte 2. */
+    unsigned long high_word = ((unsigned long) modChan) << 16;
 
     ASSERT(addr != NULL);
-    ASSERT(is_direct != NULL);
-
 
     switch(*cmd) {
-    case CMD_READ_MCA:
-        /* We can't issue a blanket check of the variant cache since this
-         * routine is called when _updating_ the cache. The only time it is
-         * really required is for commands that potentially support direct
-         * reads.
-         */
-        ASSERT(VERSION_CACHE[ioChan][PIC_VARIANT] != UDXP_VERSION_NOT_READ);
-
-        *addr = high_word | 0x2000;
-
-        if (dxp_has_cpld(ioChan)) {
-            *is_direct = TRUE_;
-        } else {
-            *is_direct = FALSE_;
-        }
-
-        break;
-
 #ifdef XIA_ALPHA
 
     case CMD_GET_ALPHA_HV:
@@ -470,7 +383,6 @@ int dxp_usb2_reticulate_address(int ioChan, byte_t *cmd, unsigned long *addr,
            need to support the commands through serial connection */
         *cmd       = CMD_ACCESS_I2C;
         *addr      = high_word | 0x03000000;
-        *is_direct = FALSE_;
         break;
 
     case CMD_ALPHA_PULSER_ENABLE_DISABLE:
@@ -482,7 +394,6 @@ int dxp_usb2_reticulate_address(int ioChan, byte_t *cmd, unsigned long *addr,
     case CMD_ALPHA_PULSER_CONTROL:
         /* Pulser commands are redirected to UART 2. */
         *addr      = high_word | 0x02000000;
-        *is_direct = FALSE_;
         break;
 
 #endif /* XIA_ALPHA */
@@ -490,76 +401,8 @@ int dxp_usb2_reticulate_address(int ioChan, byte_t *cmd, unsigned long *addr,
     default:
         /* for default UART operation add UART 1 to Byte 3 */
         *addr      = high_word | 0x01000000;
-        *is_direct = FALSE_;
         break;
     }
-
-    return DXP_SUCCESS;
-}
-
-
-/*
- * USB2-UART interface only
- * Read out data directly from usb bus
- * Checksum and escape character will be added manually here
- */
-int dxp_usb2_direct_read(int ioChan, DXP_MD_IO udxp_io, unsigned long address,
-                         byte_t cmd, unsigned int lenR, byte_t *receive)
-{
-    int status;
-
-    unsigned int i;
-    unsigned int j;
-
-    unsigned int retBytes     = 0;
-    unsigned int retWords     = 0;
-    unsigned short *shortRet  = NULL;
-
-    byte_t *byteRet = NULL;
-
-    byte_t retChksm     = 0x00;
-
-    Xia_Util_Functions funcs;
-
-    dxp_md_init_util(&funcs, NULL);
-    ASSERT(receive != NULL);
-
-    /* Subtract the length of checksum from expected length
-     * Note that there is an extra byte every 4 bytes
-     */
-    retBytes = ((lenR - RECV_BASE - 1) * 4) / 3;
-    retWords = (unsigned int) (((float) retBytes) / 2.);
-    shortRet = (unsigned short *)udxpc_md_alloc(retWords * sizeof(unsigned short));
-
-    status = dxp_usb_read_block(ioChan, udxp_io, address,
-                                (unsigned long) retWords, shortRet);
-
-    if (status != DXP_SUCCESS) {
-        UDXP_FREE(shortRet);
-        sprintf(INFO_STRING, "Error reading from ioChan %d", ioChan);
-        udxpc_log_error("dxp_usb2_direct_read", INFO_STRING, status);
-        return status;
-    }
-
-    /* Prepend length and escape character*/
-    receive[0] = 0x1B;
-    receive[1] = cmd;
-    receive[2] = (byte_t) ((lenR - RECV_BASE) & 0xFF);
-    receive[3] = (byte_t) (((lenR - RECV_BASE) >> 8) & 0xFF);
-    receive[4] = 0;
-
-    /* Unpack from ushort for USB2 */
-    byteRet = (byte_t *)shortRet;
-    for (i = 0; i < retBytes / 4; i++) {
-        for (j = 0; j < 3; j++) {
-            receive[i*3 + j + RECV_BASE] = byteRet[i*4 + j];
-        }
-    }
-
-    UDXP_FREE(shortRet);
-
-    retChksm = dxp_compute_chksum((unsigned short)(lenR - 2), receive + 1);
-    receive[lenR - 1] = retChksm;
 
     return DXP_SUCCESS;
 }
@@ -570,14 +413,14 @@ int dxp_usb2_direct_read(int ioChan, DXP_MD_IO udxp_io, unsigned long address,
  * Give back control of the bus to the PIC by writing to address
  * This is needed after access to uDXP memory via parallel bus
  * Address range 0x0000 to 0x8000
- * e.g. reading of spectrum memory, alpha buffer memory w/ dxp_usb2_direct_read
+ * e.g. reading of spectrum memory, alpha buffer memory with dxp_usb_read_block
  */
-int dxp_usb2_reset_bus(int ioChan, DXP_MD_IO udxp_io)
+int dxp_usb2_reset_bus(int ioChan, int modChan, DXP_MD_IO udxp_io)
 {
 
     int status;
 
-    unsigned int usbaddress = RELEASE_IDMA_BUS_ADDR;
+    unsigned int usbaddress = RELEASE_IDMA_BUS_ADDR | ((unsigned long)modChan) << 16;
     int usbchan = ioChan;
 
     unsigned int serial_write = 1;
@@ -588,17 +431,14 @@ int dxp_usb2_reset_bus(int ioChan, DXP_MD_IO udxp_io)
 
     Xia_Util_Functions funcs;
 
-#ifdef XIA_ALPHA
-    usbaddress = usbaddress | ((unsigned long) ioChan) << 16;
-    usbchan = 0;
-#endif /* XIA_ALPHA */
 
     dxp_md_init_util(&funcs, NULL);
 
     status = dxp_usb2_set_address_cache(usbchan, udxp_io, usbaddress);
 
     if (status != DXP_SUCCESS) {
-        sprintf(INFO_STRING, "Error setting address cahche for ioChan %d", ioChan);
+        sprintf(INFO_STRING, "Error setting address cache for ioChan %d, modChan %d",
+                ioChan, modChan);
         udxpc_log_error("dxp_usb2_reset_bus", INFO_STRING, status);
         return status;
     }
@@ -977,7 +817,7 @@ XERXES_SHARED int dxp_byte_to_string(unsigned char *bytes, unsigned int len, cha
 
 
 /*
- *Read the board information and store the variant information in the
+ * Read the board information and store the variant information in the
  * cache.
  */
 static int dxp__update_version_cache(int ioChan, DXP_MD_IO io, byte_t flags,
@@ -991,13 +831,7 @@ static int dxp__update_version_cache(int ioChan, DXP_MD_IO io, byte_t flags,
 
 
     if (IS_USB(flags)) {
-        /* Ignore for this specific routine since we can't even do a direct
-         * read without knowing what variant of the board we are dealing
-         * with.
-         */
-        boolean_t is_direct;
-
-        status = dxp_usb2_reticulate_address(ioChan, &cmd, &addr, &is_direct);
+        status = dxp_usb2_reticulate_address(ioChan, &cmd, &addr);
 
         if (status != DXP_SUCCESS) {
             sprintf(INFO_STRING, "Error updating transfer address for a USB "
@@ -1047,7 +881,7 @@ static int dxp__update_version_cache(int ioChan, DXP_MD_IO io, byte_t flags,
 }
 
 
-XERXES_SHARED boolean_t dxp_has_cpld(int ioChan)
+XERXES_SHARED boolean_t dxp_has_direct_mca_readout(int ioChan)
 {
 #ifdef XIA_ALPHA
     UNUSED(ioChan);
@@ -1071,13 +905,11 @@ XERXES_SHARED boolean_t dxp_is_supermicro(int ioChan)
 
 XERXES_SHARED boolean_t dxp_has_direct_trace_readout(int ioChan)
 {
-    byte_t *version = VERSION_CACHE[ioChan];
-
 #ifdef XIA_ALPHA
     UNUSED(ioChan);
-    UNUSED(version);
     return FALSE_;
 #else
+    byte_t *version = VERSION_CACHE[ioChan];
     ASSERT(version[PIC_MAJOR] != UDXP_VERSION_NOT_READ);
     return (version[PIC_MAJOR] == 3 && version[PIC_MINOR] >= 6) ||
            version[PIC_MAJOR] > 3;
@@ -1086,18 +918,17 @@ XERXES_SHARED boolean_t dxp_has_direct_trace_readout(int ioChan)
 
 XERXES_SHARED unsigned long dxp_dsp_coderev(int ioChan)
 {
-    byte_t *version = VERSION_CACHE[ioChan];
-    unsigned long dsp_version = 0;
 
 #ifdef XIA_ALPHA
     UNUSED(ioChan);
-    UNUSED(version);
     return 0;
 #else
+    byte_t *version = VERSION_CACHE[ioChan];
+    unsigned long dsp_version = 0;
     ASSERT(VERSION_CACHE[ioChan][DSP_MAJOR] != UDXP_VERSION_NOT_READ);
     dsp_version = ((unsigned long)version[DSP_MAJOR] << 8) +
                   (unsigned long)version[DSP_MINOR];
+    return dsp_version;
 #endif
 
-    return dsp_version;
 }

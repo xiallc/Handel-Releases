@@ -235,7 +235,8 @@
 #define XIA_MALFORMED_MM_VALUE  683 /* UltraLo moisture meter value is invalid. */
 #define XIA_NO_EVENTS       684 /* No events to retrieve from the event buffer. */
 #define XIA_NOSUPPORT_RUNDATA	685 /* The specified run data is not supported */
-
+#define XIA_PARAMETER_OOR    686 /* The parameter passed in is out of range. */
+#define XIA_PASSTHROUGH		687 /* UART passthrough command error */
 
 /* XUP errors 701-800 */
 #define XIA_XUP_VERSION     701 /* XUP version is not supported */

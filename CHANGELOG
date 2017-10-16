@@ -1,3 +1,22 @@
+v1.2.17
+=======
+
+* [microDXP] Added support for UART passthrough command, via board operation
+  "passthrough".
+
+* [microDXP] Added support for multi-module system with different DSP for each
+  board. This requires separate DSP defined for each module in the configuraiton
+  file.
+
+* [microDXP] Support for multi-channel microDXP products. Externally this
+  affects only the UltraLo, which should now configure a single module with two
+  channels rather than two single-channel modules overloading the same USB2
+  device interface number.
+
+* [microDXP] Fixed an issue with reading and writing DSP parameters with index
+  higher than 256.
+
+
 v1.2.16
 =======
 
@@ -12,11 +31,10 @@ v1.2.16
 
 * Removed several unused structs and functions from Xerxes.
 
-* [microDXP] Add special run data snapshot_mca and snapshot_statistics (and corresponding lengths).
+* [microDXP] Add special run data snapshot_mca and snapshot_statistics (and
+  corresponding lengths).
 
 * [microDXP] Validate parset value and return an error if out of range.
-
-XXX Ann DSP params * [microDXP] 
 
 
 v1.2.14
@@ -32,7 +50,7 @@ v1.2.14
 
 * [Saturn] Fixed SCA readout.
 
-	
+
 v1.2.13
 =======
 
@@ -40,27 +58,27 @@ v1.2.13
 
 * [microDXP] Added check to acquisition value "preamp_value" range, reset value
   to maximum allowed if out-of-range.
-  
-* [microDXP] Added special run "adjust_offsets" and acquisition value 
+
+* [microDXP] Added special run "adjust_offsets" and acquisition value
   "auto_adjust_offset" for ADC offset control.
-  
+
 * [microDXP] Added support for run data "sca" readout, the availability can be
   confirmed with "get_board_features" board operation, BOARD_SUPPORTS_UPDATED_SCA
   bit, see handel_constants.h for a list of board features.
 
 * [microDXP] Fixed an error in variable gain calculation.
 
-* [microDXP] Scale acquisition values "sca_time_off" and "sca_time_on" to 
+* [microDXP] Scale acquisition values "sca_time_off" and "sca_time_on" to
   microseconds.
-  
-* [STJ] Added a "bias_dac_enable" acquisition value to denote the STJ Bias DAC 
+
+* [STJ] Added a "bias_dac_enable" acquisition value to denote the STJ Bias DAC
   disable status.
-  
+
 * [STJ] Updated limit for maximum number_mca_channels.
 
 * Updated API documentation and Quickstart Guides.
-   
-* Removed the following exported funtions from the API, they are only needed for 
+
+* Removed the following exported funtions from the API, they are only needed for
   internal initialization of the data structure, and could potentially make the
   system unstable if used after starting up. Modification to system configuration
   can be safely done by loading a new configuration file with xiaLoadSystem, then
@@ -117,7 +135,7 @@ v1.2.7
 
 * [microDXP] Fixed gain setting error introduced in v1.2.5.
 
-* Fixed some memory leak on application exit by adding calls to free data 
+* Fixed some memory leak on application exit by adding calls to free data
   structures in xiaExit.
 
 * [microDXP] Added drivers for KETEK DPP2.
@@ -131,30 +149,30 @@ v1.2.7
 
 * [microDXP] Added support for Ketek High Low gain mode.
 
-* [microDXP] Moved execution of the set acquisition value function to 
-  xiaSetAcquisitionValues, up from BoardOperation "apply". This is needed to 
-  pass in the correct acquisition name if it contains extra parameters (e.g. 
-  "scalo_0"). It will also make the microDXP behave the same as other XIA 
+* [microDXP] Moved execution of the set acquisition value function to
+  xiaSetAcquisitionValues, up from BoardOperation "apply". This is needed to
+  pass in the correct acquisition name if it contains extra parameters (e.g.
+  "scalo_0"). It will also make the microDXP behave the same as other XIA
   devices.
 
 * [microDXP] Added support for setting sca limits and sca related acquisition
   values: number_of_scas, sca_time_on, sca_time_off, scalo_0, scahi_0, etc..
 
-* [microDXP] Added get_board_features board operation to return bit flags 
-  representing board features, defined in handel_constants.h. Currently 
+* [microDXP] Added get_board_features board operation to return bit flags
+  representing board features, defined in handel_constants.h. Currently
   inlcudes BOARD_SUPPORTS_SCA.
-  
-* [microDXP] Added trace_trigger_type and trace_trigger_position acquisition 
+
+* [microDXP] Added trace_trigger_type and trace_trigger_position acquisition
   values
 
 * [Saturn] Added back support for USB1 and EPP Saturn.
-  
+
 DEPRECATION NOTICES
 
-* [microDXP] The run data all_statistics is now deprecated, replaced by 
+* [microDXP] The run data all_statistics is now deprecated, replaced by
   module_statistics_2.
 
-    
+
 v1.2.4
 ======
 
@@ -168,12 +186,12 @@ v1.2.3
 
 * [microDXP] Updated the traceTypes array used for special runs.
 
-* [microDXP] Constrain the acquisition value peaksam_offset as  
+* [microDXP] Constrain the acquisition value peaksam_offset as
   peaksam_offset <= peaking_time + energy_gap.
 
-* [microDXP] Constrain the DSP parameter PEAKSAM as 
+* [microDXP] Constrain the DSP parameter PEAKSAM as
   0 <= PEAKSAM <= PEAKINT
-  
+
 * [microDXP] Constrain FASTLEN and FASTGAP as follows:
   2 <= FASTLEN
   0 <= FASTGAP
@@ -182,12 +200,12 @@ v1.2.3
 * [microDXP] Increased the range of PEAKINT and PEAKSAM to 4095. Corrected the
   range of the other filter parameters to 1023 from 1024.
 
-* [microDXP] Set filter parameters with the set filter parameter command instead 
+* [microDXP] Set filter parameters with the set filter parameter command instead
   of the set DSP parameter command, fixing a bug were the settings weren't being
   applied in the DSP.
-  
+
 * [microDXP] Refresh peak_mode after setting the parset.
-  
+
 
 v1.2.2
 ======

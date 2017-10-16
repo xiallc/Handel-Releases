@@ -254,7 +254,7 @@ typedef int (*DXP_WRITE_REG)(int *ioChan, int *modChan, char *name,
 typedef int (*DXP_READ_REG)(int *ioChan, int *modChan, char *name,
 							unsigned long *data);
 
-typedef int (*DXP_DO_CMD)(int *, byte_t, unsigned int, byte_t *, unsigned int, byte_t *);
+typedef int (*DXP_DO_CMD)(int *ioChan, int modChan, byte_t, unsigned int, byte_t *, unsigned int, byte_t *);
 
 typedef int (*DXP_UNHOOK)(Board *board);
 

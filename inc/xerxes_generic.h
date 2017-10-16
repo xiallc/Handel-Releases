@@ -41,6 +41,8 @@
 
 /* GLOBAL constants needed by both xia_xerxes.h and xerxes.h */
 
+#define ALLCHAN -1
+
 #define MAXSYM              500
 #define MAXFILENAME_LEN     200
 #define MAXDXP				100		/* Maximum number of DXP modules in system */

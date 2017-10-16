@@ -104,6 +104,7 @@
 #define BOARD_USE_UPDATED_BOARDINFO 0x05 	/* Updated get_board_info response structure */
 #define BOARD_SUPPORTS_UPDATED_PRESET 0x06 	/* Extra word for preset values */
 #define BOARD_SUPPORTS_SNAPSHOT 0x07 		/* Support for snapshot readout */
+#define BOARD_SUPPORTS_PASSTHROUGH 0x08 	/* Support for uart passthrough */
 
 /* UltraLo */
 enum ElectrodeSize

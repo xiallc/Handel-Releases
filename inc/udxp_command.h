@@ -146,6 +146,9 @@
 #define CMD_SET_OFFADC          0x9D
 #define CMD_APPLY               0x9F
 
+/* UART passthrough command */
+#define CMD_PASSTHROUGH         0xC0
+
 /* XIA Setup Commands */
 #define CMD_WRITE_I2C           0xF6
 #define CMD_READ_I2C            0xF7

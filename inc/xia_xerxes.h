@@ -49,8 +49,6 @@
 
 #include "xia_common.h"
 
-#define ALLCHAN -1
-
 /* If this is compiled by a C++ compiler, make it clear that these are C routines */
 #ifdef __cplusplus
 extern "C"

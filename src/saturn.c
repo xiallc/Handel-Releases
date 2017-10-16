@@ -3151,10 +3151,11 @@ XERXES_STATIC int dxp_read_reg(int *ioChan, int *modChan, char *name,
 /*
  * This routine does nothing currently.
  */
-XERXES_STATIC int XERXES_API dxp_do_cmd(int *ioChan, byte_t cmd, unsigned int lenS,
+XERXES_STATIC int XERXES_API dxp_do_cmd(int *ioChan, int modChan, byte_t cmd, unsigned int lenS,
                                         byte_t *send, unsigned int lenR, byte_t *receive)
 {
     UNUSED(ioChan);
+    UNUSED(modChan);
     UNUSED(cmd);
     UNUSED(lenS);
     UNUSED(send);

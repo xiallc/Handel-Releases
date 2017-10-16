@@ -1555,7 +1555,7 @@ static int dxp_md_plx_io(int *camChan, unsigned int *function,
 
     if (status != PLX_SUCCESS) {
         plx_print_error(status, ERROR_STRING);
-        dxp_md_log_error("dxp_md_plx_io", ERROR_STRING, DXP_MDIO);        
+        dxp_md_log_error("dxp_md_plx_io", ERROR_STRING, DXP_MDIO);
         sprintf(ERROR_STRING, "Unable to perform requested I/O: func = %u, addr = "
                 "%#lx, len = %u, (PLX driver reports status = %d)",
                 *function, *addr, *length, status);
@@ -1587,7 +1587,7 @@ static int dxp_md_plx_close(int *camChan)
 
         if (status != PLX_SUCCESS) {
             plx_print_error(status, ERROR_STRING);
-            dxp_md_log_debug("dxp_md_plx_open", ERROR_STRING);            
+            dxp_md_log_debug("dxp_md_plx_open", ERROR_STRING);
             sprintf(ERROR_STRING, "Error closing PXI slot '%s', handle = %p,"
                     " (PLX driver reports status = %d)",
                     pxiNames[*camChan], &h, status);

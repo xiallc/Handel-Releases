@@ -43,20 +43,20 @@
 XERXES_SHARED byte_t dxp_compute_chksum(unsigned int len, byte_t *data);
 XERXES_SHARED int    dxp_build_cmdstr(byte_t cmd, unsigned short len,
 									  byte_t *data, byte_t *cmdstr);
-XERXES_SHARED int    dxp_command(int ioChan, DXP_MD_IO udxp_io,
+XERXES_SHARED int    dxp_command(int ioChan, int modChan, DXP_MD_IO udxp_io,
 								 byte_t cmd, unsigned int lenS,
 								 byte_t *send, unsigned int lenR,
 								 byte_t *receive, byte_t ioFlags);
 XERXES_SHARED int dxp_byte_to_string(unsigned char *bytes,
                   unsigned int len, char *string);
-XERXES_SHARED int dxp_usb_read_block(int ioChan, DXP_MD_IO udxp_io,
+XERXES_SHARED int dxp_usb_read_block(int ioChan, int modChan, DXP_MD_IO udxp_io,
                  unsigned long addr, unsigned long n, unsigned short *data);
-XERXES_SHARED int dxp_usb_write_block(int ioChan, DXP_MD_IO udxp_io,
+XERXES_SHARED int dxp_usb_write_block(int ioChan, int modChan, DXP_MD_IO udxp_io,
                                       unsigned long addr, unsigned long n,
                                       unsigned short *data);
 XERXES_SHARED void dxp_init_pic_version_cache(void);
-XERXES_SHARED boolean_t dxp_has_cpld(int ioChan);
 XERXES_SHARED boolean_t dxp_is_supermicro(int ioChan);
+XERXES_SHARED boolean_t dxp_has_direct_mca_readout(int ioChan);
 XERXES_SHARED boolean_t dxp_has_direct_trace_readout(int ioChan);
 XERXES_SHARED unsigned long dxp_dsp_coderev(int ioChan);
 
