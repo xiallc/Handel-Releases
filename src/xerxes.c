@@ -85,7 +85,6 @@ XERXES_STATIC int dxp_do_readout(Board *board, int *modchan,
                                  unsigned long spectrum[]);
 XERXES_STATIC int dxp_parse_memory_str(char *name, char *type, unsigned long *base, unsigned long *offset);
 XERXES_STATIC int dxp_fipconfig(void);
-XERXES_STATIC int dxp_init_info(void);
 
 
 /* Shorthand notation telling routines to act on all channels of the DXP (-1 currently). */
@@ -110,11 +109,6 @@ static Board_Info *btypes_head = NULL;
 static Board *system_head = NULL;
 
 /*
- *	Define a global structure for system level information
- */
-static System_Info *info = NULL;
-
-/*
  *	Define the head of the DSP linked list
  */
 static Dsp_Info *dsp_head = NULL;
@@ -131,9 +125,6 @@ static Fippi_Info *fippi_head = NULL;
 static Board_Info        *working_btype        = NULL;
 static Board             *working_board        = NULL;
 static Interface         *working_iface        = NULL;
-static Dsp_Info          *working_dsp          = NULL;
-static Fippi_Info        *working_fippi        = NULL;
-
 
 /*
  * Routines to perform global initialization functions.  Read in configuration
@@ -210,7 +201,7 @@ XERXES_EXPORT int XERXES_API dxp_install_utils(const char *utilname)
     xerxes_md_clear_tmp      = util_funcs.dxp_md_clear_tmp;
     xerxes_md_path_separator = util_funcs.dxp_md_path_separator;
 
-    /* Now for the Utils structure */
+    /* Initialize the global utils structure */
     if (utils != NULL) {
         xerxes_md_free(utils->dllname);
         xerxes_md_free(utils->funcs);
@@ -218,7 +209,7 @@ XERXES_EXPORT int XERXES_API dxp_install_utils(const char *utilname)
         utils = NULL;
     }
 
-    /* Allocate and assign memory for the Utils structure */
+    /* Allocate and assign memory for the utils structure */
     utils = (Utils *) xerxes_md_alloc(sizeof(Utils));
     utils->dllname = (char *) xerxes_md_alloc((strlen(lstr)+1)*sizeof(char));
     strcpy(utils->dllname, lstr);
@@ -242,22 +233,6 @@ XERXES_EXPORT int XERXES_API dxp_install_utils(const char *utilname)
     utils->funcs->dxp_md_tmp_path       = xerxes_md_tmp_path;
     utils->funcs->dxp_md_clear_tmp      = xerxes_md_clear_tmp;
     utils->funcs->dxp_md_path_separator = xerxes_md_path_separator;
-
-    return DXP_SUCCESS;
-}
-
-/*
- * Allocate memory for the system level information if needed
- */
-XERXES_STATIC int dxp_init_info()
-{
-    if (!info) {
-        info = (System_Info*) xerxes_md_alloc(sizeof(System_Info));
-        info->modules= NULL;
-        info->btypes = NULL;
-        info->utils = utils;
-        info->status = 0;
-    }
 
     return DXP_SUCCESS;
 }
@@ -296,13 +271,6 @@ XERXES_EXPORT int XERXES_API dxp_init_ds(void)
         return status;
     }
 
-    /* CLEAR INFO STRUCTURE */
-    if (info!=NULL) {
-        if (info->modules != NULL) xerxes_md_free(info->modules);
-        xerxes_md_free(info);
-        info = NULL;
-    }
-
     return DXP_SUCCESS;
 }
 
@@ -334,7 +302,7 @@ XERXES_EXPORT int XERXES_API dxp_init_boards_ds(void)
     /* CLEAR INTERFACE LINK LIST */
     if((status=dxp_init_iface_ds())!=DXP_SUCCESS) {
         sprintf(info_string,"Failed to initialize the Interface structures");
-        dxp_log_error("dxp_init_ds",info_string,status);
+        dxp_log_error("dxp_init_boards_ds",info_string,status);
         return status;
     }
 
@@ -401,10 +369,6 @@ static int XERXES_API dxp_init_dsp_ds(void)
     /* And clear out the pointer to the head of the list(the memory is freed) */
     dsp_head = NULL;
 
-    /* NULL the current dsp in the static variable, to ensure we dont point
-     * free memory */
-    working_dsp = NULL;
-
     return DXP_SUCCESS;
 }
 
@@ -425,10 +389,6 @@ static int XERXES_API dxp_init_fippi_ds(void)
     }
     /* And clear out the pointer to the head of the list(the memory is freed) */
     fippi_head = NULL;
-
-    /* NULL the current fippi in the static variable, to ensure we dont point
-     * free memory */
-    working_fippi = NULL;
 
     return DXP_SUCCESS;
 }
@@ -472,14 +432,6 @@ int XERXES_API dxp_add_system_item(char *ltoken, char **values)
             strTmp = NULL;
             return DXP_SUCCESS;
         }
-    } else if (STREQ(strTmp,"modules")) {
-        status = dxp_init_info();
-        /* Now copy the filename for the modules configuration file */
-        info->modules = (char *) xerxes_md_alloc((len+1)*sizeof(char));
-        /* Copy the filename into the structure.  End the string with
-         * a NULL character. */
-        info->modules = strncpy(info->modules, values[0], len);
-        info->modules[len] = '\0';
     } else {
         status = DXP_INPUT_UNDEFINED;
         sprintf(info_string,"Unable to add token: %s", strTmp);
@@ -674,48 +626,33 @@ int dxp_add_board_item(char *ltoken, char **values)
         working_board->btype->funcs->dxp_init_driver(working_iface);
         working_board->next	= NULL;
 
-        /* More memory assignments */
+        working_board->mmu          = NULL;
+        working_board->system_dsp   = NULL;
+        working_board->fippi_a      = NULL;
+        working_board->system_fpga  = NULL;
+        working_board->system_fippi = NULL;            
+                
+        /* Memory assignments */
+        working_board->chanstate =
+            (Chan_State *)xerxes_md_alloc(nchan * sizeof(Chan_State));
+
+        memset(working_board->chanstate, 0, nchan * sizeof(Chan_State));
+
         working_board->params =
             (unsigned short **)xerxes_md_alloc(nchan * sizeof(unsigned short *));
 
-        for (j = 0; j < working_board->nchan; j++) {
-            working_board->params[j] = NULL;
-        }
-
-        working_board->chanstate =
-            (Chan_State *)xerxes_md_alloc(nchan * sizeof(Chan_State));
-        memset(working_board->chanstate, 0, nchan * sizeof(Chan_State));
-
         working_board->dsp =
             (Dsp_Info **)xerxes_md_alloc(nchan * sizeof(Dsp_Info *));
+        
         working_board->fippi=
             (Fippi_Info **)xerxes_md_alloc(nchan * sizeof(Fippi_Info *));
 
         /* Fill in some default information */
         for (j = 0; j < working_board->nchan; j++) {
-
-            if (working_board->used && (1<<j)) {
-
-                working_board->dsp[j]        = working_dsp;
-                working_board->fippi[j]      = working_fippi;
-
-                if (working_dsp != NULL) {
-                    param_array_size =
-                        working_board->dsp[j]->params->nsymbol * sizeof(unsigned short);
-                    working_board->params[j] =
-                        (unsigned short *)xerxes_md_alloc(param_array_size);
-                    memset(working_board->params[j], 0, param_array_size);
-                }
-
-            } else {
-                working_board->dsp[j]        = NULL;
-                working_board->params[j]     = NULL;
-                working_board->fippi[j]      = NULL;
-            }
+            working_board->dsp[j]        = NULL;
+            working_board->params[j]     = NULL;
+            working_board->fippi[j]      = NULL;
         }
-
-        /* system_dsp is optional but must be initialized */
-        working_board->system_dsp = NULL;
 
         numDxpMod++;
 
@@ -768,7 +705,7 @@ int dxp_add_board_item(char *ltoken, char **values)
     } else if (STREQ(ltoken, "fippi")) {
 
         if (working_btype == NULL) {
-            dxp_log_error("dxp_add_board_item", "Unable to process 'default_fippi' "
+            dxp_log_error("dxp_add_board_item", "Unable to process 'fippi' "
                           "unless a board type has been defined", DXP_UNKNOWN_BTYPE);
             return DXP_UNKNOWN_BTYPE;
         }
@@ -1176,14 +1113,10 @@ int XERXES_API dxp_add_btype(char* name, char* pointer, char* dllname)
 
     /* No match in the existing list, add a new entry */
     if (btypes_head==NULL) {
-        status = dxp_init_info();
-        ASSERT(status == DXP_SUCCESS);
         /* Initialize the Header entry in the btypes linked list */
         btypes_head = (Board_Info*) xerxes_md_alloc(sizeof(Board_Info));
         btypes_head->type = 0;
         current = btypes_head;
-        /* Assign the head entry of board types to the global structure */
-        info->btypes = btypes_head;
     } else {
         /* Not First time, allocate memory for next member of linked list */
         prev->next = (Board_Info*) xerxes_md_alloc(sizeof(Board_Info));
@@ -1257,6 +1190,7 @@ static int XERXES_API dxp_add_btype_library(Board_Info* current)
 
     /* Allocate the memory for the function pointer structure */
     current->funcs = (Functions *) xerxes_md_alloc(sizeof(Functions));
+    memset(current->funcs, 0, sizeof(Functions));
 
 #ifndef EXCLUDE_SATURN
     if (STREQ(current->name,"dxpx10p")) {
@@ -1455,7 +1389,6 @@ XERXES_STATIC int dxp_add_dsp(char* filename, Board_Info* board,
             dxp_log_error("dxp_add_dsp", info_string, DXP_NOMEM);
             return DXP_NOMEM;
         }
-
     }
 
     /* Initialize pointers not used by all devices */
@@ -3264,16 +3197,11 @@ int dxp_read_register(int *detChan, char *name, unsigned long *data)
 XERXES_EXPORT int XERXES_API dxp_cmd(int *detChan, byte_t *cmd, unsigned int *lenS,
                                      byte_t *send, unsigned int *lenR, byte_t *receive)
 {
-    /*    DWORD before, after;
-     */
-
     int status;
 	int ioChan;
     int modChan;
 
-
     Board *chosen = NULL;
-
 
     status = dxp_det_to_elec(detChan, &chosen, &modChan);
 
@@ -3285,15 +3213,20 @@ XERXES_EXPORT int XERXES_API dxp_cmd(int *detChan, byte_t *cmd, unsigned int *le
 
 	ioChan = chosen->ioChan;
 
-    /* Use detChan to enable channel selection of USB udxp */
-    status = chosen->btype->funcs->dxp_do_cmd(&ioChan, modChan, *cmd, *lenS,
-                                              send, *lenR, receive);
+    /* Only works for supported devices */
+    if (chosen->btype->funcs->dxp_do_cmd) {
+        dxp_log_debug("dxp_cmd", "do comand");
+        status = chosen->btype->funcs->dxp_do_cmd(modChan, chosen, *cmd, *lenS,
+                                                  send, *lenR, receive);
 
-    if (status != DXP_SUCCESS) {
-        dxp_log_error("dxp_cmd", "Command error", status);
-        return status;
+        if (status != DXP_SUCCESS) {
+            dxp_log_error("dxp_cmd", "Command error", status);
+            return status;
+        }
+    } else {
+        dxp_log_debug("dxp_cmd", "This function is not implemented for current device");
     }
-
+    
     return DXP_SUCCESS;
 }
 

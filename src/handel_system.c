@@ -180,7 +180,7 @@ HANDEL_EXPORT int HANDEL_API xiaStartSystem(void)
  * this routine should only be used for situations where special firmware is
  * required.
  */
-HANDEL_SHARED int HANDEL_API xiaDownloadFirmware(int detChan, char *type)
+HANDEL_EXPORT int HANDEL_API xiaDownloadFirmware(int detChan, char *type)
 {
     int status;
     int elemType;

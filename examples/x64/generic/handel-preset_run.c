@@ -1,9 +1,9 @@
 /*
 * Example code to demonstrate setting preset run parameters
 *
-* Supported devices are xMap, Saturn, STJ, Mercury / Mercury4, 
+* Supported devices are xMap, Saturn, STJ, Mercury / Mercury4, microDXP
 *
-* Copyright (c) 2008-2016, XIA LLC
+* Copyright (c) 2008-2017, XIA LLC
 * All rights reserved
 *
 *
@@ -78,9 +78,9 @@ int main(int argc, char *argv[])
     CHECK_ERROR(status);
 
     /* Poll waiting for the preset run to complete, for simplicity
-* Only the first channel in the system is used here
-*/
-    printf("-- Polling waiting for preset run to complete.");
+     * Only the first channel in the system is used here
+     */
+    printf("-- Polling waiting for preset run of %0.2fs realtime to complete.", presetRealtime);
 
     for(;;) {
         printf(".");    
@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
         SLEEP(0.5);
     } 
 
-    printf("-- Stopping a run\n");
+    printf("-- Stopping a run.\n");
     status = xiaStopRun(0);
     CHECK_ERROR(status);
 

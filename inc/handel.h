@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2002-2004 X-ray Instrumentation Associates
- *               2005-2016 XIA LLC
+ *               2005-2014 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms,
@@ -60,32 +60,47 @@ extern "C" {
  */
 
 
-HANDEL_IMPORT int HANDEL_API xiaInit(char *inifile);
+
+HANDEL_IMPORT int HANDEL_API xiaInit(char *iniFile);
 HANDEL_IMPORT int HANDEL_API xiaInitHandel(void);
-HANDEL_IMPORT int HANDEL_API xiaEnableLogOutput(void);
-HANDEL_IMPORT int HANDEL_API xiaSuppressLogOutput(void);
-HANDEL_IMPORT int HANDEL_API xiaSetLogLevel(int level);
-HANDEL_IMPORT int HANDEL_API xiaSetLogOutput(char *filename);
-HANDEL_IMPORT int HANDEL_API xiaCloseLog(void);
+HANDEL_IMPORT int HANDEL_API xiaNewDetector(char *alias);
+HANDEL_IMPORT int HANDEL_API xiaAddDetectorItem(char *alias, char *name, void *value);
+HANDEL_IMPORT int HANDEL_API xiaModifyDetectorItem(char *alias, char *name, void *value);
 HANDEL_IMPORT int HANDEL_API xiaGetDetectorItem(char *alias, char *name, void *value);
-HANDEL_IMPORT int HANDEL_API xiaGetNumDetectors(unsigned int *numDetectors);
+HANDEL_IMPORT int HANDEL_API xiaGetNumDetectors(unsigned int *numDet);
 HANDEL_IMPORT int HANDEL_API xiaGetDetectors(char *detectors[]);
 HANDEL_IMPORT int HANDEL_API xiaGetDetectors_VB(unsigned int index, char *alias);
+HANDEL_IMPORT int HANDEL_API xiaRemoveDetector(char *alias);
 HANDEL_IMPORT int HANDEL_API xiaDetectorFromDetChan(int detChan, char *alias);
-HANDEL_IMPORT int HANDEL_API xiaGetFirmwareItem(char *alias, unsigned short ptrr, char *name, void *value);
+HANDEL_IMPORT int HANDEL_API xiaNewFirmware(char *alias);
+HANDEL_IMPORT int HANDEL_API xiaAddFirmwareItem(char *alias, char *name, void *value);
+HANDEL_IMPORT int HANDEL_API xiaModifyFirmwareItem(char *alias, unsigned short decimation, 
+						   char *name, void *value);
+HANDEL_IMPORT int HANDEL_API xiaGetFirmwareItem(char *alias, unsigned short decimation, 
+						char *name, void *value);
 HANDEL_IMPORT int HANDEL_API xiaGetNumFirmwareSets(unsigned int *numFirmware);
-HANDEL_IMPORT int HANDEL_API xiaGetFirmwareSets(char *firmwares[]);
+HANDEL_IMPORT int HANDEL_API xiaGetFirmwareSets(char *firmware[]);
 HANDEL_IMPORT int HANDEL_API xiaGetFirmwareSets_VB(unsigned int index, char *alias);
 HANDEL_IMPORT int HANDEL_API xiaGetNumPTRRs(char *alias, unsigned int *numPTRR);
+HANDEL_IMPORT int HANDEL_API xiaRemoveFirmware(char *alias);
+HANDEL_IMPORT int HANDEL_API xiaNewModule(char *alias);
+HANDEL_IMPORT int HANDEL_API xiaAddModuleItem(char *alias, char *name, void *value);
+HANDEL_IMPORT int HANDEL_API xiaModifyModuleItem(char *alias, char *name, void *value);
 HANDEL_IMPORT int HANDEL_API xiaGetModuleItem(char *alias, char *name, void *value);
 HANDEL_IMPORT int HANDEL_API xiaGetNumModules(unsigned int *numModules);
 HANDEL_IMPORT int HANDEL_API xiaGetModules(char *modules[]);
 HANDEL_IMPORT int HANDEL_API xiaGetModules_VB(unsigned int index, char *alias);
+HANDEL_IMPORT int HANDEL_API xiaRemoveModule(char *alias);
 HANDEL_IMPORT int HANDEL_API xiaModuleFromDetChan(int detChan, char *alias);
+HANDEL_IMPORT int HANDEL_API xiaAddChannelSetElem(unsigned int detChanSet, unsigned int newChan);
+HANDEL_IMPORT int HANDEL_API xiaRemoveChannelSetElem(unsigned int detChan, unsigned int chan);
+HANDEL_IMPORT int HANDEL_API xiaRemoveChannelSet(unsigned int detChan);
 HANDEL_IMPORT int HANDEL_API xiaStartSystem(void);
+HANDEL_IMPORT int HANDEL_API xiaDownloadFirmware(int detChan, char *type);
 HANDEL_IMPORT int HANDEL_API xiaSetAcquisitionValues(int detChan, char *name, void *value);
 HANDEL_IMPORT int HANDEL_API xiaGetAcquisitionValues(int detChan, char *name, void *value);
 HANDEL_IMPORT int HANDEL_API xiaRemoveAcquisitionValues(int detChan, char *name);
+HANDEL_IMPORT int HANDEL_API xiaUpdateUserParams(int detChan);
 HANDEL_IMPORT int HANDEL_API xiaGainOperation(int detChan, char *name, void *value);
 HANDEL_IMPORT int HANDEL_API xiaGainCalibrate(int detChan, double deltaGain);
 HANDEL_IMPORT int HANDEL_API xiaStartRun(int detChan, unsigned short resume);
@@ -97,7 +112,7 @@ HANDEL_IMPORT int HANDEL_API xiaLoadSystem(char *type, char *filename);
 HANDEL_IMPORT int HANDEL_API xiaSaveSystem(char *type, char *filename);
 HANDEL_IMPORT int HANDEL_API xiaGetParameter(int detChan, const char *name, unsigned short *value);
 HANDEL_IMPORT int HANDEL_API xiaSetParameter(int detChan, const char *name, unsigned short value);
-HANDEL_IMPORT int HANDEL_API xiaGetNumParams(int detChan, unsigned short *value);
+HANDEL_IMPORT int HANDEL_API xiaGetNumParams(int detChan, unsigned short *numParams);
 HANDEL_IMPORT int HANDEL_API xiaGetParamData(int detChan, char *name, void *value);
 HANDEL_IMPORT int HANDEL_API xiaGetParamName(int detChan, unsigned short index, char *name);
 HANDEL_IMPORT int HANDEL_API xiaBoardOperation(int detChan, char *name, void *value);
@@ -105,10 +120,20 @@ HANDEL_IMPORT int HANDEL_API xiaMemoryOperation(int detChan, char *name, void *v
 HANDEL_IMPORT int HANDEL_API xiaCommandOperation(int detChan, byte_t cmd,
 												unsigned int lenS, byte_t *send,
 												unsigned int lenR, byte_t *recv);
+
 HANDEL_IMPORT int HANDEL_API xiaExit(void);
-HANDEL_IMPORT int HANDEL_API xiaSetIOPriority(int pri);
-HANDEL_IMPORT void HANDEL_API xiaGetVersionInfo(int *rel, int *min, int *maj,
+
+HANDEL_IMPORT int HANDEL_API xiaEnableLogOutput(void);
+HANDEL_IMPORT int HANDEL_API xiaSuppressLogOutput(void);
+HANDEL_IMPORT int HANDEL_API xiaSetLogLevel(int level);
+HANDEL_IMPORT int HANDEL_API xiaSetLogOutput(char *fileName);
+HANDEL_IMPORT int HANDEL_API xiaCloseLog(void);
+
+  HANDEL_IMPORT int HANDEL_API xiaSetIOPriority(int pri);
+
+  HANDEL_IMPORT void HANDEL_API xiaGetVersionInfo(int *rel, int *min, int *maj,
 												  char *pretty);
+
 
 #ifdef _DEBUG
   HANDEL_IMPORT void HANDEL_API xiaUnitTests(unsigned short tests);
@@ -123,30 +148,42 @@ HANDEL_IMPORT void HANDEL_API xiaGetVersionInfo(int *rel, int *min, int *maj,
  */
 HANDEL_IMPORT int HANDEL_API xiaInit();
 HANDEL_IMPORT int HANDEL_API xiaInitHandel();
-HANDEL_IMPORT int HANDEL_API xiaEnableLogOutput();
-HANDEL_IMPORT int HANDEL_API xiaSuppressLogOutput();
-HANDEL_IMPORT int HANDEL_API xiaSetLogLevel();
-HANDEL_IMPORT int HANDEL_API xiaSetLogOutput();
-HANDEL_IMPORT int HANDEL_API xiaCloseLog();
+HANDEL_IMPORT int HANDEL_API xiaNewDetector();
+HANDEL_IMPORT int HANDEL_API xiaAddDetectorItem();
+HANDEL_IMPORT int HANDEL_API xiaModifyDetectorItem();
 HANDEL_IMPORT int HANDEL_API xiaGetDetectorItem();
 HANDEL_IMPORT int HANDEL_API xiaGetNumDetectors();
 HANDEL_IMPORT int HANDEL_API xiaGetDetectors();
 HANDEL_IMPORT int HANDEL_API xiaGetDetectors_VB();
+HANDEL_IMPORT int HANDEL_API xiaRemoveDetector();
+HANDEL_IMPORT int HANDEL_API xiaNewFirmware();
+HANDEL_IMPORT int HANDEL_API xiaAddFirmwareItem();
+HANDEL_IMPORT int HANDEL_API xiaModifyFirmwareItem();
 HANDEL_IMPORT int HANDEL_API xiaGetFirmwareItem();
 HANDEL_IMPORT int HANDEL_API xiaGetNumFirmwareSets();
 HANDEL_IMPORT int HANDEL_API xiaGetFirmwareSets();
 HANDEL_IMPORT int HANDEL_API xiaGetFirmwareSets_VB();
 HANDEL_IMPORT int HANDEL_API xiaGetNumPTRRs();
+HANDEL_IMPORT int HANDEL_API xiaRemoveFirmware();
+HANDEL_IMPORT int HANDEL_API xiaNewModule();
+HANDEL_IMPORT int HANDEL_API xiaAddModuleItem();
+HANDEL_IMPORT int HANDEL_API xiaModifyModuleItem();
 HANDEL_IMPORT int HANDEL_API xiaGetModuleItem();
 HANDEL_IMPORT int HANDEL_API xiaGetNumModules();
 HANDEL_IMPORT int HANDEL_API xiaGetModules();
 HANDEL_IMPORT int HANDEL_API xiaGetModules_VB();
+HANDEL_IMPORT int HANDEL_API xiaRemoveModule();
+HANDEL_IMPORT int HANDEL_API xiaAddChannelSetElem();
+HANDEL_IMPORT int HANDEL_API xiaRemoveChannelSetElem();
+HANDEL_IMPORT int HANDEL_API xiaRemoveChannelSet();
 HANDEL_IMPORT int HANDEL_API xiaStartSystem();
+HANDEL_IMPORT int HANDEL_API xiaDownloadFirmware();
 HANDEL_IMPORT int HANDEL_API xiaSetAcquisitionValues();
 HANDEL_IMPORT int HANDEL_API xiaGetAcquisitionValues();
 HANDEL_IMPORT int HANDEL_API xiaRemoveAcquisitionValues();
-HANDEL_IMPORT int HANDEL_API xiaGainCalibrate();
+HANDEL_IMPORT int HANDEL_API xiaUpdateUserParams();
 HANDEL_IMPORT int HANDEL_API xiaGainOperation();
+HANDEL_IMPORT int HANDEL_API xiaGainCalibrate();
 HANDEL_IMPORT int HANDEL_API xiaStartRun();
 HANDEL_IMPORT int HANDEL_API xiaStopRun();
 HANDEL_IMPORT int HANDEL_API xiaGetRunData();
@@ -160,11 +197,20 @@ HANDEL_IMPORT int HANDEL_API xiaGetNumParams();
 HANDEL_IMPORT int HANDEL_API xiaGetParamData();
 HANDEL_IMPORT int HANDEL_API xiaGetParamName();
 HANDEL_IMPORT int HANDEL_API xiaBoardOperation();
-HANDEL_IMPORT int HANDEL_API xiaMemoryOperation();
-HANDEL_IMPORT int HANDEL_API xiaCommandOperation();
+  HANDEL_IMPORT int HANDEL_API xiaMemoryOperation();
+  HANDEL_IMPORT int HANDEL_API xiaCommandOperation();
 HANDEL_IMPORT int HANDEL_API xiaExit();
-HANDEL_IMPORT int HANDEL_API xiaSetIOPriority();
-HANDEL_IMPORT void HANDEL_API xiaGetVersionInfo();
+
+HANDEL_IMPORT int HANDEL_API xiaEnableLogOutput();
+HANDEL_IMPORT int HANDEL_API xiaSuppressLogOutput();
+HANDEL_IMPORT int HANDEL_API xiaSetLogLevel();
+HANDEL_IMPORT int HANDEL_API xiaSetLogOutput();
+HANDEL_IMPORT int HANDEL_API xiaCloseLog();
+
+  HANDEL_IMPORT int HANDEL_API xiaSetIOPriority();
+
+  HANDEL_IMPORT void HANDEL_API xiaGetVersionInfo();
+
 
 #endif                                  /*   end if _HANDEL_PROTO_ */
 

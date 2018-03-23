@@ -441,6 +441,9 @@ struct Interface_Serial {
     /* The COM port number */
     unsigned int com_port;
 
+    /* On Linux a device file may be given instead of a COM port. */
+    char *device_file;
+
     /* The Baud rate of the port */
     unsigned int baud_rate;
 };

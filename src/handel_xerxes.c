@@ -481,7 +481,12 @@ HANDEL_STATIC int xia__CopyInterfString(Module *m, char *interf)
 
 #ifndef EXCLUDE_SERIAL
     case SERIAL:
-        sprintf(interf, "COM%u", m->interface_info->info.serial->com_port);
+        if (m->interface_info->info.serial->device_file) {
+            sprintf(interf, "%s", m->interface_info->info.serial->device_file);
+        }
+        else {
+            sprintf(interf, "COM%u", m->interface_info->info.serial->com_port);
+        }
         break;
 #endif /* EXCLUDE_SERIAL */
 
@@ -547,8 +552,14 @@ HANDEL_STATIC int xia__CopyMDString(Module *m, char *md)
 
 #ifndef EXCLUDE_SERIAL
     case SERIAL:
-        sprintf(md, "%u:%u", m->interface_info->info.serial->com_port,
-                m->interface_info->info.serial->baud_rate);
+        if (m->interface_info->info.serial->device_file) {
+            sprintf(md, "%s:%u", m->interface_info->info.serial->device_file,
+                    m->interface_info->info.serial->baud_rate);
+        }
+        else {
+            sprintf(md, "%u:%u", m->interface_info->info.serial->com_port,
+                    m->interface_info->info.serial->baud_rate);
+        }
         break;
 #endif /* EXCLUDE_SERIAL */
 

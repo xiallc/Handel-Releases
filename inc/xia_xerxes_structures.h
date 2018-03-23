@@ -107,6 +107,7 @@ struct Dsp_Info {
   struct Dsp_Info *next;
 };
 typedef struct Dsp_Info Dsp_Info;
+
 /*
  *	Linked list to contain all FiPPi configurations
  */
@@ -129,6 +130,8 @@ struct Utils {
   struct Xia_Util_Functions *funcs;
 };
 typedef struct Utils Utils;
+
+
 /*
  *	Linked list containing pointers to libraries to interface with boards
  */
@@ -139,6 +142,7 @@ struct Interface {
   struct Interface *next;
 };
 typedef struct Interface Interface;
+
 /*
  *	Structure containing information about the state of each channel
  */
@@ -147,6 +151,7 @@ struct Chan_State {
   short dspdownloaded;
 };
 typedef struct Chan_State Chan_State;
+
 /*
  *	Define a system linked list for all boards in use
  */
@@ -201,6 +206,7 @@ struct Board {
   struct Board *next;
 };
 typedef struct Board Board;
+
 /*
  *  Structure that points at the functions within a board type DLL
  */
@@ -254,7 +260,7 @@ typedef int (*DXP_WRITE_REG)(int *ioChan, int *modChan, char *name,
 typedef int (*DXP_READ_REG)(int *ioChan, int *modChan, char *name,
 							unsigned long *data);
 
-typedef int (*DXP_DO_CMD)(int *ioChan, int modChan, byte_t, unsigned int, byte_t *, unsigned int, byte_t *);
+typedef int (*DXP_DO_CMD)(int modChan, Board *board, byte_t, unsigned int, byte_t *, unsigned int, byte_t *);
 
 typedef int (*DXP_UNHOOK)(Board *board);
 
@@ -331,24 +337,6 @@ struct Board_Info {
   struct Board_Info *next;
 };
 typedef struct Board_Info Board_Info;
-/*
- * Define a struct to contain global information
- */
-struct System_Info {
-  /* Pointer to the first defined board type in the system */
-  struct Board_Info *btypes;
-  /* The file that contains the module configurations */
-  char *modules;
-  /* Pointer to the utils structure */
-  Utils *utils;
-  /* Tell if the system was started from configuration or restore_config()
-   * Hold the status bits of the system
-   *
-   * 0 = startup from default configuration
-   * 1 = startup from saved configuration
-   */
-  short status;
-};
-typedef struct System_Info System_Info;
+
 
 #endif /* __XIA_XERXES_STRUCTURES_H__ */

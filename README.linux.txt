@@ -40,9 +40,6 @@ alias hammer='/path/to/swtoolkit/hammer.sh'
 # Handel dev dependencies
 export TMP=/tmp # Handel's scons script reads this var?
 
-# libusb
-sudo apt-get install libusb-dev
-
 # optional: Handel's test suite requires Ruby
 sudo apt-get install ruby ruby-dev
 sudo gem install ffi
@@ -57,7 +54,7 @@ products you need.
 
 Here's an example for microDXP USB2:
 
-   hammer --udxp --no-udxps --no-xw --no-serial --no-xmap --no-stj --no-mercury --no-saturn --verbose 
+   hammer --udxp --no-udxps --no-xw --no-serial --no-xmap --no-stj --no-mercury --no-saturn --verbose
 
 To search for other flags, search "SetBitFromOption" in main.scons.
 
@@ -65,14 +62,87 @@ To search for other flags, search "SetBitFromOption" in main.scons.
 Defines
 =======
 
-To integrate Handel with your own build system, you need to pass the defines
-equivalent to the above scons command line. Note that not every define is
-needed for every file in the source distribution.
+This section lists defines you can use in your build system to control
+the features compiled in Handel. Note that not every define is needed
+for every file in the source distribution.
 
-  LINUX, HANDEL_MAKE_DLL, HANDEL_USE_DLL, EXCLUDE_UDXPS, EXCLUDE_XUP,
-  EXCLUDE_XMAP, EXCLUDE_STJ, EXCLUDE_MERCURY, EXCLUDE_SATURN, EXCLUDE_SERIAL,
-  EXCLUDE_EPP, EXCLUDE_PLX
+Disable products and protocols not currently supported on Linux:
 
-If you bump into errors that seem related to a protocol or product that you're
-not interested in, scan up the code for an appropriate "#ifndef EXCLUDE_" and
-add the define.
+    EXCLUDE_XMAP EXCLUDE_STJ EXCLUDE_PLX
+
+Selectively disable products you do not use:
+
+    EXCLUDE_MERCURY EXCLUDE_SATURN EXCLUDE_UDXP
+
+When building for microDXP, always define these internal feature
+exclusions, which are not available in the customer release:
+
+    EXCLUDE_UDXPS EXCLUDE_XUP
+
+Selectively disable interface protocols you do not use:
+
+    EXCLUDE_SERIAL EXCLUDE_EPP EXCLUDE_USB EXCLUDE_USB2
+
+
+USB Setup
+=========
+
+Handel USB and USB2 support on Linux are built on libusb-0.1.
+
+  sudo apt-get install libusb-dev
+
+Check that libusb sees the XIA device:
+
+  lsusb -v | grep "ID: 10e9"
+
+By default, root is required to open the device. This snippet shows
+how to set up Ubuntu udev rules to enable user access:
+
+```
+# Confirm your user is in the plugdev group
+groups
+
+# Set up udev rules. Customize idProduct for your device.
+sudo cat > /etc/udev/rules.d/99-xia-usb.rules <<RULES
+ACTION=="add", SUBSYSTEMS=="usb", ATTRS{idVendor}=="10e9", ATTRS{idProduct}=="0702", MODE="660", GROUP="plugdev"
+ACTION=="add", SUBSYSTEMS=="usb", ATTRS{idVendor}=="10e9", ATTRS{idProduct}=="0b01", MODE="660", GROUP="plugdev"
+RULES
+```
+
+It may be helpful in debugging to monitor USB transfers. This is easy
+if your system includes usbmon:
+
+```
+mount -t debugfs none_debugs /sys/kernel/debug
+modprobe usbmon
+
+cat /sys/kernel/debug/usb/usbmon/1u | sed -n -e "s/^[a-f0-9]\+ [0-9]\+//p"
+```
+
+
+Serial Port Setup
+=================
+
+Handel v1.2.19 and later includes a serial port implementation built
+on termios. This interface is experimental but does pass all microDXP
+tests in XIA's testing. To use it, edit the module definition in your
+.ini file to set the interface to "serial". Instead of defining
+com_port as you would for the Windows serial interface, locate the
+device in /dev and put this file in the device\_file setting. Here is
+a full sample module definition:
+
+```
+[module definitions]
+START #0
+alias = module1
+module_type = udxp
+interface = serial
+device_file = /dev/ttyS1
+baud_rate = 230400
+number_of_channels = 1
+channel0_alias = 0
+channel0_detector = detector1:0
+firmware_set_chan0 = firmware1
+default_chan0 = defaults_module1_0
+END #0
+```

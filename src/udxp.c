@@ -3,7 +3,35 @@
  * Copyright (c) 2005-2013 XIA LLC
  * All rights reserved
  *
- * NOT COVERED UNDER THE BSD LICENSE. NOT FOR RELEASE TO CUSTOMERS.
+ * Redistribution and use in source and binary forms,
+ * with or without modification, are permitted provided
+ * that the following conditions are met:
+ *
+ *   * Redistributions of source code must retain the above
+ *     copyright notice, this list of conditions and the
+ *     following disclaimer.
+ *   * Redistributions in binary form must reproduce the
+ *     above copyright notice, this list of conditions and the
+ *     following disclaimer in the documentation and/or other
+ *     materials provided with the distribution.
+ *   * Neither the name of XIA LLC
+ *     nor the names of its contributors may be used to endorse
+ *     or promote products derived from this software without
+ *     specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+ * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+ * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 #include <string.h>
@@ -17,6 +45,7 @@
 #include "xerxes_generic.h"
 #include "xerxes_structures.h"
 #include "xia_xerxes_structures.h"
+#include "xerxes_io.h"
 #include "udxp.h"
 #include "xerxes_errors.h"
 #include "xia_udxp.h"
@@ -42,7 +71,6 @@
 /*
  * Pointer to utility functions
  */
-static DXP_MD_IO          udxp_md_io;
 static DXP_MD_SET_MAXBLK  udxp_md_set_maxblk;
 static DXP_MD_GET_MAXBLK  udxp_md_get_maxblk;
 static DXP_MD_LOG         udxp_md_log;
@@ -56,12 +84,6 @@ static int dxp_init_dspparams(int ioChan, int modChan, Board *board);
 static byte_t bytesPerBin = 3;
 
 char info_string[INFO_LEN];
-
-/* USB RS232 update
- * Need a modular variable to identify whether the board is USB or RS232
- * This value will determine ioFlags passed to dxp_command function
- */
-static boolean_t IS_USB = FALSE_;
 
 /*
  * Routine to create pointers to all the internal routines
@@ -112,12 +134,13 @@ XERXES_EXPORT int dxp_init_udxp(Functions* funcs)
     funcs->dxp_write_mem = dxp_write_mem;
     funcs->dxp_write_reg = dxp_write_reg;
     funcs->dxp_read_reg  = dxp_read_reg;
-    funcs->dxp_do_cmd = dxp_do_cmd;
     funcs->dxp_unhook = dxp_unhook;
 
     funcs->dxp_get_symbol_by_index = dxp_get_symbol_by_index;
     funcs->dxp_get_num_params = dxp_get_num_params;
 
+    funcs->dxp_do_cmd = dxp_do_cmd;
+    
     dxp_init_pic_version_cache();
 
     return DXP_SUCCESS;
@@ -127,15 +150,11 @@ XERXES_EXPORT int dxp_init_udxp(Functions* funcs)
  */
 static int dxp_init_driver(Interface* iface)
 /* Interface *iface;    Input: Pointer to the IO Interface  */
-{
+{    
     /* Assign all the static vars here to point at the proper library routines */
-    udxp_md_io         = iface->funcs->dxp_md_io;
     udxp_md_set_maxblk = iface->funcs->dxp_md_set_maxblk;
     udxp_md_get_maxblk = iface->funcs->dxp_md_get_maxblk;
-
-    /* Try to determine whether the iface is usb2 */
-    IS_USB = (boolean_t) (strcmp(iface->dllname, "usb2") == 0);
-
+    
     return DXP_SUCCESS;
 }
 /*
@@ -173,8 +192,6 @@ static int dxp_download_fpgaconfig(int* ioChan, int* modChan, char *name, Board*
 {
     int status;
 
-    byte_t io_normal = IO_NORMAL;
-
     byte_t send[2];
     byte_t receive[8];
 
@@ -183,8 +200,8 @@ static int dxp_download_fpgaconfig(int* ioChan, int* modChan, char *name, Board*
 
     unsigned short fippiNum = 0;
 
+    UNUSED(ioChan);
     UNUSED(modChan);
-    UNUSED(board);
 
     if (STREQ(name, "all")) {
         return DXP_SUCCESS;
@@ -203,12 +220,8 @@ static int dxp_download_fpgaconfig(int* ioChan, int* modChan, char *name, Board*
     send[0] = (byte_t)0x00;
     send[1] = (byte_t)fippiNum;
 
-    if (IS_USB) {
-        io_normal |= IO_USB;
-    }
-
-    status = dxp_command(*ioChan, *modChan, udxp_md_io, CMD_FIPPI_CONFIG, lenS,
-                         send, lenR, receive, io_normal);
+    status = dxp_command(*modChan, board, CMD_FIPPI_CONFIG, lenS,
+                         send, lenR, receive);
 
     if (status != DXP_SUCCESS) {
         status = DXP_UDXP;
@@ -278,10 +291,10 @@ static int dxp_download_dspconfig(int* ioChan, int* modChan, Board *board)
     int udxpModChan = 0;
 
     UNUSED(modChan);
-    
+
     /* Xerxes only calls this hook once per module. */
     ASSERT(*modChan == ALLCHAN);
-   
+
     status = dxp_init_dspparams(*ioChan, udxpModChan, board);
 
     if (status != DXP_SUCCESS) {
@@ -382,8 +395,6 @@ static int dxp_init_dspparams(int ioChan, int modChan, Board *board)
     unsigned int strLen = 0;
     unsigned int i;
 
-    byte_t io_normal = IS_USB ? (IO_NORMAL | IO_USB) : IO_NORMAL;
-
     byte_t cmd = CMD_READ_DSP_PARAMS;
 
     byte_t send[1];
@@ -402,8 +413,7 @@ static int dxp_init_dspparams(int ioChan, int modChan, Board *board)
     ASSERT(PARAMS(board)->maxsym > 0);
 
     send[0] = (byte_t)1;
-    status = dxp_command(ioChan, modChan, udxp_md_io, cmd,
-                        lenS, send, lenR, receive, io_normal);
+    status = dxp_command(modChan, board, cmd, lenS, send, lenR, receive);
 
     if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error reading number of DSP parameters for "
@@ -426,8 +436,7 @@ static int dxp_init_dspparams(int ioChan, int modChan, Board *board)
     lenR = strLen + 5 + RECV_BASE;
     send[0] = (byte_t)0;
 
-    status = dxp_command(ioChan, modChan, udxp_md_io, cmd,
-                        lenS, send, lenR, names, io_normal);
+    status = dxp_command(modChan, board, cmd, lenS, send, lenR, names);
 
     if (status != DXP_SUCCESS) {
         udxp_md_free((void *)names);
@@ -488,15 +497,12 @@ static int dxp_modify_dspsymbol(int* ioChan, int* modChan, char* name,
 
     unsigned short addr = 0x0000;
 
-    byte_t io_normal = IO_NORMAL;
-
     byte_t cmd = CMD_WRITE_DSP_DATA_MEM;
 
     byte_t send[6];
     byte_t receive[1 + RECV_BASE];
 
-    UNUSED(modChan);
-    UNUSED(board);
+    UNUSED(ioChan);
 
     /* Get index of symbol */
     status = dxp_loc(name, board->dsp[0], &addr);
@@ -516,12 +522,7 @@ static int dxp_modify_dspsymbol(int* ioChan, int* modChan, char* name,
     send[5] = HI_BYTE(*value);
 
     /* Write new value to the board */
-    if (IS_USB) {
-        io_normal |= IO_USB;
-    }
-
-    status = dxp_command(*ioChan, *modChan, udxp_md_io, cmd,
-                         lenS, send, lenR, receive, io_normal);
+    status = dxp_command(*modChan, board, cmd, lenS, send, lenR, receive);
 
     if (status != DXP_SUCCESS) {
         dxp_log_error("dxp_modify_dspsymbol", "Error writing to DSP memory",
@@ -551,8 +552,6 @@ static int dxp_read_dspsymbol(int* ioChan, int* modChan, char* name,
     unsigned int lenS = 4;
     unsigned int lenR = 3 + RECV_BASE;
 
-    byte_t io_normal = IS_USB ? (IO_NORMAL | IO_USB) : IO_NORMAL;
-
     byte_t cmd = CMD_READ_DSP_DATA_MEM;
 
     byte_t send[4];
@@ -575,8 +574,7 @@ static int dxp_read_dspsymbol(int* ioChan, int* modChan, char* name,
     send[2] = LO_BYTE(addr);
     send[3] = HI_BYTE(addr);
 
-    status = dxp_command(*ioChan, *modChan, udxp_md_io, cmd,
-                         lenS, send, lenR, receive, io_normal);
+    status = dxp_command(*modChan, board, cmd, lenS, send, lenR, receive);
 
     if (status != DXP_SUCCESS) {
         dxp_log_error("dxp_read_dspsymbol", "Error executing command",
@@ -612,9 +610,6 @@ static int dxp_read_dspparams(int* ioChan, int* modChan, Board *board,
 {
     int status;
 
-    byte_t io_normal = IS_USB ? (IO_NORMAL | IO_USB) : IO_NORMAL;
-
-
     unsigned int lenS = 4;
     unsigned int lenR;
     unsigned int maxLenR = 65 + RECV_BASE;
@@ -633,7 +628,7 @@ static int dxp_read_dspparams(int* ioChan, int* modChan, Board *board,
 
     unsigned short *data = (unsigned short *)params;
 
-    UNUSED(modChan);
+    UNUSED(ioChan);
 
     ASSERT(PARAMS(board) != NULL);
     ASSERT(PARAMS(board)->nsymbol > 0);
@@ -650,9 +645,8 @@ static int dxp_read_dspparams(int* ioChan, int* modChan, Board *board,
         send[2] = LO_BYTE(addr);
         send[3] = HI_BYTE(addr);
 
-        status = dxp_command(*ioChan, *modChan, udxp_md_io, cmd, lenS, send,
-                                maxLenR, maxR, io_normal);
-
+        status = dxp_command(*modChan, board, cmd, lenS, send, maxLenR, maxR);
+        
         if (status != DXP_SUCCESS) {
             dxp_log_error("dxp_read_dspparams", "Error reading DSP data memory", status);
             return status;
@@ -676,8 +670,7 @@ static int dxp_read_dspparams(int* ioChan, int* modChan, Board *board,
         return status;
     }
 
-    status = dxp_command(*ioChan, *modChan, udxp_md_io, cmd, lenS, send,
-                        lenR, finalR, io_normal);
+    status = dxp_command(*modChan, board, cmd, lenS, send, lenR, finalR);
 
     if (status != DXP_SUCCESS) {
         udxp_md_free(finalR);
@@ -811,12 +804,10 @@ static int dxp_begin_run(int* ioChan, int* modChan, unsigned short* gate,
     unsigned int lenS = 1;
     unsigned int lenR = 8;
 
-    byte_t io_normal = IO_NORMAL;
-
     byte_t send[1];
     byte_t receive[8];
 
-    UNUSED(modChan);
+    UNUSED(ioChan);
     UNUSED(gate);
     UNUSED(board);
     UNUSED(id);
@@ -831,13 +822,9 @@ static int dxp_begin_run(int* ioChan, int* modChan, unsigned short* gate,
     send[0] = (byte_t)(0x01 ^ *resume);
 
 
-    if (IS_USB) {
-        io_normal |= IO_USB;
-    }
-
-    status = dxp_command(*ioChan, *modChan, udxp_md_io, CMD_START_RUN,
-                         lenS, send, lenR, receive, io_normal);
-
+    status = dxp_command(*modChan, board, CMD_START_RUN, lenS, send, 
+                        lenR, receive);
+   
     if (status != DXP_SUCCESS) {
         dxp_log_error("dxp_begin_run",
                       "Error executing command",
@@ -874,20 +861,12 @@ static int dxp_end_run(int* ioChan, int* modChan, Board *board)
     unsigned int lenS = 0;
     unsigned int lenR = 6;
 
-    byte_t io_normal = IO_NORMAL;
-
     byte_t receive[6];
 
-    UNUSED(modChan);
-    UNUSED(board);
+    UNUSED(ioChan);
 
-
-    if (IS_USB) {
-        io_normal |= IO_USB;
-    }
-
-    status = dxp_command(*ioChan, *modChan, udxp_md_io, CMD_STOP_RUN,
-                         lenS, NULL, lenR, receive, io_normal);
+    status = dxp_command(*modChan, board, CMD_STOP_RUN, lenS, NULL, 
+                        lenR, receive);
 
     if (status != DXP_SUCCESS) {
         dxp_log_error("dxp_end_run",
@@ -1084,12 +1063,6 @@ XERXES_STATIC int dxp_read_mem(int *ioChan, int *modChan, Board *board,
         return DXP_UNIMPLEMENTED;
     }
 
-    if (!IS_USB) {
-        sprintf(info_string, "Memory access only supported in USB mode");
-        dxp_log_error("dxp_read_mem", info_string, DXP_UNIMPLEMENTED);
-        return DXP_UNIMPLEMENTED;
-    }
-
     us_data = udxp_md_alloc((*offset) * sizeof(unsigned short));
 
     if (us_data == NULL) {
@@ -1100,8 +1073,7 @@ XERXES_STATIC int dxp_read_mem(int *ioChan, int *modChan, Board *board,
         return DXP_NOMEM;
     }
 
-    status = dxp_usb_read_block(*ioChan, *modChan, udxp_md_io, *base,
-                                *offset, us_data);
+    status = dxp_usb_read_block(*modChan, board, *base, *offset, us_data);
 
 
     if (status != DXP_SUCCESS) {
@@ -1152,12 +1124,6 @@ XERXES_STATIC int dxp_write_mem(int *ioChan, int *modChan, Board *board,
         return DXP_UNIMPLEMENTED;
     }
 
-    if (!IS_USB) {
-        dxp_log_error("dxp_write_mem", "Direct memory writes are only "
-                      "supported in USB mode.", DXP_UNIMPLEMENTED);
-        return DXP_UNIMPLEMENTED;
-    }
-
     us_data = udxp_md_alloc((*offset) * sizeof(unsigned short));
 
     if (!us_data) {
@@ -1173,7 +1139,7 @@ XERXES_STATIC int dxp_write_mem(int *ioChan, int *modChan, Board *board,
         us_data[i] = (unsigned short)(data[i] & 0xFFFF);
     }
 
-    status = dxp_usb_write_block(*ioChan, *modChan, udxp_md_io, *base, *offset, us_data);
+    status = dxp_usb_write_block(*modChan, board, *base, *offset, us_data);
 
     udxp_md_free(us_data);
 
@@ -1221,20 +1187,12 @@ XERXES_STATIC int dxp_read_reg(int *ioChan, int *modChan, char *name,
 /*
  * This routine simply calls the dxp_command() routine.
  */
-XERXES_STATIC int XERXES_API dxp_do_cmd(int *ioChan, int modChan, byte_t cmd, unsigned int lenS,
+XERXES_STATIC int XERXES_API dxp_do_cmd(int modChan, Board *board, byte_t cmd, unsigned int lenS,
                                         byte_t *send, unsigned int lenR, byte_t *receive)
 {
     int status;
-    byte_t ioFlags = IO_NORMAL;
-
-
-    if (IS_USB) {
-        ioFlags |= IO_USB;
-    }
-
-    status = dxp_command(*ioChan, modChan, udxp_md_io, cmd, lenS, send,
-                         lenR, receive, ioFlags);
-
+    status = dxp_command(modChan, board, cmd, lenS, send, lenR, receive);
+    
     if (status != DXP_SUCCESS) {
         dxp_log_error("dxp_do_cmd", "Command error", status);
         return status;

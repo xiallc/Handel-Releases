@@ -169,7 +169,6 @@ int dxp_init_saturn(Functions* funcs)
     funcs->dxp_write_mem = dxp_write_mem;
     funcs->dxp_write_reg = dxp_write_reg;
     funcs->dxp_read_reg  = dxp_read_reg;
-    funcs->dxp_do_cmd = dxp_do_cmd;
     funcs->dxp_unhook = dxp_unhook;
 
     funcs->dxp_get_symbol_by_index = dxp_get_symbol_by_index;
@@ -1762,9 +1761,9 @@ static int dxp_read_dspparams(int* ioChan, int* modChan, Board* b,
     /* Read out the parameters from the DSP memory, stored in Y memory */
     len = dsp->params->nsymbol;
 
-    sprintf(info_string, "Reading out %u DSP parameters", len);    
-    dxp_log_info("dxp_read_dspparams", info_string);    
-    
+    sprintf(info_string, "Reading out %u DSP parameters", len);
+    dxp_log_info("dxp_read_dspparams", info_string);
+
     if ((status=dxp_read_block(ioChan,modChan,&startp,&len,params))!=DXP_SUCCESS) {
         dxp_log_error("dxp_read_dspparams","error reading parameters",status);
         return status;
@@ -3143,24 +3142,6 @@ XERXES_STATIC int dxp_read_reg(int *ioChan, int *modChan, char *name,
     UNUSED(modChan);
     UNUSED(name);
     UNUSED(data);
-
-    return DXP_SUCCESS;
-}
-
-
-/*
- * This routine does nothing currently.
- */
-XERXES_STATIC int XERXES_API dxp_do_cmd(int *ioChan, int modChan, byte_t cmd, unsigned int lenS,
-                                        byte_t *send, unsigned int lenR, byte_t *receive)
-{
-    UNUSED(ioChan);
-    UNUSED(modChan);
-    UNUSED(cmd);
-    UNUSED(lenS);
-    UNUSED(send);
-    UNUSED(lenR);
-    UNUSED(receive);
 
     return DXP_SUCCESS;
 }

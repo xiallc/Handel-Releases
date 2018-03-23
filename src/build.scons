@@ -29,7 +29,7 @@ def do_stdcall_and_cdecl_lib(name, lib_inputs, stdcall_defines,
         inputs.append(other_inputs)
     cdecl_lib = cdecl_env.ComponentLibrary(name, inputs, COMPONENT_STATIC=False,
                                            COMPONENT_LIBRARY_PUBLISH=True)
-    stdcall_lib = []										   
+    stdcall_lib = []
     if base.Bit('vba'):
         stdcall_env = base.Clone()
         stdcall_env.Append(CPPDEFINES=stdcall_defines)
@@ -92,14 +92,15 @@ else:
     md_defs.append('EXCLUDE_USB2')
 
 if env.Bit('serial'):
-    md_libs.append('xia_serial')
-    serial_env = protocols_env.Clone()
-    serial_env.Append(LIBS=['cdrvhf32', 'cdrvxf32', 'cdrvdl32'])
-    serial_inputs = ['xia_serial.c']
-    for lib in do_stdcall_and_cdecl_lib('xia_serial', serial_inputs,
-                                        ['WIN32_SERIAL_VBA'], assert_obj,
-                                        lib_env=serial_env):
-        md_deps.append(lib)
+    if win:
+        md_libs.append('xia_serial')
+        serial_env = protocols_env.Clone()
+        serial_env.Append(LIBS=['cdrvhf32', 'cdrvxf32', 'cdrvdl32'])
+        serial_inputs = ['xia_serial.c']
+        for lib in do_stdcall_and_cdecl_lib('xia_serial', serial_inputs,
+                                            ['WIN32_SERIAL_VBA'], assert_obj,
+                                            lib_env=serial_env):
+            md_deps.append(lib)
 else:
     md_defs.append('EXCLUDE_SERIAL')
 
@@ -167,11 +168,15 @@ if dd_env.Bit('udxp') or dd_env.Bit('udxps'):
     udxp_common_inputs = ['udxp_common.c']
     udxp_common_obj = dd_env.ComponentObject(udxp_common_inputs)
 
+# Shared object for DD libs to do IO through Xerxes objects.
+xerxes_io_obj = dd_env.ComponentObject('xerxes_io.c')
+
 for p in projects:
     if dd_env.Bit(p):
         device_libs.append(p)
-        inputs = ["%s.c" % p]
-        lib = dd_env.ComponentLibrary(p, inputs + assert_obj + udxp_common_obj,
+        src = "%s.c" % p
+        objs = assert_obj + udxp_common_obj + xerxes_io_obj
+        lib = dd_env.ComponentLibrary(p, [src] + objs,
                                       COMPONENT_STATIC=True,
                                       COMPONENT_LIBRARY_PUBLISH=True)
         xerxes_deps.append(lib)
@@ -199,7 +204,7 @@ fdd_lib = fdd_env.ComponentLibrary('fdd', fdd_inputs + assert_obj,
                                          COMPONENT_STATIC=True,
                                          COMPONENT_LIBRARY_PUBLISH=True)
 fdd_env.Depends(fdd_lib, [md_lib])
-                                         
+
 # PSL
 handel_libs = ['fdd', 'xerxes', 'md', 'xiafile'] # xerxes must precede md on linux!
 handel_deps = [md_lib, xerxes_lib, fdd_lib, file_lib]
@@ -245,7 +250,7 @@ handel_env.Append(LIBS=device_libs) # static device libs must come after xerxes 
 handel_inputs = handel_env.Glob('handel*.c')
 
 # Build Handel.rc for DLL version
-rc_cmd = handel_env.Command(['handel.rc'], 
+rc_cmd = handel_env.Command(['handel.rc'],
                            ['$MAIN_DIR/tools/releaser/version.yml', '$MAIN_DIR/tools/releaser/changeset.yml'],
                            build_helpers.version.generate, build_options=device_libs)
 

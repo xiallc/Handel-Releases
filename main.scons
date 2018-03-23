@@ -36,6 +36,13 @@ print 'building to', base_env.Dir('$DESTINATION_ROOT')
 # Add external folders as Repository resource
 base_env.Dir('redist').addRepository(base_env.Dir('../redist'))
 
+# Add defines on the command line, e.g. define=XERXES_TRACE_IO
+cppdefines = []
+for key, value in ARGLIST:
+    if key == 'define':
+        cppdefines.append(value)
+base_env.Append(CPPDEFINES=cppdefines)
+
 # List of redist files
 redist_files = []
 
@@ -48,7 +55,7 @@ if base_env.Bit('release'):
     build_helpers.version.update_hg_changeset('tools/releaser/version.yml', 'tools/releaser/changeset.yml')
 else:
     build_helpers.version.set_version_string('tools/releaser/changeset.yml', "development")
-    
+
 ver_cmd = base_env.Command('inc/xia_version.h',
                  ['tools/releaser/version.yml', 'tools/releaser/changeset.yml'],
                  build_helpers.version.generate)
@@ -154,7 +161,6 @@ if base_env.Bit('epp'):
 # LINUX
 linux_env = base_env.Clone(
     tools = ['target_platform_linux'])
-linux_env.Append(CPPDEFINES=['LINUX'])
 linux_env['STATIC_AND_SHARED_OBJECTS_ARE_THE_SAME']=1
 
 linux_env.Append(CCFLAGS=['-pipe', '-fPIC', '-Wall'])
@@ -198,7 +204,8 @@ windows_env.Append(CPPDEFINES=['_CRT_SECURE_NO_WARNINGS',
                                '_BIND_TO_CURRENT_VCLIBS_VERSION'])
 
 windows_env.Append(LINKFLAGS=['/INCREMENTAL:NO'])
-windows_env.Append(CPPDEFINES=['WIN32_LEAN_AND_MEAN', 'NONAMELESSUNION'])
+windows_env.Append(CPPDEFINES=['WIN32_LEAN_AND_MEAN', 'NONAMELESSUNION',
+                               '__MEM_DBG__'])
 # Not everyone wants to build with libcmt
 windows_env.FilterOut(CCFLAGS_DEBUG=['/MTd'])
 windows_env.Append(CCFLAGS_DEBUG=['/MDd'])

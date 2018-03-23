@@ -53,6 +53,12 @@
 #include <time.h>
 #include <string.h>
 
+#ifndef EXCLUDE_SERIAL
+#include <errno.h>
+#include <fcntl.h>
+#include <termios.h>
+#endif
+
 /* XIA include files */
 #include "xerxes_errors.h"
 #include "xerxes_structures.h"
@@ -64,8 +70,6 @@
 
 #define MODE 4
 
-
-#define SERIAL_WAIT_TIMEOUT  ((unsigned long)1100)
 
 /* total number of modules in the system */
 static unsigned int numMod    = 0;
@@ -132,18 +136,17 @@ static unsigned long usb2AddrCache[MAXMOD];
 
 #define HEADER_SIZE 4
 
-static unsigned int numSerial = 0;
 /* variables to store the IO channel information */
 static char *serialName[MAXMOD];
-/* Serial port globals */
-static unsigned short comPort = 0;
+static HANDLE serialHandles[MAXMOD];
+static unsigned int numSerial = 0;
 
-static void dxp_md_decode_serial_errors(unsigned short errs);
-static int dxp_md_serial_read_header(unsigned short port, unsigned short *bytes,
+/* Serial port globals */
+static int dxp_md_serial_read_header(int fd, unsigned short *bytes,
                                      unsigned short *buf);
-static int dxp_md_serial_read_data(unsigned short port, unsigned long size,
-                                   unsigned short *buf);
-static int dxp_md_serial_reset(unsigned short port);
+static int dxp_md_serial_read_data(int fd,
+                                   unsigned long size, unsigned short *buf);
+
 #endif /* EXCLUDE_SERIAL */
 
 
@@ -741,102 +744,171 @@ XIA_MD_STATIC int XIA_MD_API dxp_md_usb_close(int *camChan)
 
 
 #ifndef EXCLUDE_SERIAL
+
 /*
- * This routine initializes the requested serial port
- * for operation at the specified baud.
+ * Initialized any global structures.
+ *
+ * Only called once per library load.
  */
-XIA_MD_STATIC int XIA_MD_API dxp_md_serial_initialize(unsigned int *maxMod, char *dllname)
+XIA_MD_STATIC int dxp_md_serial_initialize(unsigned int *maxMod,
+                                           char *dllname)
 {
-    int status;
-    int statusSerial;
+    int i;
+
+    UNUSED(maxMod);
+    UNUSED(dllname);
 
 
-    if (*maxMod > MAXMOD)
-    {
-        status = DXP_NOMEM;
-        sprintf(ERROR_STRING, "Calling routine requests %d maximum modules: only"
-                "%d available.", *maxMod, MAXMOD);
-        dxp_md_log_error("dxp_md_serial_initialize", ERROR_STRING, status);
-        return status;
-    }
-
-    sprintf(ERROR_STRING, "dllname = %s", dllname);
-    dxp_md_log_debug("dxp_md_serial_initialize", ERROR_STRING);
-
-    /* Reset # of currently defined
-     * serial mods in the system.
-     */
     numSerial = 0;
 
-    sscanf(dllname, "COM%hu", &comPort);
-
-    sprintf(ERROR_STRING, "COM Port = %u", comPort);
-    dxp_md_log_debug("dxp_md_serial_initialize", ERROR_STRING);
-
-    statusSerial = InitSerialPort(comPort, 115200);
-
-    if (statusSerial != SERIAL_SUCCESS)
-    {
-        status = DXP_INITIALIZE;
-        sprintf(ERROR_STRING, "Unable to initialize the serial port: status = %d",
-                statusSerial);
-        dxp_md_log_error("dxp_md_serial_initialize", ERROR_STRING, status);
-        return status;
+    for (i = 0; i < MAXMOD; i++) {
+        serialName[i] = NULL;
     }
-
-    /* Close the port */
-
-    /*
-    statusSerial = CloseSerialPort(comPort);
-
-    if (statusSerial != SERIAL_SUCCESS)
-    {
-    status = DXP_INITIALIZE;
-    sprintf(ERROR_STRING, "Error closing serial port: status = %d", statusSerial);
-    dxp_md_log_error("dxp_md_serial_initialize", ERROR_STRING, status);
-    return status;
-    }
-    */
 
     return DXP_SUCCESS;
 }
 
+/* Serial port initialization from https://stackoverflow.com/a/6947758/223029 */
+int dxp_md_serial_set_interface_attribs(int fd, int speed)
+{
+    struct termios tty;
+
+    if (tcgetattr(fd, &tty) < 0) {
+        printf("Error from tcgetattr: %s\n", strerror(errno));
+        return -1;
+    }
+
+    cfsetospeed(&tty, (speed_t)speed);
+    cfsetispeed(&tty, (speed_t)speed);
+
+    tty.c_cflag |= (CLOCAL | CREAD);    /* ignore modem controls */
+    tty.c_cflag &= ~CSIZE;
+    tty.c_cflag |= CS8;         /* 8-bit characters */
+    tty.c_cflag &= ~PARENB;     /* no parity bit */
+    tty.c_cflag &= ~CSTOPB;     /* only need 1 stop bit */
+
+    /* setup for non-canonical mode */
+    tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
+    tty.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+    tty.c_oflag &= ~OPOST;
+
+    tty.c_cc[VMIN] = 0;   /* Don't block if no bytes ever come */
+    tty.c_cc[VTIME] = 10; /* Deciseconds to wait for the first byte */
+
+    if (tcsetattr(fd, TCSANOW, &tty) != 0) {
+        printf("Error from tcsetattr: %s\n", strerror(errno));
+        return -1;
+    }
+    return 0;
+}
 
 /*
- * This routine assigns the specified device a chan
- * number in the global array. (I think.)
+ * Initializes a new COM port instance.
+ *
+ * This routine is called each time that a COM port is opened.
+ * ioname encodes COM port and baud rate as "[port]:[baud_rate]".
  */
 XIA_MD_STATIC int XIA_MD_API dxp_md_serial_open(char* ioname, int* camChan)
 {
+    int status;
+    int len_ioname;
+
     unsigned int i;
 
+    char device_file[1024]; // TODO: max path constant
 
-    sprintf(ERROR_STRING, "ioname = %s", ioname);
-    dxp_md_log_debug("dxp_md_serial_open", ERROR_STRING);
+    unsigned long baud;
+    int baudConst;
 
-    /* First loop over the existing names to make sure this module
-     * was not already configured?  Don't want/need to perform
-     * this operation 2 times. */
 
-    for(i = 0; i < numSerial; i++)
-    {
-        if(STREQ(serialName[i], ioname))
-        {
+    sprintf(ERROR_STRING, "Open serial device %s", ioname);
+    dxp_md_log_info("dxp_md_serial_open", ERROR_STRING);
+
+    /* Check for an existing definition. */
+    for(i = 0; i < numSerial; i++) {
+        if(STREQ(serialName[i], ioname)) {
             *camChan = i;
             return DXP_SUCCESS;
         }
     }
 
-    /* Got a new one.  Increase the number existing and assign the global
-     * information */
-    if (serialName[numSerial] != NULL) {
-        dxp_md_free(serialName[numSerial]);
+    /* Parse in the device file and baud rate. */
+    int loc = strcspn(ioname, ":");
+    if (loc == 0) {
+        sprintf(ERROR_STRING, "Unable to find : in ioname %s", ioname);
+        dxp_md_log_error("dxp_md_serial_open", ERROR_STRING, DXP_BAD_PARAM);
+        return DXP_BAD_PARAM;
     }
 
-    serialName[numSerial] = (char *)dxp_md_alloc((strlen(ioname) + 1) * sizeof(char));
-    strcpy(serialName[numSerial], ioname);
+    strncpy(device_file, ioname, loc);
+    device_file[loc] = '\0';
+
+    sscanf(ioname + loc, ":%lu", &baud);
 
     *camChan = numSerial++;
+
+    int fd = open(device_file, O_RDWR | O_NOCTTY | O_SYNC);
+    if (fd < 0) {
+        sprintf(ERROR_STRING, "Error opening %s, where the driver reports "
+                "%s", device_file, strerror(errno));
+        dxp_md_log_error("dxp_md_serial_open", ERROR_STRING, DXP_MDOPEN);
+        return DXP_MDOPEN;
+    }
+
+    /* Convert baud to corresponding baud constant */
+    switch (baud)
+    {
+    case 50: baudConst = B50; break;
+    case 75: baudConst = B75; break;
+    case 110: baudConst = B110; break;
+    case 134: baudConst = B134; break;
+    case 150: baudConst = B150; break;
+    case 200: baudConst = B200; break;
+    case 300: baudConst = B300; break;
+    case 600: baudConst = B600; break;
+    case 1200: baudConst = B1200; break;
+    case 1800: baudConst = B1800; break;
+    case 2400: baudConst = B2400; break;
+    case 4800: baudConst = B4800; break;
+    case 9600: baudConst = B9600; break;
+    case 19200: baudConst = B19200; break;
+    case 38400: baudConst = B38400; break;
+    case 57600: baudConst = B57600; break;
+    case 115200: baudConst = B115200; break;
+    case 230400: baudConst = B230400; break;
+    default:
+        close(fd);
+        sprintf(ERROR_STRING, "device %s unknown baud %lu", device_file, baud);
+        dxp_md_log_error("dxp_md_serial_open", ERROR_STRING, DXP_BAD_PARAM);
+        return DXP_BAD_PARAM;
+    }
+
+    status = dxp_md_serial_set_interface_attribs(fd, baudConst);
+    if (status != 0) {
+        close(fd);
+        sprintf(ERROR_STRING, "Error configuring %s, where the driver reports "
+                "%d", device_file, status);
+        dxp_md_log_error("dxp_md_serial_open", ERROR_STRING, DXP_MDINITIALIZE);
+        return DXP_MDINITIALIZE;
+    }
+
+    serialHandles[*camChan] = fd;
+
+    ASSERT(serialName[*camChan] == NULL);
+
+    len_ioname = strlen(ioname) + 1;
+
+    serialName[*camChan] = dxp_md_alloc(len_ioname);
+
+    if (serialName[*camChan] == NULL) {
+        sprintf(ERROR_STRING, "Unable to allocate %d bytes for serialName[%d]",
+                len_ioname, *camChan);
+        dxp_md_log_error("dxp_md_serial_open", ERROR_STRING, DXP_MDNOMEM);
+        return DXP_MDNOMEM;
+    }
+
+    strcpy(serialName[*camChan], ioname);
+
     numMod++;
 
     return DXP_SUCCESS;
@@ -849,105 +921,60 @@ XIA_MD_STATIC int XIA_MD_API dxp_md_serial_open(char* ioname, int* camChan)
  */
 XIA_MD_STATIC int XIA_MD_API dxp_md_serial_io(int *camChan,
                                               unsigned int *function,
-                                              unsigned int *wait_in_ms,
-                                              unsigned short *data,
+                                              unsigned long *wait_in_ms,
+                                              void *data,
                                               unsigned int *length)
 {
-    LARGE_INTEGER freq;
-    LARGE_INTEGER before, after;
-
     int status;
-
     unsigned int i;
 
     unsigned short n_bytes = 0;
 
+    unsigned short *us_data = (unsigned short *)data;
+
     byte_t *buf    = NULL;
 
-    double to = (double)(*wait_in_ms);
+    int fd = serialHandles[*camChan];
 
-
-    /* Get the proper comPort information
-     * Use this when we need to support multiple
-     * serial ports.
-     */
-    sscanf(serialName[*camChan], "%hu", &comPort);
-
-    QueryPerformanceFrequency(&freq);
-
+    UNUSED(wait_in_ms);
 
     if (*function == MD_IO_READ) {
-
-        QueryPerformanceCounter(&before);
-
-        status = SetTimeoutInMS(comPort, to);
-
-        if (status != SERIAL_SUCCESS) {
-            sprintf(ERROR_STRING,
-                    "Error setting timeout to %lf milliseconds on COM%u",
-                    to, comPort);
-            dxp_md_log_error("dxp_md_serial_io", ERROR_STRING, DXP_MDIO);
-            return DXP_MDIO;
-        }
-
-        status = dxp_md_serial_read_header(comPort, &n_bytes, data);
+        status = dxp_md_serial_read_header(fd, &n_bytes, us_data);
 
         if (status != DXP_SUCCESS) {
             dxp_md_log_error("dxp_md_serial_io", "Error reading header", status);
             return status;
         }
 
-        QueryPerformanceCounter(&after);
-
-        /* Caclulate the timeout time based on a conservative transfer rate
-         * of 5kb/s with a minimum of 1000 milliseconds.
+        /* Check the incoming data packet length against the size of the
+         * user's buffer.
          */
-        to = (double)((n_bytes / 5000.0) * 1000.0);
-
-        if (to < 1000.0) {
-            to = 1000.0;
+        if (n_bytes + HEADER_SIZE > *length) {
+            tcflush(fd, TCIOFLUSH);
+            sprintf(ERROR_STRING, "Header reports ndata=%hu, larger than "
+                    "requested length %u-%d.", n_bytes, *length, HEADER_SIZE);
+            dxp_md_log_error("dxp_md_serial_io", ERROR_STRING, DXP_MDSIZE);
+            return DXP_MDSIZE;
         }
 
-        status = SetTimeoutInMS(comPort, to);
-
-        if (status != SERIAL_SUCCESS) {
-            sprintf(ERROR_STRING, "Error setting timeout to %lf milliseconds", to);
-            dxp_md_log_error("dxp_md_serial_io", ERROR_STRING, DXP_MDIO);
-            return DXP_MDIO;
-        }
-
-        status = dxp_md_serial_read_data(comPort, n_bytes, data + HEADER_SIZE);
+        status = dxp_md_serial_read_data(fd, n_bytes, us_data + HEADER_SIZE);
 
         if (status != DXP_SUCCESS) {
             dxp_md_log_error("dxp_md_serial_io", "Error reading data", status);
             return status;
         }
-
-
     } else if (*function == MD_IO_WRITE) {
-
-        /* Write to the serial port */
-
-        status = CheckAndClearTransmitBuffer(comPort);
-
-        if (status != SERIAL_SUCCESS) {
-            status = DXP_MDIO;
-            dxp_md_log_error("dxp_md_serial_io", "Error clearing transmit buffer", status);
-            return status;
-        }
-
-        status = CheckAndClearReceiveBuffer(comPort);
-
-        if (status != SERIAL_SUCCESS) {
-            status = DXP_MDIO;
-            dxp_md_log_error("dxp_md_serial_io", "Error clearing receive buffer", status);
-            return status;
+        status = tcflush(fd, TCIOFLUSH);
+        if (status != 0) {
+            sprintf(ERROR_STRING, "Error flushing fd=%d, driver reports %s",
+                    fd, strerror(errno));
+            dxp_md_log_error("dxp_md_serial_open", ERROR_STRING, DXP_MDIO);
+            return DXP_MDIO;
         }
 
         buf = (byte_t *)dxp_md_alloc(*length * sizeof(byte_t));
 
         if (buf == NULL) {
-
             status = DXP_NOMEM;
             sprintf(ERROR_STRING, "Error allocating %u bytes for buf",
                     *length);
@@ -956,33 +983,37 @@ XIA_MD_STATIC int XIA_MD_API dxp_md_serial_io(int *camChan,
         }
 
         for (i = 0; i < *length; i++) {
-
-            buf[i] = (char)data[i];
+            buf[i] = (byte_t)us_data[i];
         }
 
-        status = WriteSerialPort(comPort, *length, buf);
+        int wlen = write(fd, buf, *length);
 
-        if (status != SERIAL_SUCCESS) {
-
+        if (wlen != *length) {
             dxp_md_free((void *)buf);
             buf = NULL;
 
-            status = DXP_MDIO;
-            sprintf(ERROR_STRING, "Error writing %u bytes to COM%u",
-                    *length, comPort);
-            dxp_md_log_error("dxp_md_serial_io", ERROR_STRING, status);
-            return status;
+            sprintf(ERROR_STRING, "Error writing %u bytes to fd %d"
+                    "driver reported status %d", *length, fd, wlen);
+            dxp_md_log_error("dxp_md_serial_io", ERROR_STRING, DXP_MDIO);
+            return DXP_MDIO;
         }
 
         dxp_md_free((void *)buf);
         buf = NULL;
+
+        status = tcdrain(fd);
+        if (status != 0) {
+            sprintf(ERROR_STRING, "Error draining fd=%d, driver reports %s",
+                    fd, strerror(errno));
+            dxp_md_log_error("dxp_md_serial_open", ERROR_STRING, DXP_MDIO);
+            return DXP_MDIO;
+        }
 
     } else if (*function == MD_IO_OPEN) {
         /* Do nothing */
     } else if (*function == MD_IO_CLOSE) {
         /* Do nothing */
     } else {
-
         status = DXP_MDUNKNOWN;
         sprintf(ERROR_STRING, "Unknown function: %u", *function);
         dxp_md_log_error("dxp_md_serial_io", ERROR_STRING, status);
@@ -992,34 +1023,6 @@ XIA_MD_STATIC int XIA_MD_API dxp_md_serial_io(int *camChan,
     return DXP_SUCCESS;
 }
 
-
-/*
- * Closes and re-opens the port
- */
-static int dxp_md_serial_reset(unsigned short port)
-{
-    int status;
-
-
-    status = CloseSerialPort(port);
-
-    if (status != SERIAL_SUCCESS) {
-        dxp_md_log_error("dxp_md_serial_reset", "Error closing port", DXP_MDIO);
-        return DXP_MDIO;
-    }
-
-    status = InitSerialPort(port, 115200);
-
-    if (status != SERIAL_SUCCESS) {
-        dxp_md_log_error("dxp_md_serial_reset", "Error re-initializing port",
-                         DXP_MDIO);
-        return DXP_MDIO;
-    }
-
-    return DXP_SUCCESS;
-}
-
-
 /*
  * Reads the header of the returned packet
  *
@@ -1027,7 +1030,7 @@ static int dxp_md_serial_reset(unsigned short port)
  * specified buffer. Also calculates the number of bytes remaining
  * in the packet including the XOR checksum.
  */
-static int dxp_md_serial_read_header(unsigned short port, unsigned short *bytes,
+static int dxp_md_serial_read_header(int fd, unsigned short *bytes,
                                      unsigned short *buf)
 {
     int i;
@@ -1038,22 +1041,16 @@ static int dxp_md_serial_read_header(unsigned short port, unsigned short *bytes,
 
     byte_t header[HEADER_SIZE];
 
-    serial_read_error_t *err = NULL;
-
 
     ASSERT(bytes != NULL);
     ASSERT(buf != NULL);
 
-
     for (i = 0; i < HEADER_SIZE; i++) {
+        int rlen = read(fd, &b, 1);
 
-        err = ReadSerialPort(port, 1, &b);
-
-        if (err->status != SERIAL_SUCCESS) {
-            sprintf(ERROR_STRING, "Error reading header from COM%u: actual = %d, "
-                    "expected = %d, bytes_in_recv_buf = %d, size_recv_buf = %d", port,
-                    err->actual, err->expected, err->bytes_in_recv_buf,
-                    err->size_recv_buf);
+        if (rlen != 1) {
+            sprintf(ERROR_STRING, "Error reading header from fd=%d: actual = %d, "
+                    "expected = %d", fd, rlen, 1);
             dxp_md_log_error("dxp_md_serial_read_header", ERROR_STRING, DXP_MDIO);
             return DXP_MDIO;
         }
@@ -1061,10 +1058,6 @@ static int dxp_md_serial_read_header(unsigned short port, unsigned short *bytes,
         header[i] = b;
     }
 
-    /* XXX Is any error checking done elsewhere to verify
-     * the initial, non-size bytes in the header? Perhaps in
-     * dxp_cmd()/dxp_command()?
-     */
     lo = header[2];
     hi = header[3];
 
@@ -1076,7 +1069,7 @@ static int dxp_md_serial_read_header(unsigned short port, unsigned short *bytes,
         dxp_md_log_debug("dxp_md_serial_read_header",
                          "Number of data bytes = 1 in header");
         for (i = 0; i < HEADER_SIZE; i++) {
-            sprintf(ERROR_STRING, "header[%d] = %#x", i, (unsigned short)header[i]);
+            sprintf(ERROR_STRING, "header[%d] = %#hx", i, (unsigned short)header[i]);
             dxp_md_log_debug("dxp_md_serial_read_header",
                              ERROR_STRING);
         }
@@ -1097,20 +1090,15 @@ static int dxp_md_serial_read_header(unsigned short port, unsigned short *bytes,
  * Reads the specified number of bytes from the port and copies them to
  *  the buffer.
  */
-static int dxp_md_serial_read_data(unsigned short port, unsigned long size,
-                                   unsigned short *buf)
+static int dxp_md_serial_read_data(int fd,
+                                   unsigned long size, unsigned short *buf)
 {
-    int status;
-
+    byte_t *b = NULL;
+    int timeToStall = 5;
+    int totalRead;
     unsigned long i;
 
-    byte_t *b = NULL;
-
-    serial_read_error_t *err = NULL;
-
-
     ASSERT(buf != NULL);
-
 
     b = (byte_t *)dxp_md_alloc(size * sizeof(byte_t));
 
@@ -1120,27 +1108,30 @@ static int dxp_md_serial_read_data(unsigned short port, unsigned long size,
         return DXP_NOMEM;
     }
 
-    err = ReadSerialPort(port, size, b);
+    /* VMIN limits read size to 255. We just loop until it we get all the
+     * requested data or stall after several failures.
+     */
+    for (totalRead = 0; totalRead < size; ) {
+        int remaining = size - totalRead;
 
-    if (err->status != SERIAL_SUCCESS) {
-        dxp_md_free(b);
-        sprintf(ERROR_STRING, "bytes_in_recv_buf = %d, size_recv_buf = %d",
-                err->bytes_in_recv_buf, err->size_recv_buf);
-        dxp_md_log_debug("dxp_md_serial_read_data", ERROR_STRING);
-        sprintf(ERROR_STRING, "Error reading data from COM%u: "
-                "expected = %d, actual = %d", port, err->expected, err->actual);
-        dxp_md_log_error("dxp_md_serial_read_data", ERROR_STRING, DXP_MDIO);
+        int rlen = read(fd, b + totalRead, remaining);
+        if (rlen <= 0) {
+            if (timeToStall-- > 0)
+                continue;
 
-        status = dxp_md_serial_reset(port);
+            dxp_md_free(b);
+            sprintf(ERROR_STRING, "Error reading data from fd=%d: "
+                    "requested = %d, returned = %d", fd, remaining, rlen);
+            dxp_md_log_error("dxp_md_serial_read_data", ERROR_STRING, DXP_MDIO);
 
-        if (status != DXP_SUCCESS) {
-            sprintf(ERROR_STRING,
-                    "Error attempting to reset COM%u in response to a "
-                    "communications failure", port);
-            dxp_md_log_error("dxp_md_serial_read_data", ERROR_STRING, status);
+            /* The Windows driver closes the port and reinitializes it on failure
+             * here. Do we need it?
+             */
+
+            return DXP_MDIO;
         }
 
-        return DXP_MDIO;
+        totalRead += rlen;
     }
 
     for (i = 0; i < size; i++) {
@@ -1153,53 +1144,30 @@ static int dxp_md_serial_read_data(unsigned short port, unsigned long size,
 }
 
 
-static void dxp_md_decode_serial_errors(unsigned short errs)
-{
-    sprintf(ERROR_STRING, "All data: %s",                    errs & 0x1    ? "transmitted" : "not transmitted");
-    dxp_md_log_debug("dxp_md_decode_serial_errors", ERROR_STRING);
-    sprintf(ERROR_STRING, "Break: %s",                       errs & 0x2    ? "detected"    : "not detected");
-    dxp_md_log_debug("dxp_md_decode_serial_errors", ERROR_STRING);
-    sprintf(ERROR_STRING, "Carrier: %s",                     errs & 0x4    ? "detected"    : "not detected");
-    dxp_md_log_debug("dxp_md_decode_serial_errors", ERROR_STRING);
-    sprintf(ERROR_STRING, "CTS: %s",                         errs & 0x8    ? "high"        : "low");
-    dxp_md_log_debug("dxp_md_decode_serial_errors", ERROR_STRING);
-    sprintf(ERROR_STRING, "DSR: %s",                         errs & 0x10   ? "high"        : "low");
-    dxp_md_log_debug("dxp_md_decode_serial_errors", ERROR_STRING);
-    sprintf(ERROR_STRING, "Framing Error: %s",               errs & 0x20   ? "yes"         : "no");
-    dxp_md_log_debug("dxp_md_decode_serial_errors", ERROR_STRING);
-    sprintf(ERROR_STRING, "Input Overrun (Ring Buffer): %s", errs & 0x40   ? "yes"         : "no");
-    dxp_md_log_debug("dxp_md_decode_serial_errors", ERROR_STRING);
-    sprintf(ERROR_STRING, "Input Overrun (UART): %s",        errs & 0x80   ? "yes"         : "no");
-    dxp_md_log_debug("dxp_md_decode_serial_errors", ERROR_STRING);
-    sprintf(ERROR_STRING, "Parity Error: %s",                errs & 0x100  ? "yes"         : "no");
-    dxp_md_log_debug("dxp_md_decode_serial_errors", ERROR_STRING);
-    sprintf(ERROR_STRING, "Port: %s",                        errs & 0x200  ? "available"   : "in use");
-    dxp_md_log_debug("dxp_md_decode_serial_errors", ERROR_STRING);
-    sprintf(ERROR_STRING, "Receive Buffer: %s",              errs & 0x400  ? "empty"       : "not empty");
-    dxp_md_log_debug("dxp_md_decode_serial_errors", ERROR_STRING);
-    sprintf(ERROR_STRING, "Ring: %s",                        errs & 0x800  ? "detected"    : "not detected");
-    dxp_md_log_debug("dxp_md_decode_serial_errors", ERROR_STRING);
-    sprintf(ERROR_STRING, "Transmit Buffer: %s",             errs & 0x1000 ? "empty"       : "not empty");
-    dxp_md_log_debug("dxp_md_decode_serial_errors", ERROR_STRING);
-
-}
-
-
 /*
  * Closes the serial port connection so that we don't
  * crash due to interrupt vectors left lying around.
  */
 XIA_MD_STATIC int XIA_MD_API dxp_md_serial_close(int *camChan)
 {
-    int status;
+    ASSERT(camChan != NULL);
 
-    UNUSED(camChan);
+    sprintf(ERROR_STRING, "Called with camChan %d", *camChan);
+    dxp_md_log_debug("dxp_md_serial_close", ERROR_STRING);
 
+    if (serialName[*camChan] != NULL) {
+        int fd = serialHandles[*camChan];
 
-    status = CloseSerialPort(0);
+        sprintf(ERROR_STRING, "Preparing to close camChan %d, device %s, fd %d",
+                *camChan, serialName[*camChan], fd);
+        dxp_md_log_debug("dxp_md_serial_close", ERROR_STRING);
 
-    if (status != 0) {
-        return DXP_MDCLOSE;
+        close(fd);
+
+        dxp_md_free(serialName[*camChan]);
+        serialName[*camChan] = NULL;
+
+        numSerial--;
     }
 
     return DXP_SUCCESS;
@@ -1309,6 +1277,7 @@ XIA_MD_STATIC int  dxp_md_usb2_io(int *camChan, unsigned int *function,
     byte_t *byte_buf = NULL;
 
     unsigned long n_bytes = 0;
+    unsigned long n_bytes_read = 0;
 
 
     ASSERT(addr != NULL);
@@ -1341,6 +1310,7 @@ XIA_MD_STATIC int  dxp_md_usb2_io(int *camChan, unsigned int *function,
 
         switch (*function) {
         case MD_IO_READ:
+
             /* The data comes from the calling routine as an unsigned short, so
              * we need to convert it to a byte array for the USB2 driver.
              */
@@ -1352,14 +1322,21 @@ XIA_MD_STATIC int  dxp_md_usb2_io(int *camChan, unsigned int *function,
                 dxp_md_log_error("dxp_md_usb2_io", ERROR_STRING, DXP_MDNOMEM);
                 return DXP_MDNOMEM;
             }
-
-            status = xia_usb2_read(usb2Handles[*camChan], cache_addr, n_bytes,
-                                   byte_buf);
-
-            if (status != XIA_USB2_SUCCESS) {
+            status = xia_usb2_readn(usb2Handles[*camChan], cache_addr, n_bytes,
+                                    byte_buf, &n_bytes_read);
+            if (status != 0) {
                 dxp_md_free(byte_buf);
                 sprintf(ERROR_STRING, "Error reading %lu bytes from %#lx for "
-                        "camChan %d", n_bytes, cache_addr, *camChan);
+                        "camChan %d, driver reports %d",
+                        n_bytes, cache_addr, *camChan, status);
+                dxp_md_log_error("dxp_md_usb2_io", ERROR_STRING, DXP_MDIO);
+                return DXP_MDIO;
+            }
+
+            if (n_bytes_read != n_bytes) {
+                sprintf(ERROR_STRING, "Reading %lu bytes from %#lx for "
+                        "camChan %d, got %lu",
+                        n_bytes, cache_addr, *camChan, n_bytes_read);
                 dxp_md_log_error("dxp_md_usb2_io", ERROR_STRING, DXP_MDIO);
                 return DXP_MDIO;
             }

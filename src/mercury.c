@@ -207,7 +207,6 @@ XERXES_EXPORT int dxp_init_mercury(Functions* funcs)
     funcs->dxp_write_mem = dxp_write_mem;
     funcs->dxp_write_reg = dxp_write_reg;
     funcs->dxp_read_reg  = dxp_read_reg;
-    funcs->dxp_do_cmd = dxp_do_cmd;
     funcs->dxp_unhook = dxp_unhook;
 
     funcs->dxp_get_symbol_by_index = dxp_get_symbol_by_index;
@@ -1889,25 +1888,6 @@ XERXES_STATIC int dxp_read_reg(int *ioChan, int *modChan, char *name,
     dxp_log_error("dxp_read_reg", info_string, DXP_UNKNOWN_REG);
     return DXP_UNKNOWN_REG;
 
-}
-
-
-/*
- * Unused for the Mercury.
- */
-XERXES_STATIC int dxp_do_cmd(int *ioChan, int modChan, byte_t cmd, unsigned int lenS,
-                             byte_t *send, unsigned int lenR, byte_t *receive)
-{
-    UNUSED(ioChan);
-    UNUSED(modChan);
-    UNUSED(cmd);
-    UNUSED(lenS);
-    UNUSED(send);
-    UNUSED(lenR);
-    UNUSED(receive);
-
-
-    return DXP_SUCCESS;
 }
 
 

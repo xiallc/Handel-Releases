@@ -151,25 +151,6 @@ XIA_MD_IMPORT int XIA_MD_API DxpReadPort(unsigned short port, unsigned short *da
 #endif /* EXCLUDE_USB */
 
 
-#ifndef EXCLUDE_SERIAL
-
-#include "seriallib.h"
-
-XIA_MD_IMPORT int XIA_MD_API InitSerialPort(unsigned short port, unsigned long baud);
-XIA_MD_IMPORT int XIA_MD_API CloseSerialPort(unsigned short port);
-XIA_MD_IMPORT serial_read_error_t * XIA_MD_API ReadSerialPort(
-											   unsigned short port,
-											   unsigned long size,
-											   unsigned char *data);
-XIA_MD_IMPORT int XIA_MD_API WriteSerialPort(unsigned short port, unsigned long size, unsigned char *data);
-XIA_MD_IMPORT int XIA_MD_API CheckAndClearTransmitBuffer(unsigned short port);
-XIA_MD_IMPORT int XIA_MD_API CheckAndClearReceiveBuffer(unsigned short port);
-XIA_MD_IMPORT int XIA_MD_API GetErrors(unsigned short port, unsigned short *errs);
-XIA_MD_IMPORT int XIA_MD_API NumBytesAtSerialPort(unsigned short port, unsigned long *numBytes);
-  XIA_MD_IMPORT int XIA_MD_API SetTimeoutInMS(unsigned short port, double ms);
-#endif /* EXCLUDE_UDXP */
-
-
 #else									/* old style prototypes */
 
 #ifndef EXCLUDE_EPP

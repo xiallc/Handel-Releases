@@ -116,7 +116,6 @@ static unsigned int numUSB2 = 0;
 #ifndef EXCLUDE_SERIAL
 #include "seriallib.h"
 
-#define SERIAL_WAIT_TIMEOUT 1100UL
 #define HEADER_SIZE 4
 
 /* variables to store the IO channel information */
@@ -821,6 +820,16 @@ XIA_MD_STATIC int XIA_MD_API dxp_md_serial_io(int *camChan,
         }
 
         QueryPerformanceCounter(&after);
+
+        /* Check the incoming data packet length against the size of the
+         * user's buffer.
+         */
+        if ((unsigned int)(n_bytes + HEADER_SIZE) > *length) {
+            sprintf(ERROR_STRING, "Header reports ndata=%hu, larger than "
+                    "requested length %u-%d.", n_bytes, *length, HEADER_SIZE);
+            dxp_md_log_error("dxp_md_serial_io", ERROR_STRING, DXP_MDSIZE);
+            return DXP_MDSIZE;
+        }
 
         /* Caclulate the timeout time based on a conservative transfer rate
          * of 5kb/s with a minimum of 1000 milliseconds.

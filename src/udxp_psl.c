@@ -3,7 +3,35 @@
  * Copyright (c) 2005-2017 XIA LLC
  * All rights reserved
  *
- * NOT COVERED UNDER THE BSD LICENSE. NOT FOR RELEASE TO CUSTOMERS.
+ * Redistribution and use in source and binary forms,
+ * with or without modification, are permitted provided
+ * that the following conditions are met:
+ *
+ *   * Redistributions of source code must retain the above
+ *     copyright notice, this list of conditions and the
+ *     following disclaimer.
+ *   * Redistributions in binary form must reproduce the
+ *     above copyright notice, this list of conditions and the
+ *     following disclaimer in the documentation and/or other
+ *     materials provided with the distribution.
+ *   * Neither the name of XIA LLC
+ *     nor the names of its contributors may be used to endorse
+ *     or promote products derived from this software without
+ *     specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+ * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+ * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 
@@ -157,8 +185,6 @@ PSL_STATIC int pslGetSnapshotStats(int detChan, void *value, XiaDefaults *defs);
 
 PSL_STATIC int pslDoTrace(int detChan, short type, double *info, XiaDefaults *defs);
 
-PSL_STATIC int pslQueryStatus(int detChan, unsigned short *sword);
-
 PSL_STATIC int pslGetBaseClock(int detChan, double *value);
 PSL_STATIC int pslCalculateRanges(byte_t nFiPPIs, int ptPerFippi, int bytePerPt,
                                   double BASE_CLOCK, byte_t CLKSET, byte_t *data,
@@ -209,6 +235,8 @@ PSL_STATIC int pslSetSca(int detChan, char *name, XiaDefaults *defs, void *value
 PSL_STATIC int pslSetScaTimeOn(int detChan, char *name, XiaDefaults *defs, void *value);
 PSL_STATIC int pslSetScaTimeOff(int detChan, char *name, XiaDefaults *defs, void *value);
 PSL_STATIC int pslSetAutoAdjust(int detChan, char *name, XiaDefaults *defs, void *value);
+PSL_STATIC int pslSetPresetType(int detChan, char *name, XiaDefaults *defs, void *value);
+PSL_STATIC int pslSetPresetValue(int detChan, char *name, XiaDefaults *defs, void *value);
 
 #ifdef XIA_ALPHA
 PSL_STATIC int pslSetAlphaEventLen(int detChan, char *name, XiaDefaults *defs,
@@ -262,6 +290,8 @@ PSL_STATIC int pslGetSca(int detChan, char *name, XiaDefaults *defs, void *value
 PSL_STATIC int pslGetScaTimeOn(int detChan, char *name, XiaDefaults *defs, void *value);
 PSL_STATIC int pslGetScaTimeOff(int detChan, char *name, XiaDefaults *defs, void *value);
 PSL_STATIC int pslGetAutoAdjust(int detChan, char *name, XiaDefaults *defs, void *value);
+PSL_STATIC int pslGetPresetType(int detChan, char *name, XiaDefaults *defs, void *value);
+PSL_STATIC int pslGetPresetValue(int detChan, char *name, XiaDefaults *defs, void *value);
 
 #ifdef XIA_ALPHA
 PSL_STATIC int pslGetAlphaEventLen(int detChan, char *name, XiaDefaults *defs,
@@ -318,6 +348,7 @@ PSL_STATIC int pslPassthrough(int detChan, char *name, XiaDefaults *defs,
                                    void *value);
 
 #ifndef EXCLUDE_XUP
+PSL_STATIC int pslQueryStatus(int detChan);
 PSL_STATIC int pslDownloadXUP(int detChan, char *name, XiaDefaults *defs,
                               void *value);
 PSL_STATIC int pslSetXUPBackupPath(int detChan, char *name, XiaDefaults *defs,
@@ -443,6 +474,8 @@ static Udxp_AcquisitionValue acqVals[] = {
     {"sca_time_off",        AV_MEM_R_PAR, 0.0, pslSetScaTimeOff,  pslGetScaTimeOff},
     {"sca",                 AV_MEM_R_PAR, 0.0, pslSetSca,         pslGetSca},
     {"auto_adjust_offset",  AV_MEM_R_PAR, 0.0, pslSetAutoAdjust,  pslGetAutoAdjust},
+    {"preset_type",         AV_MEM_R_PAR, 0.0, pslSetPresetType,  pslGetPresetType},
+    {"preset_value",        AV_MEM_R_PAR, 0.0, pslSetPresetValue, pslGetPresetValue},
 
 #ifdef XIA_ALPHA
     {
@@ -475,6 +508,7 @@ static Udxp_RunData runData[] = {
     {"input_count_rate",    pslGetICR},
     {"output_count_rate",   pslGetOCR},
     {"events_in_run",       pslGetEvents},
+    {"total_output_events", pslGetEvents}, /* TODO: update and document pending case 15688 */
     {"triggers",            pslGetTriggers},
     {"baseline_length",     pslGetBaseHistogramLen},
     {"baseline",            pslGetBaseline},
@@ -910,7 +944,7 @@ PSL_STATIC int pslGetAcquisitionValues(int detChan, char *name,
      * clear the UNKNOWN bit.
      */
     if (e != NULL) {
-        e->state = (flag_t)(e->state | AV_STATE_SYNCD & ~AV_STATE_UNKNOWN);
+        e->state = (flag_t)((e->state | AV_STATE_SYNCD) & ~AV_STATE_UNKNOWN);
         e->data  = *((double *)value);
     }
 
@@ -1274,7 +1308,7 @@ PSL_STATIC int psl__AdjustOffsets(int detChan, void *value, XiaDefaults *defs)
 PSL_STATIC int psl__Snapshot(int detChan, void *value, XiaDefaults *defs)
 {
     int status;
-    unsigned int features;
+    unsigned long features;
     double clearSpectrum  = *((double *)value);
 
     DEFINE_CMD(CMD_SNAPSHOT, 1, 1);
@@ -1601,8 +1635,7 @@ PSL_STATIC int pslUserSetup(int detChan, XiaDefaults *defaults,
                             int detector_chan, Module *m, int modChan)
 {
     int status = XIA_SUCCESS;
-    
-    UNUSED(detChan);
+
     UNUSED(defaults);
     UNUSED(firmwareSet);
     UNUSED(currentFirmware);
@@ -1646,7 +1679,6 @@ PSL_STATIC int pslUserSetup(int detChan, XiaDefaults *defaults,
 
     ALPHA_MAX_EVENTS_IN_BUFFER = (unsigned short)floor((double)OUTBUFLEN /
                                                        (double)EVENTLEN);
-
 #else
     UNUSED(detChan);
 #endif /* XIA_ALPHA */
@@ -2489,7 +2521,7 @@ PSL_STATIC int pslSetParset(int detChan, char *name, XiaDefaults *defs, void *va
     /* Verify limits on the PARSETs
      */
     if ((parset >= maxParset) || (parset < 0)) {
-        sprintf(info_string, "Specified PARSET '%u' is out-of-range", parset);
+        sprintf(info_string, "Specified PARSET '%0.1f' is out-of-range", parset);
         pslLogError("pslSetParset", info_string, XIA_BAD_VALUE);
         return XIA_BAD_VALUE;
     }
@@ -2716,7 +2748,7 @@ PSL_STATIC int pslGetADCTrace(int detChan, void *value, XiaDefaults *defs)
     recv = (byte_t *)utils->funcs->dxp_md_alloc(lenR * sizeof(byte_t));
 
     if (!recv) {
-        sprintf(info_string, "Out-of-memory allocating %u bytes for 'recv' array",
+        sprintf(info_string, "Out-of-memory allocating %zu bytes for 'recv' array",
                 lenR * sizeof(byte_t));
         pslLogError("pslGetADCTrace", info_string, XIA_NOMEM);
         return XIA_NOMEM;
@@ -3365,7 +3397,7 @@ PSL_STATIC int pslGetSnapshotStats(int detChan, void *value, XiaDefaults *defs)
 {
     int status;
 
-    unsigned int features;
+    unsigned long features;
     parameter_t SNAPSTATSTART = 0x0000;
 
     double *stats = (double *)value;
@@ -3450,7 +3482,7 @@ PSL_STATIC int pslGetSnapshotMca(int detChan, void *value, XiaDefaults *defs)
     int status;
     int statusX;
 
-    unsigned int features;
+    unsigned long features;
 
     unsigned int i;
     unsigned int dataLen;
@@ -3996,7 +4028,6 @@ PSL_STATIC int pslBoardOperation(int detChan, char *name, void *value,
     ASSERT(name != NULL);
     ASSERT(value != NULL);
 
-
     for (i = 0; i < nOps; i++) {
         if (STREQ(boardOps[i].name, name)) {
             status = boardOps[i].fn(detChan, name, defs, value);
@@ -4457,48 +4488,6 @@ PSL_STATIC int pslUnHook(int detChan)
 }
 
 
-PSL_STATIC int pslQueryStatus(int detChan, unsigned short *sword)
-{
-    int status;
-    int statusX;
-
-    byte_t cmd       = CMD_STATUS;
-
-    unsigned int lenS = 0;
-    unsigned int lenR = 6 + RECV_BASE;
-
-    byte_t receive[6 + RECV_BASE];
-
-    UNUSED(sword);
-
-
-    statusX = dxp_cmd(&detChan, &cmd, &lenS, NULL,
-                      &lenR, receive);
-
-    if (statusX != DXP_SUCCESS) {
-        status = XIA_XERXES;
-        sprintf(info_string, "Error getting status for detChan %d", detChan);
-        pslLogError("pslQueryStatus", info_string, status);
-        return status;
-    }
-
-    sprintf(info_string, "Return Status      = %u", receive[4]);
-    pslLogDebug("pslQueryStatus", info_string);
-    sprintf(info_string, "PIC Status         = %u", receive[5]);
-    pslLogDebug("pslQueryStatus", info_string);
-    sprintf(info_string, "DSP Boot Status    = %u", receive[6]);
-    pslLogDebug("pslQueryStatus", info_string);
-    sprintf(info_string, "Run State          = %u", receive[7]);
-    pslLogDebug("pslQueryStatus", info_string);
-    sprintf(info_string, "DSP BUSY value     = %u", receive[8]);
-    pslLogDebug("pslQueryStatus", info_string);
-    sprintf(info_string, "DSP RUNERROR value = %u", receive[9]);
-    pslLogDebug("pslQueryStatus", info_string);
-
-    return XIA_SUCCESS;
-}
-
-
 /*
  * Reads out the history sector of the flash memory and
  * returns all 256 bytes in the value array. This board
@@ -4911,7 +4900,7 @@ PSL_STATIC int pslSetResetInterval(int detChan, double *value)
 
     if (*resetinterval > MAX_RESET_INTERVAL || *resetinterval < 0) {
         sprintf(info_string, "Requested reset interval (%0.2f) is out of range "
-             "(%d, %0.2f), resetting to max (%d).", *resetinterval, 0,
+             "(%d, %d), resetting to max (%d).", *resetinterval, 0,
              MAX_RESET_INTERVAL, MAX_RESET_INTERVAL);
         pslLogWarning("pslSetResetInterval", info_string);
         *resetinterval = MAX_RESET_INTERVAL;
@@ -5963,8 +5952,6 @@ PSL_STATIC int pslInvalidateAll(flag_t member, XiaDefaults *defs)
 
 
 /*
- * Sets the PRESET run type and length
- *
  * value should be a 2 element array of doubles. The value at index 0
  * is the PRESET type (see the RS-232 specification for a description of
  * valid values). Index 1 holds the PRESET length/time. This value is
@@ -5975,113 +5962,31 @@ PSL_STATIC int pslSetPreset(int detChan, char *name, XiaDefaults *defs,
                             void *value)
 {
     int status;
-    int statusX;
-
-    double time   = 0.0;
-    double counts = 0.0;
 
     double *data = (double *)value;
 
-    unsigned int features;
-    boolean_t support_long_readout = FALSE_;
-
-    int num_bytes;
-    unsigned long long max_value;
-
-    byte_t type = 0x00;
-
-    unsigned long long length = 0x00;
-
-    DEFINE_CMD(CMD_SET_PRESET, 8, 8);
-
     UNUSED(name);
-    UNUSED(defs);
 
     ASSERT(value != NULL);
 
-    status = pslGetBoardFeatures(detChan, NULL, defs, (void *)&features);
-    ASSERT(status == XIA_SUCCESS);
+    pslLogWarning("pslBoardOperation", "The board operation set_preset is "
+                  "deprecated and will be removed in future releaes, please use "
+                  "acquisition values preset_type and preset_value instead.");
 
-    support_long_readout = (features & 1 << BOARD_SUPPORTS_UPDATED_PRESET) ;
-    num_bytes = support_long_readout ? 6 : 4;
-    max_value = (1ULL << (num_bytes * 8)) - 1;
+    status = pslSetPresetType(detChan, NULL, defs, (void *)&data[0]);
 
-    if (!support_long_readout) {
-        OLD_MICRO_CMD(6, 6);
+    if (status != XIA_SUCCESS) {
+        sprintf(info_string, "Error setting preset_type for detChan %d", detChan);
+        pslLogError("pslSetPreset", info_string, status);
+        return status;
     }
 
-    type  = (byte_t)data[0];
+    status = pslSetPresetValue(detChan, NULL, defs, (void *)&data[1]);
 
-    send[0] = (byte_t)0;
-    send[1] = type;
-
-    /* Convert the data[1], "preset length" into the relevant value */
-    switch(type) {
-    case PRESET_STANDARD:
-        /* Do nothing since the length will be ignored for this type */
-        break;
-
-    case PRESET_REALTIME:
-    case PRESET_LIVETIME:
-        time = data[1];
-        length = (unsigned long long)(time / PRESET_CLOCK_TICK);
-        break;
-
-    case PRESET_OUTPUT_COUNTS:
-    case PRESET_INPUT_COUNTS:
-        counts = data[1];
-        length = (unsigned long long)counts;
-        break;
-
-    default:
-        sprintf(info_string, "Unknown PRESET run type '%#x'", type);
-        pslLogError("pslSetPreset", info_string, XIA_UNKNOWN_PRESET);
-        return XIA_UNKNOWN_PRESET;
-        break;
-    }
-
-    if (length > max_value) {
-        sprintf(info_string, "Calculated PRESET length 0x%llx is greater than "
-            "maximum allowed 0x%llx, resetting to maximum", length, max_value);
-        pslLogDebug("pslSetPreset", info_string);
-        length = max_value;
-    }
-
-    send[2] = (byte_t)(length & 0xFF);
-    send[3] = (byte_t)((length >> 8) & 0xFF);
-    send[4] = (byte_t)((length >> 16) & 0xFF);
-    send[5] = (byte_t)((length >> 24) & 0xFF);
-
-    if (support_long_readout) {
-        send[6] = (byte_t)((length >> 32) & 0xFF);
-        send[7] = (byte_t)((length >> 40) & 0xFF);
-    }
-
-    statusX = dxp_cmd(&detChan, &cmd, &lenS, send, &lenR, receive);
-
-    sprintf(info_string, "Setting PRESET run: type = %#x, length = %llu",
-            type, length);
-    pslLogInfo("pslSetPreset", info_string);
-
-    if (statusX != DXP_SUCCESS) {
-        sprintf(info_string, "Error setting PRESET run: type = %#x, length = %llu",
-                type, length);
-        pslLogError("pslSetPreset", info_string, XIA_XERXES);
-        return XIA_XERXES;
-    }
-
-    /* Pass the actual value used back to the user */
-    switch(type) {
-    case PRESET_REALTIME:
-    case PRESET_LIVETIME:
-        data[1] = pslDoubleFromBytesOffset(receive, num_bytes, RECV_BASE + 1) * PRESET_CLOCK_TICK;
-        break;
-    case PRESET_OUTPUT_COUNTS:
-    case PRESET_INPUT_COUNTS:
-        data[1] = pslDoubleFromBytesOffset(receive, num_bytes, RECV_BASE + 1);
-        break;
-    default:
-        break;
+    if (status != XIA_SUCCESS) {
+        sprintf(info_string, "Error setting preset_value for detChan %d", detChan);
+        pslLogError("pslSetPreset", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -7700,7 +7605,7 @@ PSL_STATIC int pslGetBoardFeatures(int detChan, char *name, XiaDefaults *defs,
 
 
 /*
- * Pass a command through to a UART attached to the processor. 
+ * Pass a command through to a UART attached to the processor.
  *
  * The value type is void**, an array pointing to the following elements:
  *  byte* send: an array of bytes to send with the command.
@@ -7717,18 +7622,18 @@ PSL_STATIC int pslPassthrough(int detChan, char *name, XiaDefaults *defs,
 
     int **value_int_array = (int **)value;
     byte_t **value_byte_array = (byte_t **)value;
-    
+
     byte_t *send_byte = value_byte_array[0];
-    int send_len = *(value_int_array[1]); 
+    int send_len = *(value_int_array[1]);
     byte_t *receive_byte = value_byte_array[2];
     int receive_len = *(value_int_array[3]);
-    
+
     /* The return size for the command is fixed at 32 + 1 (status) */
     DEFINE_CMD(CMD_PASSTHROUGH, MAX_PASSTHROUGH_SIZE, RECV_BASE + MAX_PASSTHROUGH_SIZE + 1);
-        
+
     UNUSED(name);
-    
-    
+
+
     status = pslGetBoardFeatures(detChan, NULL, defs, (void *)&features);
 
     if ((status != XIA_SUCCESS) || !(features & 1 << BOARD_SUPPORTS_PASSTHROUGH)) {
@@ -7743,7 +7648,7 @@ PSL_STATIC int pslPassthrough(int detChan, char *name, XiaDefaults *defs,
 
     if (send_len > MAX_PASSTHROUGH_SIZE || receive_len > MAX_PASSTHROUGH_SIZE) {
         sprintf(info_string, "Requested passthrough size send: %d "
-                    "receive: %d exceeds supported size: %d", send_len, 
+                    "receive: %d exceeds supported size: %d", send_len,
                     receive_len, MAX_PASSTHROUGH_SIZE);
         pslLogError("pslPassthrough", info_string, XIA_PARAMETER_OOR);
         return XIA_PARAMETER_OOR;
@@ -7763,14 +7668,14 @@ PSL_STATIC int pslPassthrough(int detChan, char *name, XiaDefaults *defs,
 
     if (receive[RECV_BASE] != 0) {
         sprintf(info_string, "Hardware reported error status code 0x%X sending "
-                "UART passthrough command for detChan %d", receive[RECV_BASE], 
+                "UART passthrough command for detChan %d", receive[RECV_BASE],
                 detChan);
         pslLogError("pslPassthrough", info_string, XIA_PASSTHROUGH);
         return XIA_PASSTHROUGH;
     }
-    
+
     memcpy(receive_byte, receive + RECV_BASE + 1, receive_len);
-    
+
     return XIA_SUCCESS;
 }
 
@@ -7979,7 +7884,7 @@ PSL_STATIC int pslGetNumScas(int detChan, char *name, XiaDefaults *defs, void *v
      */
     if (NUMSCA > max_sca_length) {
         sprintf(info_string, "Number of SCAs is greater then the maximum allowed "
-                "%d for detChan %d, resetting to default", max_sca_length, detChan);
+                "%lu for detChan %d, resetting to default", max_sca_length, detChan);
         pslLogWarning("pslGetNumScas", info_string);
 
         NUMSCA = (parameter_t)max_sca_length;
@@ -8031,7 +7936,7 @@ PSL_STATIC int pslSetNumScas(int detChan, char *name, XiaDefaults *defs, void *v
 
     if ((unsigned int)nSCA > max_sca_length) {
         sprintf(info_string, "Number of SCAs is greater then the maximum allowed "
-                "%d for detChan %d", max_sca_length, detChan);
+                "%lu for detChan %d", max_sca_length, detChan);
         pslLogError("pslSetNumScas", info_string, XIA_MAX_SCAS);
         return XIA_MAX_SCAS;
     }
@@ -8533,8 +8438,253 @@ PSL_STATIC int pslSetAutoAdjust(int detChan, char *name, XiaDefaults *defs,
     return XIA_SUCCESS;
 }
 
+/*
+ * Get preset_type acquisition value
+ */
+PSL_STATIC int pslGetPresetType(int detChan, char *name, XiaDefaults *defs, void *value)
+{
+    int status;
+    parameter_t PRESET;
 
+    UNUSED(name);
+    UNUSED(defs);
 
+    status = pslGetParameter(detChan, "PRESET", &PRESET);
+
+    if (status != XIA_SUCCESS) {
+        sprintf(info_string, "Error getting PRESET parameter for detChan %d", detChan);
+        pslLogError("pslGetPresetType", info_string, status);
+        return status;
+    }
+
+    *((double *)value) = (double)PRESET;
+
+    return XIA_SUCCESS;
+}
+
+/*
+ * Get preset_value acquisition value
+ */
+PSL_STATIC int pslGetPresetValue(int detChan, char *name, XiaDefaults *defs, void *value)
+{
+    int status;
+    int statusX;
+
+    double *data = (double *)value;
+
+    unsigned long features;
+    boolean_t support_long_readout = FALSE_;
+
+    int num_bytes;
+    byte_t type = 0x00;
+
+    DEFINE_CMD(CMD_GET_PRESET, 1, 8);
+
+    UNUSED(name);
+
+    ASSERT(value != NULL);
+
+    status = pslGetBoardFeatures(detChan, NULL, defs, (void *)&features);
+    ASSERT(status == XIA_SUCCESS);
+
+    support_long_readout = (features & 1 << BOARD_SUPPORTS_UPDATED_PRESET) ;
+    num_bytes = support_long_readout ? 6 : 4;
+
+    if (!support_long_readout) {
+        OLD_MICRO_CMD(6, 6);
+    }
+
+    send[0] = 0x01;
+
+    statusX = dxp_cmd(&detChan, &cmd, &lenS, send, &lenR, receive);
+
+    if (statusX != DXP_SUCCESS) {
+        sprintf(info_string, "Error getting preset setting for detChan %d", detChan);
+        pslLogError("pslGetPresetValue", info_string, XIA_XERXES);
+        return XIA_XERXES;
+    }
+
+    type = receive[RECV_BASE];
+
+    /* Convert the data, "preset length" into scaled value */
+    switch(type) {
+    case PRESET_STANDARD:
+        /* The value is meaningless if we don't know the units in which it was first set. */
+        *data = 0.0;
+        break;
+    case PRESET_REALTIME:
+    case PRESET_LIVETIME:
+        *data = pslDoubleFromBytesOffset(receive, num_bytes, RECV_BASE + 1) * PRESET_CLOCK_TICK;
+        break;
+    case PRESET_OUTPUT_COUNTS:
+    case PRESET_INPUT_COUNTS:
+        *data = pslDoubleFromBytesOffset(receive, num_bytes, RECV_BASE + 1);
+        break;
+    default:
+        sprintf(info_string, "Unknown PRESET run type '%#x'", type);
+        pslLogError("pslGetPresetValue", info_string, XIA_UNKNOWN_PRESET);
+        return XIA_UNKNOWN_PRESET;
+        break;
+    }
+
+     return XIA_SUCCESS;
+}
+
+/*
+ * Set preset_type acquisition value
+ */
+PSL_STATIC int pslSetPresetType(int detChan, char *name, XiaDefaults *defs, void *value)
+{
+    int status;
+    parameter_t PRESET = (parameter_t)*(double *)value;
+
+    UNUSED(name);
+    UNUSED(defs);
+
+    ASSERT(value != NULL);
+
+    switch(PRESET) {
+    case PRESET_STANDARD:
+    case PRESET_REALTIME:
+    case PRESET_LIVETIME:
+    case PRESET_OUTPUT_COUNTS:
+    case PRESET_INPUT_COUNTS:
+        break;
+    default:
+        sprintf(info_string, "Unknown PRESET run type '%#x'", PRESET);
+        pslLogError("pslSetPresetType", info_string, XIA_UNKNOWN_PRESET);
+        return XIA_UNKNOWN_PRESET;
+        break;
+    }
+
+    status = pslSetParameter(detChan, "PRESET", PRESET);
+
+    if (status != XIA_SUCCESS) {
+        sprintf(info_string, "Error setting PRESET parameter for detChan %d", detChan);
+        pslLogError("pslSetPresetType", info_string, status);
+        return status;
+    }
+
+    return XIA_SUCCESS;
+}
+
+/*
+ * Set preset_value acquisition value
+ */
+PSL_STATIC int pslSetPresetValue(int detChan, char *name, XiaDefaults *defs, void *value)
+{
+    int status, statusX;
+
+    unsigned long features;
+    boolean_t support_long_readout = FALSE_;
+
+    int num_bytes;
+    unsigned long long max_value;
+
+    double preset_type;
+    double *preset_value = (double *)value;
+
+    unsigned long long length = 0x00;
+
+    DEFINE_CMD(CMD_SET_PRESET, 8, 8);
+
+    UNUSED(name);
+
+    ASSERT(value != NULL);
+
+    status = pslGetAcquisitionValues(detChan, "preset_type", (void *)&preset_type, defs);
+
+    if (status != XIA_SUCCESS) {
+        sprintf(info_string, "Error finding 'preset_type' for detChan %d", detChan);
+        pslLogError("pslSetPresetValue", info_string, status);
+        return status;
+    }
+
+    status = pslGetBoardFeatures(detChan, NULL, defs, (void *)&features);
+    ASSERT(status == XIA_SUCCESS);
+
+    support_long_readout = (features & 1 << BOARD_SUPPORTS_UPDATED_PRESET) ;
+    num_bytes = support_long_readout ? 6 : 4;
+    max_value = (1ULL << (num_bytes * 8)) - 1;
+
+    if (!support_long_readout) {
+        OLD_MICRO_CMD(6, 6);
+    }
+
+    send[0] = (byte_t)0;
+    send[1] = (byte_t)preset_type;
+
+    /* Convert the data[1], "preset length" into the relevant value */
+    switch((byte_t)preset_type) {
+    case PRESET_STANDARD:
+        /* Do nothing since the length will be ignored for this type */
+        break;
+
+    case PRESET_REALTIME:
+    case PRESET_LIVETIME:
+        length = (unsigned long long)(*preset_value / PRESET_CLOCK_TICK);
+        break;
+
+    case PRESET_OUTPUT_COUNTS:
+    case PRESET_INPUT_COUNTS:
+        length = (unsigned long long)*preset_value;
+        break;
+
+    default:
+        sprintf(info_string, "Unknown PRESET run type '%0f'", preset_type);
+        pslLogError("pslSetPresetValue", info_string, XIA_UNKNOWN_PRESET);
+        return XIA_UNKNOWN_PRESET;
+        break;
+    }
+
+    if (length > max_value) {
+        sprintf(info_string, "Calculated PRESET length 0x%llx is greater than "
+            "maximum allowed 0x%llx, resetting to maximum", length, max_value);
+        pslLogDebug("pslSetPresetValue", info_string);
+        length = max_value;
+    }
+
+    send[2] = (byte_t)(length & 0xFF);
+    send[3] = (byte_t)((length >> 8) & 0xFF);
+    send[4] = (byte_t)((length >> 16) & 0xFF);
+    send[5] = (byte_t)((length >> 24) & 0xFF);
+
+    if (support_long_readout) {
+        send[6] = (byte_t)((length >> 32) & 0xFF);
+        send[7] = (byte_t)((length >> 40) & 0xFF);
+    }
+
+    statusX = dxp_cmd(&detChan, &cmd, &lenS, send, &lenR, receive);
+
+    sprintf(info_string, "Setting PRESET run: type = %0f, length = %llu, detChan %d",
+            preset_type, length, detChan);
+    pslLogInfo("pslSetPresetValue", info_string);
+
+    if (statusX != DXP_SUCCESS) {
+        sprintf(info_string, "Error setting PRESET run: type = %0f, length = "
+                "%llu, detChan %d", preset_type, length, detChan);
+        pslLogError("pslSetPresetValue", info_string, XIA_XERXES);
+        return XIA_XERXES;
+    }
+
+    ASSERT(receive[RECV_BASE] == (byte_t)preset_type);
+
+    /* Pass the actual value used back to the user */
+    switch((byte_t)preset_type) {
+    case PRESET_REALTIME:
+    case PRESET_LIVETIME:
+        *preset_value = pslDoubleFromBytesOffset(receive, num_bytes, RECV_BASE + 1) * PRESET_CLOCK_TICK;
+        break;
+    case PRESET_OUTPUT_COUNTS:
+    case PRESET_INPUT_COUNTS:
+        *preset_value = pslDoubleFromBytesOffset(receive, num_bytes, RECV_BASE + 1);
+        break;
+    default:
+        break;
+    }
+
+    return XIA_SUCCESS;
+}
 
 #ifdef XIA_ALPHA
 /*
@@ -11053,6 +11203,46 @@ PSL_STATIC int pslGetUSBVersion(int detChan, char *name, XiaDefaults *defs,
 
 #ifndef EXCLUDE_XUP
 
+PSL_STATIC int pslQueryStatus(int detChan)
+{
+    int status;
+    int statusX;
+
+    byte_t cmd       = CMD_STATUS;
+
+    unsigned int lenS = 0;
+    unsigned int lenR = 6 + RECV_BASE;
+
+    byte_t receive[6 + RECV_BASE];
+
+
+    statusX = dxp_cmd(&detChan, &cmd, &lenS, NULL,
+                      &lenR, receive);
+
+    if (statusX != DXP_SUCCESS) {
+        status = XIA_XERXES;
+        sprintf(info_string, "Error getting status for detChan %d", detChan);
+        pslLogError("pslQueryStatus", info_string, status);
+        return status;
+    }
+
+    sprintf(info_string, "Return Status      = %u", receive[4]);
+    pslLogDebug("pslQueryStatus", info_string);
+    sprintf(info_string, "PIC Status         = %u", receive[5]);
+    pslLogDebug("pslQueryStatus", info_string);
+    sprintf(info_string, "DSP Boot Status    = %u", receive[6]);
+    pslLogDebug("pslQueryStatus", info_string);
+    sprintf(info_string, "Run State          = %u", receive[7]);
+    pslLogDebug("pslQueryStatus", info_string);
+    sprintf(info_string, "DSP BUSY value     = %u", receive[8]);
+    pslLogDebug("pslQueryStatus", info_string);
+    sprintf(info_string, "DSP RUNERROR value = %u", receive[9]);
+    pslLogDebug("pslQueryStatus", info_string);
+
+    return XIA_SUCCESS;
+}
+
+
 /*
  * This routine is responsible for upgrading a user's
  * board using the supplied XUP file and for implementing
@@ -11079,7 +11269,7 @@ PSL_STATIC int pslDownloadXUP(int detChan, char *name, XiaDefaults *defs,
     sprintf(info_string, "xup = %s", xup);
     pslLogDebug("pslDoXUP", info_string);
 
-    status = pslQueryStatus(detChan, NULL);
+    status = pslQueryStatus(detChan);
 
     if (status != XIA_SUCCESS) {
         pslLogError("pslDoXUP", "Error getting status", status);

@@ -68,6 +68,7 @@ static int writePLX(FILE *fp, Module *module);
 static int writeEPP(FILE *fp, Module *module);
 static int writeUSB(FILE *fp, Module *module);
 static int writeUSB2(FILE *fp, Module *m);
+static int writeSerial(FILE *fp, Module *m);
 
 static int writeInterface(FILE *fp, Module *m);
 
@@ -90,6 +91,9 @@ static InterfaceWriters_t INTERFACE_WRITERS[] = {
 #ifndef EXCLUDE_USB2
     {USB2,         writeUSB2},
 #endif /* EXCLUDE_USB2 */
+#ifndef EXCLUDE_SERIAL
+    {SERIAL,       writeSerial},
+#endif
 };
 
 
@@ -1274,30 +1278,44 @@ HANDEL_STATIC int xiaLoadModule(FILE *fp, fpos_t *start, fpos_t *end)
 
         status = xiaFileRA(fp, start, end, "com_port", value);
 
-        if (status != XIA_SUCCESS) {
+        if (status == XIA_SUCCESS) {
+            sscanf(value, "%u", &comPort);
 
-            xiaLogError("xiaLoadModule", "Unable to load COM port", status);
-            return status;
+            sprintf(info_string, "COM Port = %u", comPort);
+            xiaLogDebug("xiaLoadModule", info_string);
+
+            status = xiaAddModuleItem(alias, "com_port", (void *)&comPort);
+
+            if (status != XIA_SUCCESS) {
+                sprintf(info_string, "Error adding COM port to module %s", alias);
+                xiaLogError("xiaLoadModule", info_string, status);
+                return status;
+            }
         }
+        else {
+            status = xiaFileRA(fp, start, end, "device_file", value);
 
-        sscanf(value, "%u", &comPort);
+            if (status != XIA_SUCCESS) {
+                xiaLogError("xiaLoadModule", "Unable to load COM port or device_file", status);
+                return status;
+            }
 
-        sprintf(info_string, "COM Port = %u", comPort);
-        xiaLogDebug("xiaLoadModule", info_string);
+            sprintf(info_string, "Device file = %s", value);
+            xiaLogDebug("xiaLoadModule", info_string);
 
-        status = xiaAddModuleItem(alias, "com_port", (void *)&comPort);
+            status = xiaAddModuleItem(alias, "device_file", value);
 
-        if (status != XIA_SUCCESS) {
 
-            sprintf(info_string, "Error adding COM port to module %s", alias);
-            xiaLogError("xiaLoadModule", info_string, status);
-            return status;
+            if (status != XIA_SUCCESS) {
+                sprintf(info_string, "Error adding device file to module %s", alias);
+                xiaLogError("xiaLoadModule", info_string, status);
+                return status;
+            }
         }
 
         status = xiaFileRA(fp, start, end, "baud_rate", value);
 
         if (status != XIA_SUCCESS) {
-
             xiaLogError("xiaLoadModule", "Unable to load baud rate", status);
             return status;
         }
@@ -1310,7 +1328,6 @@ HANDEL_STATIC int xiaLoadModule(FILE *fp, fpos_t *start, fpos_t *end)
         status = xiaAddModuleItem(alias, "baud_rate", (void *)&baudRate);
 
         if (status != XIA_SUCCESS) {
-
             sprintf(info_string, "Error adding baud rate to module %s", alias);
             xiaLogError("xiaLoadModule", info_string, status);
             return status;
@@ -2153,6 +2170,28 @@ static int writeUSB2(FILE *fp, Module *m)
     fprintf(fp, "interface = usb2\n");
     fprintf(fp, "device_number = %u\n",
             m->interface_info->info.usb2->device_number);
+
+    return XIA_SUCCESS;
+}
+
+static int writeSerial(FILE *fp, Module *m)
+{
+    ASSERT(fp != NULL);
+    ASSERT(m != NULL);
+    ASSERT(m->interface_info->type == SERIAL);
+
+
+    fprintf(fp, "interface = serial\n");
+    if (m->interface_info->info.serial->device_file) {
+        fprintf(fp, "device_file = %s\n",
+                m->interface_info->info.serial->device_file);
+    }
+    else {
+        fprintf(fp, "com_port = %u\n",
+                m->interface_info->info.serial->com_port);
+    }
+    fprintf(fp, "baud_rate = %u\n",
+            m->interface_info->info.serial->baud_rate);
 
     return XIA_SUCCESS;
 }

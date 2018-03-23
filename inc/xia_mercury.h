@@ -112,7 +112,7 @@ XERXES_STATIC int dxp_write_reg(int *ioChan, int *modChan, char *name,
                                 unsigned long *data);
 XERXES_STATIC int dxp_read_reg(int *ioChan, int *modChan, char *name,
                                unsigned long *data);
-XERXES_STATIC int dxp_do_cmd(int *ioChan, int modChan, byte_t cmd, unsigned int lenS,
+XERXES_STATIC int dxp_do_cmd(int modChan, Board *board, byte_t cmd, unsigned int lenS,
                              byte_t *send, unsigned int lenR, byte_t *receive);
 XERXES_STATIC int dxp_unhook(Board *board);
 XERXES_STATIC int dxp_get_symbol_by_index(int modChan, unsigned short index,

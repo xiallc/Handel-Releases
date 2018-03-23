@@ -692,7 +692,7 @@ PSL_EXPORT int PSL_API xmap_PSLInit(PSLFuncs *funcs)
 {
     funcs->validateDefaults     = pslValidateDefaults;
     funcs->validateModule       = pslValidateModule;
-    funcs->downloadFirmware     = pslDownloadFirmware;    
+    funcs->downloadFirmware     = pslDownloadFirmware;
     funcs->setAcquisitionValues = pslSetAcquisitionValues;
     funcs->getAcquisitionValues = pslGetAcquisitionValues;
     funcs->gainOperation        = pslGainOperation;
@@ -922,12 +922,12 @@ PSL_STATIC int pslGetAcquisitionValues(int detChan, char *name, void *value,
 
     for (i = 0; i < N_ELEMS(ACQ_VALUES); i++) {
         if (STRNEQ(name, ACQ_VALUES[i].name)) {
-            
+
             /* If the get function is not impelement just use the current values */
             if (ACQ_VALUES[i].getFN == NULL) {
                 return XIA_SUCCESS;
-            }            
-            
+            }
+
             status = ACQ_VALUES[i].getFN(detChan, value, defaults);
 
             if (status != XIA_SUCCESS) {
@@ -4805,7 +4805,7 @@ PSL_STATIC int psl__SetSCA(int detChan, int modChan, char *name,
 {
     int status;
     int statusX;
-    
+
     unsigned short scaNum = 0;
 
     parameter_t SCALIM = 0;
@@ -4828,10 +4828,10 @@ PSL_STATIC int psl__SetSCA(int detChan, int modChan, char *name,
     ASSERT(STRNEQ(name, "sca"));
 
     if (sscanf(name, "sca%hu_%s", &scaNum, limit) != 2) {
-        sprintf(info_string, "Malformed SCA string '%s' for detChan %d", 
+        sprintf(info_string, "Malformed SCA string '%s' for detChan %d",
             name, detChan);
         pslLogError("psl__SetSCA", info_string, XIA_BAD_NAME);
-        return XIA_BAD_NAME;        
+        return XIA_BAD_NAME;
     }
 
     if (!(STREQ(limit, "lo") || STREQ(limit, "hi"))) {
@@ -4958,7 +4958,7 @@ PSL_STATIC int psl__GetSCAData(int detChan, void *value, XiaDefaults *defs,
 
     parameter_t SCAMEMBASE = 0;
     char memory[DATA_MEMORY_STR_LEN];
-    
+
     double *sca64 = (double *)value;
 
 
@@ -4980,14 +4980,14 @@ PSL_STATIC int psl__GetSCAData(int detChan, void *value, XiaDefaults *defs,
         pslLogError("psl__GetSCAData", info_string, DXP_NO_SCA);
         return DXP_NO_SCA;
     }
-        
+
     status = pslGetParameter(detChan, "SCAMEMBASE", &SCAMEMBASE);
 
     if (status != XIA_SUCCESS) {
         sprintf(info_string, "Error getting SCA memory address for detChan %d", detChan);
         pslLogError("psl__GetSCAData", info_string, status);
         return status;
-    }    
+    }
 
     status = pslGetModChan(detChan, m, &modChan);
 
@@ -4996,13 +4996,13 @@ PSL_STATIC int psl__GetSCAData(int detChan, void *value, XiaDefaults *defs,
                 detChan);
         pslLogError("psl__GetSCAData", info_string, status);
         return status;
-    }    
+    }
 
     addr = (unsigned long)SCAMEMBASE + (modChan * XMAP_SCA_CHAN_OFFSET);
-   
+
     sprintf(info_string, "Reading out %d SCA value: addr = %#lx", (int)nSCA, addr);
     pslLogDebug("psl__GetSCAData", info_string);
-    
+
     /* The SCA values are 64 bits, total, so there are 2 32-bit words returned
     * per SCA.
     */
@@ -5015,7 +5015,7 @@ PSL_STATIC int psl__GetSCAData(int detChan, void *value, XiaDefaults *defs,
         pslLogError("psl__GetSCAData", info_string, XIA_NOMEM);
         return XIA_NOMEM;
     }
-    
+
     sprintf(memory, "burst:%#lx:%lu", addr, (unsigned long)totalSCA);
     statusX = dxp_read_memory(&detChan, memory, sca);
 
@@ -5025,7 +5025,7 @@ PSL_STATIC int psl__GetSCAData(int detChan, void *value, XiaDefaults *defs,
                 memory, detChan);
         pslLogError("psl__GetSCAData", info_string, XIA_XERXES);
         return XIA_XERXES;
-    }    
+    }
 
     for (i = 0, j = 0; i < (int)nSCA * 2; i += 2, j++) {
         sca64[j] = (double)sca[i] + ldexp(sca[i + 1], 32);
@@ -6299,6 +6299,10 @@ PSL_STATIC int psl__SetGateMode(int detChan, int modChan, char *name,
 /*
  * Clears the requested buffer.
  *
+ * This command blocks until the buffer is cleared. By default the max
+ * buffer size is cleared, but this can be controlled by setting
+ * buffer_clear_size equal to buffer_len.
+ *
  * Requires mapping firmware. Calling routines do not need to check
  * the firmware type before calling this routine. However, if mapping mode
  * firmware is not being used an error will be returned which the calling
@@ -7051,9 +7055,9 @@ PSL_STATIC int psl__SetPeakSampleOffset(int detChan, int modChan, char *name,
         sprintf(info_string, "Malformed peak sample offset string '%s' for "
             "detChan %d", name, detChan);
         pslLogError("psl__SetPeakSampleOffset", info_string, XIA_BAD_NAME);
-        return XIA_BAD_NAME;        
+        return XIA_BAD_NAME;
     }
-    
+
     if (dec != 0 && dec != 2 && dec != 4 && dec != 6) {
         sprintf(info_string, "Specified decimation (%d) is invalid. Allowed "
                 "values are 0, 2, 4 and 6 for detChan %d",
@@ -7342,14 +7346,14 @@ PSL_STATIC int psl__SetPeakIntervalOffset(int detChan, int modChan, char *name,
 
     /* Get the decimation that this value applies to so we can check
     * if we need to update PEAKINT.
-    */    
+    */
     if (sscanf(name, "peak_interval_offset%d", &dec) != 1) {
         sprintf(info_string, "Malformed peak interval offset string '%s' for "
             "detChan %d", name, detChan);
         pslLogError("psl__SetPeakIntervalOffset", info_string, XIA_BAD_NAME);
-        return XIA_BAD_NAME;        
+        return XIA_BAD_NAME;
     }
-    
+
     if (dec != 0 && dec != 2 && dec != 4 && dec != 6) {
         sprintf(info_string, "Specified decimation (%d) is invalid. Allowed "
                 "values are 0, 2, 4 and 6 for detChan %d",

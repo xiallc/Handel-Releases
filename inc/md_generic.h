@@ -54,7 +54,6 @@
 #define IO_CLOSE     0x08
 #define IO_SNIFF_ON  0x10
 #define IO_SNIFF_OFF 0x20
-#define IO_USB       0x40 /* Special flag to signal dxp_command for USB comm */
 
 /* An invalid address for the USB address cache. Due to the way we structure
  * the USB2 address space, 0xFFFFFFFF should not be a valid target address.

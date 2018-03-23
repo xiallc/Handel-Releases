@@ -54,7 +54,7 @@
 #include "handel_log.h"
 
 
-HANDEL_SHARED int HANDEL_API xiaNewDetector(char *alias)
+HANDEL_EXPORT int HANDEL_API xiaNewDetector(char *alias)
 {
     int status = XIA_SUCCESS;
 
@@ -136,7 +136,7 @@ HANDEL_SHARED int HANDEL_API xiaNewDetector(char *alias)
     return XIA_SUCCESS;
 }
 
-HANDEL_SHARED int HANDEL_API xiaAddDetectorItem(char *alias, char *name,
+HANDEL_EXPORT int HANDEL_API xiaAddDetectorItem(char *alias, char *name,
                                                 void *value)
 {
     int status = XIA_SUCCESS;
@@ -315,7 +315,7 @@ HANDEL_SHARED int HANDEL_API xiaAddDetectorItem(char *alias, char *name,
     return XIA_SUCCESS;
 }
 
-HANDEL_SHARED int HANDEL_API xiaModifyDetectorItem(char *alias, char *name,
+HANDEL_EXPORT int HANDEL_API xiaModifyDetectorItem(char *alias, char *name,
                                                    void *value)
 {
     int status = XIA_SUCCESS;
@@ -386,7 +386,6 @@ HANDEL_EXPORT int HANDEL_API xiaGetDetectorItem(char *alias, char *name, void
                                                 *value)
 {
     int status = XIA_SUCCESS;
-    int slen;
     int idx;
 
     unsigned int i;
@@ -449,7 +448,6 @@ HANDEL_EXPORT int HANDEL_API xiaGetDetectorItem(char *alias, char *name, void
     }
     else if (strncmp(name, "channel", 7) == 0) {
         /* Is it a gain or a polarity? */
-        slen = (int)strlen(strtemp);
         /* The #-may-be-greater-then-one-digit hack */
         sidx = strchr(strtemp, '_');
         sidx[0] = '\0';
@@ -564,7 +562,7 @@ HANDEL_EXPORT int HANDEL_API xiaGetDetectors_VB(unsigned int index, char *alias)
     return status;
 }
 
-HANDEL_SHARED int HANDEL_API xiaRemoveDetector(char *alias)
+HANDEL_EXPORT int HANDEL_API xiaRemoveDetector(char *alias)
 {
     int status = XIA_SUCCESS;
     int i;

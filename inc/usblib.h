@@ -48,17 +48,17 @@
 
 #define CTRL_SIZE 5
 
-#ifdef LINUX
+#ifdef __linux__
 #define IN2 2
 #define OUT1 1
 #define OUT2 2
 #define OUT4 4
-#else /* LINUX */
+#else /* __linux__ */
 #define IN2 8
 #define OUT1 0
 #define OUT2 1
 #define OUT4 3
-#endif /* LINUX */
+#endif /* __linux__ */
 
 
 /* Few definitions shamelessly copied from ezusbsys.h provided by Cypress */

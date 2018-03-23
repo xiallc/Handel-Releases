@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2004 X-ray Instrumentation Associates
- *               2005-2016 XIA LLC
+ *               2005-2017 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms,
@@ -55,7 +55,7 @@ typedef unsigned char  boolean_t;
 typedef unsigned short parameter_t;
 typedef unsigned short flag_t;
 
-#ifdef LINUX
+#ifdef __linux__
 #include <stdint.h>
 typedef intptr_t        HANDLE;
 
@@ -64,7 +64,7 @@ typedef unsigned short  USHORT;
 typedef unsigned short* PUSHORT;
 typedef unsigned int    ULONG;
 typedef unsigned long*  PULONG;
-#endif /* LINUX */
+#endif /* __linux__ */
 
 /*
  * Macros

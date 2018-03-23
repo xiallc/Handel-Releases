@@ -66,8 +66,8 @@
 /* Prototypes */
 static int xia_usb2__send_setup_packet(HANDLE h, unsigned long addr,
                                        unsigned long n_bytes, byte_t rw_flag);
-static int xia_usb2__xfer(HANDLE h, byte_t ep, DWORD n_bytes, byte_t *buf);
-static int xia_usb2__small_read_xfer(HANDLE h, DWORD n_bytes, byte_t *buf);
+static int xia_usb2__xfer(HANDLE h, byte_t ep, DWORD n_bytes, byte_t *buf, DWORD *bytes_ret);
+static int xia_usb2__small_read_xfer(HANDLE h, DWORD n_bytes, byte_t *buf, DWORD *bytes_ret);
 static int xia_usb2__set_max_packet_size(HANDLE h);
 
 #ifdef XIA_USB2_DUMP_HELPERS
@@ -235,10 +235,45 @@ XIA_EXPORT int XIA_API xia_usb2_close(HANDLE h)
  * buf is expected to be allocated by the calling routine.
  */
 XIA_EXPORT int XIA_API xia_usb2_read(HANDLE h, unsigned long addr,
-                                     unsigned long n_bytes, byte_t *buf)
+                                     unsigned long n_bytes,
+                                     byte_t *buf)
 {
+    unsigned long bytes_ret = 0;
     int status;
 
+    status = xia_usb2_readn(h, addr, n_bytes, buf, &bytes_ret);
+    if (status != XIA_USB2_SUCCESS)
+        return status;
+
+    /* Prior to adding xia_usb2_readn, the Windows driver never
+     * checked the length, just whether there was an error. Just warn,
+     * don't error, for backward compatiblity.
+     */
+    if (bytes_ret != n_bytes) {
+        printf("USB bulk read returned %lu bytes, expected %lu\n",
+               bytes_ret, n_bytes);
+    }
+
+    return XIA_USB2_SUCCESS;
+}
+
+/*
+ * Read the specified number of bytes from the specified address and
+ * into the specified buffer.
+ *
+ * buf is expected to be allocated by the calling routine.
+ *
+ * Returns the actual number of bytes read in n_bytes_read. This can
+ * be less than the number of bytes requested if the transfer succeeds
+ * but the device returns fewer bytes for whatever reason, e.g.
+ * microDXP not padding out a 512 byte transfer for smaller commands.
+ */
+XIA_EXPORT int XIA_API xia_usb2_readn(HANDLE h, unsigned long addr,
+                                      unsigned long n_bytes,
+                                      byte_t *buf, unsigned long *n_bytes_read)
+{
+    int status;
+    DWORD bytes_ret;
 
     ASSERT(XIA_USB2_SMALL_READ_PACKET_SIZE == 512 ||
            XIA_USB2_SMALL_READ_PACKET_SIZE == 64);
@@ -265,7 +300,7 @@ XIA_EXPORT int XIA_API xia_usb2_read(HANDLE h, unsigned long addr,
             return status;
         }
 
-        status = xia_usb2__small_read_xfer(h, (DWORD)n_bytes, buf);
+        status = xia_usb2__small_read_xfer(h, (DWORD)n_bytes, buf, &bytes_ret);
 
     } else {
         status = xia_usb2__send_setup_packet(h, addr, n_bytes,
@@ -275,7 +310,11 @@ XIA_EXPORT int XIA_API xia_usb2_read(HANDLE h, unsigned long addr,
             return status;
         }
 
-        status = xia_usb2__xfer(h, XIA_USB2_READ_EP, (DWORD)n_bytes, buf);
+        status = xia_usb2__xfer(h, XIA_USB2_READ_EP, (DWORD)n_bytes, buf, &bytes_ret);
+    }
+
+    if (status == XIA_USB2_SUCCESS) {
+        *n_bytes_read = bytes_ret;
     }
 
     return status;
@@ -289,7 +328,7 @@ XIA_EXPORT int XIA_API xia_usb2_write(HANDLE h, unsigned long addr,
                                       unsigned long n_bytes, byte_t *buf)
 {
     int status;
-
+    DWORD bytes_ret;
 
     if (h == INVALID_HANDLE_VALUE) {
         return XIA_USB2_NULL_HANDLE;
@@ -310,7 +349,7 @@ XIA_EXPORT int XIA_API xia_usb2_write(HANDLE h, unsigned long addr,
         return status;
     }
 
-    status = xia_usb2__xfer(h, XIA_USB2_WRITE_EP, (DWORD)n_bytes, buf);
+    status = xia_usb2__xfer(h, XIA_USB2_WRITE_EP, (DWORD)n_bytes, buf, &bytes_ret);
 
     return status;
 }
@@ -327,6 +366,7 @@ static int xia_usb2__send_setup_packet(HANDLE h, unsigned long addr,
     int status;
 
     byte_t pkt[XIA_USB2_SETUP_PACKET_SIZE];
+    DWORD bytes_ret;
 
 
     ASSERT(n_bytes != 0);
@@ -344,7 +384,7 @@ static int xia_usb2__send_setup_packet(HANDLE h, unsigned long addr,
     pkt[8] = (byte_t)((addr >> 24) & 0xFF);
 
     status = xia_usb2__xfer(h, XIA_USB2_SETUP_EP, XIA_USB2_SETUP_PACKET_SIZE,
-                            pkt);
+                            pkt, &bytes_ret);
 
     return status;
 }
@@ -359,12 +399,11 @@ static int xia_usb2__send_setup_packet(HANDLE h, unsigned long addr,
  * when calling CreateFile, passing the OVERLAPPED structure to DeviceIoControl,
  * Then calling WaitForSingleObject with a specified timeout value.
  */
-static int xia_usb2__xfer(HANDLE h, byte_t ep, DWORD n_bytes, byte_t *buf)
+static int xia_usb2__xfer(HANDLE h, byte_t ep, DWORD n_bytes, byte_t *buf, DWORD *bytes_ret)
 {
     SINGLE_TRANSFER st;
     OVERLAPPED overlapped;
 
-    DWORD bytes_ret;
     DWORD err;
     DWORD wait;
 
@@ -388,7 +427,7 @@ static int xia_usb2__xfer(HANDLE h, byte_t ep, DWORD n_bytes, byte_t *buf)
     }
 
     success = DeviceIoControl(h, IOCTL_ADAPT_SEND_NON_EP0_DIRECT,
-                              &st, sizeof(st), buf, n_bytes, &bytes_ret,
+                              &st, sizeof(st), buf, n_bytes, bytes_ret,
                               &overlapped);
 
     /* In the unlikely event that the transfer completes immediately
@@ -430,7 +469,7 @@ static int xia_usb2__xfer(HANDLE h, byte_t ep, DWORD n_bytes, byte_t *buf)
          * Cypress's .NET driver source.
          */
         success = DeviceIoControl(h, IOCTL_ADAPT_ABORT_PIPE, &st.ucEndpointAddress,
-                                  1, NULL, 0, &bytes_ret, NULL);
+                                  1, NULL, 0, bytes_ret, NULL);
 
         if (!success) {
             err = GetLastError();
@@ -449,7 +488,7 @@ static int xia_usb2__xfer(HANDLE h, byte_t ep, DWORD n_bytes, byte_t *buf)
         return status;
     }
 
-    success = GetOverlappedResult(h, &overlapped, &bytes_ret, FALSE_);
+    success = GetOverlappedResult(h, &overlapped, bytes_ret, FALSE_);
 
     if (!success) {
         err = GetLastError();
@@ -472,7 +511,7 @@ static int xia_usb2__xfer(HANDLE h, byte_t ep, DWORD n_bytes, byte_t *buf)
  * to read a larger block and extract the small number of bytes we actually
  * want.
  */
-static int xia_usb2__small_read_xfer(HANDLE h, DWORD n_bytes, byte_t *buf)
+static int xia_usb2__small_read_xfer(HANDLE h, DWORD n_bytes, byte_t *buf, DWORD *bytes_ret)
 {
     int status;
 
@@ -492,13 +531,14 @@ static int xia_usb2__small_read_xfer(HANDLE h, DWORD n_bytes, byte_t *buf)
     }
 
     status = xia_usb2__xfer(h, XIA_USB2_READ_EP,
-                            XIA_USB2_SMALL_READ_PACKET_SIZE, big_packet);
+                            XIA_USB2_SMALL_READ_PACKET_SIZE, big_packet, bytes_ret);
 
     if (status != XIA_USB2_SUCCESS) {
         free(big_packet);
         return status;
     }
 
+    *bytes_ret = n_bytes;
     memcpy(buf, big_packet, n_bytes);
     free(big_packet);
 

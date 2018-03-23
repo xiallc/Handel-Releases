@@ -130,8 +130,8 @@ XERXES_STATIC int dxp_read_reg(int *ioChan, int *modChan, char *name,
 
 XERXES_STATIC FILE* XERXES_API dxp_find_file(const char *, const char *);
 
-XERXES_STATIC int XERXES_API dxp_do_cmd(int *ioChan, int modChan, byte_t cmd, unsigned int lenS,
-					byte_t *send, unsigned int lenR, byte_t *receive);
+XERXES_STATIC int XERXES_API dxp_do_cmd(int modChan, Board *board, byte_t cmd, unsigned int lenS,
+                                        byte_t *send, unsigned int lenR, byte_t *receive);
 
 XERXES_STATIC int XERXES_API dxp_unhook(Board *board);
 

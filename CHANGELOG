@@ -1,3 +1,52 @@
+v1.2.19
+=======
+
+* Added back the following exported functions to the API, they were removed in
+v1.2.13 but are needed by end-user applications. 
+
+xiaNewDetector
+xiaAddDetectorItem
+xiaModifyDetectorItem
+xiaRemoveDetector
+xiaNewFirmware
+xiaAddFirmwareItem
+xiaModifyFirmwareItem
+xiaRemoveFirmware
+xiaNewModule
+xiaAddModuleItem
+xiaModifyModuleItem
+xiaRemoveModule
+xiaAddChannelSetElem
+xiaRemoveChannelSetElem
+xiaRemoveChannelSet
+xiaDownloadFirmware
+xiaUpdateUserParams
+
+* Experimental support for serial port IO on Linux. To use, set
+  interface=serial in the .ini file module definition and set
+  device_file to a device file in /dev.
+
+* Tweaked Linux USB2 bulk read length validation to support for all
+  microDXP revisions on Linux USB2. The protocol layer now returns the
+  actual length read and the MD layer validates this against the
+  requested length.
+
+* usblib.h and xia_common.h now detect Linux using the
+  compiler-defined __linux__ to avoid the need to define LINUX in all
+  build systems.
+	
+* [microDXP] Added printout of PIC and DSP versions in handel log.
+    
+* [Saturn] Fixed a regression error updating DECIMATION at peaking time change.
+
+    
+v1.2.18
+=======
+
+* [microDXP] Added support for "preset_type" and "preset_value" acquisition 
+  values for reading out and setting preset run settings.
+
+
 v1.2.17
 =======
 

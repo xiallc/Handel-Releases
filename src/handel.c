@@ -665,6 +665,8 @@ HANDEL_SHARED int HANDEL_API xiaFreeModule(Module *module)
 
 #ifndef EXCLUDE_SERIAL
     case SERIAL:
+        if (module->interface_info->info.serial->device_file)
+            handel_md_free(module->interface_info->info.serial->device_file);
         handel_md_free((void *)module->interface_info->info.serial);
         handel_md_free((void *)module->interface_info);
         break;

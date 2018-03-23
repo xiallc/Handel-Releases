@@ -538,7 +538,7 @@ HANDEL_EXPORT int HANDEL_API xiaRemoveAcquisitionValues(int detChan, char *name)
  * Downloads all user parameters, or DSP parameters set by calls to
  * xiaSetAcquisitionValues().
  */
-HANDEL_SHARED int HANDEL_API xiaUpdateUserParams(int detChan)
+HANDEL_EXPORT int HANDEL_API xiaUpdateUserParams(int detChan)
 {
     int status;
     int elemType;

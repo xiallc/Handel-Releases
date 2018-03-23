@@ -51,6 +51,9 @@ extern "C" {
   XIA_EXPORT int XIA_API xia_usb2_read(HANDLE h, unsigned long addr,
                                        unsigned long n_bytes,
                                        byte_t *buf);
+  XIA_EXPORT int XIA_API xia_usb2_readn(HANDLE h, unsigned long addr,
+                                        unsigned long n_bytes,
+                                        byte_t *buf, unsigned long *n_bytes_read);
   XIA_EXPORT int XIA_API xia_usb2_write(HANDLE h, unsigned long addr,
                                         unsigned long n_bytes,
                                         byte_t *buf);

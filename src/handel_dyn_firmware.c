@@ -63,7 +63,7 @@ HANDEL_STATIC boolean_t HANDEL_API xiaIsPTRRFree(Firmware *firmware,
                                                  unsigned short pttr);
 
 
-HANDEL_SHARED int HANDEL_API xiaNewFirmware(char *alias)
+HANDEL_EXPORT int HANDEL_API xiaNewFirmware(char *alias)
 {
     int status = XIA_SUCCESS;
 
@@ -155,7 +155,7 @@ HANDEL_SHARED int HANDEL_API xiaNewFirmware(char *alias)
 }
 
 
-HANDEL_SHARED int HANDEL_API xiaAddFirmwareItem(char *alias, char *name, void *value)
+HANDEL_EXPORT int HANDEL_API xiaAddFirmwareItem(char *alias, char *name, void *value)
 {
     int status = XIA_SUCCESS;
 
@@ -269,7 +269,7 @@ HANDEL_SHARED int HANDEL_API xiaAddFirmwareItem(char *alias, char *name, void *v
 }
 
 
-HANDEL_SHARED int HANDEL_API xiaModifyFirmwareItem(char *alias, unsigned short ptrr, char *name, void *value)
+HANDEL_EXPORT int HANDEL_API xiaModifyFirmwareItem(char *alias, unsigned short ptrr, char *name, void *value)
 {
     int status = XIA_SUCCESS;
 
@@ -901,7 +901,7 @@ HANDEL_STATIC int HANDEL_API xiaSetFirmwareItem(FirmwareSet *fs, Firmware *f, ch
 }
 
 
-HANDEL_SHARED int HANDEL_API xiaRemoveFirmware(char *alias)
+HANDEL_EXPORT int HANDEL_API xiaRemoveFirmware(char *alias)
 {
     int status = XIA_SUCCESS;
 

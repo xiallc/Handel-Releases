@@ -177,11 +177,12 @@ static char *interfaceStr[] = {
 /* This array is mainly used to compare names with the possible sub-interface
  * values. This should be update every time a new interface is added.
  */
-static char *subInterfaceStr[8] = {
+static char *subInterfaceStr[9] = {
     "slot",
     "epp_address",
     "daisy_chain_id",
     "com_port",
+    "device_file",
     "baud_rate",
     "device_number",
     "pci_bus",
@@ -201,6 +202,7 @@ static ModItem_t items[] = {
     {"daisy_chain_id",     _addInterface,  TRUE_},
     {"device_number",      _addInterface,  TRUE_},
     {"com_port",           _addInterface,  TRUE_},
+    {"device_file",        _addInterface,  TRUE_},
     {"baud_rate",          _addInterface,  TRUE_},
     {"pci_bus",            _addInterface,  TRUE_},
     {"pci_slot",           _addInterface,  TRUE_},
@@ -233,7 +235,7 @@ static AddChanType_t chanTypes[] = {
 #define NUM_CHAN_TYPES (sizeof(chanTypes) / sizeof(chanTypes[0]))
 
 
-HANDEL_SHARED int HANDEL_API xiaNewModule(char *alias)
+HANDEL_EXPORT int HANDEL_API xiaNewModule(char *alias)
 {
     int status = XIA_SUCCESS;
 
@@ -311,7 +313,7 @@ HANDEL_SHARED int HANDEL_API xiaNewModule(char *alias)
 }
 
 
-HANDEL_SHARED int HANDEL_API xiaAddModuleItem(char *alias, char *name, void *value)
+HANDEL_EXPORT int HANDEL_API xiaAddModuleItem(char *alias, char *name, void *value)
 {
     int status;
 
@@ -570,8 +572,9 @@ HANDEL_STATIC int HANDEL_API xiaProcessInterface(Module *chosen, char *name, voi
 
 #ifndef EXCLUDE_SERIAL
                 if (STREQ(name, "com_port")  ||
-                        STREQ(name, "baud_rate") ||
-                        STREQ(interface, "serial"))
+                    STREQ(name, "baud_rate") ||
+                    STREQ(name, "device_file") ||
+                    STREQ(interface, "serial"))
                 {
 
                     if ((chosen->interface_info->type != SERIAL) &&
@@ -596,14 +599,28 @@ HANDEL_STATIC int HANDEL_API xiaProcessInterface(Module *chosen, char *name, voi
                             return status;
                         }
 
-                        chosen->interface_info->info.serial->com_port  = 0;
-                        chosen->interface_info->info.serial->baud_rate = 115200;
+                        chosen->interface_info->info.serial->com_port    = 0;
+                        chosen->interface_info->info.serial->device_file = NULL;
+                        chosen->interface_info->info.serial->baud_rate   = 115200;
                     }
 
 
                     if (STREQ(name, "com_port")) {
 
                         chosen->interface_info->info.serial->com_port = *((unsigned int *)value);
+
+                    } else if (STREQ(name, "device_file")) {
+
+                        char *f = (char *)value;
+                        chosen->interface_info->info.serial->device_file = handel_md_alloc(strlen(value) + 1);
+                        if (chosen->interface_info->info.serial->device_file == NULL) {
+                            xiaLogError("xiaProcessInterface", "Unable to allocate memory for "
+                                        "chosen->interface_info->info.serial->device_file",
+                                        XIA_NOMEM);
+                            return XIA_NOMEM;
+                        }
+
+                        strcpy(chosen->interface_info->info.serial->device_file, f);
 
                     } else if (STREQ(name, "baud_rate")) {
 
@@ -1084,7 +1101,7 @@ HANDEL_STATIC int HANDEL_API xiaMergeDefaults(char *output, char *input1,
 }
 
 
-HANDEL_SHARED int HANDEL_API xiaModifyModuleItem(char *alias, char *name, void *value)
+HANDEL_EXPORT int HANDEL_API xiaModifyModuleItem(char *alias, char *name, void *value)
 {
     int status;
 
@@ -1383,6 +1400,10 @@ HANDEL_STATIC int HANDEL_API xiaGetIFaceInfo(Module *chosen, char *name, void *v
 
                             *((unsigned int *)value) = chosen->interface_info->info.serial->com_port;
 
+                        } else if (STREQ(name, "device_file")) {
+
+                            strcpy((char *)value, chosen->interface_info->info.serial->device_file);
+
                         } else if (STREQ(name, "baud_rate")) {
 
                             *((unsigned int *)value) = chosen->interface_info->info.serial->baud_rate;
@@ -1680,7 +1701,7 @@ HANDEL_STATIC int HANDEL_API xiaGetNumChans(Module *chosen, void *value)
 }
 
 
-HANDEL_SHARED int HANDEL_API xiaRemoveModule(char *alias)
+HANDEL_EXPORT int HANDEL_API xiaRemoveModule(char *alias)
 {
     int status;
 
