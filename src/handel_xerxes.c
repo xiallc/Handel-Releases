@@ -451,7 +451,7 @@ HANDEL_STATIC int xia__CopyInterfString(Module *m, char *interf)
 
 
     switch (m->interface_info->type) {
-    case NO_INTERFACE:
+    case XIA_INTERFACE_NONE:
     default:
         sprintf(info_string, "No interface string specified for alias '%s'",
                 m->alias);
@@ -461,26 +461,26 @@ HANDEL_STATIC int xia__CopyInterfString(Module *m, char *interf)
 
 
 #ifndef EXCLUDE_EPP
-    case EPP:
-    case GENERIC_EPP:
+    case XIA_EPP:
+    case XIA_GENERIC_EPP:
         sprintf(interf, "%#x", m->interface_info->info.epp->epp_address);
         break;
 #endif /* EXCLUDE_EPP */
 
 #ifndef EXCLUDE_USB
-    case USB:
+    case XIA_USB:
         sprintf(interf, "%u", m->interface_info->info.usb->device_number);
         break;
 #endif /* EXCLUDE_USB */
 
 #ifndef EXCLUDE_USB2
-    case USB2:
+    case XIA_USB2:
         sprintf(interf, "%u", m->interface_info->info.usb2->device_number);
         break;
 #endif /* EXCLUDE_USB2 */
 
 #ifndef EXCLUDE_SERIAL
-    case SERIAL:
+    case XIA_SERIAL:
         if (m->interface_info->info.serial->device_file) {
             sprintf(interf, "%s", m->interface_info->info.serial->device_file);
         }
@@ -491,7 +491,7 @@ HANDEL_STATIC int xia__CopyInterfString(Module *m, char *interf)
 #endif /* EXCLUDE_SERIAL */
 
 #ifndef EXCLUDE_PLX
-    case PLX:
+    case XIA_PLX:
         sprintf(interf, "pxi");
         break;
 #endif /* EXCLUDE_PLX */
@@ -515,7 +515,7 @@ HANDEL_STATIC int xia__CopyMDString(Module *m, char *md)
 
 
     switch (m->interface_info->type) {
-    case NO_INTERFACE:
+    case XIA_INTERFACE_NONE:
     default:
         sprintf(info_string, "No interface string specified for alias '%s'",
                 m->alias);
@@ -524,8 +524,8 @@ HANDEL_STATIC int xia__CopyMDString(Module *m, char *md)
         break;
 
 #ifndef EXCLUDE_EPP
-    case EPP:
-    case GENERIC_EPP:
+    case XIA_EPP:
+    case XIA_GENERIC_EPP:
         /* If default then dont change anything, else tack on a : in front
          * of the string (tells XerXes to
          * treat this as a multi-module EPP chain
@@ -539,19 +539,19 @@ HANDEL_STATIC int xia__CopyMDString(Module *m, char *md)
 #endif /* EXCLUDE_EPP */
 
 #ifndef EXCLUDE_USB
-    case USB:
+    case XIA_USB:
         sprintf(md, "%u", m->interface_info->info.usb->device_number);
         break;
 #endif /* EXCLUDE_USB */
 
 #ifndef EXCLUDE_USB2
-    case USB2:
+    case XIA_USB2:
         sprintf(md, "%u", m->interface_info->info.usb2->device_number);
         break;
 #endif /* EXCLUDE_USB2 */
 
 #ifndef EXCLUDE_SERIAL
-    case SERIAL:
+    case XIA_SERIAL:
         if (m->interface_info->info.serial->device_file) {
             sprintf(md, "%s:%u", m->interface_info->info.serial->device_file,
                     m->interface_info->info.serial->baud_rate);
@@ -564,7 +564,7 @@ HANDEL_STATIC int xia__CopyMDString(Module *m, char *md)
 #endif /* EXCLUDE_SERIAL */
 
 #ifndef EXCLUDE_PLX
-    case PLX:
+    case XIA_PLX:
         sprintf(md, "%u:%u", m->interface_info->info.plx->bus,
                 m->interface_info->info.plx->slot);
         break;

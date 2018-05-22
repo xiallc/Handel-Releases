@@ -1,8 +1,20 @@
+v1.2.20
+=======
+
+* Added a fix allocating memory in EPP device IO from Mark Rivers for linux, 
+
+* Fixed missing CPPDEFINES in build to set the EXCLUDE flags. 
+
+* Added missing plxapi.lib, xerxes_io.c, xerxes_io.h to source release.
+
+* Fixed xiaGetDetectors output.
+
+
 v1.2.19
 =======
 
 * Added back the following exported functions to the API, they were removed in
-v1.2.13 but are needed by end-user applications. 
+v1.2.13 but are needed by end-user applications.
 
 xiaNewDetector
 xiaAddDetectorItem
@@ -34,16 +46,19 @@ xiaUpdateUserParams
 * usblib.h and xia_common.h now detect Linux using the
   compiler-defined __linux__ to avoid the need to define LINUX in all
   build systems.
-	
+
 * [microDXP] Added printout of PIC and DSP versions in handel log.
-    
+
 * [Saturn] Fixed a regression error updating DECIMATION at peaking time change.
 
-    
+* Optional tracing of IO operations to the log may be enabled by
+  defining XERXES_TRACE_IO in the build.
+
+
 v1.2.18
 =======
 
-* [microDXP] Added support for "preset_type" and "preset_value" acquisition 
+* [microDXP] Added support for "preset_type" and "preset_value" acquisition
   values for reading out and setting preset run settings.
 
 

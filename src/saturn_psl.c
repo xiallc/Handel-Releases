@@ -502,18 +502,18 @@ PSL_STATIC boolean_t PSL_API pslIsInterfaceValid(Module *module)
 
 #ifndef EXCLUDE_EPP
     foundValidInterface = (boolean_t) (foundValidInterface ||
-                                       (module->interface_info->type == EPP ||
-                                        module->interface_info->type == GENERIC_EPP));
+                                       (module->interface_info->type == XIA_EPP ||
+                                        module->interface_info->type == XIA_GENERIC_EPP));
 #endif /* EXCLUDE_EPP */
 
 #ifndef EXCLUDE_USB
     foundValidInterface = (boolean_t) (foundValidInterface ||
-                                       (module->interface_info->type == USB));
+                                       (module->interface_info->type == XIA_USB));
 #endif /* EXCLUDE_USB */
 
 #ifndef EXCLUDE_USB2
     foundValidInterface = (boolean_t) (foundValidInterface ||
-                                       (module->interface_info->type == USB2));
+                                       (module->interface_info->type == XIA_USB2));
 #endif /* EXCLUDE_USB2 */
 
     if (!foundValidInterface) {

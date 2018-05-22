@@ -172,14 +172,12 @@ static char *PATH_SEP = "/";
 
 void Sleep(DWORD sleep_msec)
 {
-    int				sec;
-    int				usec;
+    struct timespec ts;
 
-    sec = sleep_msec / 1000;
-    usec = (sleep_msec - (sec * 1000)) * 1000;
+    ts.tv_sec = sleep_msec / 1000;
+    ts.tv_nsec = (sleep_msec - (ts.tv_sec * 1000)) * 1000000;
 
-    sleep(sec);
-    usleep(usec);
+    nanosleep(&ts, 0);
 }
 
 
@@ -493,11 +491,12 @@ XIA_MD_STATIC int XIA_MD_API dxp_md_epp_io(int* camChan, unsigned int* function,
     int rstat = 0;
     int status;
 
-    unsigned int i;
+    int i;
 
     unsigned short *us_data = (unsigned short *)data;
-
-    unsigned long *temp=NULL;
+    
+    int ullength = (int) *length/2;
+    unsigned long *temp = NULL;
 
     if ((currentID != eppID[*camChan]) && (eppID[*camChan] != -1))
     {
@@ -530,20 +529,28 @@ XIA_MD_STATIC int XIA_MD_API dxp_md_epp_io(int* camChan, unsigned int* function,
         } else {
             /* Perform long reads and writes if in program address space (24-bit) */
             /* Allocate memory */
-            temp = (unsigned long *) dxp_md_alloc(sizeof(unsigned short)*(*length));
+            temp = (unsigned long *)dxp_md_alloc(sizeof(unsigned long) * ullength);
+            
+            if (!temp) {
+                sprintf(ERROR_STRING, "Unable to allocate %zu bytes for temp",
+                        sizeof(unsigned long) * ullength);
+                dxp_md_log_error("dxp_md_epp_io", ERROR_STRING, DXP_MDNOMEM);
+                return DXP_MDNOMEM;
+            }
+            
             if (*function == MD_IO_READ) {
-                rstat = DxpReadBlocklong(next_addr, temp, (int) *length/2);
+                rstat = DxpReadBlocklong(next_addr, temp, ullength);
                 /* reverse the byte order for the EPPLIB library */
-                for (i=0; i<*length/2; i++) {
+                for (i = 0; i < ullength; i++) {
                     us_data[2*i] = (unsigned short) (temp[i]&0xFFFF);
                     us_data[2*i+1] = (unsigned short) ((temp[i]>>16)&0xFFFF);
                 }
             } else {
                 /* reverse the byte order for the EPPLIB library */
-                for (i=0; i<*length/2; i++) {
+                for (i=0; i < ullength; i++) {
                     temp[i] = ((us_data[2*i]<<16) + us_data[2*i+1]);
                 }
-                rstat = DxpWriteBlocklong(next_addr, temp, (int) *length/2);
+                rstat = DxpWriteBlocklong(next_addr, temp, ullength);
             }
             /* Free the memory */
             dxp_md_free(temp);

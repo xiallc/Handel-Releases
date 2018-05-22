@@ -105,6 +105,7 @@
 #define BOARD_SUPPORTS_UPDATED_PRESET 0x06 	/* Extra word for preset values */
 #define BOARD_SUPPORTS_SNAPSHOT 0x07 		/* Support for snapshot readout */
 #define BOARD_SUPPORTS_PASSTHROUGH 0x08 	/* Support for uart passthrough */
+/* FalconX features 0x11 - 0x18 */
 
 /* UltraLo */
 enum ElectrodeSize

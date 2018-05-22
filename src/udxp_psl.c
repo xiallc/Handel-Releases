@@ -713,19 +713,15 @@ PSL_STATIC int pslValidateModule(Module *module)
  */
 PSL_STATIC boolean_t pslIsInterfaceValid(Module *module)
 {
-
-#ifndef EXCLUDE_SERIAL
-    if (module->interface_info->type == SERIAL) {
+    if (module->interface_info->type == XIA_SERIAL) {
         IS_USB = FALSE_;
         return TRUE_;
     }
-#endif /* EXCLUDE_SERIAL */
-#ifndef EXCLUDE_USB2
-    if (module->interface_info->type == USB2) {
+
+    if (module->interface_info->type == XIA_USB2) {
         IS_USB = TRUE_; /* HACK for RS232 Alpha support */
         return TRUE_;
     }
-#endif /* EXCLUDE_USB2 */
 
     return FALSE_;
 }

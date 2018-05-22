@@ -3215,7 +3215,6 @@ XERXES_EXPORT int XERXES_API dxp_cmd(int *detChan, byte_t *cmd, unsigned int *le
 
     /* Only works for supported devices */
     if (chosen->btype->funcs->dxp_do_cmd) {
-        dxp_log_debug("dxp_cmd", "do comand");
         status = chosen->btype->funcs->dxp_do_cmd(modChan, chosen, *cmd, *lenS,
                                                   send, *lenR, receive);
 

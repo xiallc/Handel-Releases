@@ -49,9 +49,12 @@ def update_environment(env):
     win = env['PLATFORM'] == 'win32' # The target_platform tool may not have set proper bits yet.
 
     if win and env.Bit('x64'):
-	env.ClearBits('usb')
-	env.ClearBits('epp')
-	env.ClearBits('serial')
+        env.ClearBits('usb')
+        env.ClearBits('epp')
+        env.ClearBits('serial')
+
+    if not win:
+        env.ClearBits('plx', 'xw')
 
     if not env.Bit('epp') and not env.Bit('usb') and not env.Bit('usb2'):
         env.ClearBits('saturn')
@@ -86,3 +89,14 @@ def update_environment(env):
 
     if not env.Bit('xmap') and not env.Bit('stj'):
         env.ClearBits('plx')
+
+    print "build options: ",
+
+    for option_item in ['usb','usb2','epp','plx','serial']:
+        if env.Bit(option_item):
+            print option_item,
+
+    for option_item in ['stj','xmap','saturn','mercury','udxp','udxps']:
+        if env.Bit(option_item):
+            print option_item,
+    print

@@ -78,22 +78,12 @@ static char line[XIA_LINE_LEN];
 static InterfaceWriters_t INTERFACE_WRITERS[] = {
     /* Sentinel */
     {0, NULL},
-#ifndef EXCLUDE_PLX
-    {PLX,          writePLX},
-#endif /* EXCLUDE_PLX */
-#ifndef EXCLUDE_EPP
-    {EPP,          writeEPP},
-    {GENERIC_EPP,  writeEPP},
-#endif /* EXCLUDE_PLX */
-#ifndef EXCLUDE_USB
-    {USB,          writeUSB},
-#endif /* EXCLUDE_USB */
-#ifndef EXCLUDE_USB2
-    {USB2,         writeUSB2},
-#endif /* EXCLUDE_USB2 */
-#ifndef EXCLUDE_SERIAL
-    {SERIAL,       writeSerial},
-#endif
+    {XIA_PLX,          writePLX},
+    {XIA_EPP,          writeEPP},
+    {XIA_GENERIC_EPP,  writeEPP},
+    {XIA_USB,          writeUSB},
+    {XIA_USB2,         writeUSB2},
+    {XIA_SERIAL,       writeSerial},
 };
 
 
@@ -109,7 +99,7 @@ SectionInfo sectionInfo[] =
 HANDEL_EXPORT int HANDEL_API xiaLoadSystem(char *type, char *filename)
 {
     int status;
-
+    
     if (type == NULL) {
         xiaLogError("xiaLoadSystem", ".INI file 'type' string is NULL",
                     XIA_NULL_TYPE);
@@ -396,7 +386,7 @@ HANDEL_SHARED int HANDEL_API xiaReadIniFile(char *inifile)
     fpos_t local_end;
 
     char xiaini[8] = "xia.ini";
-
+    
     /* Check if an .INI file was specified */
     if (inifile == NULL) {
         inifile = xiaini;
@@ -2082,11 +2072,9 @@ static int writeInterface(FILE *fp, Module *module)
     int i;
     int status;
 
-
     ASSERT(fp != NULL);
     ASSERT(module != NULL);
-
-
+        
     for (i = 0; i < (int)N_ELEMS(INTERFACE_WRITERS); i++) {
         if (module->interface_info->type == INTERFACE_WRITERS[i].type) {
 
@@ -2164,8 +2152,7 @@ static int writeUSB2(FILE *fp, Module *m)
 {
     ASSERT(fp != NULL);
     ASSERT(m != NULL);
-    ASSERT(m->interface_info->type == USB2);
-
+    ASSERT(m->interface_info->type == XIA_USB2);
 
     fprintf(fp, "interface = usb2\n");
     fprintf(fp, "device_number = %u\n",
@@ -2178,9 +2165,8 @@ static int writeSerial(FILE *fp, Module *m)
 {
     ASSERT(fp != NULL);
     ASSERT(m != NULL);
-    ASSERT(m->interface_info->type == SERIAL);
-
-
+    ASSERT(m->interface_info->type == XIA_SERIAL);
+        
     fprintf(fp, "interface = serial\n");
     if (m->interface_info->info.serial->device_file) {
         fprintf(fp, "device_file = %s\n",

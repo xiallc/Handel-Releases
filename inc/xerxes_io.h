@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2004 X-ray Instrumentation Associates
- *               2005-2016 XIA LLC
+ * Copyright (c) 2017 XIA LLC
  * All rights reserved
  *
  * Redistribution and use in source and binary forms,
@@ -34,70 +33,23 @@
  * SUCH DAMAGE.
  */
 
-
-#ifndef __XIA_MODULE_H__
-#define __XIA_MODULE_H__
-
-#include "handeldef.h"
-#include "xia_handel.h"
-#include "xia_common.h"
+#ifndef __XERXES_IO_H__
+#define __XERXES_IO_H__
 
 
-/*
- * Typedefs
- */
-
-typedef unsigned short Token;
-typedef int (*ModItemFunc_t)(Module *, void *, char *);
-typedef int (*ModInitFunc_t)(Module *);
-typedef int (*AddChanTypeFunc_t)(Module *, int, void *);
+#include "xerxesdef.h"
+#include "xia_xerxes_structures.h"
 
 
-/*
- * Structs
- */
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
-typedef struct _ModItemFunc {
-  char *name;
-  ModItemFunc_t f;
-  boolean_t needsBT;
+XERXES_SHARED int dxp_md_io(Board *board, unsigned int function,
+                            unsigned long addr, void *data, unsigned int len);
 
-} ModItem_t;
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
-
-typedef struct _AddChanType {
-  char *name;
-  AddChanTypeFunc_t f;
-
-} AddChanType_t;
-
-
-/* Interface */
-enum {
-  XIA_INTERFACE_NONE = 0,
-  XIA_EPP,
-  XIA_GENERIC_EPP,
-  XIA_SERIAL,
-  XIA_USB,
-  XIA_USB2,
-  XIA_PLX
-};
-
-
-/* Module-Name Tokens */
-enum {
-  BAD_TOK = 0,
-  MODTYP_TOK,
-  INTERFACE_TOK,
-  LIBRARY_TOK,
-  NUMCHAN_TOK,
-  CHANNEL_TOK,
-  FIRMWARE_TOK,
-  DEFAULT_TOK
-};
-
-/* Channel index offset in strings like channel{n}_alias, etc */
-#define CHANNEL_IDX_OFFSET  7
-
-
-#endif /* __XIA_MODULE_H__ */
+#endif /* __XERXES_IO_H__ */

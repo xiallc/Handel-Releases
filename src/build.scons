@@ -107,8 +107,11 @@ else:
 if env.Bit('epp'):
     md_libs.append('xia_epp')
     epp_env = protocols_env.Clone()
-    epp_env.Append(LIBS=['dlportio'])
-    epp_inputs = ['xia_epp.c']
+    if win:
+        epp_env.Append(LIBS=['dlportio'])
+        epp_inputs = ['xia_epp.c']
+    else:
+        epp_inputs = ['xia_epp_linux.c']
     for lib in do_stdcall_and_cdecl_lib('xia_epp', epp_inputs,
                                         ['WIN32_EPPLIB_VBA'], assert_obj,
                                         lib_env=epp_env):
@@ -151,13 +154,14 @@ md_env.Depends(md_lib, md_deps)
 projects = ['saturn', 'xmap', 'stj', 'mercury', 'udxp', 'udxps']
 
 # DD libraries
-xerxes_handel_defs = []
+xerxes_handel_defs = md_defs
 xerxes_libs = ['md', 'xiafile']
 xerxes_deps = [md_lib, file_lib]
 device_libs = []
 
 dd_env = env.Clone()
 dd_env.Append(LIBS=['md', 'xiafile'])
+dd_env.Append(CPPDEFINES=xerxes_handel_defs)
 
 if dd_env.Bit('alpha'):
     dd_env.Append(CPPDEFINES=['XIA_ALPHA'])
@@ -210,6 +214,7 @@ handel_libs = ['fdd', 'xerxes', 'md', 'xiafile'] # xerxes must precede md on lin
 handel_deps = [md_lib, xerxes_lib, fdd_lib, file_lib]
 
 psl_env = env.Clone()
+psl_env.Append(CPPDEFINES=xerxes_handel_defs)
 
 if psl_env.Bit('alpha'):
     psl_env.Append(CPPDEFINES=['XIA_ALPHA'])
