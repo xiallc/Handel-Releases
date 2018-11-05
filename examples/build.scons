@@ -1,0 +1,25 @@
+Import('env')
+
+sample_code_env = env.Clone()
+sample_code_env.Append(LIBS=['handel'])
+
+if sample_code_env.Bit('xmap'):
+    sample_code_env.ComponentProgram('hqsg-xmap', ['xmap\hqsg-xmap.c'])
+    sample_code_env.ComponentProgram('hqsg-xmap-preset', ['xmap\hqsg-xmap-preset.c'])
+    sample_code_env.ComponentProgram('hqsg-xmap-mapping', ['xmap\hqsg-xmap-mapping.c'])
+
+if sample_code_env.Bit('udxp'):
+    sample_code_env.ComponentProgram('hqsg-microdxp', ['microdxp\hqsg-microdxp.c'])
+    sample_code_env.ComponentProgram('hqsg-microdxp-snapshot', ['microdxp\hqsg-microdxp-snapshot.c'])
+    sample_code_env.ComponentProgram('hqsg-microdxp-passthrough', ['microdxp\hqsg-microdxp-passthrough.c'])
+
+if sample_code_env.Bit('saturn'):
+    sample_code_env.ComponentProgram('hqsg-saturn', ['saturn\hqsg-saturn.c'])
+
+if sample_code_env.Bit('stj'):
+    sample_code_env.ComponentProgram('hqsg-stj-list', ['stj\hqsg-stj-list.c'])
+
+sample_code_env.ComponentProgram('handel-sca', ['generic\handel-sca.c'])
+sample_code_env.ComponentProgram('handel-gap_time', ['generic\handel-gap_time.c'])
+sample_code_env.ComponentProgram('handel-preset_run', ['generic\handel-preset_run.c'])
+

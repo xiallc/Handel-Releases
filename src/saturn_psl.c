@@ -4075,7 +4075,7 @@ PSL_STATIC int pslUpdateFilter(int detChan, double peakingTime,
         filterInfo = (parameter_t *)saturn_psl_md_alloc(numFilter * sizeof(parameter_t));
 
         status = xiaFddGetFilterInfo(firmwareSet->filename, peakingTime, firmwareSet->numKeywords,
-                                     firmwareSet->keywords, &ptMin, &ptMax, filterInfo);
+                                     (const char **)firmwareSet->keywords, &ptMin, &ptMax, filterInfo);
 
         if (status != XIA_SUCCESS) {
             saturn_psl_md_free(filterInfo);
@@ -5238,7 +5238,6 @@ PSL_STATIC double PSL_API pslTauFit(unsigned int* trace, unsigned long kmin, uns
 {
     double mutop;
     double mubot;
-    double valtop;
     double valbot;
     double eps;
     double dmu;
@@ -5259,7 +5258,6 @@ PSL_STATIC double PSL_API pslTauFit(unsigned int* trace, unsigned long kmin, uns
     /* start the binary search progression search */
     do {
         /* Save the last valbot value */
-        valtop = valbot;
         mutop = mubot;
 
         /* Divide the mu value by 2 (multiply tau by 2) */
@@ -5918,7 +5916,7 @@ PSL_STATIC int psl__GetSCAData(int detChan, void *value, XiaDefaults *defs)
     sca = (unsigned long *)saturn_psl_md_alloc(totalSCA * sizeof(unsigned long));
  
     if (!sca) {
-        sprintf(info_string, "Error allocating %d bytes for 'sca'",
+        sprintf(info_string, "Error allocating %zu bytes for 'sca'",
                 totalSCA * sizeof(unsigned long));
         pslLogError("psl__GetSCAData", info_string, XIA_NOMEM);
         return XIA_NOMEM;

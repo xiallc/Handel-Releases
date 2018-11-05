@@ -5,19 +5,20 @@ import sys
 import build_helpers.logic
 import build_helpers.version
 
+# Default to not build EPP and USB1 drivers
+PROTOCOLS = [['epp',    'Include EPP driver',       False],
+             ['serial', 'Include RS-232 driver',    True],
+             ['usb',    'Include USB driver',       False],
+             ['usb2',   'Include USB2 driver',      True],
+             ['plx',    'Include PLX driver',       True]]
 
-PROTOCOLS = [['epp',    'Include EPP driver'],
-             ['serial', 'Include RS-232 driver'],
-             ['usb',    'Include USB driver'],
-             ['usb2',   'Include USB2 driver'],
-             ['plx',    'Include PLX driver']]
-
-DEVICES = [['saturn',  'Include Saturn support'],
-           ['udxp',    'Include microDXP support'],
-           ['udxps',   'Include microDXP setup support'],
-           ['xmap',    'Include xMAP support'],
-           ['stj',     'Include Stj support'],
-           ['mercury', 'Include Mercury/Mercury-4 support']]
+# Default to not build udxps driver
+DEVICES = [['saturn',  'Include Saturn support',            True],
+           ['udxp',    'Include microDXP support',          True],
+           ['udxps',   'Include microDXP setup support',    False],
+           ['xmap',    'Include xMAP support',              True],
+           ['stj',     'Include Stj support',               True],
+           ['mercury', 'Include Mercury/Mercury-4 support', True]]
 
 base_env = Environment(
     tools             = ['component_setup'],
@@ -67,15 +68,11 @@ base_env.Depends('src/handel.c', ['inc/xia_version.h'])
 AddTargetGroup('protocols', 'low level interface protocols')
 for p in PROTOCOLS:
     DeclareBit(p[0], p[1])
-    base_env.SetBitFromOption(p[0], True)
+    base_env.SetBitFromOption(p[0], p[2])
 
 for d in DEVICES:
     DeclareBit(d[0], d[1])
-    base_env.SetBitFromOption(d[0], True)
-
-# Default to not build EPP and USB1 drivers
-base_env.SetBitFromOption('epp', False)
-base_env.SetBitFromOption('usb', False)
+    base_env.SetBitFromOption(d[0], d[2])
 
 DeclareBit('analysis', 'Build with code analysis')
 base_env.SetBitFromOption('analysis', False)
@@ -120,7 +117,7 @@ DeclareBit('samples', 'Build samples')
 base_env.SetBitFromOption('samples', False)
 
 if base_env.Bit('samples') :
-	base_env.Append(BUILD_SCONSCRIPTS=['docs/sample_code/build.scons'])
+	base_env.Append(BUILD_SCONSCRIPTS=['examples/build.scons'])
 
 # Add COMMDRV libs
 if base_env.Bit('serial'):
@@ -172,7 +169,6 @@ if base_env.Bit('x64'):
         BUILD_TYPE_DESCRIPTION = 'Linux debug build - x64',
         BUILD_GROUPS = ['default'],
         tools = ['target_debug'])
-
     linux_rel_env = linux_env.Clone(
         BUILD_TYPE = 'rel-x64',
         BUILD_TYPE_DESCRIPTION = 'Linux optimized build - x64',
@@ -191,6 +187,9 @@ else:
         BUILD_GROUPS = ['default'],
         tools = ['target_optimized'])
 
+# Remove variable not used warning when ASSERT is not built
+linux_rel_env.Append(CCFLAGS=['-Wno-unused-but-set-variable'])
+
 # WIN32
 windows_env = base_env.Clone(
     tools        = ['target_platform_windows'],
@@ -206,6 +205,7 @@ windows_env.Append(CPPDEFINES=['_CRT_SECURE_NO_WARNINGS',
 windows_env.Append(LINKFLAGS=['/INCREMENTAL:NO'])
 windows_env.Append(CPPDEFINES=['WIN32_LEAN_AND_MEAN', 'NONAMELESSUNION',
                                '__MEM_DBG__'])
+
 # Not everyone wants to build with libcmt
 windows_env.FilterOut(CCFLAGS_DEBUG=['/MTd'])
 windows_env.Append(CCFLAGS_DEBUG=['/MDd'])
@@ -242,7 +242,6 @@ else:
         BUILD_GROUPS           = ['default'],
         tools                  = ['target_optimized'])
 
-
 # Add VLD memory leak detection options in debug build
 DeclareBit('vld', 'Build with Visual Leak Detector')
 base_env.SetBitFromOption('vld', False)
@@ -252,22 +251,31 @@ if base_env.Bit('vld') :
     print 'Setting up Visual Leak Detector environment.\n'
     base_env.Dir('tools').addRepository(base_env.Dir('../tools'))
     vld_path = '$MAIN_DIR/tools/vld'
-    vld_env = windows_dbg_env.Clone(
-        BUILD_TYPE             = 'vld',
-        BUILD_TYPE_DESCRIPTION = 'VLD enabled build')
-    vld_env.Append(CPPDEFINES=['__VLD_MEM_DBG__'])
-    vld_env.Append(CPPPATH = [os.path.join(vld_path, 'include')])
-    vld_env.Append(BUILD_SCONSCRIPTS=['tests/memory_leak_test/build.scons'])
+
     if base_env.Bit('x64'):
+        vld_env = windows_dbg_env.Clone(
+            BUILD_TYPE             = 'vld-x64',
+            BUILD_TYPE_DESCRIPTION = 'VLD x64 build')
         redist_files += Glob('tools/vld/bin/Win64/*')
         vld_env.Append(LIBPATH = [os.path.join(vld_path, 'lib/Win64')])
     else:
+        vld_env = windows_dbg_env.Clone(
+            BUILD_TYPE             = 'vld-x86',
+            BUILD_TYPE_DESCRIPTION = 'VLD x86 build')
         redist_files += Glob('tools/vld/bin/Win32/*')
         vld_env.Append(LIBPATH = [os.path.join(vld_path, 'lib/Win32')])
 
+    vld_env.Append(CPPDEFINES=['__VLD_MEM_DBG__'])
+    vld_env.Append(CCFLAGS_DEBUG=['/Zi'])
+    vld_env.Append(CCFLAGS_DEBUG=['/Oy-'])
+    vld_env.Append(CCFLAGS_DEBUG=['/Ob0'])
+    vld_env.Append(CCFLAGS_DEBUG=['/MT'])
+    vld_env.Append(CCFLAGS_DEBUG=['/EHsc'])
+    vld_env.Append(CPPPATH = [os.path.join(vld_path, 'include')])
+    vld_env.Append(BUILD_SCONSCRIPTS=['tests/memory_leak_test/build.scons'])
+
     BuildEnvironments([vld_env])
     vld_env.Replicate('$STAGING_DIR', redist_files)
-
 elif base_env.Bit('analysis'):
     analysis_env = windows_dbg_env.Clone(
         BUILD_TYPE             = 'analysis',

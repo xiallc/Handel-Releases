@@ -183,7 +183,7 @@ for p in projects:
         lib = dd_env.ComponentLibrary(p, [src] + objs,
                                       COMPONENT_STATIC=True,
                                       COMPONENT_LIBRARY_PUBLISH=True)
-        xerxes_deps.append(lib)
+        xerxes_deps.append([lib, md_lib])
         dd_env.Depends(lib, [md_lib])
     else:
         xerxes_handel_defs.append("EXCLUDE_%s" % p.upper())
@@ -252,6 +252,7 @@ handel_env.Append(LIBS=xerxes_libs)
 handel_env.Append(LIBS=handel_libs)
 handel_env.Append(LIBS=md_libs)
 handel_env.Append(LIBS=device_libs) # static device libs must come after xerxes on linux!
+
 handel_inputs = handel_env.Glob('handel*.c')
 
 # Build Handel.rc for DLL version

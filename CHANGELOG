@@ -1,9 +1,31 @@
+v1.2.22
+=======
+
+* [microDxp] Added run data snapshot_sca and snapshot_sca_length. Support can be
+  determined by checking BOARD_SUPPORTS_SNAPSHOTSCA bit in get_board_features
+  board operation. See handel_constants.h for a list of board features.
+
+* [xMap] Updated PLX SDK to v7.25, this will require updates to the PLX driver
+  included in the release.
+
+* [xMap] Fixed an issue where mapping acquisition values sync_count,
+  num_map_pixels_per_buffer, and num_map_pixels are not initialized when
+  starting up in non-mapping mode.
+
+* Updated logging system to include timestamps for each event.
+
+* Fixed build script for source release, updated example code directory
+  structure. With python and scons installed, the build.bat in the source
+  release should be able to build both Handel and example programs.
+
+
 v1.2.20
 =======
 
-* Added a fix allocating memory in EPP device IO from Mark Rivers for linux, 
+* Fixed the memory allocation size in EPP device IO affecting 64-bit
+  Linux, thanks to Mark Rivers for the patch.
 
-* Fixed missing CPPDEFINES in build to set the EXCLUDE flags. 
+* Fixed missing CPPDEFINES in build to set the EXCLUDE flags.
 
 * Added missing plxapi.lib, xerxes_io.c, xerxes_io.h to source release.
 
@@ -13,8 +35,8 @@ v1.2.20
 v1.2.19
 =======
 
-* Added back the following exported functions to the API, they were removed in
-v1.2.13 but are needed by end-user applications.
+* Added back the following exported functions to the API. They were removed in
+  v1.2.13 but are needed by end-user applications.
 
 xiaNewDetector
 xiaAddDetectorItem

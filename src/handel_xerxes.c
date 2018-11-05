@@ -734,7 +734,7 @@ HANDEL_STATIC int xia__AddSystemFPGA(Module *module, char *sysFPGAName,
     sysFPGAStr[0] = (char *)handel_md_alloc(strlen(sysFPGAName) + 1);
 
     if (!sysFPGAStr[0]) {
-        sprintf(info_string, "Unable to allocate %d bytes for 'sysFPGAStr[0]'",
+        sprintf(info_string, "Unable to allocate %zu bytes for 'sysFPGAStr[0]'",
                 strlen(sysFPGAName) + 1);
         xiaLogError("xia__AddSystemFPGA", info_string, XIA_NOMEM);
         return XIA_NOMEM;
@@ -925,7 +925,7 @@ HANDEL_STATIC int xia__AddSystemDSP(Module *module, char *sysDSPName,
     sysDSPStr[0] = (char *)handel_md_alloc(strlen(sysDSPName) + 1);
 
     if (!sysDSPStr[0]) {
-        sprintf(info_string, "Unable to allocate %d bytes for 'sysDSPStr[0]'",
+        sprintf(info_string, "Unable to allocate %zu bytes for 'sysDSPStr[0]'",
                 strlen(sysDSPName) + 1);
         xiaLogError("xiaAddSystemDSP", info_string, XIA_NOMEM);
         return XIA_NOMEM;
@@ -1037,7 +1037,7 @@ HANDEL_STATIC int xia__AddFiPPIA(Module *module, char *sysFippiAName,
     sysFippiAStr[0] = (char *)handel_md_alloc(strlen(sysFippiAName) + 1);
 
     if (!sysFippiAStr[0]) {
-        sprintf(info_string, "Unable to allocate %d bytes for 'sysFippiAStr[0]'",
+        sprintf(info_string, "Unable to allocate %zu bytes for 'sysFippiAStr[0]'",
                 strlen(sysFippiAName) + 1);
         xiaLogError("xiaAddSystemFippiA", info_string, XIA_NOMEM);
         return XIA_NOMEM;
@@ -1104,7 +1104,7 @@ HANDEL_STATIC int xia__AddXerxesBoardType(Module *m)
     type = (char **)handel_md_alloc(sizeof(char *));
 
     if (!type) {
-        sprintf(info_string, "Error allocating %d bytes for 'type'", sizeof(char *));
+        sprintf(info_string, "Error allocating %zu bytes for 'type'", sizeof(char *));
         xiaLogError("xia__AddXerxesBoardType", info_string, XIA_NOMEM);
         return XIA_NOMEM;
     }
@@ -1114,7 +1114,7 @@ HANDEL_STATIC int xia__AddXerxesBoardType(Module *m)
     if (!type[0]) {
         handel_md_free(type);
 
-        sprintf(info_string, "Error allocating %d bytes for 'type[0]'",
+        sprintf(info_string, "Error allocating %zu bytes for 'type[0]'",
                 strlen(m->type) + 1);
         xiaLogError("xia__AddXerxesBoardType", info_string, XIA_NOMEM);
         return XIA_NOMEM;
@@ -1236,7 +1236,7 @@ HANDEL_STATIC int xia__AddXerxesModule(Module *m)
                                       sizeof(char *));
 
     if (!modStr) {
-        sprintf(info_string, "Error allocating %d bytes for 'modStr'",
+        sprintf(info_string, "Error allocating %zu bytes for 'modStr'",
                 (m->number_of_channels + 2) * sizeof(char *));
         xiaLogError("xia__AddXerxesModule", info_string, XIA_NOMEM);
         return XIA_NOMEM;
@@ -1361,7 +1361,7 @@ HANDEL_STATIC int xia__DoMMUConfig(Module *m)
         mmu = (char **)handel_md_alloc(sizeof(char **));
 
         if (!mmu) {
-            sprintf(info_string, "Error allocating %d bytes for 'mmu'",
+            sprintf(info_string, "Error allocating %zu bytes for 'mmu'",
                     sizeof(char **));
             xiaLogError("xia__DoMMUConfig", info_string, XIA_NOMEM);
             return XIA_NOMEM;
@@ -1372,7 +1372,7 @@ HANDEL_STATIC int xia__DoMMUConfig(Module *m)
         if (!mmu[0]) {
             handel_md_free(mmu);
 
-            sprintf(info_string, "Error allocating %d bytes for 'mmu[0]'",
+            sprintf(info_string, "Error allocating %zu bytes for 'mmu[0]'",
                     strlen(name) + 1);
             xiaLogError("xia__DoMMUConfig", info_string, XIA_NOMEM);
             return XIA_NOMEM;
@@ -1937,7 +1937,7 @@ HANDEL_STATIC int xia__AddSystemFiPPI(Module *m, char *sysFipName,
     sysFipStr[0] = handel_md_alloc(strlen(sysFipName) + 1);
 
     if (sysFipStr[0] == NULL) {
-        sprintf(info_string, "Unable to allocated %d bytes for 'sysFipStr[0]'",
+        sprintf(info_string, "Unable to allocated %zu bytes for 'sysFipStr[0]'",
                 strlen(sysFipName) + 1);
         xiaLogError("xia__AddSystemFiPPI", info_string, XIA_NOMEM);
         return XIA_NOMEM;

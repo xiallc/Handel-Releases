@@ -22,6 +22,7 @@
 
 #include "handel.h"
 #include "handel_errors.h"
+#include "handel_constants.h"
 #include "md_generic.h"
 
 
@@ -33,8 +34,11 @@ static void setup_logging(char *log_name);
 static void clean_up();
 static void INThandler(int sig);
 static double get_time();
+static void check_microdxp_sca_features();
 
 unsigned long *mca = NULL;
+double *sca = NULL;
+
 boolean_t stop = FALSE_;
 
 int main(int argc, char *argv[])
@@ -49,7 +53,12 @@ int main(int argc, char *argv[])
 
     double test_time;
     double mca_length;
+
+    unsigned long snapshot_sca_length;
     unsigned long mca_lengths[3] = {1024, 2048, 4096};
+
+    double sca_length = 2;
+    double sca_limit = 0;
 
     if (argc < 2) {
         print_usage();
@@ -63,10 +72,24 @@ int main(int argc, char *argv[])
 
     printf("Test started. Press CTRL+C to stop.\n");
 
+    check_microdxp_sca_features();
+
+    status = xiaSetAcquisitionValues(-1, "number_of_scas", &sca_length);
+    CHECK_ERROR(status);
+
+    status = xiaGetSpecialRunData(0, "snapshot_sca_length", &snapshot_sca_length);
+    CHECK_ERROR(status);
+
+    printf("\r\nsnapshot_sca_length = %ul", snapshot_sca_length);
+
+    sca = malloc((int)snapshot_sca_length * sizeof(double));
+    if (!sca) clean_up();
+
     for (i = 0; i < 3; i++)
     {
         mca_length = mca_lengths[i];
         status = xiaSetAcquisitionValues(-1, "number_mca_channels", &mca_length);
+        CHECK_ERROR(status);
 
         printf("\r\nmca_length = %.0f\r\n", mca_length);
 
@@ -74,8 +97,19 @@ int main(int argc, char *argv[])
 
         if (mca) free(mca);
         mca = malloc(mca_lengths[i] * sizeof(unsigned long));
-
         if (!mca) clean_up();
+
+        /* Set two SCA regions splitting the entire spectrum */
+        sca_limit = 0;
+        status = xiaSetAcquisitionValues(-1, "scalo_0", &sca_limit);
+
+        sca_limit = (int)(mca_length / 2);
+        status = xiaSetAcquisitionValues(-1, "scahi_0", &sca_limit);
+
+        sca_limit++;
+        status = xiaSetAcquisitionValues(-1, "scalo_1", &sca_limit);
+
+        status = xiaSetAcquisitionValues(-1, "scahi_1", &mca_length);
 
         /* start a run and take snapshots */
         status = xiaStartRun(-1, 0);
@@ -100,6 +134,17 @@ int main(int argc, char *argv[])
         CHECK_ERROR(status);
 
         printf("read snapshot statistics elapsed %.6fs\r\n", get_time() - test_time);
+        test_time = get_time();
+
+        status = xiaGetSpecialRunData(0, "snapshot_sca", sca);
+        printf("read snapshot sca elapsed %.6fs\r\n", get_time() - test_time);
+
+        if (status != XIA_NOSUPPORT_VALUE){
+            CHECK_ERROR(status);
+            printf("sca[0] = %.0f\r\n", sca[0]);
+            printf("sca[1] = %.0f\r\n", sca[1]);
+        }
+
 
         mca_total = 0;
         for (j = 0; j < mca_length; j++) {
@@ -107,6 +152,7 @@ int main(int argc, char *argv[])
         }
 
         printf("events = %.0f mca_total = %lu\r\n", statistics[4], mca_total);
+
 
         status = xiaStopRun(-1);
         CHECK_ERROR(status);
@@ -154,6 +200,7 @@ static void clean_up()
     status = xiaCloseLog();
 
     if (mca) free(mca);
+    if (sca) free(sca);
 }
 
 
@@ -217,4 +264,38 @@ double get_time()
     gettimeofday(&t, &tzp);
     return t.tv_sec + t.tv_usec*1e-6;
 #endif
+}
+
+
+/*
+ * microDxp specific operation:
+ *
+ * Check to see if connected microDxp supports the snapshot features
+ * print a warning if not -- but continue with the operations with
+ * possible error results.
+ */
+static void check_microdxp_sca_features()
+{
+    int status;
+    unsigned long features;
+
+    char moduleType[200];
+
+    status = xiaGetModuleItem("module1", "module_type", (void *)moduleType);
+    CHECK_ERROR(status);
+
+    printf("-- Checking %s SCA features.\n", moduleType);
+
+    /* Only applicable to microDxp */
+    if (strcmp(moduleType,"udxp") != 0) return;
+
+    status = xiaBoardOperation(0, "get_board_features", &features);
+    CHECK_ERROR(status);
+
+    /* feature list constants in handel_constants.h */
+    printf(" Support for snapshot special run - [%s]\n",
+            (features & 1 << BOARD_SUPPORTS_SNAPSHOT) ? "YES" : "NO");
+
+    printf(" Support for snapshot SCA data readout, run data 'snapshot_sca' - [%s]\n",
+            (features & 1 << BOARD_SUPPORTS_SNAPSHOTSCA) ? "YES" : "NO");
 }

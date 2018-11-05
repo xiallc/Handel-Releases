@@ -74,6 +74,10 @@ static int writeInterface(FILE *fp, Module *m);
 
 static char line[XIA_LINE_LEN];
 
+HANDEL_STATIC int HANDEL_API xiaGetLine_N(FILE *fp, char *lline, int len);
+HANDEL_STATIC int HANDEL_API xiaGetLine(FILE *fp, char *line);
+
+
 /* GLOBAL Variables */
 static InterfaceWriters_t INTERFACE_WRITERS[] = {
     /* Sentinel */
@@ -95,11 +99,10 @@ SectionInfo sectionInfo[] =
     {xiaLoadModule,   "module definitions"}
 };
 
-
 HANDEL_EXPORT int HANDEL_API xiaLoadSystem(char *type, char *filename)
 {
     int status;
-    
+
     if (type == NULL) {
         xiaLogError("xiaLoadSystem", ".INI file 'type' string is NULL",
                     XIA_NULL_TYPE);
@@ -386,7 +389,7 @@ HANDEL_SHARED int HANDEL_API xiaReadIniFile(char *inifile)
     fpos_t local_end;
 
     char xiaini[8] = "xia.ini";
-    
+
     /* Check if an .INI file was specified */
     if (inifile == NULL) {
         inifile = xiaini;
@@ -617,33 +620,61 @@ HANDEL_STATIC int HANDEL_API xiaGetLineData(char *lline, char *name, char *value
     return status;
 }
 
-/*
- * Gets the first line with text after the current file position.
- */
 HANDEL_STATIC int HANDEL_API xiaGetLine(FILE *fp, char *lline)
 {
-    int status = XIA_SUCCESS;
+    return xiaGetLine_N(fp, lline, XIA_LINE_LEN);
+}
+
+/*
+ * Gets the first line with text after the current file position.
+ *
+ * If the line is longer than llen, the file position is scanned to
+ * the start of the next line.
+ */
+HANDEL_STATIC int HANDEL_API xiaGetLine_N(FILE *fp, char *lline, int llen)
+{
     unsigned int j;
 
     char *cstatus;
 
-    /* Now fine the match to the section entry */
-    do
-    {
-        cstatus = handel_md_fgets(lline, XIA_LINE_LEN, fp);
+    do {
+        size_t len;
+        char extra[8193];
+
+        cstatus = handel_md_fgets(lline, llen, fp);
 
         /* lline won't be overwritten in this case */
-        if (cstatus == NULL)
-        {
+        if (cstatus == NULL) {
             return XIA_EOF;
         }
 
+        /* If a partial line was read, flush the rest of that line so the next read
+         * gets a new line.
+         */
+        while ((len = strlen(cstatus)) > 0 &&
+               cstatus[len - 1] != '\r' && cstatus[len - 1] != '\n') {
+            cstatus = handel_md_fgets(extra, sizeof(extra) - 1, fp);
+
+            if (!cstatus) {
+                break;
+            }
+        }
+
+        len = strlen(lline);
+
+        /*
+         * Remove the new line character to keep the log file output from
+         * containing the extra white space.
+         */
+        if (len > 1 && lline[len - 2] == '\n')
+            lline[len - 2] = '\0';
+        if (len > 0 && lline[len - 1] == '\n')
+            lline[len - 1] = '\0';
+
         /* Check for any alphanumeric character in the line */
-        for (j = 0; j < (unsigned int)strlen(lline); j++)
-        {
-            if (isgraph(CTYPE_CHAR(lline[j])))
-            {
-                return status;
+        for (j = 0; j < (unsigned int)len; j++) {
+            if (isgraph(CTYPE_CHAR(lline[j]))) {
+                return XIA_SUCCESS;
             }
         }
     } while (cstatus != NULL);
@@ -2074,7 +2105,7 @@ static int writeInterface(FILE *fp, Module *module)
 
     ASSERT(fp != NULL);
     ASSERT(module != NULL);
-        
+
     for (i = 0; i < (int)N_ELEMS(INTERFACE_WRITERS); i++) {
         if (module->interface_info->type == INTERFACE_WRITERS[i].type) {
 
@@ -2166,7 +2197,7 @@ static int writeSerial(FILE *fp, Module *m)
     ASSERT(fp != NULL);
     ASSERT(m != NULL);
     ASSERT(m->interface_info->type == XIA_SERIAL);
-        
+
     fprintf(fp, "interface = serial\n");
     if (m->interface_info->info.serial->device_file) {
         fprintf(fp, "device_file = %s\n",
