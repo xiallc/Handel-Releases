@@ -1,7 +1,40 @@
+v1.2.24
+=======
+
+* [microDXP] Reset IDMA bus at initialization to clear up possible lockups after
+  previous connection was broken off unexpectedly.
+
+* [microDXP] Updated logging on start up.
+
+
+v1.2.23
+=======
+
+* [microDXP] Added run data energy_livetime and corresponding entry in
+  module_statistics_2.
+
+* Fixed issues with example code building in Linux. Removed unused code and use
+  platform specific system calls for sleep operation.
+
+* Added logging entries in handel log for USB error codes.
+
+* [microDXP] Fixed error in setting acquistion value "preset_type" for Rev G
+  boards.
+
+* [microDXP] Fixed passthrough command capabilities check, return error
+  XIA_PASSTHROUGH if passthrough is not supported.
+
+* Attempt to clear USB2 send buffer after connection in case stale data were
+  left in the buffer after previous connection was broken off, e.g.
+  when user press CTRL+C to end a program during active communiction, in some
+  cases this had caused a device to appear locked up, and required a power
+  cycle.
+
+
 v1.2.22
 =======
 
-* [microDxp] Added run data snapshot_sca and snapshot_sca_length. Support can be
+* [microDXP] Added run data snapshot_sca and snapshot_sca_length. Support can be
   determined by checking BOARD_SUPPORTS_SNAPSHOTSCA bit in get_board_features
   board operation. See handel_constants.h for a list of board features.
 

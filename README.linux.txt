@@ -23,15 +23,15 @@ scons dev setup
 Note: from the source distribution, move src/main.scons to the root of the
 package.
 
-# python
+# Python
 sudo apt-get install python2.7 python2.7-dev
-cd /tmp && wget https://bootstrap.pypa.io/ez_setup.py -O - | sudo python
-sudo easy_install pyyaml
+sudo pip install pyyaml
 
-# scons--recent versions like 2.4.0 and 2.3.6 work fine
-wget http://prdownloads.sourceforge.net/scons/scons-2.4.0.tar.gz
-tar xvzf scons-2.4.0.tar.gz
-pushd scons-2.4.0
+# scons 2.x. It may work installed from pip on some systems, but
+# we have to install from source to get the paths to work.
+wget https://github.com/SCons/scons/archive/2.5.0.tar.gz
+tar xvzf scons-2.5.0.tar.gz
+pushd scons-2.5.0
 sudo python setup.py install --standard-lib
 popd
 export SCONS_DIR=/usr/local/lib/python2.7/dist-packages/SCons

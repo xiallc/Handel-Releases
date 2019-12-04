@@ -16,7 +16,10 @@
 /* For Sleep() */
 #ifdef _WIN32
 #include <windows.h>
-#endif /* _WIN32 */
+#else
+#include <time.h>
+#endif
+
 
 #include "handel.h"
 #include "handel_errors.h"
@@ -26,7 +29,8 @@
 
 static void print_usage(void);
 static void CHECK_ERROR(int status);
-static void do_run(unsigned long runtime_ms);
+static void do_run(double runtime_ms);
+static void SLEEP(double time_seconds);
 
 static void check_microdxp_sca_features();
 
@@ -34,20 +38,20 @@ static void check_microdxp_sca_features();
 int main(int argc, char *argv[])
 {
   int status;
-  int i;
+  unsigned short i;
   int ignored = 0;
   
   /* SCA Settings. sca_values must match number_scas */
   double number_scas = 4.0;
   double sca_values[4];
     
-  unsigned long runtime = 1000;
+  double runtime = 1.0;
   
   double sca_bound = 0.0;
   double sca_size = 0.0;
   double number_mca_channels = 0.0;
   
-  char scaStr[8];
+  char scaStr[9];
   
   if (argc < 2) {
       print_usage();
@@ -85,7 +89,7 @@ int main(int argc, char *argv[])
   
   /* Set the individual SCA limits */  
   for (i = 0; i < (unsigned short)number_scas; i++) {
-    sprintf(scaStr, "sca%d_lo", i);
+    sprintf(scaStr, "sca%hhu_lo", (byte_t)i);
  
     status = xiaSetAcquisitionValues(0, scaStr, (void *)&sca_bound);
     CHECK_ERROR(status);
@@ -93,7 +97,7 @@ int main(int argc, char *argv[])
     printf("  %0.0f,", sca_bound);
     sca_bound += sca_size;
 
-    sprintf(scaStr, "sca%d_hi", i);
+    sprintf(scaStr, "sca%hhu_hi", (byte_t)i);
     status = xiaSetAcquisitionValues(0, scaStr, (void *)&sca_bound);
     CHECK_ERROR(status);
     
@@ -177,7 +181,7 @@ static void print_usage(void)
     fprintf(stdout, "Arguments: [.ini file]\n");
 }
 
-static void do_run(unsigned long runtime_ms)
+static void do_run(double runtime)
 {
   int status;
    
@@ -186,13 +190,34 @@ static void do_run(unsigned long runtime_ms)
   status = xiaStartRun(0, 0);
   CHECK_ERROR(status);
 
-#ifdef _WIN32
-  printf("-- Waiting %lums\n", runtime_ms);
-  Sleep((DWORD)runtime_ms);
-#endif /* _WIN32 */
-
+  printf("-- Waiting %0.2f\n", runtime);
+  SLEEP(runtime);
+  
   printf("-- Stopping run\n");
   status = xiaStopRun(0);
   CHECK_ERROR(status);
  
+}
+
+static void SLEEP(double time_seconds)
+{
+#if _WIN32
+    DWORD wait = (DWORD)(1000.0 * time_seconds);
+    Sleep(wait);
+#else
+    unsigned long secs = (unsigned long)time_seconds;
+    struct timespec req = {
+        .tv_sec = secs,
+        .tv_nsec = ((time_seconds - secs) * 1000000000.0)
+    };
+    struct timespec rem = {
+        .tv_sec = 0,
+        .tv_nsec = 0
+    };
+    while (TRUE_) {
+        if (nanosleep(&req, &rem) == 0)
+        break;
+        req = rem;
+    }
+#endif
 }

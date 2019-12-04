@@ -37,10 +37,10 @@ print 'building to', base_env.Dir('$DESTINATION_ROOT')
 # Add external folders as Repository resource
 base_env.Dir('redist').addRepository(base_env.Dir('../redist'))
 
-# Add defines on the command line, e.g. define=XERXES_TRACE_IO
+# Add defines on the command line, e.g. cppdefine=XERXES_TRACE_IO
 cppdefines = []
 for key, value in ARGLIST:
-    if key == 'define':
+    if key == 'cppdefine':
         cppdefines.append(value)
 base_env.Append(CPPDEFINES=cppdefines)
 
@@ -162,6 +162,7 @@ linux_env['STATIC_AND_SHARED_OBJECTS_ARE_THE_SAME']=1
 
 linux_env.Append(CCFLAGS=['-pipe', '-fPIC', '-Wall'])
 linux_env.Append(CCFLAGS_DEBUG=['-g', '-O0'])
+linux_env.Append(LINKFLAGS=['-Wl,--no-undefined'])
 
 if base_env.Bit('x64'):
     linux_dbg_env = linux_env.Clone(

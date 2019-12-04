@@ -15,7 +15,9 @@
 /* For Sleep() */
 #ifdef _WIN32
 #include <windows.h>
-#endif /* _WIN32 */
+#else
+#include <time.h>
+#endif
 
 #include "handel.h"
 #include "handel_errors.h"

@@ -9,10 +9,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
+#ifdef _WIN32
 #pragma warning(disable : 4115)
 
 /* For Sleep() */
 #include <windows.h>
+#else
+#include <time.h>
+#endif
 
 #include "handel.h"
 #include "handel_errors.h"
@@ -20,6 +25,7 @@
 
 static void CHECK_ERROR(int status);
 static void CHECK_MEM(void *mem);
+static void SLEEP(double time_seconds);
 static void print_usage(void);
 
 
@@ -36,27 +42,27 @@ int main(int argc, char *argv[])
   double gain     = 4.077;
   double currentGENSET;
   double currentPARSET;
-  
+
   unsigned short GENSET;
   unsigned short PARSET;
-  
+
   unsigned short numberPeakingTimes = 0;
   unsigned short numberFippis = 0;
-  
+
   unsigned long mcaLen = 0;
 
   unsigned long *mca = NULL;
-  
+
   double *peakingTimes = NULL;
-  
+
   if (argc < 2) {
       print_usage();
       exit(1);
   }
-    
+
   /* Setup logging here */
   printf("Configuring the Handel log file.\n");
-  xiaSetLogLevel(MD_WARNING);
+  xiaSetLogLevel(MD_DEBUG);
   xiaSetLogOutput("handel.log");
 
   printf("Loading the .ini file.\n");
@@ -71,7 +77,7 @@ int main(int argc, char *argv[])
   /* Modify some acquisition values */
   status = xiaSetAcquisitionValues(0, "number_mca_channels", &nMCA);
   CHECK_ERROR(status);
-    
+
   status = xiaSetAcquisitionValues(0, "trigger_threshold", &thresh);
   CHECK_ERROR(status);
 
@@ -80,10 +86,10 @@ int main(int argc, char *argv[])
 
   status = xiaSetAcquisitionValues(0, "gain", &gain);
   CHECK_ERROR(status);
-  
+
   /* Apply changes to parameters */
   status = xiaBoardOperation(0, "apply", (void *)&ignored);
-  
+
   /* Save the settings to the current GENSET and PARSET */
   status = xiaGetAcquisitionValues(0, "genset", &currentGENSET);
   CHECK_ERROR(status);
@@ -103,10 +109,10 @@ int main(int argc, char *argv[])
   /* Read out number of peaking times to pre-allocate peaking time array */
   status = xiaBoardOperation(0, "get_number_pt_per_fippi", &numberPeakingTimes);
   CHECK_ERROR(status);
-  
+
   peakingTimes = (double *)malloc(numberPeakingTimes * sizeof(double));
   CHECK_MEM(peakingTimes);
-    
+
   status = xiaBoardOperation(0, "get_current_peaking_times", peakingTimes);
   CHECK_ERROR(status);
 
@@ -116,14 +122,14 @@ int main(int argc, char *argv[])
   }
 
   free(peakingTimes);
-  
+
   /* Read out number of fippis to pre-allocate peaking time array */
   status = xiaBoardOperation(0, "get_number_of_fippis", &numberFippis);
   CHECK_ERROR(status);
-  
+
   peakingTimes = (double *)malloc(numberPeakingTimes * numberFippis * sizeof(double));
   CHECK_MEM(peakingTimes);
-    
+
   status = xiaBoardOperation(0, "get_peaking_times", peakingTimes);
   CHECK_ERROR(status);
 
@@ -132,14 +138,14 @@ int main(int argc, char *argv[])
     printf("peaking time %d = %lf\n", i, peakingTimes[i]);
   }
 
-  free(peakingTimes);  
+  free(peakingTimes);
 
   /* Start a run w/ the MCA cleared */
   status = xiaStartRun(0, 0);
   CHECK_ERROR(status);
 
   printf("Started run. Sleeping...\n");
-  Sleep((DWORD)1000);
+  SLEEP(1);
 
   status = xiaStopRun(0);
   CHECK_ERROR(status);
@@ -147,7 +153,7 @@ int main(int argc, char *argv[])
   /* Prepare to read out MCA spectrum */
   status = xiaGetRunData(0, "mca_length", &mcaLen);
   CHECK_ERROR(status);
-  
+
   if (mcaLen > 0)
   {
     printf("Got run data\n");
@@ -158,7 +164,7 @@ int main(int argc, char *argv[])
    */
   mca = (unsigned long *)malloc(mcaLen * sizeof(unsigned long));
   CHECK_MEM(mca);
-    
+
   status = xiaGetRunData(0, "mca", (void *)mca);
   CHECK_ERROR(status);
 
@@ -167,7 +173,7 @@ int main(int argc, char *argv[])
   xiaSetIOPriority(MD_IO_PRI_NORMAL);
 
   free(mca);
-  
+
   status = xiaExit();
   CHECK_ERROR(status);
   xiaCloseLog();
@@ -198,10 +204,31 @@ static void CHECK_MEM(void *mem)
   }
 }
 
+static void SLEEP(double time_seconds)
+{
+#if _WIN32
+    DWORD wait = (DWORD)(1000.0 * time_seconds);
+    Sleep(wait);
+#else
+    unsigned long secs = (unsigned long)time_seconds;
+    struct timespec req = {
+        .tv_sec = secs,
+        .tv_nsec = ((time_seconds - secs) * 1000000000.0)
+    };
+    struct timespec rem = {
+        .tv_sec = 0,
+        .tv_nsec = 0
+    };
+    while (TRUE_) {
+        if (nanosleep(&req, &rem) == 0)
+        break;
+        req = rem;
+    }
+#endif
+}
 
 static void print_usage(void)
 {
     fprintf(stdout, "Arguments: [.ini file]]\n");
     return;
 }
-

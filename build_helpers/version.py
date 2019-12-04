@@ -3,34 +3,34 @@
 # Copyright (c) 2009 XIA LLC
 # All rights reserved.
 #
-# Redistribution and use in source and binary forms, 
-# with or without modification, are permitted provided 
+# Redistribution and use in source and binary forms,
+# with or without modification, are permitted provided
 # that the following conditions are met:
 #
-#   * Redistributions of source code must retain the above 
-#     copyright notice, this list of conditions and the 
+#   * Redistributions of source code must retain the above
+#     copyright notice, this list of conditions and the
 #     following disclaimer.
-#   * Redistributions in binary form must reproduce the 
-#     above copyright notice, this list of conditions and the 
-#     following disclaimer in the documentation and/or other 
+#   * Redistributions in binary form must reproduce the
+#     above copyright notice, this list of conditions and the
+#     following disclaimer in the documentation and/or other
 #     materials provided with the distribution.
-#   * Neither the name of X-ray Instrumentation Associates 
-#     nor the names of its contributors may be used to endorse 
-#     or promote products derived from this software without 
+#   * Neither the name of X-ray Instrumentation Associates
+#     nor the names of its contributors may be used to endorse
+#     or promote products derived from this software without
 #     specific prior written permission.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND 
-# CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-# INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
-# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-# IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE 
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
-# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
-# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR 
-# TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF 
-# THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+# CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+# INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+# TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+# THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
 # Helper routines to generate the version header for Handel.
@@ -49,22 +49,22 @@ def generate(target, source, env):
     Generates a version header file suitable for use with Handel. env should
     contain a path to the version metadata (in YAML format) at the key
     'version_metadata'.
-    """  
+    """
     version = None
     with open(str(source[0]), 'r') as f:
-        version = yaml.load(f)    
-    
+        version = yaml.safe_load(f)
+
     assert(version != None)
-   
+
     hgstring = None
     if os.path.isfile(str(source[1])) :
         with open(str(source[1]), 'r') as f:
-            hgstring = yaml.load(f)['versionstring']
-    
+            hgstring = yaml.safe_load(f)['versionstring']
+
     assert(hgstring != None)
-    
+
     save_file = str(target[0])
-    
+
     if 'xia_version.h' in save_file:
         write_version_h(save_file, version, hgstring)
     elif 'handel.rc' in save_file:
@@ -76,21 +76,21 @@ def generate(target, source, env):
 
 def get_hg_changeset():
     return subprocess.check_output(['hg', 'par', '--template', '{node|short}'])
-    
-    
+
+
 def write_handel_rc(file, version, hgstring, build_options):
     version_cs = "%s,%s,%s" % (version['major'], version['minor'], version['revision'])
     if hgstring != "":
         version_ps = "%s.%s.%s - %s" % (version['major'], version['minor'], version['revision'], hgstring)
     else:
         version_ps = "%s.%s.%s" % (version['major'], version['minor'], version['revision'])
-    
+
     with open(file, 'w') as f:
 
         f.write("#define HANDEL_FILEVERSION %s\n" % version_cs)
         f.write("#define HANDEL_PRODUCTVERSION_STRING \"%s\"\n" % version_ps)
         f.write("#define HANDEL_BUILD_OPTIONS \"Build options: %s\"\n" % build_options)
-        
+
         f.write("""#include <windows.h>
 
 // DLL version information.
@@ -111,7 +111,7 @@ BEGIN
   BEGIN
     BLOCK "040904b0"
     BEGIN
-      VALUE "Comments",         HANDEL_BUILD_OPTIONS	
+      VALUE "Comments",         HANDEL_BUILD_OPTIONS
       VALUE "CompanyName",      "XIA LLC"
       VALUE "FileDescription",  "Handel API library for XIA DXP hardware"
       VALUE "InternalName",     "Handel"
@@ -152,37 +152,37 @@ def write_version_h(file, version, hgstring):
         f.write("\n")
         f.write("#endif /* __XIA_VERSION_H__ */\n")
         f.write("\n")
-    
-        
+
+
 def update_hg_changeset(version_yml, hg_yml):
     """
     Update the mercurial changeset in the hg_yml file, add an optional
     version string tag from "string" field in version_yml, this will
     trigger a rebuild if changeset was updated
-    """    
+    """
     if os.path.isfile(version_yml) :
         with open(version_yml, 'r') as f:
-            version = yaml.load(f)
-    
+            version = yaml.safe_load(f)
+
     versionstring = version.get('string', "")
-    
+
     if versionstring != "":
         versionstring += (" " + get_hg_changeset())
     else:
         versionstring = get_hg_changeset()
-        
+
     set_version_string(hg_yml, versionstring)
-            
+
 def set_version_string(hg_yml, newstring):
 
     hgstring = {'versionstring':""}
 
     if os.path.isfile(hg_yml) :
         with open(hg_yml, 'r') as f:
-            hgstring = yaml.load(f)
-    
-    versionstring = hgstring.get('versionstring',"") 
-            
+            hgstring = yaml.safe_load(f)
+
+    versionstring = hgstring.get('versionstring',"")
+
     if versionstring != newstring:
         hgstring['versionstring'] =  newstring
         with open(hg_yml, 'w') as f:

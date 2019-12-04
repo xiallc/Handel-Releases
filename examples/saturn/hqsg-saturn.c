@@ -6,7 +6,6 @@
  *               2005-2009, XIA LLC
  * All rights reserved
  *
- * $Id$
  *
  */
 
@@ -17,7 +16,9 @@
 /* For Sleep() */
 #ifdef _WIN32
 #include <windows.h>
-#endif /* _WIN32 */
+#else
+#include <time.h>
+#endif
 
 #include "handel.h"
 #include "handel_errors.h"
@@ -25,6 +26,7 @@
 
 static void print_usage(void);
 static void CHECK_ERROR(int status);
+static void SLEEP(double time_seconds);
 
 int main(int argc, char *argv[])
 {
@@ -46,7 +48,7 @@ int main(int argc, char *argv[])
 
   char scaStr[80];
 
-  unsigned long runtime = 1000;
+  double runtime = 1.0;
   unsigned long mcaLen = 0;
   unsigned long *mca = NULL;
 
@@ -61,7 +63,7 @@ int main(int argc, char *argv[])
   CHECK_ERROR(status);
 
   /* Setup logging here */
-  xiaSetLogLevel(MD_ERROR);
+  xiaSetLogLevel(MD_DEBUG);
   xiaSetLogOutput("errors.log");
 
   printf("-- Starting The System\n");
@@ -101,10 +103,8 @@ int main(int argc, char *argv[])
   status = xiaStartRun(0, 0);
   CHECK_ERROR(status);
 
-#ifdef _WIN32
-  printf("-- Waiting %lums\n", runtime);
-  Sleep((DWORD)runtime);
-#endif /* _WIN32 */
+  printf("-- Waiting %0.2f\n", runtime);
+  SLEEP(runtime);
 
   printf("-- Stopping a run\n");
   status = xiaStopRun(0);
@@ -170,3 +170,25 @@ static void print_usage(void)
 }
 
 
+static void SLEEP(double time_seconds)
+{
+#if _WIN32
+    DWORD wait = (DWORD)(1000.0 * time_seconds);
+    Sleep(wait);
+#else
+    unsigned long secs = (unsigned long)time_seconds;
+    struct timespec req = {
+        .tv_sec = secs,
+        .tv_nsec = ((time_seconds - secs) * 1000000000.0)
+    };
+    struct timespec rem = {
+        .tv_sec = 0,
+        .tv_nsec = 0
+    };
+    while (TRUE_) {
+        if (nanosleep(&req, &rem) == 0)
+        break;
+        req = rem;
+    }
+#endif
+}

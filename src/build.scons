@@ -4,6 +4,7 @@ import build_helpers.version
 Import('env')
 
 win = env.Bit('windows')
+linux = env.Bit('linux')
 
 def do_stdcall_and_cdecl_lib(name, lib_inputs, stdcall_defines,
                              other_inputs=None, other_defines=None,
@@ -49,6 +50,10 @@ def do_stdcall_and_cdecl_lib(name, lib_inputs, stdcall_defines,
 assert_inputs = ['xia_assert.c']
 assert_obj = env.ComponentObject(assert_inputs)
 
+# Common logging library
+log_inputs = ['md_log.c']
+log_obj = env.ComponentObject(log_inputs)
+
 # Common file handle manager
 file_env = env.Clone()
 file_inputs = ['xia_file.c']
@@ -85,7 +90,7 @@ if env.Bit('usb2'):
         usb2_env.Append(LIBS=['libusb'])
         usb2_inputs = ['xia_usb_linux.c']
     for lib in do_stdcall_and_cdecl_lib('xia_usb2', usb2_inputs,
-                                        ['WIN32_XIA_USB2_VBA'], assert_obj,
+                                        ['WIN32_XIA_USB2_VBA'], assert_obj + log_obj,
                                         lib_env=usb2_env):
         md_deps.append(lib)
 else:
@@ -133,11 +138,11 @@ else:
 
 
 # MD library
-md_inputs = ['md_log.c']
+md_inputs = []
 
 if win:
     md_inputs.append('md_win32.c')
-elif env.Bit('linux'):
+elif linux:
     md_inputs.append('md_linux.c')
 
 md_env = env.Clone()
@@ -145,7 +150,7 @@ md_env.Append(CPPDEFINES=md_defs)
 md_env.Append(LIBS=md_libs)
 if win:
     md_env.Append(LIBS=['user32'])
-md_lib = md_env.ComponentLibrary('md', md_inputs + assert_obj,
+md_lib = md_env.ComponentLibrary('md', md_inputs + assert_obj + log_obj,
                                  COMPONENT_STATIC=True,
                                  COMPONENT_LIBRARY_PUBLISH=True)
 md_env.Depends(md_lib, md_deps)
@@ -246,12 +251,19 @@ for p in projects:
 handel_env = env.Clone()
 handel_env.Append(CPPDEFINES=['HANDEL_MAKE_DLL', 'HANDEL_USE_DLL'] +
                   xerxes_handel_defs)
-if win:
-    handel_env.Append(LIBS=['user32'])
 handel_env.Append(LIBS=xerxes_libs)
 handel_env.Append(LIBS=handel_libs)
 handel_env.Append(LIBS=md_libs)
 handel_env.Append(LIBS=device_libs) # static device libs must come after xerxes on linux!
+
+# Add platform libraries. It would be preferable to add this at the
+# platform level in main.scons, but there doesn't seem to be a built
+# in way to make them last on the link command line as required for
+# libm on Linux.
+if win:
+    handel_env.Append(LIBS=['user32'])
+else:
+    handel_env.Append(LIBS=['m'])
 
 handel_inputs = handel_env.Glob('handel*.c')
 

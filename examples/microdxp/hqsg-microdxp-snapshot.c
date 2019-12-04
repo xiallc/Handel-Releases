@@ -16,6 +16,7 @@
 /* For Sleep() */
 #include <windows.h>
 #else
+#include <time.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #endif
@@ -27,7 +28,7 @@
 
 
 static void CHECK_ERROR(int status);
-static int MS_SLEEP(float *time);
+static void SLEEP(double time_seconds);
 static void print_usage(void);
 static void start_system(char *ini_file);
 static void setup_logging(char *log_name);
@@ -47,7 +48,7 @@ int main(int argc, char *argv[])
     unsigned int i, j;
     unsigned long mca_total;
 
-    float sleep = 0.5;
+    double sleep = 0.5;
     double clearspectrum[1] = {0.};
     double statistics[9];
 
@@ -80,7 +81,7 @@ int main(int argc, char *argv[])
     status = xiaGetSpecialRunData(0, "snapshot_sca_length", &snapshot_sca_length);
     CHECK_ERROR(status);
 
-    printf("\r\nsnapshot_sca_length = %ul", snapshot_sca_length);
+    printf("\r\nsnapshot_sca_length = %lu", snapshot_sca_length);
 
     sca = malloc((int)snapshot_sca_length * sizeof(double));
     if (!sca) clean_up();
@@ -101,21 +102,25 @@ int main(int argc, char *argv[])
 
         /* Set two SCA regions splitting the entire spectrum */
         sca_limit = 0;
-        status = xiaSetAcquisitionValues(-1, "scalo_0", &sca_limit);
+        status = xiaSetAcquisitionValues(-1, "sca0_lo", &sca_limit);
+        CHECK_ERROR(status);
 
         sca_limit = (int)(mca_length / 2);
-        status = xiaSetAcquisitionValues(-1, "scahi_0", &sca_limit);
+        status = xiaSetAcquisitionValues(-1, "sca0_hi", &sca_limit);
+        CHECK_ERROR(status);
 
         sca_limit++;
-        status = xiaSetAcquisitionValues(-1, "scalo_1", &sca_limit);
+        status = xiaSetAcquisitionValues(-1, "sca1_lo", &sca_limit);
+        CHECK_ERROR(status);
 
-        status = xiaSetAcquisitionValues(-1, "scahi_1", &mca_length);
+        status = xiaSetAcquisitionValues(-1, "sca1_hi", &mca_length);
+        CHECK_ERROR(status);
 
         /* start a run and take snapshots */
         status = xiaStartRun(-1, 0);
         CHECK_ERROR(status);
 
-        MS_SLEEP(&sleep);
+        SLEEP(sleep);
 
         test_time = get_time();
         status = xiaDoSpecialRun(0, "snapshot", &clearspectrum);
@@ -191,13 +196,11 @@ static void setup_logging(char *log_name)
 
 static void clean_up()
 {
-    int status;
-
     printf("\nCleaning up Handel.\n");
-    status = xiaExit();
+    xiaExit();
 
     printf("Closing the Handel log file.\n");
-    status = xiaCloseLog();
+    xiaCloseLog();
 
     if (mca) free(mca);
     if (sca) free(sca);
@@ -227,16 +230,16 @@ static void print_usage(void)
     return;
 }
 
-static int MS_SLEEP(float *time)
+static void SLEEP(double time_seconds)
 {
 #if _WIN32
-    DWORD wait = (DWORD)(1000.0 * (*time));
+    DWORD wait = (DWORD)(1000.0 * time_seconds);
     Sleep(wait);
 #else
-    unsigned long secs = (unsigned long) *time;
+    unsigned long secs = (unsigned long)time_seconds;
     struct timespec req = {
         .tv_sec = secs,
-        .tv_nsec = ((*time - secs) * 1000000000.0)
+        .tv_nsec = ((time_seconds - secs) * 1000000000.0)
     };
     struct timespec rem = {
         .tv_sec = 0,
@@ -244,11 +247,10 @@ static int MS_SLEEP(float *time)
     };
     while (TRUE_) {
         if (nanosleep(&req, &rem) == 0)
-            break;
+        break;
         req = rem;
     }
 #endif
-    return XIA_SUCCESS;
 }
 
 double get_time()
