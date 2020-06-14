@@ -345,7 +345,7 @@ XIA_EXPORT int XIA_API xia_usb_read(long address, long nWords, char *device, uns
 
     rv = usb_bulk_write(xia_usb_handle, OUT1 | USB_ENDPOINT_OUT, (char*)ctrlBuffer, CTRL_SIZE, XIA_USB2_TIMEOUT);
     if (rv != CTRL_SIZE) {
-        sprintf(info_string, "usb_bulk_read returned %d should be %d", rv, CTRL_SIZE);
+        sprintf(info_string, "usb_bulk_write returned %d should be %d", rv, CTRL_SIZE);
         dxp_md_log_error("xia_usb_read", info_string, XIA_MD);
         return 14;
     }

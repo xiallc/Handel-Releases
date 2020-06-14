@@ -1,3 +1,22 @@
+v1.2.25
+=======
+
+* Instead of returning a generic XIA_XERXES (402) error code for I/O, firmware
+  error, Handel API now will return errors defined in xerxes_error.h. A new API
+  function xiaGetErrorText has been added to return the text for each error
+  code.
+
+* Handel error code constants have been updated and reoganized to better define
+  the error.
+
+* [microDXP] Added a check to board status on startup, do not continue if board
+  if in an invalid state that requires power cycle.
+
+* [microDXP] Added a 10ms delay before reading response for Linux build, it
+  would match the command response timing in Windows, to fix a read error that
+  occurs in repeated command response loop under Linux.
+
+
 v1.2.24
 =======
 

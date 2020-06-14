@@ -1202,7 +1202,7 @@ PSL_STATIC int pslStartRun(int detChan, unsigned short resume,
                            XiaDefaults *defaults, Module *m)
 {
     int status;
-    int statusX;
+
 
     unsigned short ignored_gate   = 0;
 
@@ -1255,12 +1255,12 @@ PSL_STATIC int pslStartRun(int detChan, unsigned short resume,
         }
     }
 
-    statusX = dxp_start_one_run(&detChan, &ignored_gate, &resume);
+    status = dxp_start_one_run(&detChan, &ignored_gate, &resume);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error starting run on detChan = %d", detChan);
-        pslLogError("pslStartRun", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("pslStartRun", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -1273,17 +1273,17 @@ PSL_STATIC int pslStartRun(int detChan, unsigned short resume,
  */
 PSL_STATIC int pslStopRun(int detChan, Module *m)
 {
-    int statusX;
+    int status;
 
     UNUSED(m);
 
 
-    statusX = dxp_stop_one_run(&detChan);
+    status = dxp_stop_one_run(&detChan);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error stopping run on detChan = %d", detChan);
-        pslLogError("pslStopRun", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("pslStopRun", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -1458,19 +1458,19 @@ PSL_STATIC int pslGetDefaultAlias(char *alias, char **names, double *values)
 PSL_STATIC int pslGetParameter(int detChan, const char *name,
                                unsigned short *value)
 {
-    int statusX;
+    int status;
 
 
     ASSERT(name != NULL);
     ASSERT(value != NULL);
 
 
-    statusX = dxp_get_one_dspsymbol(&detChan, (char *)name, value);
+    status = dxp_get_one_dspsymbol(&detChan, (char *)name, value);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error reading '%s' for detChan %d", name, detChan);
-        pslLogError("pslGetParameter", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("pslGetParameter", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -1483,19 +1483,19 @@ PSL_STATIC int pslGetParameter(int detChan, const char *name,
 PSL_STATIC int pslSetParameter(int detChan, const char *name,
                                unsigned short value)
 {
-    int statusX;
+    int status;
 
 
     ASSERT(name != NULL);
 
 
-    statusX = dxp_set_one_dspsymbol(&detChan, (char *)name, &value);
+    status = dxp_set_one_dspsymbol(&detChan, (char *)name, &value);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error setting '%s' to %#hx for detChan %d",
                 name, value, detChan);
-        pslLogError("pslSetParameter", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("pslSetParameter", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -1639,18 +1639,18 @@ PSL_STATIC unsigned int pslGetNumDefaults(void)
  */
 PSL_STATIC int pslGetNumParams(int detChan, unsigned short *numParams)
 {
-    int statusX;
+    int status;
 
 
     ASSERT(numParams != NULL);
 
-    statusX = dxp_max_symbols(&detChan, numParams);
+    status = dxp_max_symbols(&detChan, numParams);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error getting the number of DSP parameters for "
                 "detChan %d", detChan);
-        pslLogError("pslGetNumParams", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("pslGetNumParams", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -1703,19 +1703,19 @@ PSL_STATIC int PSL_API pslGetParamData(int detChan, char *name, void *value)
  */
 PSL_STATIC int pslGetParamName(int detChan, unsigned short index, char *name)
 {
-    int statusX;
+    int status;
 
 
     ASSERT(name != NULL);
 
 
-    statusX = dxp_symbolname_by_index(&detChan, &index, name);
+    status = dxp_symbolname_by_index(&detChan, &index, name);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error getting parameter located at index %hu for "
                 "detChan %d", index, detChan);
-        pslLogError("pslGetParamName", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("pslGetParamName", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -1807,15 +1807,15 @@ PSL_STATIC int pslBoardOperation(int detChan, char *name, void *value,
  */
 PSL_STATIC int pslUnHook(int detChan)
 {
-    int statusX;
+    int status;
 
 
-    statusX = dxp_exit(&detChan);
+    status = dxp_exit(&detChan);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error shutting down detChan = %d", detChan);
-        pslLogError("pslUnHook", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("pslUnHook", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -1974,8 +1974,8 @@ PSL_STATIC int psl__GetADCTrace(int detChan, void *value, XiaDefaults *defs)
 
     if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error reading ADC trace data for detChan %d", detChan);
-        pslLogError("psl__GetADCTrace", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__GetADCTrace", info_string, status);
+        return status;
     }
 
     status = dxp_stop_control_task(&detChan);
@@ -1983,8 +1983,8 @@ PSL_STATIC int psl__GetADCTrace(int detChan, void *value, XiaDefaults *defs)
     if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error stopping control task run on detChan %d",
                 detChan);
-        pslLogError("psl__GetADCTrace", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__GetADCTrace", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -2064,7 +2064,7 @@ PSL_STATIC int psl__DownloadFiPPIA(int detChan, char *file, char *rawFile,
                                    Module *m)
 {
     int status;
-    int statusX;
+
 
     unsigned int i;
     unsigned int modChan = 0;
@@ -2091,13 +2091,13 @@ PSL_STATIC int psl__DownloadFiPPIA(int detChan, char *file, char *rawFile,
         return XIA_SUCCESS;
     }
 
-    statusX = dxp_replace_fpgaconfig(&detChan, "a", file);
+    status = dxp_replace_fpgaconfig(&detChan, "a", file);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error switching to new FiPPI '%s' for detChan %d",
                 file, detChan);
-        pslLogError("psl__DownloadFiPPIA", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__DownloadFiPPIA", info_string, status);
+        return status;
     }
 
     /* Since we just downloaded the FiPPI for all 4 channels, set the current
@@ -2528,7 +2528,7 @@ PSL_STATIC int psl__UpdateGain(int detChan, int modChan, XiaDefaults *defs,
 PSL_STATIC int psl__Apply(int detChan, char *name, XiaDefaults *defs,
                           void *value)
 {
-    int statusX;
+    int status;
 
     short task = MERCURY_CT_APPLY;
 
@@ -2537,22 +2537,22 @@ PSL_STATIC int psl__Apply(int detChan, char *name, XiaDefaults *defs,
     UNUSED(value);
 
 
-    statusX = dxp_start_control_task(&detChan, &task, NULL, NULL);
+    status = dxp_start_control_task(&detChan, &task, NULL, NULL);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error starting 'apply' control task for detChan %d",
                 detChan);
-        pslLogError("psl__Apply", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__Apply", info_string, status);
+        return status;
     }
 
-    statusX = dxp_stop_control_task(&detChan);
+    status = dxp_stop_control_task(&detChan);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error stopping 'apply' control task for detChan %d",
                 detChan);
-        pslLogError("psl__Apply", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__Apply", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -2598,7 +2598,7 @@ PSL_STATIC int psl__DoADCTrace(int detChan, void *info, XiaDefaults *defs)
  */
 PSL_STATIC int psl__DoTrace(int detChan, short type, double *info)
 {
-    int statusX;
+    int status;
 
     unsigned int infoLen = 2;
 
@@ -2622,13 +2622,13 @@ PSL_STATIC int psl__DoTrace(int detChan, short type, double *info)
      */
     info[1] = ((double)intInfo[1] + 1.0) * tick;
 
-    statusX = dxp_start_control_task(&detChan, &type, &infoLen, &intInfo[0]);
+    status = dxp_start_control_task(&detChan, &type, &infoLen, &intInfo[0]);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error starting control task %hd for detChan %d",
                 type, detChan);
-        pslLogError("psl__DoTrace", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__DoTrace", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -2771,7 +2771,7 @@ PSL_STATIC int psl__DoEnergySamples(int detChan, void *value, XiaDefaults *defs)
 PSL_STATIC int psl__GetMCALength(int detChan, void *value, XiaDefaults *defs,
                                  Module *m)
 {
-    int statusX;
+    int status;
 
     unsigned int mcaLen = 0;
 
@@ -2782,13 +2782,13 @@ PSL_STATIC int psl__GetMCALength(int detChan, void *value, XiaDefaults *defs,
     ASSERT(value != NULL);
 
 
-    statusX = dxp_nspec(&detChan, &mcaLen);
+    status = dxp_nspec(&detChan, &mcaLen);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error getting spectrum length for detChan %d",
                 detChan);
-        pslLogError("pslGetMCALength", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("pslGetMCALength", info_string, status);
+        return status;
     }
 
     sprintf(info_string, "MCA length = %u", mcaLen);
@@ -2805,7 +2805,7 @@ PSL_STATIC int psl__GetMCALength(int detChan, void *value, XiaDefaults *defs,
  */
 PSL_STATIC int psl__GetMCA(int detChan, void *value, XiaDefaults *defs, Module *m)
 {
-    int statusX;
+    int status;
 
     UNUSED(defs);
     UNUSED(m);
@@ -2814,13 +2814,13 @@ PSL_STATIC int psl__GetMCA(int detChan, void *value, XiaDefaults *defs, Module *
     ASSERT(value != NULL);
 
 
-    statusX = dxp_readout_detector_run(&detChan, NULL, NULL,
+    status = dxp_readout_detector_run(&detChan, NULL, NULL,
                                        (unsigned long *)value);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error reading MCA spectrum for detChan %d", detChan);
-        pslLogError("psl__GetMCA", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__GetMCA", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -2832,7 +2832,7 @@ PSL_STATIC int psl__GetMCA(int detChan, void *value, XiaDefaults *defs, Module *
 PSL_STATIC int psl__GetBaselineLength(int detChan, void *value,
                                       XiaDefaults *defs, Module *m)
 {
-    int statusX;
+    int status;
 
     unsigned int len = 0;
 
@@ -2840,13 +2840,13 @@ PSL_STATIC int psl__GetBaselineLength(int detChan, void *value,
     UNUSED(m);
 
 
-    statusX = dxp_nbase(&detChan, &len);
+    status = dxp_nbase(&detChan, &len);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error getting baseline length for detChan %d",
                 detChan);
-        pslLogError("psl__GetBaselineLength", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__GetBaselineLength", info_string, status);
+        return status;
     }
 
     *((unsigned long *)value) = (unsigned long)len;
@@ -2860,7 +2860,7 @@ PSL_STATIC int psl__GetBaselineLength(int detChan, void *value,
 PSL_STATIC int psl__GetBaseline(int detChan, void *value, XiaDefaults *defs,
                                 Module *m)
 {
-    int statusX;
+    int status;
 
     unsigned long *base = (unsigned long *) value;
 
@@ -2871,13 +2871,13 @@ PSL_STATIC int psl__GetBaseline(int detChan, void *value, XiaDefaults *defs,
     ASSERT(value != NULL);
 
 
-    statusX = dxp_readout_detector_run(&detChan, NULL, base, NULL);
+    status = dxp_readout_detector_run(&detChan, NULL, base, NULL);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error reading baseline from Xerxes for detChan %d",
                 detChan);
-        pslLogError("psl__GetBaseline", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__GetBaseline", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -3622,7 +3622,7 @@ PSL_STATIC int psl__SetPresetValue(int detChan, int modChan, char *name, void *v
 PSL_STATIC int psl__GetRunActive(int detChan, void *value, XiaDefaults *defs,
                                  Module *m)
 {
-    int statusX;
+    int status;
     int active;
 
     UNUSED(m);
@@ -3632,12 +3632,12 @@ PSL_STATIC int psl__GetRunActive(int detChan, void *value, XiaDefaults *defs,
     ASSERT(value != NULL);
 
 
-    statusX = dxp_isrunning(&detChan, &active);
+    status = dxp_isrunning(&detChan, &active);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error getting run status for detChan %d", detChan);
-        pslLogError("psl__GetRunActive", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__GetRunActive", info_string, status);
+        return status;
     }
 
     *((unsigned long *)value) = (unsigned long)active;
@@ -4004,7 +4004,7 @@ PSL_STATIC int psl__GetELivetime(int detChan, void *value, XiaDefaults *defs,
  */
 PSL_STATIC int psl__GetStatisticsBlock(int detChan, unsigned long *stats)
 {
-    int statusX;
+    int status;
 
     char mem[MAXITEM_LEN];
 
@@ -4013,13 +4013,13 @@ PSL_STATIC int psl__GetStatisticsBlock(int detChan, unsigned long *stats)
 
     sprintf(mem, "burst:%#x:%d", 0x00, MERCURY_MEMORY_BLOCK_SIZE);
 
-    statusX = dxp_read_memory(&detChan, mem, stats);
+    status = dxp_read_memory(&detChan, mem, stats);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error burst reading statistics block for detChan %d",
                 detChan);
-        pslLogError("psl__GetStatisticsBlock", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__GetStatisticsBlock", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -4314,20 +4314,20 @@ PSL_STATIC int psl__ExtractUnderflows(int modChan, unsigned long *stats,
  */
 PSL_STATIC int psl__GetParamValues(int detChan, void *value)
 {
-    int statusX;
+    int status;
 
 
     ASSERT(value != NULL);
 
 
-    statusX = dxp_readout_detector_run(&detChan, (unsigned short *)value, NULL,
+    status = dxp_readout_detector_run(&detChan, (unsigned short *)value, NULL,
                                        NULL);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error getting DSP parameter values for detChan %d",
                 detChan);
-        pslLogError("psl__GetParamValues", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__GetParamValues", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -5454,7 +5454,7 @@ PSL_STATIC int psl__GetDSPName(int modChan, double pt, FirmwareSet *fs,
 PSL_STATIC int psl__DownloadFiPPIADSPNoWake(int detChan, char *file,
                                             char *rawFile, Module *m)
 {
-    int statusX;
+    int status;
 
     unsigned int i;
     unsigned int modChan = 0;
@@ -5471,13 +5471,13 @@ PSL_STATIC int psl__DownloadFiPPIADSPNoWake(int detChan, char *file,
         return XIA_SUCCESS;
     }
 
-    statusX = dxp_replace_fpgaconfig(&detChan, "a_dsp_no_wake", file);
+    status = dxp_replace_fpgaconfig(&detChan, "a_dsp_no_wake", file);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error switching to new FiPPI '%s' for detChan %d",
                 file, detChan);
-        pslLogError("psl__DownloadFiPPIA", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__DownloadFiPPIA", info_string, status);
+        return status;
     }
 
     /* Since we just downloaded the FiPPI for all 4 channels, set the current
@@ -5500,7 +5500,7 @@ PSL_STATIC int psl__DownloadFiPPIADSPNoWake(int detChan, char *file,
 PSL_STATIC int psl__DownloadDSP(int detChan, char *file, char *rawFile,
                                 Module *m)
 {
-    int statusX;
+    int status;
 
     unsigned int i;
     unsigned int modChan;
@@ -5513,13 +5513,13 @@ PSL_STATIC int psl__DownloadDSP(int detChan, char *file, char *rawFile,
     sprintf(info_string, "Changing DSP to '%s' for detChan %d", file, detChan);
     pslLogDebug("psl__DownloadDSP", info_string);
 
-    statusX = pslGetModChan(detChan, m, &modChan);
+    status = pslGetModChan(detChan, m, &modChan);
 
-    if (statusX != XIA_SUCCESS) {
+    if (status != XIA_SUCCESS) {
         sprintf(info_string, "Error getting module channel for detChan = %d",
                 detChan);
-        pslLogError("psl__DownloadDSP", info_string, statusX);
-        return statusX;
+        pslLogError("psl__DownloadDSP", info_string, status);
+        return status;
     }
 
     if (STREQ(rawFile, m->currentFirmware[modChan].currentDSP)) {
@@ -5529,13 +5529,13 @@ PSL_STATIC int psl__DownloadDSP(int detChan, char *file, char *rawFile,
         return XIA_SUCCESS;
     }
 
-    statusX = dxp_replace_dspconfig(&detChan, file);
+    status = dxp_replace_dspconfig(&detChan, file);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error downloading new DSP '%s' for detChan %d",
                 file, detChan);
-        pslLogError("psl__DownloadDSP", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__DownloadDSP", info_string, status);
+        return status;
     }
 
     /* Even though the xMAP only has a single DSP, we need to update the "DSP"
@@ -5553,27 +5553,27 @@ PSL_STATIC int psl__DownloadDSP(int detChan, char *file, char *rawFile,
  */
 PSL_STATIC int psl__WakeDSP(int detChan)
 {
-    int statusX;
+    int status;
 
     short task = MERCURY_CT_WAKE_DSP;
 
 
-    statusX = dxp_start_control_task(&detChan, &task, NULL, NULL);
+    status = dxp_start_control_task(&detChan, &task, NULL, NULL);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error starting control task to wake the DSP for "
                 "detChan %d", detChan);
-        pslLogError("psl__WakeDSP", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__WakeDSP", info_string, status);
+        return status;
     }
 
-    statusX = dxp_stop_control_task(&detChan);
+    status = dxp_stop_control_task(&detChan);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error stopping control task to wake the DSP for "
                 "detChan %d", detChan);
-        pslLogError("psl__WakeDSP", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__WakeDSP", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -5803,7 +5803,7 @@ PSL_STATIC int psl__GetBaseHistoryLen(int detChan, void *value, XiaDefaults *def
  */
 PSL_STATIC int psl__GetBaseHistory(int detChan, void *value, XiaDefaults *defs)
 {
-    int statusX;
+    int status;
 
     short type = MERCURY_CT_ADC;
 
@@ -5811,22 +5811,22 @@ PSL_STATIC int psl__GetBaseHistory(int detChan, void *value, XiaDefaults *defs)
 
     ASSERT(value != NULL);
 
-    statusX = dxp_get_control_task_data(&detChan, &type, value);
+    status = dxp_get_control_task_data(&detChan, &type, value);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error reading baseline history data for detChan %d",
                 detChan);
-        pslLogError("psl__GetBaseHistory", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__GetBaseHistory", info_string, status);
+        return status;
     }
 
-    statusX = dxp_stop_control_task(&detChan);
+    status = dxp_stop_control_task(&detChan);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error stopping control task run on detChan %d",
                 detChan);
-        pslLogError("psl__GetBaseHistory", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__GetBaseHistory", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -5990,7 +5990,7 @@ PSL_STATIC int psl__SetSCA(int detChan, int modChan, char *name,
                            Module *m, Detector *det, FirmwareSet *fs)
 {
     int status;
-    int statusX;
+
 
     unsigned short scaNum = 0;
 
@@ -6064,13 +6064,13 @@ PSL_STATIC int psl__SetSCA(int detChan, int modChan, char *name,
 
     sprintf(memory, "data:%#lx:1", addr);
 
-    statusX = dxp_write_memory(&detChan, memory, &data);
+    status = dxp_write_memory(&detChan, memory, &data);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error writing SCA limit (%lu) for detChan %d",
                 data, detChan);
-        pslLogError("psl__SetSCA", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__SetSCA", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -6130,7 +6130,7 @@ PSL_STATIC int psl__GetSCALength(int detChan, void *value, XiaDefaults *defs,
 PSL_STATIC int psl__GetSCAData(int detChan, void *value, XiaDefaults *defs,
                                Module *m)
 {
-    int status, statusX;
+    int status;
     int i;
     int j;
 
@@ -6202,14 +6202,14 @@ PSL_STATIC int psl__GetSCAData(int detChan, void *value, XiaDefaults *defs,
     }
 
     sprintf(memory, "burst:%#x:%u", addr, totalSCA);
-    statusX = dxp_read_memory(&detChan, memory, sca);
+    status = dxp_read_memory(&detChan, memory, sca);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         mercury_psl_md_free(sca);
         sprintf(info_string, "Error reading sca value from memory %s for detChan %d",
                 memory, detChan);
-        pslLogError("psl__GetSCAData", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__GetSCAData", info_string, status);
+        return status;
     }
 
     for (i = 0, j = 0; i < (int)nSCA * 2; i += 2, j++) {
@@ -6228,21 +6228,21 @@ PSL_STATIC int psl__GetSCAData(int detChan, void *value, XiaDefaults *defs,
 PSL_STATIC int psl__GetMCR(int detChan, char *name, XiaDefaults *defs,
                            void *value)
 {
-    int statusX;
+    int status;
 
     UNUSED(defs);
     UNUSED(name);
 
 
-    statusX = dxp_read_register(&detChan, "MCR", (unsigned long *)value);
+    status = dxp_read_register(&detChan, "MCR", (unsigned long *)value);
 
     sprintf(info_string, "MCR = %#lx", *((unsigned long *)value));
     pslLogDebug("psl__GetMCR", info_string);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error reading MCR for detChan %d", detChan);
-        pslLogError("psl__GetMCR", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__GetMCR", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -6255,21 +6255,21 @@ PSL_STATIC int psl__GetMCR(int detChan, char *name, XiaDefaults *defs,
 PSL_STATIC int psl__GetMFR(int detChan, char *name, XiaDefaults *defs,
                            void *value)
 {
-    int statusX;
+    int status;
 
     UNUSED(defs);
     UNUSED(name);
 
 
-    statusX = dxp_read_register(&detChan, "MFR", (unsigned long *)value);
+    status = dxp_read_register(&detChan, "MFR", (unsigned long *)value);
 
     sprintf(info_string, "MFR = %#lx", *((unsigned long *)value));
     pslLogDebug("psl__GetMFR", info_string);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error reading MFR for detChan %d", detChan);
-        pslLogError("psl__GetMFR", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__GetMFR", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -6283,21 +6283,21 @@ PSL_STATIC int psl__GetMFR(int detChan, char *name, XiaDefaults *defs,
 PSL_STATIC int psl__GetCSR(int detChan, char *name, XiaDefaults *defs,
                            void *value)
 {
-    int statusX;
+    int status;
 
     UNUSED(defs);
     UNUSED(name);
 
 
-    statusX = dxp_read_register(&detChan, "CSR", (unsigned long *)value);
+    status = dxp_read_register(&detChan, "CSR", (unsigned long *)value);
 
     sprintf(info_string, "CSR = %#lx", *((unsigned long *)value));
     pslLogDebug("psl__GetCSR", info_string);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error reading CSR for detChan %d", detChan);
-        pslLogError("psl__GetCSR", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__GetCSR", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -6310,7 +6310,7 @@ PSL_STATIC int psl__GetCSR(int detChan, char *name, XiaDefaults *defs,
 PSL_STATIC int psl__GetCVR(int detChan, char *name, XiaDefaults *defs,
                            void *value)
 {
-    int statusX;
+    int status;
 
     UNUSED(name);
     UNUSED(defs);
@@ -6319,12 +6319,12 @@ PSL_STATIC int psl__GetCVR(int detChan, char *name, XiaDefaults *defs,
     ASSERT(value != NULL);
 
 
-    statusX = dxp_read_register(&detChan, "CVR", (unsigned long *)value);
+    status = dxp_read_register(&detChan, "CVR", (unsigned long *)value);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error reading CVR for detChan %d", detChan);
-        pslLogError("psl__GetCVR", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__GetCVR", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -6337,7 +6337,7 @@ PSL_STATIC int psl__GetCVR(int detChan, char *name, XiaDefaults *defs,
 PSL_STATIC int psl__GetSVR(int detChan, char *name, XiaDefaults *defs,
                            void *value)
 {
-    int statusX;
+    int status;
 
     UNUSED(name);
     UNUSED(defs);
@@ -6346,12 +6346,12 @@ PSL_STATIC int psl__GetSVR(int detChan, char *name, XiaDefaults *defs,
     ASSERT(value != NULL);
 
 
-    statusX = dxp_read_register(&detChan, "SVR", (unsigned long *)value);
+    status = dxp_read_register(&detChan, "SVR", (unsigned long *)value);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error reading SVR for detChan %d", detChan);
-        pslLogError("psl__GetSVR", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__GetSVR", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -6364,17 +6364,17 @@ PSL_STATIC int psl__GetSVR(int detChan, char *name, XiaDefaults *defs,
  */
 PSL_STATIC int psl__IsMapping(int detChan, boolean_t *is_mapping)
 {
-    int statusX;
+    int status;
 
     boolean_t isMapping = FALSE_;
 
-    statusX = psl__CheckBit(detChan, "VAR", MERCURY_VAR_DAQ_MODE, &isMapping);
+    status = psl__CheckBit(detChan, "VAR", MERCURY_VAR_DAQ_MODE, &isMapping);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error reading firmware variant for detChan %d",
                 detChan);
-        pslLogError("psl__IsMapping", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__IsMapping", info_string, status);
+        return status;
     }
 
     *is_mapping = isMapping;
@@ -6474,7 +6474,7 @@ PSL_STATIC int psl__SwitchSystemFPGA(int detChan, int modChan, FirmwareSet *fs,
                                      boolean_t *downloaded)
 {
     int status;
-    int statusX;
+
 
     char *tmpPath = NULL;
 
@@ -6518,13 +6518,13 @@ PSL_STATIC int psl__SwitchSystemFPGA(int detChan, int modChan, FirmwareSet *fs,
         return XIA_SUCCESS;
     }
 
-    statusX = dxp_replace_fpgaconfig(&detChan, "system_fpga", file);
+    status = dxp_replace_fpgaconfig(&detChan, "system_fpga", file);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error updating System FPGA with '%s' for detChan %d",
                 file, detChan);
-        pslLogError("psl__SwitchSystemFPGA", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__SwitchSystemFPGA", info_string, status);
+        return status;
     }
 
     *downloaded = TRUE_;
@@ -6623,31 +6623,31 @@ PSL_STATIC int psl__ClearBuffer(int detChan, char buf, boolean_t waitForEmpty)
 PSL_STATIC int psl__SetRegisterBit(int detChan, char *reg, int bit,
                                    boolean_t overwrite)
 {
-    int statusX;
+    int status;
 
     unsigned long val = 0;
 
 
     if (!overwrite) {
-        statusX = dxp_read_register(&detChan, reg, &val);
+        status = dxp_read_register(&detChan, reg, &val);
 
-        if (statusX != DXP_SUCCESS) {
+        if (status != DXP_SUCCESS) {
             sprintf(info_string, "Error reading the '%s' for detChan %d", reg,
                     detChan);
-            pslLogError("psl__SetRegisterBit", info_string, XIA_XERXES);
-            return XIA_XERXES;
+            pslLogError("psl__SetRegisterBit", info_string, status);
+            return status;
         }
     }
 
     val |= (0x1 << bit);
 
-    statusX = dxp_write_register(&detChan, reg, &val);
+    status = dxp_write_register(&detChan, reg, &val);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error writing %#lx to the '%s' after setting bit %d "
                 "for detChan %d", val, reg, bit, detChan);
-        pslLogError("psl__SetRegisterBit", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__SetRegisterBit", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -6659,7 +6659,7 @@ PSL_STATIC int psl__SetRegisterBit(int detChan, char *reg, int bit,
  */
 PSL_STATIC int psl__CheckBit(int detChan, char *reg, int bit, boolean_t *isSet)
 {
-    int statusX;
+    int status;
 
     unsigned long val = 0;
 
@@ -6667,12 +6667,12 @@ PSL_STATIC int psl__CheckBit(int detChan, char *reg, int bit, boolean_t *isSet)
     ASSERT(reg != NULL);
 
 
-    statusX = dxp_read_register(&detChan, reg, &val);
+    status = dxp_read_register(&detChan, reg, &val);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error reading the '%s' for detChan %d", reg, detChan);
-        pslLogError("psl__ClearRegisterBit", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__ClearRegisterBit", info_string, status);
+        return status;
     }
 
     *isSet = (boolean_t)(val & (1 << bit));
@@ -7048,7 +7048,7 @@ PSL_STATIC int psl__MapPixelNext(int detChan, char *name, XiaDefaults *defs,
                                  void *value)
 {
     int status;
-    int statusX;
+
 
     boolean_t isMapping = FALSE_;
 
@@ -7077,13 +7077,13 @@ PSL_STATIC int psl__MapPixelNext(int detChan, char *name, XiaDefaults *defs,
     /* Set bit 13 to advance the pixel. */
     mfr = 0x2000;
 
-    statusX = dxp_write_register(&detChan, "MFR", &mfr);
+    status = dxp_write_register(&detChan, "MFR", &mfr);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error writing Mapping Flag Register for detChan %d",
                 detChan);
-        pslLogError("psl__MapPixelNext", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__MapPixelNext", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -7159,7 +7159,7 @@ PSL_STATIC int psl__GetBufferFullB(int detChan, void *value, XiaDefaults *defs,
  */
 PSL_STATIC int psl__GetBufferFull(int detChan, char buf, boolean_t *is_full)
 {
-    int statusX;
+
     int status;
 
     unsigned long fullMask = 0;
@@ -7188,13 +7188,13 @@ PSL_STATIC int psl__GetBufferFull(int detChan, char buf, boolean_t *is_full)
         return XIA_NO_MAPPING;
     }
 
-    statusX = dxp_read_register(&detChan, "MFR", &mfr);
+    status = dxp_read_register(&detChan, "MFR", &mfr);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error reading buffer '%c' status for detChan %d",
                 buf, detChan);
-        pslLogError("psl__GetBufferFull", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__GetBufferFull", info_string, status);
+        return status;
     }
 
     switch (buf) {
@@ -7380,7 +7380,7 @@ PSL_STATIC int psl__GetBuffer(int detChan, char buf, unsigned long *data,
                               XiaDefaults *defs, Module *m)
 {
     int status;
-    int statusX;
+
 
     unsigned long len  = 0;
     unsigned long base = 0;
@@ -7433,13 +7433,13 @@ PSL_STATIC int psl__GetBuffer(int detChan, char buf, unsigned long *data,
 
     sprintf(memoryStr, "burst_map:%#lx:%lu", base, len);
 
-    statusX = dxp_read_memory(&detChan, memoryStr, data);
+    status = dxp_read_memory(&detChan, memoryStr, data);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error reading memory for buffer '%c' on detChan %d",
                 buf, detChan);
-        pslLogError("psl__GetBuffer", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__GetBuffer", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -7523,7 +7523,7 @@ PSL_STATIC int psl__GetBufferOverrun(int detChan, void *value,
                                      XiaDefaults *defs, Module *m)
 {
     int status;
-    int statusX;
+
 
     boolean_t isMapping = FALSE_;
 
@@ -7549,13 +7549,13 @@ PSL_STATIC int psl__GetBufferOverrun(int detChan, void *value,
         return XIA_NO_MAPPING;
     }
 
-    statusX = dxp_read_register(&detChan, "MFR", &mfr);
+    status = dxp_read_register(&detChan, "MFR", &mfr);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error reading Mapping Flag Register for detChan %d",
                 detChan);
-        pslLogError("psl__GetBufferOverrun", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__GetBufferOverrun", info_string, status);
+        return status;
     }
 
     if (mfr & (1 << MERCURY_MFR_BUFFER_OVERRUN)) {
@@ -7670,29 +7670,29 @@ PSL_STATIC int psl__SetPixelAdvanceMode(int detChan, int modChan, char *name,
  */
 PSL_STATIC int psl__ClearRegisterBit(int detChan, char *reg, int bit)
 {
-    int statusX;
+    int status;
 
     unsigned long val = 0;
 
 
-    statusX = dxp_read_register(&detChan, reg, &val);
+    status = dxp_read_register(&detChan, reg, &val);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error reading the '%s' for detChan %d",
                 reg, detChan);
-        pslLogError("psl__ClearRegisterBit", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__ClearRegisterBit", info_string, status);
+        return status;
     }
 
     val &= ~(0x1 << bit);
 
-    statusX = dxp_write_register(&detChan, reg, &val);
+    status = dxp_write_register(&detChan, reg, &val);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error writing %#lx to the '%s' after clearing bit %d "
                 "for detChan %d", val, reg, bit, detChan);
-        pslLogError("psl__ClearRegisterBit", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__ClearRegisterBit", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -7710,7 +7710,7 @@ PSL_STATIC int psl__SetSyncCount(int detChan, int modChan, char *name,
                                  XiaDefaults *defs, Module *m,
                                  Detector *det, FirmwareSet *fs)
 {
-    int statusX;
+    int status;
 
     unsigned long count = 0;
 
@@ -7727,13 +7727,13 @@ PSL_STATIC int psl__SetSyncCount(int detChan, int modChan, char *name,
 
     count = (unsigned long)(*((double *)value));
 
-    statusX = dxp_write_register(&detChan, "SYNCCNT", &count);
+    status = dxp_write_register(&detChan, "SYNCCNT", &count);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error setting the number of SYNC counts to %lu "
                 "for detChan %d", count, detChan);
-        pslLogError("psl__SetSyncCount", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__SetSyncCount", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -7787,7 +7787,7 @@ PSL_STATIC int psl__SetGateIgnore(int detChan, int modChan, char *name,
 PSL_STATIC int psl__GetSerialNumber(int detChan, char *name, XiaDefaults *defs,
                                     void *value)
 {
-    int statusX;
+    int status;
     int i;
     int number_dwords = SERIAL_NUM_LEN / 2;
 
@@ -7804,14 +7804,14 @@ PSL_STATIC int psl__GetSerialNumber(int detChan, char *name, XiaDefaults *defs,
     buf = mercury_psl_md_alloc(number_dwords * sizeof(unsigned long));
     sprintf(mem, "eeprom:%#x:%d", BOARD_SER_NUM, number_dwords);
 
-    statusX = dxp_read_memory(&detChan, mem, (unsigned long *)buf);
+    status = dxp_read_memory(&detChan, mem, (unsigned long *)buf);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         mercury_psl_md_free(buf);
         sprintf(info_string, "Error reading serial number for detChan %d",
                 detChan);
-        pslLogError("psl__GetSerialNumber", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__GetSerialNumber", info_string, status);
+        return status;
     }
 
     for (i = 0; i < SERIAL_NUM_LEN; i++)
@@ -7836,7 +7836,7 @@ PSL_STATIC int psl__GetSerialNumber(int detChan, char *name, XiaDefaults *defs,
 PSL_STATIC int psl__SetSerialNumber(int detChan, char *name, XiaDefaults *defs,
                                     void *value)
 {
-    int statusX;
+    int status;
     int i;
     int number_dwords = SERIAL_NUM_LEN / 2;
 
@@ -7853,8 +7853,8 @@ PSL_STATIC int psl__SetSerialNumber(int detChan, char *name, XiaDefaults *defs,
     if (serialNum[SERIAL_NUM_LEN] != '\0') {
         sprintf(info_string, "Incorrect serial number format (%s) for detChan %d",
                 serialNum, detChan);
-        pslLogError("psl__SetSerialNumber", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__SetSerialNumber", info_string, XIA_INVALID_STR);
+        return XIA_INVALID_STR;
     }
 
     buf = mercury_psl_md_alloc(number_dwords * sizeof(unsigned long));
@@ -7866,14 +7866,14 @@ PSL_STATIC int psl__SetSerialNumber(int detChan, char *name, XiaDefaults *defs,
 
     sprintf(mem, "eeprom:%#x:%d", BOARD_SER_NUM, number_dwords);
 
-    statusX = dxp_write_memory(&detChan, mem, (unsigned long *)buf);
+    status = dxp_write_memory(&detChan, mem, (unsigned long *)buf);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         mercury_psl_md_free(buf);
         sprintf(info_string, "Error setting serial number for detChan %d",
                 detChan);
-        pslLogError("psl__SetSerialNumber", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__SetSerialNumber", info_string, status);
+        return status;
     } else {
         sprintf(info_string, "Serial number set to %s for detChan %d",
                 serialNum, detChan);
@@ -8006,8 +8006,8 @@ PSL_STATIC int psl__SetTempCorrection(int detChan, int modChan, char *name,
     if (TEMPCORRECTION > 2) {
         sprintf(info_string, "Specified temperature correction %hu is not a valid "
                 "setting", TEMPCORRECTION);
-        pslLogError("psl__SetTempCorrection", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__SetTempCorrection", info_string, XIA_PARAMETER_OOR);
+        return XIA_PARAMETER_OOR;
     }
 
     status = pslSetParameter(detChan, "TEMPCORRECTION", TEMPCORRECTION);
@@ -8110,7 +8110,7 @@ PSL_STATIC int psl__SetPeakMode(int detChan, int modChan, char *name,
 PSL_STATIC int psl__GetModuleMCA(int detChan, void *value,
                                  XiaDefaults *defs, Module *m)
 {
-    int statusX;
+
     int status;
 
     unsigned long addr;
@@ -8137,13 +8137,13 @@ PSL_STATIC int psl__GetModuleMCA(int detChan, void *value,
 
     sprintf(memStr, "burst:%#lx:%lu", addr, len);
 
-    statusX = dxp_read_memory(&detChan, memStr, value);
+    status = dxp_read_memory(&detChan, memStr, value);
 
-    if (statusX != DXP_SUCCESS) {
+    if (status != DXP_SUCCESS) {
         sprintf(info_string, "Error reading all MCA data for the module containing"
                 "detChan %d", detChan);
-        pslLogError("psl__GetModuleMCA", info_string, XIA_XERXES);
-        return XIA_XERXES;
+        pslLogError("psl__GetModuleMCA", info_string, status);
+        return status;
     }
 
     return XIA_SUCCESS;
@@ -8302,7 +8302,7 @@ PSL_STATIC int psl__GetCalibratedGain(int detChan, void *value, XiaDefaults *def
     if (status != XIA_SUCCESS) {
         sprintf(info_string, "Error reading low calibrated gain for detChan %d",
                 detChan);
-        pslLogError("psl__GetCalibratedGain", info_string, XIA_XERXES);
+        pslLogError("psl__GetCalibratedGain", info_string, status);
         return status;
     }
 
@@ -8311,7 +8311,7 @@ PSL_STATIC int psl__GetCalibratedGain(int detChan, void *value, XiaDefaults *def
     if (status != XIA_SUCCESS) {
         sprintf(info_string, "Error reading high calibrated gain for detChan %d",
                 detChan);
-        pslLogError("psl__GetCalibratedGain", info_string, XIA_XERXES);
+        pslLogError("psl__GetCalibratedGain", info_string, status);
         return status;
     }
 
