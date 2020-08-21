@@ -136,7 +136,8 @@ static void CHECK_ERROR(int status)
 {
     /* XIA_SUCCESS is defined in handel_errors.h */
     if (status != XIA_SUCCESS) {
-        printf("Error encountered! Status = %d\n", status);
+        printf("Error encountered! Status = %d, %s\n", status,
+            xiaGetErrorText(status));
         clean_up();
         exit(status);
     }

@@ -142,25 +142,10 @@ XIA_EXPORT int XIA_API xia_usb_open(char *device, HANDLE *hDevice)
 static bool is_xia_usb2_device(struct usb_device *q)
 {
     bool is_xia_vid     = (q->descriptor.idVendor == 0x10E9);
-
     bool is_ketek_vid   = (q->descriptor.idVendor == 0x20BD);
-
-    bool is_saturn      = (q->descriptor.idProduct == 0x0701);
-
-    bool is_mercury     = (q->descriptor.idProduct == 0x0702) ||
-                             (q->descriptor.idProduct == 0x0703) ||
-                             (q->descriptor.idProduct == 0x0780) ||
-                             (q->descriptor.idProduct == 0x0781);
-
-    bool is_microdxp    = (q->descriptor.idProduct == 0x0B01) ||
-                             (q->descriptor.idProduct == 0x0A01) ||
-                             (q->descriptor.idProduct == 0x0C01);
-
-
     bool is_dpp2        = (q->descriptor.idProduct == 0x0020);
 
-    return (is_xia_vid && (is_saturn || is_mercury || is_microdxp)) ||
-            (is_ketek_vid && is_dpp2);
+    return is_xia_vid || (is_ketek_vid && is_dpp2);
 }
 
 

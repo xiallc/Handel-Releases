@@ -124,6 +124,8 @@ PSL_STATIC int pslReadDirectUsbMemory(int detChan, unsigned long address,
 PSL_STATIC int pslGetMcaDirect(int detChan, int bytesPerBin,
                                     int numMCAChans, unsigned long startAddr,
                                     unsigned long *data);
+PSL_STATIC void pslConvertStatistics(int detChan, byte_t *receive, double *stats);
+
 #ifdef XIA_ALPHA
 PSL_STATIC unsigned long long pslUllFromBytesOffset(byte_t *bytes, int size, int offset);
 PSL_STATIC int pslAlphaPulserComputeDAC(unsigned short amplitude,
@@ -159,6 +161,14 @@ PSL_STATIC int pslGetSCALength(int detChan, void *value, XiaDefaults *defs);
 PSL_STATIC int pslGetMaxSCALength(int detChan, void *value, XiaDefaults *defs);
 PSL_STATIC int pslGetSCAData(int detChan, void *value, XiaDefaults *defs);
 PSL_STATIC int pslGetModuleStatistics(int detChan, void *value, XiaDefaults *defs);
+PSL_STATIC int pslGetGatedStatistics(int detChan, void *value, XiaDefaults *defs);
+PSL_STATIC int pslGetGatedLivetime(int detChan, void *value, XiaDefaults *defs);
+PSL_STATIC int pslGetGatedRuntime(int detChan, void *value, XiaDefaults *defs);
+PSL_STATIC int pslGetGatedICR(int detChan, void *value, XiaDefaults *defs);
+PSL_STATIC int pslGetGatedOCR(int detChan, void *value, XiaDefaults *defs);
+PSL_STATIC int pslGetGatedEvents(int detChan, void *value, XiaDefaults *defs);
+PSL_STATIC int pslGetGatedTriggers(int detChan, void *value, XiaDefaults *defs);
+PSL_STATIC int pslGetGatedMCAData(int detChan, void *value, XiaDefaults *defs);
 
 #ifdef XIA_ALPHA
 PSL_STATIC int pslGetAlphaBufferNumEvents(int detChan, void *value,
@@ -238,6 +248,7 @@ PSL_STATIC int pslSetScaTimeOff(int detChan, char *name, XiaDefaults *defs, void
 PSL_STATIC int pslSetAutoAdjust(int detChan, char *name, XiaDefaults *defs, void *value);
 PSL_STATIC int pslSetPresetType(int detChan, char *name, XiaDefaults *defs, void *value);
 PSL_STATIC int pslSetPresetValue(int detChan, char *name, XiaDefaults *defs, void *value);
+PSL_STATIC int pslSetHighVoltage(int detChan, char *name, XiaDefaults *defs, void *value);
 
 #ifdef XIA_ALPHA
 PSL_STATIC int pslSetAlphaEventLen(int detChan, char *name, XiaDefaults *defs,
@@ -293,6 +304,7 @@ PSL_STATIC int pslGetScaTimeOff(int detChan, char *name, XiaDefaults *defs, void
 PSL_STATIC int pslGetAutoAdjust(int detChan, char *name, XiaDefaults *defs, void *value);
 PSL_STATIC int pslGetPresetType(int detChan, char *name, XiaDefaults *defs, void *value);
 PSL_STATIC int pslGetPresetValue(int detChan, char *name, XiaDefaults *defs, void *value);
+PSL_STATIC int pslGetHighVoltage(int detChan, char *name, XiaDefaults *defs, void *value);
 
 #ifdef XIA_ALPHA
 PSL_STATIC int pslGetAlphaEventLen(int detChan, char *name, XiaDefaults *defs,
@@ -482,6 +494,7 @@ static Udxp_AcquisitionValue acqVals[] = {
     {"auto_adjust_offset",  AV_MEM_R_PAR, 0.0, pslSetAutoAdjust,  pslGetAutoAdjust},
     {"preset_type",         AV_MEM_R_PAR, 0.0, pslSetPresetType,  pslGetPresetType},
     {"preset_value",        AV_MEM_R_PAR, 0.0, pslSetPresetValue, pslGetPresetValue},
+    {"high_voltage",        AV_MEM_R_PAR, 0.0, pslSetHighVoltage, pslGetHighVoltage},
 
 #ifdef XIA_ALPHA
     {
@@ -507,27 +520,35 @@ static Udxp_AcquisitionValue acqVals[] = {
 
 
 static Udxp_RunData runData[] = {
-    {"mca_length",          pslGetMCALength},
-    {"mca",                 pslGetMCAData},
-    {"livetime",            pslGetLivetime},
-    {"runtime",             pslGetRuntime},
-    {"input_count_rate",    pslGetICR},
-    {"output_count_rate",   pslGetOCR},
-    {"events_in_run",       pslGetEvents},
-    {"total_output_events", pslGetEvents}, /* TODO: update and document pending case 15688 */
-    {"triggers",            pslGetTriggers},
-    {"baseline_length",     pslGetBaseHistogramLen},
-    {"baseline",            pslGetBaseline},
-    {"run_active",          pslGetRunActive},
-    {"all_statistics",      pslGetAllStatistics},
-    {"sca_length",          pslGetSCALength},
-    {"max_sca_length",      pslGetMaxSCALength},
-    {"sca",                 pslGetSCAData},
-    {"realtime",            pslGetRuntime},
-    {"mca_events",          pslGetEvents},
-    {"trigger_livetime",    pslGetLivetime},
-    {"energy_livetime",     pslGetELivetime},
-    {"module_statistics_2", pslGetModuleStatistics},
+    {"mca_length",              pslGetMCALength},
+    {"mca",                     pslGetMCAData},
+    {"livetime",                pslGetLivetime},
+    {"runtime",                 pslGetRuntime},
+    {"input_count_rate",        pslGetICR},
+    {"output_count_rate",       pslGetOCR},
+    {"events_in_run",           pslGetEvents},
+    {"total_output_events",     pslGetEvents}, /* TODO: update and document pending case 15688 */
+    {"triggers",                pslGetTriggers},
+    {"baseline_length",         pslGetBaseHistogramLen},
+    {"baseline",                pslGetBaseline},
+    {"run_active",              pslGetRunActive},
+    {"all_statistics",          pslGetAllStatistics},
+    {"sca_length",              pslGetSCALength},
+    {"max_sca_length",          pslGetMaxSCALength},
+    {"sca",                     pslGetSCAData},
+    {"realtime",                pslGetRuntime},
+    {"mca_events",              pslGetEvents},
+    {"trigger_livetime",        pslGetLivetime},
+    {"energy_livetime",         pslGetELivetime},
+    {"module_statistics_2",     pslGetModuleStatistics},
+    {"mca_gated",               pslGetGatedMCAData},
+    {"module_statistics_gated", pslGetGatedStatistics},
+    {"livetime_gated",          pslGetGatedLivetime},
+    {"realtime_gated",          pslGetGatedRuntime},
+    {"triggers_gated",          pslGetGatedTriggers},
+    {"events_in_run_gated",     pslGetGatedEvents},
+    {"output_count_rate_gated", pslGetGatedOCR},
+    {"input_count_rate_gated",  pslGetGatedICR},
 #ifdef XIA_ALPHA
     {"alpha_buffer_num_events", pslGetAlphaBufferNumEvents},
     {"alpha_events",            pslGetAlphaEvents},
@@ -815,7 +836,7 @@ PSL_STATIC int pslDownloadFirmware(int detChan, char *type, char *file,
     sscanf(type, "fippi%u", &fippiNum);
 
     sprintf(info_string, "User requested fippi = %u", fippiNum);
-    pslLogDebug("pslDownloadFirmware", info_string);
+    pslLogInfo("pslDownloadFirmware", info_string);
 
     /* Not sure how to use the CurrentFirmware info. in
      * this context. For now, we can just spend the
@@ -834,7 +855,7 @@ PSL_STATIC int pslDownloadFirmware(int detChan, char *type, char *file,
 
     sprintf(info_string, "Current FiPPI = %u",
             (unsigned int)receive[5]);
-    pslLogDebug("pslDownloadFirmware", info_string);
+    pslLogInfo("pslDownloadFirmware", info_string);
 
     return XIA_SUCCESS;
 }
@@ -1372,14 +1393,14 @@ PSL_STATIC int pslCheckTraceWaitRange(int detChan, double *tracewait, XiaDefault
     if (*tracewait > MAX_TRACEWAIT_US) {
         sprintf(info_string, "Tracewait %0.3fus for detChan = %d is out of range, "
                 "reset to %0.3fus", *tracewait, detChan, MAX_TRACEWAIT_US);
-        pslLogDebug("pslCheckTraceWaitRange", info_string);
+        pslLogInfo("pslCheckTraceWaitRange", info_string);
         *tracewait = MAX_TRACEWAIT_US;
     }
 
     if (*tracewait < pslMinTraceWait(spd)) {
         sprintf(info_string, "Tracewait %0.3fus for detChan = %d is out of range, "
                 "reset to %0.3fus", *tracewait,  detChan, pslMinTraceWait(spd));
-        pslLogDebug("pslCheckTraceWaitRange", info_string);
+        pslLogInfo("pslCheckTraceWaitRange", info_string);
         *tracewait = pslMinTraceWait(spd);
     }
 
@@ -1389,7 +1410,7 @@ PSL_STATIC int pslCheckTraceWaitRange(int detChan, double *tracewait, XiaDefault
     *tracewait = ((double)tracetick + 1.0) / spd;
 
     sprintf(info_string, "tracewait = %.3f, tracetick = %u", *tracewait, tracetick);
-    pslLogDebug("pslCheckTraceWaitRange", info_string);
+    pslLogInfo("pslCheckTraceWaitRange", info_string);
 
     return XIA_SUCCESS;
 }
@@ -2423,7 +2444,7 @@ PSL_STATIC double pslCalculateBaseGain(unsigned int gainMode,
             "DGAINBASE = %hu, digitalGain = %0.3f, hybridGain = %0.3f, base gain = %0.3f",
             gainMode, SWGAIN, DGAINBASEEXP, DGAINBASE, digitalGain, hybridGain,
             baseGain);
-    pslLogDebug("pslCalculateBaseGain", info_string);
+    pslLogInfo("pslCalculateBaseGain", info_string);
 
     return baseGain;
 }
@@ -2538,7 +2559,7 @@ PSL_STATIC int pslSetParset(int detChan, char *name, XiaDefaults *defs, void *va
 
 
     sprintf(info_string, "parset = %0.1f", parset);
-    pslLogDebug("pslSetParset", info_string);
+    pslLogInfo("pslSetParset", info_string);
 
     status = pslGetNumPtPerFiPPI(detChan, NULL, defs, (void *)&maxParset);
     ASSERT(status == XIA_SUCCESS);
@@ -2603,7 +2624,7 @@ PSL_STATIC int pslSetGenset(int detChan, char *name, XiaDefaults *defs, void *va
 
 
     sprintf(info_string, "genset = %0.1f", *genset);
-    pslLogDebug("pslSetGenset", info_string);
+    pslLogInfo("pslSetGenset", info_string);
 
     send[0] = (byte_t)0;
     send[1] = (byte_t)(*genset);
@@ -2764,7 +2785,7 @@ PSL_STATIC int pslGetADCTrace(int detChan, void *value, XiaDefaults *defs)
     tracetick = (unsigned int)ROUND(tracewait * spd) - 1;
 
     sprintf(info_string, "tracewait = %.3f, tracetick = %u", tracewait, tracetick);
-    pslLogDebug("pslGetADCTrace", info_string);
+    pslLogInfo("pslGetADCTrace", info_string);
 
     lenR = (unsigned int)((HSTLEN * 2) + 1 + RECV_BASE);
     recv = (byte_t *)utils->funcs->dxp_md_alloc(lenR * sizeof(byte_t));
@@ -2953,7 +2974,7 @@ PSL_STATIC int pslGetNumMCA(int detChan, char *name, XiaDefaults *defs, void *va
 PSL_STATIC int pslSetNumMCA(int detChan, char *name, XiaDefaults *defs, void *value)
 {
     int status;
-
+    int max_bins = dxp_is_vega(detChan) ? VEGA_MAX_NUM_BINS : MAX_NUM_BINS;
     unsigned int nChans = (unsigned int)(*((double *)value));
 
     DEFINE_CMD(CMD_SET_NUM_BINS, 5, 5);
@@ -2962,14 +2983,12 @@ PSL_STATIC int pslSetNumMCA(int detChan, char *name, XiaDefaults *defs, void *va
     UNUSED(defs);
     UNUSED(name);
 
-
     ASSERT(value != NULL);
 
-
-    if (nChans > MAX_NUM_BINS) {
+    if (nChans > (unsigned int)max_bins) {
         sprintf(info_string,
                 "Specified number of bins '%u' is greater then the maximum allowed "
-                "number '%d' for detChan %d", nChans, MAX_NUM_BINS, detChan);
+                "number '%d' for detChan %d", nChans, max_bins, detChan);
         pslLogError("pslSetNumMCA", info_string, XIA_NUM_MCA_OOR);
         return XIA_NUM_MCA_OOR;
     }
@@ -3371,7 +3390,7 @@ PSL_STATIC int pslGetParset(int detChan, char *name, XiaDefaults *defs, void *va
     *parset = (double)receive[RECV_DATA_OFFSET_STATUS];
 
     sprintf(info_string, "parset = %.3f", *parset);
-    pslLogDebug("pslGetParset", info_string);
+    pslLogInfo("pslGetParset", info_string);
 
     return XIA_SUCCESS;
 }
@@ -3541,15 +3560,7 @@ PSL_STATIC int pslGetSnapshotStats(int detChan, void *value, XiaDefaults *defs)
         return status;
     }
 
-    stats[TriggerLivetime] =  pslDoubleFromBytesOffset(receive, 6, RECV_BASE) * LIVETIME_CLOCK_TICK;
-    stats[Realtime] =  pslDoubleFromBytesOffset(receive, 6, 11) * REALTIME_CLOCK_TICK;
-    stats[EnergyLivetime] = 0.0;
-    stats[Triggers] =  pslDoubleFromBytesOffset(receive, 4, 17);
-    stats[Events] =  pslDoubleFromBytesOffset(receive, 4, 21);
-    stats[Underflows] = pslDoubleFromBytesOffset(receive, 4, 25);
-    stats[Overflows] = pslDoubleFromBytesOffset(receive, 4, 29);
-    stats[Ocr] = (stats[Realtime] == 0.0) ? 0.0 : (stats[Events] + stats[Underflows] + stats[Overflows]) / stats[Realtime];
-    stats[Icr] = (stats[TriggerLivetime] == 0.0) ? 0.0 : stats[Triggers] / stats[TriggerLivetime];
+    pslConvertStatistics(detChan, receive, stats);
 
     return XIA_SUCCESS;
 }
@@ -4059,7 +4070,7 @@ PSL_STATIC void pslCalculatePeakingTimes(int detChan, int fippi,
 
     sprintf(info_string, "DEC = %u, CLK = %#x, tick = %0.3f",
             DECIMATION, CLKSET, ptTick);
-    pslLogDebug("pslCalculatePeakingTimes", info_string);
+    pslLogInfo("pslCalculatePeakingTimes", info_string);
 
     for (i = 0; i < ptPerFippi; i++) {
         pts[i] = ptTick * pslDoubleFromBytes(
@@ -4168,7 +4179,7 @@ PSL_STATIC int pslSaveGenset(int detChan, char *name, XiaDefaults *defs,
 
 
     sprintf(info_string, "Saving genset = %u", genset);
-    pslLogDebug("pslSaveGenset", info_string);
+    pslLogInfo("pslSaveGenset", info_string);
 
     send[0] = (byte_t)genset;
     send[1] = (byte_t)0x55;
@@ -4214,7 +4225,7 @@ PSL_STATIC int pslSaveParset(int detChan, char *name, XiaDefaults *defs,
     ASSERT(value != NULL);
 
     sprintf(info_string, "parset = %u", parset);
-    pslLogDebug("pslSaveParset", info_string);
+    pslLogInfo("pslSaveParset", info_string);
 
     status = pslGetNumPtPerFiPPI(detChan, NULL, defs, (void *)&maxParset);
     ASSERT(status == XIA_SUCCESS);
@@ -4538,12 +4549,12 @@ PSL_STATIC int pslCalculateRanges(byte_t nFiPPIs, int ptPerFippi, int bytePerPt,
         }
 
         sprintf(info_string, "dec = %u, min = %0f, max = %0f", dec, min, max);
-        pslLogDebug("pslCalculateRanges", info_string);
+        pslLogInfo("pslCalculateRanges", info_string);
 
         ptBase = (1.0 / BASE_CLOCK) * pow(2.0, (double)CLKSET + (double)dec);
 
         sprintf(info_string, "ptBase = %.3f", ptBase);
-        pslLogDebug("pslCalculateRanges", info_string);
+        pslLogInfo("pslCalculateRanges", info_string);
 
         ranges[i * 2]       = min * ptBase;
         ranges[(i * 2) + 1] = max * ptBase;
@@ -4564,7 +4575,7 @@ PSL_STATIC int pslUnHook(int detChan)
     int status;
 
     sprintf(info_string, "Unhooking detChan %d", detChan);
-    pslLogDebug("pslUnHook", info_string);
+    pslLogInfo("pslUnHook", info_string);
 
     status = dxp_exit(&detChan);
 
@@ -5198,7 +5209,7 @@ PSL_STATIC int pslGetGenset(int detChan, char *name, XiaDefaults *defs, void *va
     *genset = (double)receive[5];
 
     sprintf(info_string, "genset = %.3f", *genset);
-    pslLogDebug("pslGetGenset", info_string);
+    pslLogInfo("pslGetGenset", info_string);
 
     return XIA_SUCCESS;
 }
@@ -5742,7 +5753,7 @@ PSL_STATIC int pslSetTPeakTime(int detChan, char *name, XiaDefaults *defs, void 
     FASTLEN = (parameter_t)ROUND(*pt * clkSpd);
 
     sprintf(info_string, "FASTLEN = %u", FASTLEN);
-    pslLogDebug("pslSetTPeakTime", info_string);
+    pslLogInfo("pslSetTPeakTime", info_string);
 
     if (FASTLEN < 2) {
         sprintf(info_string, "Calculated FASTLEN is too small. Setting to min value 2.");
@@ -5841,7 +5852,7 @@ PSL_STATIC int pslSetTGapTime(int detChan, char *name, XiaDefaults *defs, void *
     FASTGAP = (parameter_t)ROUND(*gap * clkSpd);
 
     sprintf(info_string, "FASTGAP = %u", FASTGAP);
-    pslLogDebug("pslSetTGapTime", info_string);
+    pslLogInfo("pslSetTGapTime", info_string);
 
     /* 2 <= FASTLEN
      * 0 <= FASTGAP
@@ -5935,7 +5946,7 @@ PSL_STATIC int pslSetBaseLen(int detChan, char *name, XiaDefaults *defs, void *v
     BLFILTER = (parameter_t)ROUND(32768.0 / *baseLen);
 
     sprintf(info_string, "New BLFILTER = %u (bl = %.3f)", BLFILTER, *baseLen);
-    pslLogDebug("pslSetBaseLen", info_string);
+    pslLogInfo("pslSetBaseLen", info_string);
 
     if (BLFILTER == 0) {
         sprintf(info_string, "Baseline length is 0 for detChan %d", detChan);
@@ -5998,7 +6009,7 @@ PSL_STATIC int pslGetBaseLen(int detChan, char *name, XiaDefaults *defs, void *v
                                 | receive[RECV_DATA_BASE]);
 
     sprintf(info_string, "BLFILTER = %u", BLFILTER);
-    pslLogDebug("pslGetBaseLen", info_string);
+    pslLogInfo("pslGetBaseLen", info_string);
 
     *baseLen = (double)(32768.0 / BLFILTER);
 
@@ -6109,7 +6120,7 @@ PSL_STATIC int pslGetADCWait(int detChan, char *name, XiaDefaults *defs, void *v
     *minTracewait = pslMinTraceWait(spd);
 
     sprintf(info_string, "tracewait = %.3f", *minTracewait);
-    pslLogDebug("pslGetADCWait", info_string);
+    pslLogInfo("pslGetADCWait", info_string);
 
     return XIA_SUCCESS;
 }
@@ -6222,15 +6233,6 @@ PSL_STATIC int pslGetModuleStatistics(int detChan, void *value, XiaDefaults *def
 
     int status;
 
-    double lt  = 0.0;
-    double rt  = 0.0;
-    double in  = 0.0;
-    double out = 0.0;
-    double icr = 0.0;
-    double ocr = 0.0;
-    double unders = 0.0;
-    double overs = 0.0;
-
     double *stats = (double *)value;
 
     DEFINE_CMD(CMD_READ_STATISTICS, 1, 29);
@@ -6257,48 +6259,43 @@ PSL_STATIC int pslGetModuleStatistics(int detChan, void *value, XiaDefaults *def
         return status;
     }
 
-    lt =  pslDoubleFromBytesOffset(receive, 6, 5) * LIVETIME_CLOCK_TICK;
-    rt =  pslDoubleFromBytesOffset(receive, 6, 11) * REALTIME_CLOCK_TICK;
-    in =  pslDoubleFromBytesOffset(receive, 4, 17);
-    out =  pslDoubleFromBytesOffset(receive, 4, 21);
+    pslConvertStatistics(detChan, receive, stats);
+    return XIA_SUCCESS;
+}
 
-    if (isSuper) {
-        unders =  pslDoubleFromBytesOffset(receive, 4, 25);
-        overs =  pslDoubleFromBytesOffset(receive, 4, 29);
-    }
+/*
+ * Convert a statistics return array from receive buffer in the following format:
+ *
+ * [runtime, trigger_livetime, energy_livetime, triggers, events, icr,
+ * ocr, underflows, overflows]
+ */
+PSL_STATIC void pslConvertStatistics(int detChan, byte_t *receive, double *stats)
+{
+    boolean_t isSuper = dxp_is_supermicro(detChan);
 
-    if (rt > 0.0) {
-        ocr = (out + unders + overs) / rt;
-    } else {
-        ocr = 0.0;
-    }
+    ASSERT(receive != NULL);
+    ASSERT(stats != NULL);
 
-    if (lt > 0.0) {
-        icr = in / lt;
-    } else {
-        icr = 0.0;
-    }
-
-    stats[0] = rt;
-    stats[1] = lt;
-    stats[2] = 0.0;
-    stats[3] = in;
-    stats[4] = out;
-    stats[5] = icr;
-    stats[6] = ocr;
-    stats[7] = unders;
-    stats[8] = overs;
+    stats[TriggerLivetime]  = pslDoubleFromBytesOffset(receive, 6, 5) * LIVETIME_CLOCK_TICK;
+    stats[Realtime]         = pslDoubleFromBytesOffset(receive, 6, 11) * REALTIME_CLOCK_TICK;
+    stats[EnergyLivetime]   = 0.0;
+    stats[Triggers]         = pslDoubleFromBytesOffset(receive, 4, 17);
+    stats[Events]           = pslDoubleFromBytesOffset(receive, 4, 21);
+    stats[Underflows]       = isSuper ? pslDoubleFromBytesOffset(receive, 4, 25) : 0.0;
+    stats[Overflows]        = isSuper ? pslDoubleFromBytesOffset(receive, 4, 29) : 0.0;
+    stats[Ocr]              = (stats[Realtime] == 0.0) ? 0.0 : (stats[Events] + stats[Underflows] + stats[Overflows]) / stats[Realtime];
+    stats[Icr]              = (stats[TriggerLivetime] == 0.0) ? 0.0 : stats[Triggers] / stats[TriggerLivetime];
 
     /* microDXP doesn't support energy_livetime directly
      * it's calculated from the following formula
      * energy filter live time = realtime * ocr / icr
      * (excluding unrealistic OCR values caused by noisy energy peak)
      */
-    if ((icr != 0) && (icr >= ocr))
-        stats[2] = (rt * ocr) / icr;
+    if ((stats[Icr] != 0) && (stats[Icr] >= stats[Ocr]))
+        stats[EnergyLivetime] = (stats[Realtime] * stats[Ocr]) / stats[Icr];
 
-    return XIA_SUCCESS;
 }
+
 
 /*
  * Determines the preamplifier type based on the firmware loaded on
@@ -6393,7 +6390,7 @@ PSL_STATIC int pslGetFipControl(int detChan, char *name, XiaDefaults *defs, void
 
     sprintf(info_string, "lo = %#x, hi = %#x, fipcontrol = %.3f",
             receive[RECV_DATA_BASE], receive[RECV_DATA_BASE + 1], *fipcontrol);
-    pslLogDebug("pslGetFipControl", info_string);
+    pslLogInfo("pslGetFipControl", info_string);
 
     return XIA_SUCCESS;
 }
@@ -6421,7 +6418,7 @@ PSL_STATIC int pslSetFipControl(int detChan, char *name, XiaDefaults *defs, void
     send[2] = (byte_t)HI_BYTE(fipcontrol);
 
     sprintf(info_string, "Setting FIPCONTROL to %#x", fipcontrol);
-    pslLogDebug("pslSetFipControl", info_string);
+    pslLogInfo("pslSetFipControl", info_string);
 
     status = dxp_cmd(&detChan, &cmd, &lenS, send, &lenR, receive);
 
@@ -6573,7 +6570,7 @@ PSL_STATIC int pslSetGainTrim(int detChan, char *name, XiaDefaults *defs, void *
     gain = (*gaintrim) * gainbase;
 
     sprintf(info_string, "gain = %.3f, gainbase = %.3f", gain, gainbase);
-    pslLogDebug("pslSetGainTrim", info_string);
+    pslLogInfo("pslSetGainTrim", info_string);
 
     if (gain > GAIN_LINEAR_MAX) {
         sprintf(info_string,
@@ -6616,7 +6613,7 @@ PSL_STATIC int pslSetGainTrim(int detChan, char *name, XiaDefaults *defs, void *
 
     sprintf(info_string, "gaintrim = %.3f, gDB = %.3f, GAINTWEAK = %#x", *gaintrim,
             gDB, GAINTWEAK);
-    pslLogDebug("pslSetGainTrim", info_string);
+    pslLogInfo("pslSetGainTrim", info_string);
 
     send[0] = (byte_t)0;
     send[1] = (byte_t)LO_BYTE(GAINTWEAK);
@@ -6709,7 +6706,7 @@ PSL_STATIC int pslGetGainTrim(int detChan, char *name, XiaDefaults *defs, void *
 
     sprintf(info_string, "%s = %#x, gDB = %.3f, gaintrim = %.3f",
             gaintweakname, GAINTWEAK, gDB, *gaintrim);
-    pslLogDebug("pslGetGainTrim", info_string);
+    pslLogInfo("pslGetGainTrim", info_string);
 
     return XIA_SUCCESS;
 }
@@ -6785,7 +6782,7 @@ PSL_STATIC int pslUpdateFilterParams(int detChan, double *pioffset,
     PEAKINT = SLOWLEN + SLOWGAP + (parameter_t)ROUND(*pioffset / clkTick);
 
     sprintf(info_string, "PEAKINT = %u", PEAKINT);
-    pslLogDebug("pslUpdateFilterParams", info_string);
+    pslLogInfo("pslUpdateFilterParams", info_string);
 
     /* The only limit we enforce is a software limit where the value would exceed
      * the max parameter size.
@@ -6830,7 +6827,7 @@ PSL_STATIC int pslUpdateFilterParams(int detChan, double *pioffset,
         PEAKSAM = (parameter_t)ROUND(peaksam / clkTick);
 
         sprintf(info_string, "Calculated PEAKSAM = %u", PEAKSAM);
-        pslLogDebug("pslUpdateFilterParams", info_string);
+        pslLogInfo("pslUpdateFilterParams", info_string);
 
         if (PEAKSAM > PEAKINT) {
             sprintf(info_string, "PEAKSAM %hu is out of range for PEAKINT = %hu. "
@@ -7283,7 +7280,7 @@ PSL_STATIC int pslSetMaxWidth(int detChan, char *name, XiaDefaults *defs, void *
     MAXWIDTH = (parameter_t)ROUND((*mw) * clkSpd);
 
     sprintf(info_string, "MAXWIDTH = %u", MAXWIDTH);
-    pslLogDebug("pslSetMaxWidth", info_string);
+    pslLogInfo("pslSetMaxWidth", info_string);
 
     if (MAXWIDTH > MAX_MAXWIDTH) {
         sprintf(info_string, "Requested max width time (%.3lf microseconds) is "
@@ -7593,8 +7590,17 @@ PSL_STATIC int pslSetTriggerPosition(int detChan, char *name, XiaDefaults *defs,
     parameter_t TRACEPRETRIG;
     double trigPosition = *((double *)value);
 
+    boolean_t isSuper = dxp_is_supermicro(detChan);
+
     UNUSED(defs);
     UNUSED(name);
+
+    if (!isSuper) {
+        sprintf(info_string, "Trace trigger position is not supported by "
+                "non-supermicro variant");
+        pslLogError("pslGetScaTimeOn", info_string, XIA_NOSUPPORT_VALUE);
+        return XIA_NOSUPPORT_VALUE;
+    }
 
     if (trigPosition < 0 || trigPosition > 255.0) {
         sprintf(info_string, "Trace trigger position %0f is out-of-range",
@@ -7718,8 +7724,9 @@ PSL_STATIC int pslPassthrough(int detChan, char *name, XiaDefaults *defs,
     byte_t *receive_byte = value_byte_array[2];
     int receive_len = *(value_int_array[3]);
 
-    /* The return size for the command is fixed at 32 + 1 (status) */
-    DEFINE_CMD(CMD_PASSTHROUGH, MAX_PASSTHROUGH_SIZE, MAX_PASSTHROUGH_SIZE + 1);
+    /* The return size for the command is fixed at
+       RECV_BASE + 1 (passthrough status) + 32 (data) + 1 (checksum) */
+    DEFINE_CMD(CMD_PASSTHROUGH, MAX_PASSTHROUGH_SIZE, MAX_PASSTHROUGH_SIZE + 2);
 
     UNUSED(name);
 
@@ -7727,8 +7734,8 @@ PSL_STATIC int pslPassthrough(int detChan, char *name, XiaDefaults *defs,
 
     if ((status != XIA_SUCCESS) || !(features & 1 << BOARD_SUPPORTS_PASSTHROUGH)) {
         pslLogError("pslPassthrough", "Connected device does not support "
-                    "'passthrough' board operation", XIA_NOSUPPORT_VALUE);
-        return XIA_NOSUPPORT_VALUE;
+                    "'passthrough' board operation", XIA_PASSTHROUGH);
+        return XIA_PASSTHROUGH;
     }
 
     sprintf(info_string, "Sending %d bytes to UART passthrough, receive buffer "
@@ -7762,6 +7769,7 @@ PSL_STATIC int pslPassthrough(int detChan, char *name, XiaDefaults *defs,
         return status;
     }
 
+    /* Start copying after RECV_BASE + 1 (passthrough status) */
     memcpy(receive_byte, receive + RECV_BASE + 1, receive_len);
     return XIA_SUCCESS;
 }
@@ -8724,7 +8732,7 @@ PSL_STATIC int pslSetPresetValue(int detChan, char *name, XiaDefaults *defs, voi
     if (length > max_value) {
         sprintf(info_string, "Calculated PRESET length 0x%llx is greater than "
             "maximum allowed 0x%llx, resetting to maximum", length, max_value);
-        pslLogDebug("pslSetPresetValue", info_string);
+        pslLogInfo("pslSetPresetValue", info_string);
         length = max_value;
     }
 
@@ -11288,7 +11296,7 @@ PSL_STATIC int pslGetUSBVersion(int detChan, char *name, XiaDefaults *defs,
     }
 
     sprintf(info_string, "Raw version = %#lx %#lx", version[0], version[1]);
-    pslLogDebug("pslGetUSBVersion", info_string);
+    pslLogInfo("pslGetUSBVersion", info_string);
 
     /* Version bytes: [3]Revision [2] Minor [1]Major [0]status.
      * Reverse the bytes to [3]Major [2]Minor [1-0]Revision as in the
@@ -11558,3 +11566,328 @@ PSL_STATIC int pslCreateBackup(int detChan, char *name, XiaDefaults *defs,
 }
 
 #endif /* EXCLUDE_XUP */
+
+
+/* rundata module_statistics_gated
+ * Returns the gated statistics in a single array for run
+ * data module_statistics_2 value is expected to be a double array capable
+ * of holding 9 values returned in the following format:
+ *
+ * [runtime, trigger_livetime, energy_livetime, triggers, events, icr,
+ * ocr, underflows, overflows]
+ */
+PSL_STATIC int pslGetGatedStatistics(int detChan, void *value, XiaDefaults *defs)
+{
+    int status;
+
+    boolean_t isVega = dxp_is_vega(detChan);
+    ASSERT(value != NULL);
+
+    if (!isVega) {
+        pslLogError("pslGetGatedStatistics", "Connected device does not support "
+                "'module_statistics_gated' run data", XIA_NOSUPPORT_VALUE);
+        return XIA_NOSUPPORT_VALUE;
+    }
+
+    status = pslGetSnapshotStats(detChan, value, defs);
+
+    if (status != DXP_SUCCESS) {
+        sprintf(info_string, "Error reading gated statisitics (through snapshot"
+                    " data memory) for detChan %d", detChan);
+        pslLogError("pslGetGatedStatistics", info_string, status);
+        return status;
+    }
+
+    return XIA_SUCCESS;
+}
+
+
+/*
+ * This routine calculates and returns
+ * the current gated livetime value.
+ */
+PSL_STATIC int pslGetGatedLivetime(int detChan, void *value, XiaDefaults *defs)
+{
+    int status;
+
+    double stats[9];
+
+    ASSERT(value != NULL);
+
+    status = pslGetGatedStatistics(detChan, (void *)stats, defs);
+
+    if (status != DXP_SUCCESS) {
+        sprintf(info_string, "Error reading gated statistics for detChan %d", detChan);
+        pslLogError("pslGetGatedLivetime", info_string, status);
+        return status;
+    }
+
+    *((double *)value) = stats[1];
+
+    return XIA_SUCCESS;
+}
+
+/*
+ * This routine calculates and returns the
+ * current runtime value.
+ */
+PSL_STATIC int pslGetGatedRuntime(int detChan, void *value, XiaDefaults *defs)
+{
+    int status;
+
+    double stats[9];
+
+    ASSERT(value != NULL);
+
+    status = pslGetGatedStatistics(detChan, (void *)stats, defs);
+
+    if (status != DXP_SUCCESS) {
+        sprintf(info_string, "Error reading gated statistics for detChan %d", detChan);
+        pslLogError("pslGetGatedRuntime", info_string, status);
+        return status;
+    }
+
+    *((double *)value) = stats[0];
+
+    return XIA_SUCCESS;
+}
+
+
+/*
+ * This routine retrieves the gated Input Count Rate,
+ * which can also be defined as the number of
+ * fast peak events divided by the livetime.
+ */
+PSL_STATIC int pslGetGatedICR(int detChan, void *value, XiaDefaults *defs)
+{
+    int status;
+
+    double stats[9];
+
+    ASSERT(value != NULL);
+
+    status = pslGetGatedStatistics(detChan, (void *)stats, defs);
+
+    if (status != DXP_SUCCESS) {
+        sprintf(info_string, "Error reading gated statistics for detChan %d", detChan);
+        pslLogError("pslGetGatedICR", info_string, status);
+        return status;
+    }
+
+    *((double *)value) = stats[5];
+
+    return XIA_SUCCESS;
+}
+
+/*
+ * This routine retrieves the gated Output Count Rate,
+ * which can also be defined as the number of
+ * events divided by the realtime.
+ */
+PSL_STATIC int pslGetGatedOCR(int detChan, void *value, XiaDefaults *defs)
+{
+    int status;
+
+    double stats[9];
+
+    ASSERT(value != NULL);
+
+    status = pslGetGatedStatistics(detChan, (void *)stats, defs);
+
+    if (status != DXP_SUCCESS) {
+        sprintf(info_string, "Error reading gate statistics for detChan %d", detChan);
+        pslLogError("pslGetGatedOCR", info_string, status);
+        return status;
+    }
+
+    *((double *)value) = stats[6];
+
+    return XIA_SUCCESS;
+}
+
+/*
+ * This routine retrieves the number
+ * of Gated events that were binned in the MCA
+ * spectrum.
+ */
+PSL_STATIC int pslGetGatedEvents(int detChan, void *value, XiaDefaults *defs)
+{
+    int status;
+
+    double stats[9];
+
+    ASSERT(value != NULL);
+
+    status = pslGetGatedStatistics(detChan, (void *)stats, defs);
+
+    if (status != DXP_SUCCESS) {
+        sprintf(info_string, "Error reading gate statistics for detChan %d", detChan);
+        pslLogError("pslGetGatedEvents", info_string, status);
+        return status;
+    }
+
+    *((unsigned long *)value) = (unsigned long)stats[4];
+
+    return XIA_SUCCESS;
+}
+
+
+/*
+ * This routine retrieves the number of
+ * gate triggers that occurred in the run.
+ */
+PSL_STATIC int pslGetGatedTriggers(int detChan, void *value, XiaDefaults *defs)
+{
+    int status;
+
+    double stats[9];
+
+    ASSERT(value != NULL);
+
+    status = pslGetGatedStatistics(detChan, (void *)stats, defs);
+
+    if (status != DXP_SUCCESS) {
+        sprintf(info_string, "Error reading gated statistics for detChan %d", detChan);
+        pslLogError("pslGetGatedTriggers", info_string, status);
+        return status;
+    }
+
+    *((unsigned long *)value) = (unsigned long)stats[3];
+
+    return XIA_SUCCESS;
+}
+
+/* rundata mca_gated
+ * This routine retrieves gated mca data if supported (by Vega)
+ */
+PSL_STATIC int pslGetGatedMCAData(int detChan, void *value, XiaDefaults *defs)
+{
+    int status;
+
+    ASSERT(value != NULL);
+
+    if (!dxp_is_vega(detChan)) {
+        pslLogError("pslGetGatedMCAData", "Connected device does not support "
+                "'mca_gated' run data", XIA_NOSUPPORT_VALUE);
+        return XIA_NOSUPPORT_VALUE;
+    }
+
+    status = pslGetSnapshotMca(detChan, value, defs);
+
+    if (status != DXP_SUCCESS) {
+        sprintf(info_string, "Error reading gated MCA (through snapshot "
+                "data memory) for detChan %d", detChan);
+        pslLogError("pslGetGatedMCAData", info_string, status);
+        return status;
+    }
+
+    return XIA_SUCCESS;
+}
+
+/* acquisition value high_voltage
+ * Reads the high voltage value if supported (vega variant)
+ */
+PSL_STATIC int pslGetHighVoltage(int detChan, char *name, XiaDefaults *defs,
+                             void *value)
+{
+    int status;
+    unsigned short scaledVolts;
+
+    DEFINE_CMD(CMD_ACCESS_I2C, 10, 3);
+
+    UNUSED(name);
+    UNUSED(defs);
+
+    if (!dxp_is_vega(detChan)) {
+        pslLogWarning("pslGetHighVoltage", "Connected device does not support "
+                "'high_voltage' function, skipped.");
+        return XIA_SUCCESS;
+    }
+
+    ASSERT(value != NULL);
+
+    /* I2C command to get HV */
+    send[0] = UDXP_I2C_READ;
+    send[1] = 0x98;         /* I2C Address */
+    send[2] = 0x01;         /* Number of CTRL Byte */
+    send[3] = 0x02;         /* Number of data byte */
+    send[4] = 0x10;         /* CTRL byte */
+
+    status = dxp_cmd(&detChan, &cmd, &lenS, send, &lenR, receive);
+
+    if (status != DXP_SUCCESS) {
+        sprintf(info_string, "Error getting high voltage for "
+                "detChan %d", detChan);
+        pslLogError("pslGetAlphaHV", info_string, status);
+        return status;
+    }
+
+    scaledVolts = (unsigned short)BYTE_TO_WORD(receive[RECV_DATA_OFFSET_STATUS + 1],
+                            receive[RECV_DATA_OFFSET_STATUS]);
+
+    *((double *)value) = (double)scaledVolts / UDXP_HV_SCALE;
+
+    sprintf(info_string, "Read out high_voltage %hu (%.3fV) for channel "
+            " %d", scaledVolts, *((double *)value), detChan);
+    pslLogInfo("pslGetHighVoltage", info_string);
+
+    return XIA_SUCCESS;
+}
+
+
+/*
+/* acquisition value high_voltage
+ * Set the high voltage value if supported (vega variant)
+ */
+PSL_STATIC int pslSetHighVoltage(int detChan, char *name, XiaDefaults *defs,
+                             void *value)
+{
+    int status;
+
+    double volts = *((double *)value);
+    unsigned short scaledVolts;
+
+    DEFINE_CMD(CMD_ACCESS_I2C, 12, 1);
+
+    UNUSED(name);
+    UNUSED(defs);
+
+    if (!dxp_is_vega(detChan)) {
+        pslLogError("pslSetHighVoltage", "Connected device does not support "
+                "'high_voltage' function", XIA_NOSUPPORT_VALUE);
+        return XIA_NOSUPPORT_VALUE;
+    }
+
+    if ((volts < UDXP_HV_MIN) || (volts > UDXP_HV_MAX)) {
+        sprintf(info_string, "Specified high voltage value '%hu' is outside "
+                "the valid range of %d-%d for detChan %d.", volts,
+                UDXP_HV_MIN, UDXP_HV_MAX, detChan);
+        pslLogError("pslSetHighVoltage", info_string, XIA_HV_OOR);
+        return XIA_HV_OOR;
+    }
+
+    scaledVolts = (unsigned short)(volts * UDXP_HV_SCALE);
+
+    sprintf(info_string, "Setting high_voltage %hu (%.3fV) for channel "
+            " %d", scaledVolts, volts, detChan);
+    pslLogInfo("pslSetHighVoltage", info_string);
+
+    send[0] = UDXP_I2C_WRITE;
+    send[1] = 0x98;         /* I2C Address */
+    send[2] = 0x01;         /* Number of CTRL Byte */
+    send[3] = 0x02;         /* Number of data byte */
+    send[4] = 0x10;         /* CTRL byte */
+    send[5] = HI_BYTE(scaledVolts);
+    send[7] = LO_BYTE(scaledVolts);
+
+    status = dxp_cmd(&detChan, &cmd, &lenS, send, &lenR, receive);
+
+    if (status != DXP_SUCCESS) {
+        sprintf(info_string, "Error setting high voltage to %hu "
+                "for detChan %d", volts, detChan);
+        pslLogError("pslSetHighVoltage", info_string, status);
+        return status;
+    }
+
+    return XIA_SUCCESS;
+}

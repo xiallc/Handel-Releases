@@ -27,8 +27,12 @@ CyUsb.spd = 1
 %VID_10E9&PID_0702.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0702
 ; Mercury-4
 %VID_10E9&PID_0703.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0703
+; Mercury-OEM
+%VID_10E9&PID_0705.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0705
 ; Vega
 %VID_10E9&PID_0901.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0901
+; MicroDXP USDA
+%VID_10E9&PID_0902.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0902
 ; UltraLo-1800
 %VID_10E9&PID_0A01.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0A01
 ; Udxp
@@ -93,7 +97,9 @@ CYUSB_INSTALL="Cypress Generic USB Driver Installation Disk"
 VID_10E9&PID_0701.DeviceDesc="XIA Saturn USB2 Spectrometer"
 VID_10E9&PID_0702.DeviceDesc="XIA Mercury USB2 Spectrometer"
 VID_10E9&PID_0703.DeviceDesc="XIA Mercury-4 USB2 Spectrometer"
+VID_10E9&PID_0705.DeviceDesc="XIA Mercury USB2 Spectrometer"
 VID_10E9&PID_0901.DeviceDesc="XIA Vega USB2 Spectrometer"
+VID_10E9&PID_0902.DeviceDesc="XIA MicroDXP USDA USB2 Spectrometer"
 VID_10E9&PID_0A01.DeviceDesc="XIA UltraLo-1800 Alpha Particle Counter"
 VID_10E9&PID_0B01.DeviceDesc="XIA microDXP USB2 Spectrometer"
 VID_20BD&PID_0020.DeviceDesc="KETEK DPP2"

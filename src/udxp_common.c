@@ -710,7 +710,7 @@ int dxp_verify_response(byte_t cmd, unsigned int lenS, byte_t *send,
 
         if (retLen > lenR) {
             sprintf(INFO_STRING, "Received length of data %u is greater than "
-                "expected %u", retLen, lenS);
+                "expected %u", retLen, lenR);
             udxpc_log_error("dxp_verify_response", INFO_STRING, DXP_UDXP_RESPONSE);
             status = DXP_UDXP_RESPONSE;
         }
@@ -990,6 +990,19 @@ XERXES_SHARED boolean_t dxp_is_supermicro(int ioChan)
     return VERSION_CACHE[ioChan][PIC_MAJOR] > 2;
 #endif
 }
+
+XERXES_SHARED boolean_t dxp_is_vega(int ioChan)
+{
+#ifdef XIA_ALPHA
+    UNUSED(ioChan);
+    return FALSE_;
+#else
+    ASSERT(VERSION_CACHE[ioChan][PIC_VARIANT] != UDXP_VERSION_NOT_READ);
+    /* Check for vega variant */
+    return VERSION_CACHE[ioChan][PIC_VARIANT] == 36;
+#endif
+}
+
 
 XERXES_SHARED boolean_t dxp_has_direct_trace_readout(int ioChan)
 {
