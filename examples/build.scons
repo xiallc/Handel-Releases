@@ -12,9 +12,13 @@ if sample_code_env.Bit('udxp'):
     sample_code_env.ComponentProgram('hqsg-microdxp', ['microdxp/hqsg-microdxp.c'])
     sample_code_env.ComponentProgram('hqsg-microdxp-snapshot', ['microdxp/hqsg-microdxp-snapshot.c'])
     sample_code_env.ComponentProgram('hqsg-microdxp-passthrough', ['microdxp/hqsg-microdxp-passthrough.c'])
+    sample_code_env.ComponentProgram('hqsg-microdxp-vega', ['microdxp/hqsg-microdxp-vega.c'])
 
 if sample_code_env.Bit('saturn'):
     sample_code_env.ComponentProgram('hqsg-saturn', ['saturn/hqsg-saturn.c'])
+
+if sample_code_env.Bit('mercury'):
+    sample_code_env.ComponentProgram('hqsg-mercury-oem', ['mercury/hqsg-mercury-oem.c'])
 
 if sample_code_env.Bit('stj'):
     sample_code_env.ComponentProgram('hqsg-stj-list', ['stj/hqsg-stj-list.c'])

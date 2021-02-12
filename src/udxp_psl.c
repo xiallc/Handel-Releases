@@ -121,9 +121,10 @@ PSL_STATIC int pslReadoutPeakingTimes(int detChan, XiaDefaults *defs,
                                       boolean_t allFippis, double *pts);
 PSL_STATIC int pslReadDirectUsbMemory(int detChan, unsigned long address,
                                     unsigned long num_bytes, byte_t *receive);
-PSL_STATIC int pslGetMcaDirect(int detChan, int bytesPerBin,
-                                    int numMCAChans, unsigned long startAddr,
-                                    unsigned long *data);
+PSL_STATIC int pslGetMcaDirect(int detChan, unsigned long startAddr,
+                                    unsigned long *data, XiaDefaults *defs);
+PSL_STATIC int pslGetMcaCmd(int detChan, byte_t cmd,
+                                    unsigned long *value, XiaDefaults *defs);
 PSL_STATIC void pslConvertStatistics(int detChan, byte_t *receive, double *stats);
 
 #ifdef XIA_ALPHA
@@ -1922,99 +1923,21 @@ PSL_STATIC int pslGetMCALength(int detChan, void *value, XiaDefaults *defs)
 }
 
 
-/*
- * This routine returns the MCA spectrum read
- * from the board.
+/* run data mca
+ *
  */
 PSL_STATIC int pslGetMCAData(int detChan, void *value, XiaDefaults *defs)
 {
     int status;
 
-    unsigned int i;
-    unsigned int dataLen;
-    unsigned int lenS = 5;
-    unsigned int lenR = 0;
-
-    unsigned long *data = (unsigned long *)value;
-
-    double bytesPerBin = 0.0;
-    double numMCAChans = 0.0;
-    double mcaLowLim = 0.0;
-
-    byte_t cmd         = CMD_READ_MCA;
-
-    byte_t send[5];
-
-    byte_t *receive = NULL;
-
-
-    status = pslGetAcquisitionValues(detChan, "bytes_per_bin", (void *)&bytesPerBin, defs);
-
-    if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error getting bytes per bin for detChan %d", detChan);
-        pslLogError("pslGetMCAData", info_string, status);
-        return status;
-    }
-
-    status = pslGetAcquisitionValues(detChan, "number_mca_channels", (void *)&numMCAChans,
-                                     defs);
-
-    if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error getting number of MCA channels for detChan %d", detChan);
-        pslLogError("pslGetMCAData", info_string, status);
-        return status;
-    }
-
-    mcaLowLim = 0.0;
-
-    sprintf(info_string, "bytesPerBin = %.3f, numMCAChans = %.3f, mcaLowLim = %.3f",
-            bytesPerBin, numMCAChans, mcaLowLim);
-    pslLogDebug("pslGetMCAData", info_string);
-
     if (IS_USB && dxp_has_direct_mca_readout(detChan)) {
-        status = pslGetMcaDirect(detChan, (int)bytesPerBin,
-                                (int)numMCAChans, 0x2000, data);
-        return status;
+        status = pslGetMcaDirect(detChan, 0x2000, value, defs);
+    } else {
+        status = pslGetMcaCmd(detChan, CMD_READ_MCA, value, defs);
     }
 
-    send[0] = LO_BYTE((unsigned short)mcaLowLim);
-    send[1] = HI_BYTE((unsigned short)mcaLowLim);
-    send[2] = LO_BYTE((unsigned short)numMCAChans);
-    send[3] = HI_BYTE((unsigned short)numMCAChans);
-    send[4] = (byte_t)bytesPerBin;
-
-    dataLen = (unsigned int)(bytesPerBin * numMCAChans);
-    lenR = (unsigned int)(dataLen + 1 + RECV_BASE);
-
-    receive = (byte_t *)utils->funcs->dxp_md_alloc(lenR * sizeof(byte_t));
-
-    if (receive == NULL) {
-        pslLogError("pslGetMCAData", "Out-of-memory trying to create receive array",
-                    XIA_NOMEM);
-        return XIA_NOMEM;
-    }
-
-    status = dxp_cmd(&detChan, &cmd, &lenS, send, &lenR, receive);
-
-    if (status != DXP_SUCCESS) {
-        utils->funcs->dxp_md_free((void *)receive);
-
-        sprintf(info_string, "Error getting MCA data from detChan %d", detChan);
-        pslLogError("pslGetMCAData", info_string, status);
-        return status;
-    }
-
-    /* Transfer the spectra to the user's array. */
-    for (i = 0; i < numMCAChans; i++) {
-        data[i] = pslUlFromBytesOffset(receive, (int)bytesPerBin,
-                            RECV_BASE + i * (int)bytesPerBin);
-    }
-
-    utils->funcs->dxp_md_free((void *)receive);
-
-    return XIA_SUCCESS;
+    return status;
 }
-
 
 /*
  * This routine calculates and returns
@@ -3598,25 +3521,7 @@ PSL_STATIC int pslGetSnapshotMca(int detChan, void *value, XiaDefaults *defs)
     int status;
 
     unsigned long features;
-
-    unsigned int i;
-    unsigned int dataLen;
-    unsigned int lenS = 5;
-    unsigned int lenR = 0;
-
-    unsigned long *data = (unsigned long *)value;
-
-    double bytesPerBin = 0.0;
-    double numMCAChans = 0.0;
-    double mcaLowLim = 0.0;
-
     parameter_t SNAPSHOTSTART = 0x0000;
-
-    byte_t cmd = CMD_READ_SNAPSHOT_MCA;
-
-    byte_t send[5];
-
-    byte_t *receive = NULL;
 
     status = pslGetBoardFeatures(detChan, NULL, defs, (void *)&features);
 
@@ -3626,26 +3531,6 @@ PSL_STATIC int pslGetSnapshotMca(int detChan, void *value, XiaDefaults *defs)
         return XIA_NOSUPPORT_VALUE;
     }
 
-    status = pslGetAcquisitionValues(detChan, "bytes_per_bin", (void *)&bytesPerBin, defs);
-
-    if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error getting bytes per bin for detChan %d", detChan);
-        pslLogError("pslGetSnapshotMca", info_string, status);
-        return status;
-    }
-
-    status = pslGetAcquisitionValues(detChan, "number_mca_channels", (void *)&numMCAChans, defs);
-
-    if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error getting number of MCA channels for detChan %d", detChan);
-        pslLogError("pslGetSnapshotMca", info_string, status);
-        return status;
-    }
-
-    sprintf(info_string, "bytesPerBin = %.3f, numMCAChans = %.3f, mcaLowLim = %.3f",
-            bytesPerBin, numMCAChans, mcaLowLim);
-    pslLogDebug("pslGetSnapshotMca", info_string);
-
     if (IS_USB) {
         status = pslGetParameter(detChan, "SNAPSHOTSTART", &SNAPSHOTSTART);
 
@@ -3654,10 +3539,59 @@ PSL_STATIC int pslGetSnapshotMca(int detChan, void *value, XiaDefaults *defs)
             return status;
         }
 
-        status = pslGetMcaDirect(detChan, (int)bytesPerBin,
-                          (int)numMCAChans, (unsigned long)SNAPSHOTSTART, data);
+        status = pslGetMcaDirect(detChan, (unsigned long)SNAPSHOTSTART, value,defs);
+    } else {
+        status = pslGetMcaCmd(detChan, CMD_READ_SNAPSHOT_MCA, value, defs);
+    }
+
+
+    if (status != XIA_SUCCESS) {
+        pslLogError("pslGetSnapshotMca", "Error getting snapshot mca",
+                    status);
+    }
+
+    return status;
+}
+
+PSL_STATIC int pslGetMcaCmd(int detChan, byte_t cmd,
+                                    unsigned long *value, XiaDefaults *defs)
+{
+    int status;
+    unsigned int i;
+    unsigned int dataLen;
+    unsigned int lenS = 5;
+    unsigned int lenR = 0;
+
+    byte_t send[5];
+
+    byte_t *receive = NULL;
+
+    unsigned long *data = (unsigned long *)value;
+
+    double bytesPerBin = 0.0;
+    double numMCAChans = 0.0;
+    double mcaLowLim = 0.0;
+
+    status = pslGetDefault("bytes_per_bin", (void *)&bytesPerBin, defs);
+
+    if (status != XIA_SUCCESS) {
+        sprintf(info_string, "Error getting bytes per bin for detChan %d", detChan);
+        pslLogError("pslGetMcaCmd", info_string, status);
         return status;
     }
+    status = pslGetDefault("number_mca_channels", (void *)&numMCAChans, defs);
+
+    if (status != XIA_SUCCESS) {
+        sprintf(info_string, "Error getting number of MCA channels for detChan %d", detChan);
+        pslLogError("pslGetMcaCmd", info_string, status);
+        return status;
+    }
+
+    mcaLowLim = 0.0;
+
+    sprintf(info_string, "bytesPerBin = %.3f, numMCAChans = %.3f, mcaLowLim = %.3f",
+            bytesPerBin, numMCAChans, mcaLowLim);
+    pslLogDebug("pslGetMcaCmd", info_string);
 
     dataLen = (unsigned int)(bytesPerBin * numMCAChans);
     lenR = (unsigned int)(dataLen + 1 + RECV_BASE);
@@ -3671,7 +3605,7 @@ PSL_STATIC int pslGetSnapshotMca(int detChan, void *value, XiaDefaults *defs)
     receive = (byte_t *)utils->funcs->dxp_md_alloc(lenR * sizeof(byte_t));
 
     if (receive == NULL) {
-        pslLogError("pslGetSnapshotMca", "Out-of-memory trying to create "
+        pslLogError("pslGetMcaCmd", "Out-of-memory trying to create "
                     "receive array", XIA_NOMEM);
         return XIA_NOMEM;
     }
@@ -3681,7 +3615,7 @@ PSL_STATIC int pslGetSnapshotMca(int detChan, void *value, XiaDefaults *defs)
     if (status != DXP_SUCCESS) {
         utils->funcs->dxp_md_free((void *)receive);
         sprintf(info_string, "Error getting MCA data from detChan %d", detChan);
-        pslLogError("pslGetSnapshotMca", info_string, status);
+        pslLogError("pslGetMcaCmd", info_string, status);
         return status;
     }
 
@@ -3696,9 +3630,8 @@ PSL_STATIC int pslGetSnapshotMca(int detChan, void *value, XiaDefaults *defs)
 }
 
 
-PSL_STATIC int pslGetMcaDirect(int detChan, int bytesPerBin,
-                                    int numMCAChans, unsigned long startAddr,
-                                    unsigned long *data)
+PSL_STATIC int pslGetMcaDirect(int detChan, unsigned long startAddr,
+                                    unsigned long *data, XiaDefaults *defs)
 {
     int status;
     int i;
@@ -3706,13 +3639,37 @@ PSL_STATIC int pslGetMcaDirect(int detChan, int bytesPerBin,
     unsigned int dataLen;
     byte_t *receive;
 
+    double bytesPerBin = 0.0;
+    double numMCAChans = 0.0;
+    double mcaLowLim = 0.0;
+
     ASSERT(IS_USB);
 
+    status = pslGetDefault("bytes_per_bin", (void *)&bytesPerBin, defs);
+
+    if (status != XIA_SUCCESS) {
+        sprintf(info_string, "Error getting bytes per bin for detChan %d", detChan);
+        pslLogError("pslGetMcaDirect", info_string, status);
+        return status;
+    }
+    status = pslGetDefault("number_mca_channels", (void *)&numMCAChans, defs);
+
+    if (status != XIA_SUCCESS) {
+        sprintf(info_string, "Error getting number of MCA channels for detChan %d", detChan);
+        pslLogError("pslGetMcaDirect", info_string, status);
+        return status;
+    }
+
+    mcaLowLim = 0.0;
+
+    sprintf(info_string, "bytesPerBin = %.3f, numMCAChans = %.3f, mcaLowLim = %.3f",
+            bytesPerBin, numMCAChans, mcaLowLim);
+    pslLogDebug("pslGetMcaDirect", info_string);
 
     /* Note that the data in spectrum memory will always contain 4 bytes
      * Despite of the bytePerBin setting
      */
-    dataLen = numMCAChans * RAW_BYTES_PER_BIN;
+    dataLen = (unsigned int)numMCAChans * RAW_BYTES_PER_BIN;
     receive = (byte_t *)utils->funcs->dxp_md_alloc(dataLen * sizeof(byte_t));
 
     if (receive == NULL) {
@@ -3731,7 +3688,7 @@ PSL_STATIC int pslGetMcaDirect(int detChan, int bytesPerBin,
 
     /* Now it's time to discard the extra byte */
     for (i = 0; i < numMCAChans; i++) {
-        data[i] = pslUlFromBytesOffset(receive, bytesPerBin, i * RAW_BYTES_PER_BIN);
+        data[i] = pslUlFromBytesOffset(receive, (int)bytesPerBin, i * RAW_BYTES_PER_BIN);
     }
 
     utils->funcs->dxp_md_free((void *)receive);
@@ -6220,7 +6177,7 @@ PSL_STATIC int pslGetAllStatistics(int detChan, void *value, XiaDefaults *defs)
     return XIA_SUCCESS;
 }
 
-/*
+/* rundata module_statistics_2
  * Returns all of the statistics in a single array for run
  * data module_statistics_2 value is expected to be a double array capable
  * of holding 9 values returned in the following format:
@@ -6232,7 +6189,6 @@ PSL_STATIC int pslGetModuleStatistics(int detChan, void *value, XiaDefaults *def
 {
 
     int status;
-
     double *stats = (double *)value;
 
     DEFINE_CMD(CMD_READ_STATISTICS, 1, 29);
@@ -6243,7 +6199,6 @@ PSL_STATIC int pslGetModuleStatistics(int detChan, void *value, XiaDefaults *def
     }
 
     UNUSED(defs);
-
     ASSERT(value != NULL);
 
     /* long read mode to retrieve under and over flows */
@@ -6262,6 +6217,7 @@ PSL_STATIC int pslGetModuleStatistics(int detChan, void *value, XiaDefaults *def
     pslConvertStatistics(detChan, receive, stats);
     return XIA_SUCCESS;
 }
+
 
 /*
  * Convert a statistics return array from receive buffer in the following format:
@@ -7598,7 +7554,7 @@ PSL_STATIC int pslSetTriggerPosition(int detChan, char *name, XiaDefaults *defs,
     if (!isSuper) {
         sprintf(info_string, "Trace trigger position is not supported by "
                 "non-supermicro variant");
-        pslLogError("pslGetScaTimeOn", info_string, XIA_NOSUPPORT_VALUE);
+        pslLogError("pslSetTriggerPosition", info_string, XIA_NOSUPPORT_VALUE);
         return XIA_NOSUPPORT_VALUE;
     }
 
@@ -7678,6 +7634,7 @@ PSL_STATIC int pslGetBoardFeatures(int detChan, char *name, XiaDefaults *defs,
                                    void *value)
 {
     boolean_t isSuper = dxp_is_supermicro(detChan);
+    boolean_t isVega = dxp_is_vega(detChan);
 
     unsigned long *features = (unsigned long *)value;
     unsigned long coderev = dxp_dsp_coderev(detChan);
@@ -7695,6 +7652,7 @@ PSL_STATIC int pslGetBoardFeatures(int detChan, char *name, XiaDefaults *defs,
     *features |= ((unsigned long) (coderev >= MIN_SNAPSHOT_SUPPORT_CODEREV)) << BOARD_SUPPORTS_SNAPSHOT;
     *features |= ((unsigned long) (coderev >= MIN_PASSTHROUGH_SUPPORT_CODEREV)) << BOARD_SUPPORTS_PASSTHROUGH;
     *features |= ((unsigned long) (coderev >= MIN_SNAPSHOTSCA_SUPPORT_CODEREV)) << BOARD_SUPPORTS_SNAPSHOTSCA;
+    *features |= ((unsigned long) isVega) << BOARD_SUPPORTS_VEGA_FEATURES;
 
     return XIA_SUCCESS;
 }
@@ -11567,14 +11525,8 @@ PSL_STATIC int pslCreateBackup(int detChan, char *name, XiaDefaults *defs,
 
 #endif /* EXCLUDE_XUP */
 
-
-/* rundata module_statistics_gated
- * Returns the gated statistics in a single array for run
- * data module_statistics_2 value is expected to be a double array capable
- * of holding 9 values returned in the following format:
- *
- * [runtime, trigger_livetime, energy_livetime, triggers, events, icr,
- * ocr, underflows, overflows]
+/* run data module_statistics_gated
+ * Vega variant only: GATE = 1 --> snapshot spectrum and statistics
  */
 PSL_STATIC int pslGetGatedStatistics(int detChan, void *value, XiaDefaults *defs)
 {
@@ -11600,7 +11552,6 @@ PSL_STATIC int pslGetGatedStatistics(int detChan, void *value, XiaDefaults *defs
 
     return XIA_SUCCESS;
 }
-
 
 /*
  * This routine calculates and returns
@@ -11651,7 +11602,6 @@ PSL_STATIC int pslGetGatedRuntime(int detChan, void *value, XiaDefaults *defs)
 
     return XIA_SUCCESS;
 }
-
 
 /*
  * This routine retrieves the gated Input Count Rate,
@@ -11731,7 +11681,6 @@ PSL_STATIC int pslGetGatedEvents(int detChan, void *value, XiaDefaults *defs)
     return XIA_SUCCESS;
 }
 
-
 /*
  * This routine retrieves the number of
  * gate triggers that occurred in the run.
@@ -11758,7 +11707,7 @@ PSL_STATIC int pslGetGatedTriggers(int detChan, void *value, XiaDefaults *defs)
 }
 
 /* rundata mca_gated
- * This routine retrieves gated mca data if supported (by Vega)
+ * Vega variant GATE = 1 --> snapshot spectrum and statistics
  */
 PSL_STATIC int pslGetGatedMCAData(int detChan, void *value, XiaDefaults *defs)
 {
@@ -11775,8 +11724,7 @@ PSL_STATIC int pslGetGatedMCAData(int detChan, void *value, XiaDefaults *defs)
     status = pslGetSnapshotMca(detChan, value, defs);
 
     if (status != DXP_SUCCESS) {
-        sprintf(info_string, "Error reading gated MCA (through snapshot "
-                "data memory) for detChan %d", detChan);
+        sprintf(info_string, "Error reading gated MCA for detChan %d", detChan);
         pslLogError("pslGetGatedMCAData", info_string, status);
         return status;
     }
@@ -11878,7 +11826,7 @@ PSL_STATIC int pslSetHighVoltage(int detChan, char *name, XiaDefaults *defs,
     send[3] = 0x02;         /* Number of data byte */
     send[4] = 0x10;         /* CTRL byte */
     send[5] = HI_BYTE(scaledVolts);
-    send[7] = LO_BYTE(scaledVolts);
+    send[6] = LO_BYTE(scaledVolts);
 
     status = dxp_cmd(&detChan, &cmd, &lenS, send, &lenR, receive);
 

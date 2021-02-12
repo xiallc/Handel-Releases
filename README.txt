@@ -20,14 +20,26 @@ version, `gem install ffi`.
 
 tools/releaser requires more Ruby gems: tenjin win32-api wrong.
 
-# Working with SCons
+Building with scons
+===================
 
-Note: from the source distribution, move src/main.scons to the root of the
-package.
+Handel has many flags that map to defines in the compilation environment. A
+little experimentation may be needed to get the set that supports only the
+products you need.
 
-`main.scons` sets up all the product flags and includes subdirectory scons
-files. Because we use swtoolkit, our scons files contain a mix of swtoolkit
-functions and scons functions.
+The incldued bulid script can be used to invoke SCons build environment.
+
+Here's an example for microDXP USB2:
+
+   build --udxp --no-udxps --no-xw --no-serial --no-xmap --no-stj --no-mercury --no-saturn --verbose
+
+Another example to build the examples with default option:
+
+   build --samples
+
+To search for other flags, search "SetBitFromOption" in main.scons.
+
+
 
 Resources:
 

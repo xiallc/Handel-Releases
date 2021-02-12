@@ -256,7 +256,7 @@ static const double VARIABLE_GAIN_SPACING = 1.7;
 #define UDXP_I2C_WRITE  1
 #define UDXP_HV_MIN     0
 #define UDXP_HV_MAX     2.5
-#define UDXP_HV_SCALE   (65535 / UDXP_HV_MAX)
+#define UDXP_HV_SCALE   (65536 / UDXP_HV_MAX)
 
 #define CMD_ACCESS_I2C  0x40
 /*

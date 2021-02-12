@@ -1,3 +1,11 @@
+v1.2.28
+=======
+
+* [Mercury] Added support for Mercury OEM variant.
+
+* [microDXP] Added support for Vega variant microDXP.
+
+
 v1.2.26
 =======
 
@@ -12,7 +20,7 @@ v1.2.25
   function xiaGetErrorText has been added to return the text for each error
   code.
 
-* Handel error code constants have been updated and reoganized to better define
+* Handel error code constants have been updated and reorganized to better define
   the error.
 
 * [microDXP] Added a check to board status on startup, do not continue if board
@@ -43,7 +51,7 @@ v1.2.23
 
 * Added logging entries in handel log for USB error codes.
 
-* [microDXP] Fixed error in setting acquistion value "preset_type" for Rev G
+* [microDXP] Fixed error in setting acquisition value "preset_type" for Rev G
   boards.
 
 * [microDXP] Fixed passthrough command capabilities check, return error
@@ -51,7 +59,7 @@ v1.2.23
 
 * Attempt to clear USB2 send buffer after connection in case stale data were
   left in the buffer after previous connection was broken off, e.g.
-  when user press CTRL+C to end a program during active communiction, in some
+  when user press CTRL+C to end a program during active communication, in some
   cases this had caused a device to appear locked up, and required a power
   cycle.
 
@@ -222,7 +230,7 @@ v1.2.13
 
 * Updated API documentation and Quickstart Guides.
 
-* Removed the following exported funtions from the API, they are only needed for
+* Removed the following exported functions from the API, they are only needed for
   internal initialization of the data structure, and could potentially make the
   system unstable if used after starting up. Modification to system configuration
   can be safely done by loading a new configuration file with xiaLoadSystem, then
@@ -291,7 +299,7 @@ v1.2.7
 
 * [microDXP] Added run data module_statistics_2
 
-* [microDXP] Added support for Ketek High Low gain mode.
+* [microDXP] Added support for KETEK High Low gain mode.
 
 * [microDXP] Moved execution of the set acquisition value function to
   xiaSetAcquisitionValues, up from BoardOperation "apply". This is needed to
@@ -304,7 +312,7 @@ v1.2.7
 
 * [microDXP] Added get_board_features board operation to return bit flags
   representing board features, defined in handel_constants.h. Currently
-  inlcudes BOARD_SUPPORTS_SCA.
+  includes BOARD_SUPPORTS_SCA.
 
 * [microDXP] Added trace_trigger_type and trace_trigger_position acquisition
   values

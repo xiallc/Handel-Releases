@@ -110,7 +110,9 @@ if base_env.Bit('tests') :
     if base_env.Bit('xmap') :
         base_env.Append(BUILD_SCONSCRIPTS=['benchmarks/xmap/mapping/build.scons',
                          'tests/xmap_list_mode_stress_test/build.scons'])
-
+    if base_env.Bit('mercury') :
+        base_env.Append(BUILD_SCONSCRIPTS=[
+                         'tests/mercury_oem_test/build.scons'])
 
 # Set options to build sample program
 DeclareBit('samples', 'Build samples')
