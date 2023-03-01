@@ -46,7 +46,7 @@ def ConcatSourceBuilder(target, source, env):
     None if successful; 1 if error.
   """
   if len(target) != 1:
-    print 'ERROR: multiple ConcatSource targets when 1 expected'
+    print('ERROR: multiple ConcatSource targets when 1 expected')
     return 1
 
   output_lines = [

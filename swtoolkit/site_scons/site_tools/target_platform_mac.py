@@ -72,7 +72,7 @@ def BundlePseudoBuilder(env, target, **kwargs):
   env = env.Clone()
 
   # Bring keywords args into the environment.
-  for k, v in kwargs.items():
+  for k, v in list(kwargs.items()):
     env[k] = v
   # Make sure BUNDLE_RESOURCES is set and not empty; force it to be a list
   bundle_resources = env.Flatten(env.get('BUNDLE_RESOURCES', []))

@@ -1,169 +1,177 @@
-; Installation INF for the Cypress Generic USB Driver for Windows Vista
-; Processor support for OS unknown platforms.
+; Installation INF for the Cypress Generic USB Driver for %OPERATING_SYSTEM%
+; Processor support for %PLATFORM% platforms.
 ;
-; (c) Copyright 2011 Cypress Semiconductor Corporation
+; (c) Copyright 2017 Cypress Semiconductor Corporation
 ;
 
 [Version]
 Signature="$WINDOWS NT$"
 Class=USB
 ClassGUID={36FC9E60-C465-11CF-8056-444553540000}
-Provider=%CYUSB_Provider%
+Provider=%CYUSB3_Provider%
 CatalogFile=xia_usb2.cat
-DriverVer=03/15/2016,3.4.7.4
+DriverVer=11/08/2017,1.2.3.20
 
 [SourceDisksNames]
-1=%CYUSB_Install%,,,
+1=%CyUsb3_Install%,,,
 
 [SourceDisksFiles]
 xia_usb2.sys = 1
 
 [DestinationDirs]
-CYUSB.Files.Ext = 10,System32\Drivers
+CYUSB3.Files.Ext = 10,System32\Drivers
+CoInstaller_CopyFiles = 11
 
 [ControlFlags]
 ExcludeFromSelect = *
 
 [Manufacturer]
-%CYUSB_Provider%=Device,NT,NTx86,NTamd64
+%CYUSB3_Provider%=Device,NT,NTx86,NTamd64
 
 ;for all platforms
 [Device]
-%VID_10E9&PID_0600.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0600
-%VID_10E9&PID_0701.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0701
-%VID_10E9&PID_0702.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0702
-%VID_10E9&PID_0703.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0703
-%VID_10E9&PID_0704.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0704
-%VID_10E9&PID_0705.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0705
-%VID_10E9&PID_0742.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0742
-%VID_10E9&PID_0801.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0801
-%VID_10E9&PID_0901.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0901
-%VID_10E9&PID_0902.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0902
-%VID_10E9&PID_0B01.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0B01
-%VID_20BD&PID_0020.DeviceDesc%=CyUsb, USB\VID_20BD&PID_0020
-%VID_10E9&PID_0C01.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0C01
+%VID_10E9&PID_0600.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0600
+%VID_10E9&PID_0701.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0701
+%VID_10E9&PID_0702.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0702
+%VID_10E9&PID_0703.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0703
+%VID_10E9&PID_0704.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0704
+%VID_10E9&PID_0705.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0705
+%VID_10E9&PID_0742.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0742
+%VID_10E9&PID_0801.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0801
+%VID_10E9&PID_0901.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0901
+%VID_10E9&PID_0902.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0902
+%VID_10E9&PID_0B01.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0B01
+%VID_20BD&PID_0020.DeviceDesc%=CyUsb3, USB\VID_20BD&PID_0020
+%VID_10E9&PID_0C01.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0C01
 
 ;for windows 2000 non intel platforms
 [Device.NT]
-%VID_10E9&PID_0600.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0600
-%VID_10E9&PID_0701.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0701
-%VID_10E9&PID_0702.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0702
-%VID_10E9&PID_0703.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0703
-%VID_10E9&PID_0704.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0704
-%VID_10E9&PID_0705.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0705
-%VID_10E9&PID_0742.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0742
-%VID_10E9&PID_0801.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0801
-%VID_10E9&PID_0901.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0901
-%VID_10E9&PID_0902.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0902
-%VID_10E9&PID_0B01.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0B01
-%VID_20BD&PID_0020.DeviceDesc%=CyUsb, USB\VID_20BD&PID_0020
-%VID_10E9&PID_0C01.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0C01
+%VID_10E9&PID_0600.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0600
+%VID_10E9&PID_0701.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0701
+%VID_10E9&PID_0702.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0702
+%VID_10E9&PID_0703.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0703
+%VID_10E9&PID_0704.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0704
+%VID_10E9&PID_0705.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0705
+%VID_10E9&PID_0742.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0742
+%VID_10E9&PID_0801.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0801
+%VID_10E9&PID_0901.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0901
+%VID_10E9&PID_0902.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0902
+%VID_10E9&PID_0B01.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0B01
+%VID_20BD&PID_0020.DeviceDesc%=CyUsb3, USB\VID_20BD&PID_0020
+%VID_10E9&PID_0C01.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0C01
 
 ;for x86 platforms
 [Device.NTx86]
-%VID_10E9&PID_0600.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0600
-%VID_10E9&PID_0701.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0701
-%VID_10E9&PID_0702.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0702
-%VID_10E9&PID_0703.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0703
-%VID_10E9&PID_0704.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0704
-%VID_10E9&PID_0705.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0705
-%VID_10E9&PID_0742.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0742
-%VID_10E9&PID_0801.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0801
-%VID_10E9&PID_0901.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0901
-%VID_10E9&PID_0902.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0902
-%VID_10E9&PID_0B01.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0B01
-%VID_20BD&PID_0020.DeviceDesc%=CyUsb, USB\VID_20BD&PID_0020
-%VID_10E9&PID_0C01.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0C01
+%VID_10E9&PID_0600.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0600
+%VID_10E9&PID_0701.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0701
+%VID_10E9&PID_0702.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0702
+%VID_10E9&PID_0703.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0703
+%VID_10E9&PID_0704.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0704
+%VID_10E9&PID_0705.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0705
+%VID_10E9&PID_0742.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0742
+%VID_10E9&PID_0801.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0801
+%VID_10E9&PID_0901.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0901
+%VID_10E9&PID_0902.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0902
+%VID_10E9&PID_0B01.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0B01
+%VID_20BD&PID_0020.DeviceDesc%=CyUsb3, USB\VID_20BD&PID_0020
+%VID_10E9&PID_0C01.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0C01
 
 ;for x64 platforms
 [Device.NTamd64]
-%VID_10E9&PID_0600.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0600
-%VID_10E9&PID_0701.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0701
-%VID_10E9&PID_0702.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0702
-%VID_10E9&PID_0703.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0703
-%VID_10E9&PID_0704.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0704
-%VID_10E9&PID_0705.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0705
-%VID_10E9&PID_0742.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0742
-%VID_10E9&PID_0801.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0801
-%VID_10E9&PID_0901.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0901
-%VID_10E9&PID_0902.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0902
-%VID_10E9&PID_0B01.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0B01
-%VID_20BD&PID_0020.DeviceDesc%=CyUsb, USB\VID_20BD&PID_0020
-%VID_10E9&PID_0C01.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0C01
+%VID_10E9&PID_0600.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0600
+%VID_10E9&PID_0701.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0701
+%VID_10E9&PID_0702.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0702
+%VID_10E9&PID_0703.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0703
+%VID_10E9&PID_0704.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0704
+%VID_10E9&PID_0705.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0705
+%VID_10E9&PID_0742.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0742
+%VID_10E9&PID_0801.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0801
+%VID_10E9&PID_0901.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0901
+%VID_10E9&PID_0902.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0902
+%VID_10E9&PID_0B01.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0B01
+%VID_20BD&PID_0020.DeviceDesc%=CyUsb3, USB\VID_20BD&PID_0020
+%VID_10E9&PID_0C01.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0C01
 
-[CYUSB]
-CopyFiles=CYUSB.Files.Ext
-AddReg=CyUsb.AddReg
+[CYUSB3.NTx86]
+CopyFiles=CYUSB3.Files.Ext
+AddReg=CyUsb3.AddReg
 
-[CYUSB.HW]
-AddReg=CYUSB.AddReg.Guid
+[CYUSB3.NTx86.HW]
+AddReg=CYUSB3.AddReg.Guid
 
-[CYUSB.Services]
-Addservice = CYUSB,2,CYUSB.AddService
+[CYUSB3.NTx86.Services]
+Addservice = CYUSB3,2,CYUSB3.AddService
 
-[CYUSB.NT]
-CopyFiles=CYUSB.Files.Ext
-AddReg=CyUsb.AddReg
+[CYUSB3.NTamd64]
+CopyFiles=CYUSB3.Files.Ext
+AddReg=CyUsb3.AddReg
 
-[CYUSB.NT.HW]
-AddReg=CYUSB.AddReg.Guid
+[CYUSB3.NTamd64.HW]
+AddReg=CYUSB3.AddReg.Guid
 
-[CYUSB.NT.Services]
-Addservice = CYUSB,2,CYUSB.AddService
-
-
-[CYUSB.NTx86]
-CopyFiles=CYUSB.Files.Ext
-AddReg=CyUsb.AddReg
-
-[CYUSB.NTx86.HW]
-AddReg=CYUSB.AddReg.Guid
-
-[CYUSB.NTx86.Services]
-Addservice = CYUSB,2,CYUSB.AddService
-
-[CYUSB.NTamd64]
-CopyFiles=CYUSB.Files.Ext
-AddReg=CyUsb.AddReg
-
-[CYUSB.NTamd64.HW]
-AddReg=CYUSB.AddReg.Guid
-
-[CYUSB.NTamd64.Services]
-Addservice = CYUSB,2,CYUSB.AddService
+[CYUSB3.NTamd64.Services]
+Addservice = CYUSB3,2,CYUSB3.AddService
 
 
-[CYUSB.AddReg]
-; Deprecating - do not use in new apps to identify a CYUSB driver
+[CYUSB3.AddReg]
+; Deprecating - do not use in new apps to identify a CYUSB3 driver
 HKR,,DevLoader,,*ntkern
-HKR,,NTMPDriver,,xia_usb2.sys
-; You may optionally include a check for DriverBase in your application to check for a CYUSB driver
-HKR,,DriverBase,,xia_usb2.sys
+HKR,,NTMPDriver,,CYUSB3.sys
+; You may optionally include a check for DriverBase in your application to check for a CYUSB3 driver
+HKR,,DriverBase,,CYUSB3.sys
 HKR,"Parameters","MaximumTransferSize",0x10001,4096
 HKR,"Parameters","DebugLevel",0x10001,2
-HKR,,FriendlyName,,%CYUSB_Description%
+HKR,,FriendlyName,,%CYUSB3_Description%
 
-[CYUSB.AddService]
-DisplayName    = %CYUSB_Description%
+[CYUSB3.AddService]
+DisplayName    = %CYUSB3_Description%
 ServiceType    = 1                  ; SERVICE_KERNEL_DRIVER
 StartType      = 3                  ; SERVICE_DEMAND_START
 ErrorControl   = 1                  ; SERVICE_ERROR_NORMAL
 ServiceBinary  = %10%\System32\Drivers\xia_usb2.sys
-AddReg         = CYUSB.AddReg
+AddReg         = CYUSB3.AddReg
 LoadOrderGroup = Base
 
-[CYUSB.Files.Ext]
+[CYUSB3.Files.Ext]
 xia_usb2.sys
 
-[CYUSB.AddReg.Guid]
-HKR,,DriverGUID,,%CYUSB.GUID%
+[CYUSB3.AddReg.Guid]
+HKR,,DriverGUID,,%CYUSB3.GUID%
+;HKR,,DriverPowerPolicySetup,,%ENABLE_DRIVER_POWER_POLICY%
+
+;-------------- WDF Coinstaller installation
+[CYUSB3.NTamd64.CoInstallers]
+AddReg=CoInstaller_AddReg
+CopyFiles=CoInstaller_CopyFiles
+
+[CYUSB3.NTx86.CoInstallers]
+AddReg=CoInstaller_AddReg
+CopyFiles=CoInstaller_CopyFiles
+
+[CoInstaller_CopyFiles]
+;
+
+
+[CoInstaller_AddReg]
+;
+
+
+[CYUSB3.NTamd64.Wdf]
+KmdfService = CYUSB3, CYUSB3_wdfsect
+
+[CYUSB3.NTx86.Wdf]
+KmdfService = CYUSB3, CYUSB3_wdfsect
+
+[CYUSB3_wdfsect]
+KmdfLibraryVersion = 1.15
+
 
 [Strings]
-CYUSB_Provider    = "XIA"
-CYUSB_Company     = "XIA LLC"
-CYUSB_Description = "XIA USB2 Driver (Cypress v3.4.7.0)"
-CYUSB_DisplayName = "XIA USB2"
-CYUSB_Install     = "Cypress CYUSB Driver Installation Disk"
+CYUSB3_Provider    = "XIA"
+CYUSB3_Company     = "XIA LLC"
+CYUSB3_Description = "XIA USB2 Driver (Cypress v1.2.3.20)"
+CYUSB3_DisplayName = "XIA USB2"
+CYUSB3_Install     = "Cypress CYUSB3.0 Driver Installation Disk"
 
 VID_10E9&PID_0600.DeviceDesc="XIA Digital Gamma Finder Spectrometer"
 VID_10E9&PID_0701.DeviceDesc="XIA Saturn USB2 Spectrometer"
@@ -179,5 +187,5 @@ VID_10E9&PID_0B01.DeviceDesc="XIA microDXP USB2 Spectrometer"
 VID_20BD&PID_0020.DeviceDesc="KETEK DPP2"
 VID_10E9&PID_0C01.DeviceDesc="Proportional Counter Motherboard USB2 Spectrometer"
 
-CYUSB.GUID="{AE18AA60-7F6A-11d4-97DD-00010229B959}"
-CYUSB_Unused      = "."
+CYUSB3.GUID="{AE18AA60-7F6A-11d4-97DD-00010229B959}"
+CYUSB3      = "."

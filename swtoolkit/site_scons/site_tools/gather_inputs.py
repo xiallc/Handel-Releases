@@ -95,7 +95,7 @@ def GatherInputs(env, target, groups=['.*'], exclude_pattern=None):
       rfile = tgt.rfile()
       rfile_is_file = rfile.isfile()
       # See who it matches
-      for pattern, lst in ptrns.items():
+      for pattern, lst in list(ptrns.items()):
         # Add files to the list for the first pattern that matches (implicitly,
         # don't add directories).
         if rfile_is_file and pattern.match(rfile.path):
@@ -110,7 +110,7 @@ def GatherInputs(env, target, groups=['.*'], exclude_pattern=None):
   # Do the search.
   _FindSources(patterns, target, {})
 
-  return patterns.values()
+  return list(patterns.values())
 
 
 def generate(env):

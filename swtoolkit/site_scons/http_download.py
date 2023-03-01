@@ -35,7 +35,7 @@ This module supports username and password with basic authentication.
 
 import base64
 import os
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 
 def _CreateDirectory(path):
@@ -64,10 +64,10 @@ def HttpDownload(url, target, username=None, password=None):
     else:
       auth_code = base64.b64encode(username)
     headers.append(('Authorization', 'Basic ' + auth_code))
-  opener = urllib2.build_opener()
+  opener = urllib.request.build_opener()
   opener.addheaders = headers
-  urllib2.install_opener(opener)
-  src = urllib2.urlopen(url)
+  urllib.request.install_opener(opener)
+  src = urllib.request.urlopen(url)
   data = src.read()
   src.close()
 

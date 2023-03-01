@@ -32,7 +32,7 @@ AddOption('--out', dest='out', action='store',
 	  help='Override the build directory')
 if GetOption('out'):
     base_env.Replace(DESTINATION_ROOT = GetOption('out'))
-print 'building to', base_env.Dir('$DESTINATION_ROOT')
+print('building to', base_env.Dir('$DESTINATION_ROOT'))
 
 # Add external folders as Repository resource
 base_env.Dir('redist').addRepository(base_env.Dir('../redist'))
@@ -47,19 +47,22 @@ base_env.Append(CPPDEFINES=cppdefines)
 # List of redist files
 redist_files = []
 
-# For official build use the mercurial id as version string.
-# Otherwise use a development tag
+
+# For official build use the revision id as version string.
+# Otherwise add a development tag
 DeclareBit("release", "Release build")
 base_env.SetBitFromOption('release', False)
+version_tag = "" if  base_env.Bit('release') else "development:"
 
 if base_env.Bit('release'):
-    build_helpers.version.update_hg_changeset('tools/releaser/version.yml', 'tools/releaser/changeset.yml')
+    build_helpers.version.update_version_changeset('tools/releaser/version.yml',
+              'tools/releaser/changeset.yml', version_tag)
 else:
     build_helpers.version.set_version_string('tools/releaser/changeset.yml', "development")
 
 ver_cmd = base_env.Command('inc/xia_version.h',
-                 ['tools/releaser/version.yml', 'tools/releaser/changeset.yml'],
-                 build_helpers.version.generate)
+             ['tools/releaser/version.yml', 'tools/releaser/changeset.yml'],
+             build_helpers.version.generate)
 
 base_env.Depends('src/xerxes.c', ['inc/xia_version.h'])
 base_env.Depends('src/handel.c', ['inc/xia_version.h'])
@@ -92,10 +95,10 @@ DeclareBit('x64', 'Build Handel for x64 platform')
 base_env.SetBitFromOption('x64', False)
 
 if base_env.Bit('x64'):
-    print 'Setting target arch to amd64'
+    print('Setting target arch to amd64')
     base_env.Append(TARGET_ARCH = 'amd64')
 else:
-    print 'Setting target arch to x86'
+    print('Setting target arch to x86')
     base_env.Append(TARGET_ARCH = 'x86')
 
 build_helpers.logic.update_environment(base_env)
@@ -105,7 +108,7 @@ DeclareBit('tests', 'Build and run tests')
 base_env.SetBitFromOption('tests', False)
 
 if base_env.Bit('tests') :
-    print 'Adding tests build.\n'
+    print('Adding tests build.\n')
     base_env.Append(BUILD_SCONSCRIPTS=['tests/generic_c_tests/build.scons'])
     if base_env.Bit('xmap') :
         base_env.Append(BUILD_SCONSCRIPTS=['benchmarks/xmap/mapping/build.scons',
@@ -123,7 +126,7 @@ if base_env.Bit('samples') :
 
 # Add COMMDRV libs
 if base_env.Bit('serial'):
-    print 'Adding COMMDRV libs'
+    print('Adding COMMDRV libs')
     serial_path = '$MAIN_DIR/redist/commdrv'
     if not base_env.Bit('x64'):
         base_env.Append(LIBPATH = [serial_path])
@@ -131,7 +134,7 @@ if base_env.Bit('serial'):
 
 # Add PLX libs
 if base_env.Bit('plx'):
-    print 'Adding PLX libs'
+    print('Adding PLX libs')
     plx_path = '$MAIN_DIR/redist/plxapi'
     if base_env.Bit('x64'):
         plx_path = os.path.join(plx_path, 'x64')
@@ -143,7 +146,7 @@ if base_env.Bit('plx'):
 
 # Add xw build_helpers
 if base_env.Bit('xw'):
-    print 'Adding xw build_helpers'
+    print('Adding xw build_helpers')
     base_env.Dir('ccomponents').addRepository(base_env.Dir('../ccomponents'))
     xw_path = '$MAIN_DIR/ccomponents/xia_xup_writer'
     base_env.Append(CPPPATH = [os.path.join(xw_path, 'src')])
@@ -152,7 +155,7 @@ if base_env.Bit('xw'):
 
 # Add EPP libs
 if base_env.Bit('epp'):
-    print 'Adding EPP libs'
+    print('Adding EPP libs')
     epp_path = '$MAIN_DIR/redist/dlportio'
     if not base_env.Bit('x64'):
         base_env.Append(LIBPATH = [epp_path])
@@ -162,7 +165,7 @@ linux_env = base_env.Clone(
     tools = ['target_platform_linux'])
 linux_env['STATIC_AND_SHARED_OBJECTS_ARE_THE_SAME']=1
 
-linux_env.Append(CCFLAGS=['-pipe', '-fPIC', '-Wall'])
+linux_env.Append(CCFLAGS=['-pipe', '-fPIC', '-Wall', '-fcommon'])
 linux_env.Append(CCFLAGS_DEBUG=['-g', '-O0'])
 linux_env.Append(LINKFLAGS=['-Wl,--no-undefined'])
 
@@ -251,7 +254,7 @@ base_env.SetBitFromOption('vld', False)
 
 # VLD and code analysis are built separately from regular builds
 if base_env.Bit('vld') :
-    print 'Setting up Visual Leak Detector environment.\n'
+    print('Setting up Visual Leak Detector environment.\n')
     base_env.Dir('tools').addRepository(base_env.Dir('../tools'))
     vld_path = '$MAIN_DIR/tools/vld'
 

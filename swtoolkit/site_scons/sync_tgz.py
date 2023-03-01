@@ -54,19 +54,19 @@ def SyncTgz(url, target, username=None, password=None, verbose=True):
   tgz_filename = target + '.tgz'
 
   if verbose:
-    print 'Downloading %s to %s...' % (url, tgz_filename)
+    print('Downloading %s to %s...' % (url, tgz_filename))
   http_download.HttpDownload(url, tgz_filename,
                              username=username, password=password)
 
   if verbose:
-    print 'Extracting from %s...' % tgz_filename
+    print('Extracting from %s...' % tgz_filename)
   tgz = tarfile.open(tgz_filename, 'r')
   for m in tgz:
     if verbose:
-      print m.name
+      print(m.name)
     tgz.extract(m, target)
   tgz.close()
   os.remove(tgz_filename)
 
   if verbose:
-    print 'Update complete.'
+    print('Update complete.')

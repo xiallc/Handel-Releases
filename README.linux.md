@@ -20,22 +20,13 @@ https://subversion.xray.aps.anl.gov/synApps/dxp/trunk/dxpApp/handelSrc/Makefile
 scons dev setup
 ===============
 
-Note: from the source distribution, move src/main.scons to the root of the
-package.
+The latest version of SCons and swtoolkit are only compatible with python3
 
 # Python
-sudo apt-get install python2.7 python2.7-dev
-sudo pip install pyyaml
+sudo apt-get install python
 
-# scons 2.x. It may work installed from pip on some systems, but
-# we have to install from source to get the paths to work.
-wget https://github.com/SCons/scons/archive/2.5.0.tar.gz
-tar xvzf scons-2.5.0.tar.gz
-pushd scons-2.5.0
-sudo python setup.py install --standard-lib
-popd
-export SCONS_DIR=/usr/local/lib/python2.7/dist-packages/SCons
-alias hammer='/path/to/swtoolkit/hammer.sh'
+# Other packages
+pip install -r requirements.txt
 
 # Handel dev dependencies
 export TMP=/tmp # Handel's scons script reads this var?

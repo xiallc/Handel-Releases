@@ -94,7 +94,7 @@ def _StoreComponents(self, component_name):
 
   components = set()
   for clist in ('LIBS', 'COMPONENTS'):
-    components.update(map(self.subst, self.Flatten(self[clist])))
+    components.update(list(map(self.subst, self.Flatten(self[clist]))))
 
   if component_name not in __component_list:
     __component_list[component_name] = set()
@@ -116,7 +116,7 @@ def _ComponentPlatformSetup(env, builder_name, **kwargs):
   env = env.Clone()
 
   # Add all keyword arguments to the environment
-  for k, v in kwargs.items():
+  for k, v in list(kwargs.items()):
     env[k] = v
 
   # Add compiler flags for included headers, if any
@@ -151,7 +151,7 @@ def ComponentPackageDeferred(env):
   all_outputs = []
   package_filter = env.Flatten(env.subst_list('$COMPONENT_PACKAGE_FILTER'))
   components = _RetrieveComponents(package_name, package_filter)
-  for resource, dest_dir in env.get('COMPONENT_PACKAGE_RESOURCES').items():
+  for resource, dest_dir in list(env.get('COMPONENT_PACKAGE_RESOURCES').items()):
     all_outputs += env.ReplicatePublished(dest_dir, components, resource)
 
   # Add installed program and resources to the alias
@@ -311,7 +311,7 @@ def ComponentTestProgramDeferred(env):
   # Install program and resources
   all_outputs = []
   components = _RetrieveComponents(prog_name)
-  for resource, dest_dir in env.get('COMPONENT_TEST_RESOURCES').items():
+  for resource, dest_dir in list(env.get('COMPONENT_TEST_RESOURCES').items()):
     all_outputs += env.ReplicatePublished(dest_dir, components, resource)
 
   # Add installed program and resources to the alias
@@ -427,7 +427,7 @@ def ComponentProgramDeferred(env):
   # Install program and resources
   all_outputs = []
   components = _RetrieveComponents(prog_name)
-  for resource, dest_dir in env.get('COMPONENT_PROGRAM_RESOURCES').items():
+  for resource, dest_dir in list(env.get('COMPONENT_PROGRAM_RESOURCES').items()):
     all_outputs += env.ReplicatePublished(dest_dir, components, resource)
 
   # Add installed program and resources to the alias

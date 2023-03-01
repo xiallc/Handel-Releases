@@ -36,7 +36,7 @@ of an environment, it should instead go in a tool in site_tools and be invoked
 for the target environment.
 """
 
-import __builtin__
+import builtins
 import sys
 import SCons
 import usage_log
@@ -65,8 +65,8 @@ def _HostPlatform():
   }
 
   if sys.platform not in platform_map:
-    print ('site_init.py warning: platform "%s" is not in platfom map.' %
-           sys.platform)
+      print(('site_init.py warning: platform "%s" is not in platfom map.' %
+           sys.platform))
 
   return platform_map.get(sys.platform, sys.platform)
 
@@ -129,8 +129,7 @@ The following build groups may also be specified via --mode.  Build groups
 build one or more of the other build types.  The available build groups are:
 '''
 
-  groups_sorted = all_build_groups.keys()
-  groups_sorted.sort()
+  groups_sorted = sorted(all_build_groups.keys())
   for g in groups_sorted:
     help_text += '    %-16s %s\n' % (g, ','.join(all_build_groups[g]))
 
@@ -145,8 +144,8 @@ specifying --mode=default.
   # the current environment.
   for mode in build_modes:
     if mode not in all_build_types and mode not in all_build_groups:
-      print ('Warning: Ignoring build mode "%s", which is not defined on this '
-             'platform.' % mode)
+      print(('Warning: Ignoring build mode "%s", which is not defined on this '
+             'platform.' % mode))
 
 
 #------------------------------------------------------------------------------
@@ -340,20 +339,20 @@ def SiteInitMain():
 
   # Bail out if we've been here before. This is needed to handle the case where
   # this site_init.py has been dropped into a project directory.
-  if hasattr(__builtin__, 'BuildEnvironments'):
+  if hasattr(builtins, 'BuildEnvironments'):
     return
 
   usage_log.log.AddEntry('Software Construction Toolkit site init')
 
   # Let people use new global methods directly.
-  __builtin__.AddSiteDir = AddSiteDir
-  __builtin__.BuildEnvironments = BuildEnvironments
+  builtins.AddSiteDir = AddSiteDir
+  builtins.BuildEnvironments = BuildEnvironments
   # Legacy method names
   # TODO: Remove these once they're no longer used anywhere.
-  __builtin__.BuildComponents = BuildEnvironments
+  builtins.BuildComponents = BuildEnvironments
 
   # Set list of default tools for component_setup
-  __builtin__.component_setup_tools = [
+  builtins.component_setup_tools = [
       # Defer must be first so other tools can register environment
       # setup/cleanup functions.
       'defer',
@@ -418,7 +417,7 @@ def SiteInitMain():
   host_platform = SCons.Script.GetOption('host_platform')
   if not host_platform:
     host_platform = _HostPlatform()
-  __builtin__.HOST_PLATFORM = host_platform
+  builtins.HOST_PLATFORM = host_platform
 
   # Check for site path.  This is a list of site directories which each are
   # processed as if they were passed to --site-dir.

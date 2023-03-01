@@ -113,7 +113,7 @@ def RunCommand(cmdargs, cwdir=None, env=None, echo_output=True, timeout=None,
   """
   # Force unicode string in the environment to strings.
   if env:
-    env = dict([(k, str(v)) for k, v in env.items()])
+    env = dict([(k, str(v)) for k, v in list(env.items())])
   start_time = time.time()
   child = subprocess.Popen(cmdargs, cwd=cwdir, env=env, shell=True,
                            universal_newlines=True,
@@ -138,7 +138,7 @@ def RunCommand(cmdargs, cwdir=None, env=None, echo_output=True, timeout=None,
       new_out = child.stdout.read()
       if new_out:
         if echo_output:
-          print new_out,
+          print((new_out,))
         child_out.append(new_out)
 
   read_thread = threading.Thread(target=_ReadThread)
@@ -152,7 +152,7 @@ def RunCommand(cmdargs, cwdir=None, env=None, echo_output=True, timeout=None,
     if timeout and child_retcode is None:
       elapsed = time.time() - start_time
       if elapsed > timeout:
-        print '*** RunCommand() timeout:', cmdargs
+        print(('*** RunCommand() timeout:', cmdargs))
         KillProcessTree(child.pid)
         child_retcode = timeout_errorlevel
 
@@ -163,7 +163,7 @@ def RunCommand(cmdargs, cwdir=None, env=None, echo_output=True, timeout=None,
   read_thread.join(5)
 
   if echo_output:
-    print   # end last line of output
+    print()   # end last line of output
   return child_retcode, ''.join(child_out)
 
 

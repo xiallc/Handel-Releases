@@ -90,13 +90,13 @@ def update_environment(env):
     if not env.Bit('xmap') and not env.Bit('stj'):
         env.ClearBits('plx')
 
-    print "build options: ",
+    print("build options: ")
 
     for option_item in ['usb','usb2','epp','plx','serial']:
         if env.Bit(option_item):
-            print option_item,
+            print(option_item + ',')
 
     for option_item in ['stj','xmap','saturn','mercury','udxp','udxps']:
         if env.Bit(option_item):
-            print option_item,
-    print
+            print(option_item + ',')
+    print()

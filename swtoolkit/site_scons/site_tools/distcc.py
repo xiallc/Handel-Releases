@@ -73,7 +73,7 @@ def generate(env):
   for envvar in ('DISTCC_HOSTS', 'HOME'):
     value = env.get(envvar, os.environ.get(envvar))
     if not value:
-      print 'Warning: %s not set in environment; disabling distcc.' % envvar
+      print('Warning: %s not set in environment; disabling distcc.' % envvar)
       return
     env['ENV'][envvar] = value
 

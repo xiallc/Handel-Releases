@@ -34,7 +34,7 @@ This module is automatically included by the component_setup tool.
 """
 
 
-import __builtin__
+import builtins
 import types
 import SCons
 
@@ -76,7 +76,7 @@ def _CheckExclusive(already_set, proposed):
   # proposed so we don't alter the passed list).
   proposed = [bit for bit in proposed if bit not in already_set]
 
-  for group_name, group_bits in _bit_exclusive_groups.items():
+  for group_name, group_bits in list(_bit_exclusive_groups.items()):
     set_match = group_bits.intersection(already_set)
     proposed_match = group_bits.intersection(proposed)
     if set_match and proposed_match:
@@ -119,7 +119,7 @@ def DeclareBit(bit_name, desc, exclusive_groups=None):
 
   # Add bit to its exclusive groups
   if exclusive_groups:
-    if type(exclusive_groups) == types.StringType:
+    if isinstance(exclusive_groups, str):
       exclusive_groups = [exclusive_groups]
     for g in exclusive_groups:
       if g not in _bit_exclusive_groups:
@@ -243,7 +243,7 @@ def generate(env):
   """SCons entry point for this tool."""
 
   # Add methods to builtin
-  __builtin__.DeclareBit = DeclareBit
+  builtins.DeclareBit = DeclareBit
 
   # Add methods to environment
   env.AddMethod(AllBits)

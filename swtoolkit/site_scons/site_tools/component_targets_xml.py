@@ -54,7 +54,7 @@ def TargetXMLHelp(target, source, env):
 
   mode_list = doc.createElement('mode_list')
   doc.documentElement.appendChild(mode_list)
-  for mode in GetTargetModes().values():
+  for mode in list(GetTargetModes().values()):
     n = doc.createElement('build_mode')
     n.setAttribute('name', mode.name)
     n.setAttribute('description', mode.description)
@@ -62,7 +62,7 @@ def TargetXMLHelp(target, source, env):
 
   group_list = doc.createElement('target_groups')
   doc.documentElement.appendChild(group_list)
-  for group in GetTargetGroups().values():
+  for group in list(GetTargetGroups().values()):
     items = group.GetTargetNames()
     if not items:
       continue
@@ -80,19 +80,19 @@ def TargetXMLHelp(target, source, env):
       target = GetTargets().get(i)
       if target:
         # All modes
-        for k, v in target.properties.items():
+        for k, v in list(target.properties.items()):
           n = doc.createElement('target_property')
           n.setAttribute('name', k)
           n.setAttribute('value', v)
           ntarget.appendChild(n)
 
         # Mode-specific
-        for mode, mode_properties in target.mode_properties.items():
+        for mode, mode_properties in list(target.mode_properties.items()):
           nmode = doc.createElement('target_mode')
           nmode.setAttribute('name', mode)
           ntarget.appendChild(nmode)
 
-          for k, v in mode_properties.items():
+          for k, v in list(mode_properties.items()):
             n = doc.createElement('target_property')
             n.setAttribute('name', k)
             n.setAttribute('value', v)

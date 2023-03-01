@@ -2,106 +2,146 @@
 ;
 
 [Version]
-Signature="$CHICAGO$"
+Signature="$WINDOWS NT$"
 Class=USB
 ClassGUID={36FC9E60-C465-11CF-8056-444553540000}
-Provider=%PROVIDER%
+provider=%CYUSB3_Provider%
 CatalogFile=xia_usb2.cat
-DriverVer=03/15/2016,1.8.120.3
+DriverVer=11/08/2017,1.2.3.20
 
 [SourceDisksNames]
-1=%CYUSB_INSTALL%,,,
+1=%CYUSB3_Install%,,,
 
 [SourceDisksFiles]
-CyUsbME.sys = 1
-CyUsb.sys = 1
-CyUsb.spd = 1
-
-[Manufacturer]
-%MFGNAME%=XIA
-
-[XIA]
-; Saturn
-%VID_10E9&PID_0701.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0701
-; Mercury
-%VID_10E9&PID_0702.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0702
-; Mercury-4
-%VID_10E9&PID_0703.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0703
-; Mercury-OEM
-%VID_10E9&PID_0705.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0705
-; Vega
-%VID_10E9&PID_0901.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0901
-; microDXP Vega
-%VID_10E9&PID_0902.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0902
-; UltraLo-1800
-%VID_10E9&PID_0A01.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0A01
-; microDXP
-%VID_10E9&PID_0B01.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0B01
-; KETEK DPP2
-%VID_20BD&PID_0020.DeviceDesc%=CyUsb, USB\VID_20BD&PID_0020
-; PCPMB
-%VID_10E9&PID_0C01.DeviceDesc%=CyUsb, USB\VID_10E9&PID_0C01
+xia_usb2.sys = 1
 
 [DestinationDirs]
-CyUsbME.Files.Ext = 10,System32\Drivers
-CyUsb.Files.Ext = 10,System32\Drivers
+CYUSB3.Files.Ext = 10,System32\Drivers
+CoInstaller_CopyFiles = 11
 
-[CyUsb]
-CopyFiles=CyUsbME.Files.Ext
-AddReg=CyUsbME.AddReg
+[ControlFlags]
+ExcludeFromSelect = *
 
-[CyUsb.HW]
-AddReg=CyUsb.AddReg.Guid
+[Manufacturer]
+%CYUSB3_Provider%=Device,NTx86,NTamd64
 
-[CyUsb.NT]
-CopyFiles=CyUsb.Files.Ext
-AddReg=CyUsb.AddReg
+;for x86 platforms
+[Device.NTx86]
+%VID_10E9&PID_0600.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0600
+%VID_10E9&PID_0701.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0701
+%VID_10E9&PID_0702.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0702
+%VID_10E9&PID_0703.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0703
+%VID_10E9&PID_0704.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0704
+%VID_10E9&PID_0705.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0705
+%VID_10E9&PID_0742.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0742
+%VID_10E9&PID_0801.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0801
+%VID_10E9&PID_0901.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0901
+%VID_10E9&PID_0902.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0902
+%VID_10E9&PID_0B01.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0B01
+%VID_20BD&PID_0020.DeviceDesc%=CyUsb3, USB\VID_20BD&PID_0020
+%VID_10E9&PID_0C01.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0C01
 
-[CyUsb.NT.HW]
-AddReg=CyUsb.AddReg.Guid
+;for x64 platforms
+[Device.NTamd64]
+%VID_10E9&PID_0600.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0600
+%VID_10E9&PID_0701.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0701
+%VID_10E9&PID_0702.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0702
+%VID_10E9&PID_0703.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0703
+%VID_10E9&PID_0704.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0704
+%VID_10E9&PID_0705.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0705
+%VID_10E9&PID_0742.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0742
+%VID_10E9&PID_0801.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0801
+%VID_10E9&PID_0901.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0901
+%VID_10E9&PID_0902.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0902
+%VID_10E9&PID_0B01.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0B01
+%VID_20BD&PID_0020.DeviceDesc%=CyUsb3, USB\VID_20BD&PID_0020
+%VID_10E9&PID_0C01.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0C01
 
-[CyUsb.NT.Services]
-Addservice = CyUsb, 0x00000002, CyUsb.AddService
 
-[CyUsb.AddService]
-DisplayName    = %CyUsb.SvcDesc%
+[CYUSB3.NTx86]
+CopyFiles=CYUSB3.Files.Ext
+AddReg=CyUsb3.AddReg
+
+[CYUSB3.NTx86.HW]
+AddReg=CYUSB3.AddReg.Guid
+
+[CYUSB3.NTx86.Services]
+Addservice = CYUSB3,2,CYUSB3.AddService
+
+[CYUSB3.NTamd64]
+CopyFiles=CYUSB3.Files.Ext
+AddReg=CyUsb3.AddReg
+
+[CYUSB3.NTamd64.HW]
+AddReg=CYUSB3.AddReg.Guid
+
+[CYUSB3.NTamd64.Services]
+Addservice = CYUSB3,2,CYUSB3.AddService
+
+[CYUSB3.AddReg]
+; Deprecating - do not use in new apps to identify a CYUSB3 driver
+HKR,,DevLoader,,*ntkern
+HKR,,NTMPDriver,,xia_usb2.sys
+; You may optionally include a check for DriverBase in your application to check for a xia_usb2 driver
+HKR,,DriverBase,,xia_usb2.sys
+HKR,"Parameters","MaximumTransferSize",0x10001,4096
+HKR,"Parameters","DebugLevel",0x10001,2
+HKR,,FriendlyName,,%CYUSB3_Description%
+
+[CYUSB3.AddService]
+DisplayName    = %CYUSB3_Description%
 ServiceType    = 1                  ; SERVICE_KERNEL_DRIVER
 StartType      = 3                  ; SERVICE_DEMAND_START
 ErrorControl   = 1                  ; SERVICE_ERROR_NORMAL
-ServiceBinary  = %10%\System32\Drivers\CyUsb.sys
+ServiceBinary  = %10%\System32\Drivers\xia_usb2.sys
+AddReg         = CYUSB3.AddReg
 LoadOrderGroup = Base
 
-[CyUsbME.AddReg]
-HKR,,DevLoader,,*ntkern
-HKR,,NTMPDriver,,CyUsbME.sys
+[CYUSB3.Files.Ext]
+xia_usb2.sys
 
-[CyUsb.AddReg]
-HKR,,DevLoader,,*ntkern
-HKR,,NTMPDriver,,CyUsb.sys
+[CYUSB3.AddReg.Guid]
+HKR,,DriverGUID,,%CYUSB3.GUID%
+;HKR,,DriverPowerPolicySetup,,%ENABLE_DRIVER_POWER_POLICY%
 
-[CyUsbME.Files.Ext]
-CyUsbME.sys
+;-------------- WDF Coinstaller installation
+[CYUSB3.NTamd64.CoInstallers]
+AddReg=CoInstaller_AddReg
+CopyFiles=CoInstaller_CopyFiles
 
-[CyUsb.Files.Ext]
-CyUsb.sys
+[CYUSB3.NTx86.CoInstallers]
+AddReg=CoInstaller_AddReg
+CopyFiles=CoInstaller_CopyFiles
 
-[CyUsb.AddReg.Guid]
-;HKR,,DriverGUID,,%CyUsb.GUID%
+[CoInstaller_CopyFiles]
+;
+
+
+[CoInstaller_AddReg]
+;
 
 ;---------------------------------------------------------------;
 
 [Strings]
-PROVIDER="XIA LLC"
-MFGNAME="XIA LLC"
-CYUSB_INSTALL="Cypress Generic USB Driver Installation Disk"
+CYUSB3_Provider    = "XIA"
+CYUSB3_Company     = "XIA LLC"
+CYUSB3_Description = "XIA LLC USB2 Driver (Cypress v1.2.3.20)"
+CYUSB3_DisplayName = "Cypress USB3.0 Generic"
+CYUSB3_Install     = "Cypress CYUSB3.0 Driver Installation Disk"
+
+VID_10E9&PID_0600.DeviceDesc="XIA Digital Gamma Finder Spectrometer"
 VID_10E9&PID_0701.DeviceDesc="XIA Saturn USB2 Spectrometer"
 VID_10E9&PID_0702.DeviceDesc="XIA Mercury USB2 Spectrometer"
 VID_10E9&PID_0703.DeviceDesc="XIA Mercury-4 USB2 Spectrometer"
-VID_10E9&PID_0705.DeviceDesc="XIA Mercury USB2 Spectrometer"
+VID_10E9&PID_0704.DeviceDesc="XIA XAS USB2 Spectrometer"
+VID_10E9&PID_0705.DeviceDesc="XIA Mercury OEM USB2 Spectrometer"
+VID_10E9&PID_0742.DeviceDesc="XIA Gemini-2 USB2 Spectrometer"
+VID_10E9&PID_0801.DeviceDesc="XIA Polaris USB2 Spectrometer"
 VID_10E9&PID_0901.DeviceDesc="XIA Vega USB2 Spectrometer"
 VID_10E9&PID_0902.DeviceDesc="XIA microDXP Vega USB2 Spectrometer"
-VID_10E9&PID_0A01.DeviceDesc="XIA UltraLo-1800 Alpha Particle Counter"
 VID_10E9&PID_0B01.DeviceDesc="XIA microDXP USB2 Spectrometer"
 VID_20BD&PID_0020.DeviceDesc="KETEK DPP2"
 VID_10E9&PID_0C01.DeviceDesc="Proportional Counter Motherboard USB2 Spectrometer"
-CyUsb.SvcDesc="XIA LLC USB2 Driver"
+
+CYUSB3.GUID="{AE18AA60-7F6A-11d4-97DD-00010229B959}"
+CYUSB3     = "."

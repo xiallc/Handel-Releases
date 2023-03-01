@@ -30,7 +30,7 @@
 
 """Nacl SDK tool SCons."""
 
-import __builtin__
+import builtins
 import os
 import sys
 import SCons.Script
@@ -95,9 +95,9 @@ def _DownloadSdk(env):
 
   # Only try to download once.
   try:
-    if __builtin__.nacl_sdk_downloaded: return
+    if builtins.nacl_sdk_downloaded: return
   except AttributeError:
-    __builtin__.nacl_sdk_downloaded = True
+    builtins.nacl_sdk_downloaded = True
 
   # Get path to extract to.
   target = env.subst('$THIRD_PARTY/nacl_sdk/' +

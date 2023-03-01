@@ -33,7 +33,7 @@
 This module locates the latest green build from Pulse for download.
 """
 
-import xmlrpclib
+import xmlrpc.client
 
 
 def GetLatest(server_url, project_name, username, password,
@@ -55,7 +55,7 @@ def GetLatest(server_url, project_name, username, password,
   Raises:
     IOError: In the event of access failure or if no green builds exist.
   """
-  server = xmlrpclib.ServerProxy(server_url + 'xmlrpc')
+  server = xmlrpc.client.ServerProxy(server_url + 'xmlrpc')
   token = server.RemoteApi.login(username, password)
   # Get the latest 100 builds of the tools.
   builds = server.RemoteApi.getLatestBuildsForProject(token, project_name,

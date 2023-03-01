@@ -22,7 +22,7 @@
 #include "md_generic.h"
 
 static void CHECK_ERROR(int status);
-static int SLEEP(float seconds);
+static int SLEEP(double seconds);
 static void INThandler(int sig);
 static void print_usage(void);
 static void start_system(char *ini_file);
@@ -34,12 +34,13 @@ unsigned long *mca = NULL;
 unsigned short *params = NULL;
 
 boolean_t stop = FALSE_;
+boolean_t disable_safe_exit = FALSE;
 
 int main(int argc, char *argv[])
 {
     char *ini;
     int status;
-    float runtime = 0.02f;
+    double runtime = 0.02f;
 
     int channel;
     int number_channels = 0;
@@ -60,7 +61,12 @@ int main(int argc, char *argv[])
         runtime = (float)atof(argv[2]);
     }
 
-    signal(SIGINT, INThandler);
+    if (runtime < 0) {
+        runtime = 0;
+        disable_safe_exit = TRUE_;
+    } else {
+        signal(SIGINT, INThandler);
+    }
 
     printf("\n");
     setup_logging("handel.log");
@@ -79,8 +85,9 @@ int main(int argc, char *argv[])
         exit(2);
     }
 
-    printf("Starting run loop wait time %.4fs\n", runtime);
-    printf("Press CTRL+C to stop the program\n");
+    printf("-- Sample code to run the MCA and statistics acquisition in an infinite loop\n");
+    printf("-- Starting run loop wait time %.4fs\n", runtime);
+    printf("-- Press CTRL+C to stop\n");
 
     fflush(stdout);
 
@@ -90,13 +97,11 @@ int main(int argc, char *argv[])
     while(!stop)
     {
         for (channel = 0; channel < number_channels; channel++) {
-            /*status = xiaGetRunData(channel, "mca", mca);
-            CHECK_ERROR(status);*/
+            status = xiaGetRunData(channel, "mca", mca);
+            CHECK_ERROR(status);
 
             status = xiaGetRunData(channel, "module_statistics_2", statistics);
             CHECK_ERROR(status);
-            if (statistics[0] <= 0)
-                stop = TRUE_;
         }
 
         loops++;
@@ -105,7 +110,7 @@ int main(int argc, char *argv[])
         SLEEP(runtime);
     }
 
-    printf("\nStopping run");
+    printf("\n-- Stopping run");
 
     status = xiaStopRun(-1);
     CHECK_ERROR(status);
@@ -176,7 +181,7 @@ static void print_usage(void)
     return;
 }
 
-static int SLEEP(float seconds)
+static int SLEEP(double seconds)
 {
 #if _WIN32
     DWORD wait = (DWORD)(1000.0 * seconds);

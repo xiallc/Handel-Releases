@@ -161,7 +161,7 @@ class VSProjectWriter(object):
     n_config = self.doc.createElement('Configuration')
     n_config.setAttribute('Name', '%s|Win32' % name)
     n_config.setAttribute('ConfigurationType', '0')
-    for k, v in attrs.items():
+    for k, v in list(attrs.items()):
       n_config.setAttribute(k, v)
     self.n_configs.appendChild(n_config)
 
@@ -174,7 +174,7 @@ class VSProjectWriter(object):
     n_tool.setAttribute('ForcedUsingAssemblies', '')
     n_tool.setAttribute('CompileAsManaged', '')
     n_tool.setAttribute('PreprocessorDefinitions', '')
-    for k, v in tool_attrs.items():
+    for k, v in list(tool_attrs.items()):
       n_tool.setAttribute(k, v)
     n_config.appendChild(n_tool)
 
@@ -186,7 +186,7 @@ class VSProjectWriter(object):
            either subdir_name:subdir_dict or relative_path_to_file:None.
       parent: Parent node (folder node for that dict)
     """
-    entries = folder_dict.keys()
+    entries = list(folder_dict.keys())
     entries.sort()
     for e in entries:
       if folder_dict[e]:
@@ -260,7 +260,7 @@ def ComponentVSProjectBuilder(target, source, env):
 
   # Add configuration per build mode supported by this target
   target_path = env['TARGET_PATH']
-  for mode, path in target_path.items():
+  for mode, path in list(target_path.items()):
     attrs = {}
     attrs['OutputDirectory'] = '$(ProjectDir)/%s/%s/out' % (mode, target_name)
     attrs['IntermediateDirectory'] = ('$(ProjectDir)/%s/%s/tmp' %
@@ -303,7 +303,7 @@ def ComponentVSProject(self, target_name, **kwargs):
 
   # Clone environment and add keyword args
   env = self.Clone()
-  for k, v in kwargs.items():
+  for k, v in list(kwargs.items()):
     env[k] = v
 
   # Save the target name
@@ -314,7 +314,7 @@ def ComponentVSProject(self, target_name, **kwargs):
   t = GetTargets().get(target_name)
   env['TARGET_PATH'] = {}
   if t:
-    for mode, mode_properties in t.mode_properties.items():
+    for mode, mode_properties in list(t.mode_properties.items()):
       # Since the target path is what Visual Studio will run, use the EXE
       # property in preference to TARGET_PATH.
       target_path = mode_properties.get('EXE',
@@ -409,8 +409,8 @@ class SourceWalker(object):
 
   def PrintProgress(self):
     """Prints a progress indicator."""
-    print '    Examined %d nodes, found %d unique...' % (
-        self.nodes_examined, self.unique_nodes)
+    print('    Examined %d nodes, found %d unique...' % (
+        self.nodes_examined, self.unique_nodes))
 
   def WalkAll(self):
     """Walks all nodes in the the tree."""
@@ -456,16 +456,16 @@ def ComponentVSSourceProjectBuilder(target, source, env):
   # Create a temporary solution alias to point to all the targets, so we can
   # make a single call to SourceWalker()
   tmp_alias = env.Alias('vs_source_project_' + target_name,
-      map(env.Alias, env['COMPONENT_VS_SOURCE_TARGETS']))
+      list(map(env.Alias, env['COMPONENT_VS_SOURCE_TARGETS'])))
 
   # Scan all targets and add unique nodes to set of sources
-  print '  Scanning dependency tree ...'
+  print('  Scanning dependency tree ...')
   all_srcs = set()
   walker = SourceWalker(tmp_alias[0], all_srcs)
   walker.WalkAll()
 
   # Walk all sources and build directory trees
-  print '  Building source tree...'
+  print('  Building source tree...')
   for n in all_srcs:
     if not hasattr(n, 'rfile'):
       continue  # Not a file
@@ -494,7 +494,7 @@ def ComponentVSSourceProjectBuilder(target, source, env):
         folder_dict[env.RelativePath(project_dir, path)] = None
         break
 
-  print '  Writing project file...'
+  print('  Writing project file...')
 
   vsp = VSProjectWriter(project_file)
   vsp.Create(target_name)
@@ -531,7 +531,7 @@ def ComponentVSSourceProject(self, project_name, target_names, **kwargs):
 
   # Clone environment and add keyword args
   env = self.Clone()
-  for k, v in kwargs.items():
+  for k, v in list(kwargs.items()):
     env[k] = v
 
   # Save the project name and targets
@@ -598,13 +598,13 @@ def ComponentVSDirProjectBuilder(target, source, env):
     folders.append((f[0], env.Dir(f[1]).abspath, {}))
 
   # Recursively scan source directories
-  print '  Scanning directories for source...'
+  print('  Scanning directories for source...')
   all_srcs = set()
   FindSources(env, all_srcs, env['PROJECT_SOURCES'],
               suffixes=env.SubstList2('$COMPONENT_VS_SOURCE_SUFFIXES'))
 
   # Walk all sources and build directory trees
-  print '  Building source tree...'
+  print('  Building source tree...')
   for n in all_srcs:
     # Map addRepository'd source to its real location.
     path = n.rfile().abspath
@@ -624,7 +624,7 @@ def ComponentVSDirProjectBuilder(target, source, env):
         folder_dict[env.RelativePath(project_dir, path)] = None
         break
 
-  print '  Writing project file...'
+  print('  Writing project file...')
 
   vsp = VSProjectWriter(project_file)
   vsp.Create(target_name)
@@ -661,7 +661,7 @@ def ComponentVSDirProject(self, project_name, source, **kwargs):
 
   # Clone environment and add keyword args
   env = self.Clone()
-  for k, v in kwargs.items():
+  for k, v in list(kwargs.items()):
     env[k] = v
 
   # Save the project name and sources
@@ -807,7 +807,7 @@ def ComponentVSSolutionBuilder(target, source, env):
 
   if folders:
     f.write('\tGlobalSection(NestedProjects) = preSolution\n')
-    for p, folder in projects.items():
+    for p, folder in list(projects.items()):
       f.write('\t\t%s = %s\n' % (MakeGuid(p), MakeGuid(folder, seed='folder')))
     f.write('\tEndGlobalSection\n')
 
@@ -848,7 +848,7 @@ def ComponentVSSolution(self, solution_name, target_names, projects=None,
 
   # Clone environment and add keyword args
   env = self.Clone()
-  for k, v in kwargs.items():
+  for k, v in list(kwargs.items()):
     env[k] = v
 
   # Save the target name
@@ -879,7 +879,7 @@ def ComponentVSSolution(self, solution_name, target_names, projects=None,
         # Just a target name
         project_names[target] = None
       else:
-        print 'Warning: ignoring unknown target "%s"' % target
+        print('Warning: ignoring unknown target "%s"' % target)
   else:
     # No target names specified, so use all projects
     for t in GetTargets():

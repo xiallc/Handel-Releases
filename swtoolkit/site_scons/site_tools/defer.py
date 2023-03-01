@@ -95,7 +95,7 @@ def SetDeferRoot(self):
 
   # Deferred functions this environment got from its parents will be run in the
   # new root context.
-  for group in GetDeferGroups(self).values():
+  for group in list(GetDeferGroups(self).values()):
     new_list = [(func, self, cwd) for (func, env, cwd) in group.func_env_cwd]
     group.func_env_cwd = new_list
 
@@ -154,8 +154,8 @@ def ExecuteDefer(self):
   try:
     while defer_groups:
       did_work = False
-      for name, group in defer_groups.items():
-        if group.after.intersection(defer_groups.keys()):
+      for name, group in list(defer_groups.items()):
+        if group.after.intersection(list(defer_groups.keys())):
           continue        # Still have dependencies
 
         # Set defer context
@@ -178,7 +178,7 @@ def ExecuteDefer(self):
 
       if not did_work:
         errmsg = 'Error in ExecuteDefer: dependency cycle detected.\n'
-        for name, group in defer_groups.items():
+        for name, group in list(defer_groups.items()):
           errmsg += '   %s after: %s\n' % (name, group.after)
         raise SCons.Errors.UserError(errmsg)
   finally:
@@ -199,21 +199,21 @@ def PrintDefer(self, print_functions=True):
   # Get the defer dict
   # Get list of defer groups from ourselves.
   defer_groups = GetDeferGroups(self)
-  dgkeys = defer_groups.keys()
+  dgkeys = list(defer_groups.keys())
   dgkeys.sort()
   for k in dgkeys:
-    print ' +- %s' % k
+    print((' +- %s' % k))
     group = defer_groups[k]
     after = list(group.after)
     if after:
-      print ' |  after'
+      print(' |  after')
       after.sort()
       for a in after:
-        print ' |   +- %s' % a
+        print((' |   +- %s' % a))
     if print_functions and group.func_env_cwd:
-      print '    functions'
+      print('    functions')
       for func, env, cwd in group.func_env_cwd:
-        print ' |   +- %s %s' % (func.__name__, cwd)
+        print((' |   +- %s %s' % (func.__name__, cwd)))
 
 
 def Defer(self, *args, **kwargs):
@@ -303,7 +303,7 @@ def Defer(self, *args, **kwargs):
   # after a() and a() calls Defer() to defer c(), then b() must also defer
   # until after c().
   if _execute_defer_context and name != _execute_defer_context:
-    for other_name, other_group in GetDeferGroups(self).items():
+    for other_name, other_group in list(GetDeferGroups(self).items()):
       if other_name == name:
         continue        # Don't defer after ourselves
       if _execute_defer_context in other_group.after:

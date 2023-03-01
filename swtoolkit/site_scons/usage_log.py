@@ -96,7 +96,7 @@ def BuildTargetsWrapper(fs, options, targets, target_top):
     target_top: Passed through to _build_targets().
   """
   log.AddEntry('build_targets start')
-  log.SetParam('build_targets.targets', map(str, targets))
+  log.SetParam('build_targets.targets', list(map(str, targets)))
 
   # Get list of non-default options.  SConscript settings override defaults.
   build_opts = dict(options.__SConscript_settings__)
@@ -109,7 +109,7 @@ def BuildTargetsWrapper(fs, options, targets, target_top):
       continue
     build_opts[key] = value
 
-  for key, value in build_opts.items():
+  for key, value in list(build_opts.items()):
     log.SetParam('build_targets.option.%s' % key, value)
 
   try:
@@ -290,13 +290,13 @@ def AtModuleLoad():
 
 def FileDumpWriter(log):
   """Dumps the log to the specified file."""
-  print 'Writing usage log to %s...' % log.dump_to_file
+  print(('Writing usage log to %s...' % log.dump_to_file))
   f = open(log.dump_to_file, 'wt')
   doc = log.ConvertToXml()
   doc.writexml(f, encoding='UTF-8', addindent='  ', newl='\n')
   doc.unlink()
   f.close()
-  print 'Done writing log.'
+  print('Done writing log.')
 
 
 # Create the initial log (can't do this in AtModuleLoad() without 'global')

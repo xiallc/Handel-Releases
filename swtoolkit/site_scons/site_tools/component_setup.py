@@ -97,20 +97,6 @@ def generate(env):
   # is tar'd up and moved elsewhere.
   SCons.Script.SetOption('duplicate', 'hard-copy')
 
-  # Remove the alias namespace lookup function from the list which SCons uses
-  # when coercing strings into nodes.  This prevents SCons from looking up
-  # aliases in input/output lists if they're not explicitly coerced via
-  # Alias(), and removes a conflict where a program has the same shorthand
-  # alias as the program name itself.  This conflict manifests itself as a
-  # python exception if you try to build a program in multiple modes on linux,
-  # for example:
-  #      hammer --mode=dbg,opt port_test
-  new_lookup_list = []
-  for func in env.lookup_list:
-    if func.im_class != SCons.Node.Alias.AliasNameSpace:
-      new_lookup_list.append(func)
-  env.lookup_list = new_lookup_list
-
   # Add command line options
   SCons.Script.AddOption(
       '--brief',

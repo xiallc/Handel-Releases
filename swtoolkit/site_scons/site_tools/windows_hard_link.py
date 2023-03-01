@@ -90,7 +90,7 @@ def _HardLink(fs, src, dst):
 
   try:
     win32file.CreateHardLink(dst, src)
-  except win32file.error, msg:
+  except win32file.error as msg:
     # Translate errors into standard OSError which SCons expects.
     raise OSError(msg)
 

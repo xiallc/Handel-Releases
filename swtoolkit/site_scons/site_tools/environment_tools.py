@@ -55,7 +55,7 @@ def FilterOut(self, **kw):
   """
 
   kw = SCons.Environment.copy_non_reserved_keywords(kw)
-  for key, val in kw.items():
+  for key, val in list(kw.items()):
     envval = self.get(key, None)
     if envval is None:
       # No existing variable in the environment, so nothing to delete.
@@ -222,7 +222,7 @@ def SubstList2(self, *args):
     for x in env['MYPARAMS']:
   which will throw an exception if MYPARAMS isn't defined.
   """
-  return map(str, self.Flatten(self.subst_list(args)))
+  return list(map(str, self.Flatten(self.subst_list(args))))
 
 
 #------------------------------------------------------------------------------

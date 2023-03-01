@@ -31,7 +31,7 @@
 """Software construction toolkit target management for SCons."""
 
 
-import __builtin__
+import builtins
 import SCons.Script
 
 
@@ -62,7 +62,7 @@ class TargetGroup(object):
 
   def GetTargetNames(self):
     """Returns a list of target name strings for the group."""
-    items = map(str, SCons.Script.Alias(self.name)[0].sources)
+    items = list(map(str, SCons.Script.Alias(self.name)[0].sources))
     # Remove duplicates from multiple environments
     return list(set(items))
 
@@ -84,7 +84,7 @@ class TargetMode(object):
 
   def GetTargetNames(self):
     """Returns a list of target name strings for the group."""
-    items = map(str, SCons.Script.Alias(self.name)[0].sources)
+    items = list(map(str, SCons.Script.Alias(self.name)[0].sources))
     # Remove duplicates from multiple environments
     return list(set(items))
 
@@ -120,8 +120,8 @@ def AddTargetGroup(name, description):
   # Warn if the target group already exists with a different description
   if (name in __target_groups
       and __target_groups[name].description != description):
-    print ('Warning: Changing description of target group "%s" from "%s" to '
-           '"%s"' % (name, __target_groups[name].description, description))
+    print(('Warning: Changing description of target group "%s" from "%s" to '
+           '"%s"' % (name, __target_groups[name].description, description)))
     __target_groups[name].description = description
   else:
     __target_groups[name] = TargetGroup(name, description)
@@ -195,7 +195,7 @@ def SetTargetProperty(self, target_name, all_modes=False, **kwargs):
     add_to_dict = target.mode_properties[mode]
 
   # Add values
-  for k, v in kwargs.items():
+  for k, v in list(kwargs.items()):
     add_to_dict[k] = self.subst(str(v))
 
 
@@ -205,16 +205,15 @@ def AddTargetHelp():
   This is called automatically by BuildEnvironments()."""
   help_text = ''
 
-  for group in GetTargetGroups().values():
-    items = group.GetTargetNames()
-    items.sort()
+  for group in list(GetTargetGroups().values()):
+    items = sorted(group.GetTargetNames())
     if items:
       help_text += '\nThe following %s:' % group.description
-      colwidth = max(map(len, items)) + 2
+      colwidth = max(list(map(len, items))) + 2
       cols = 77 / colwidth
       if cols < 1:
         cols = 1      # If target names are really long, one per line
-      rows = (len(items) + cols - 1) / cols
+      rows = int((len(items) + cols - 1) / cols)
       for row in range(0, rows):
         help_text += '\n  '
         for i in range(row, len(items), rows):
@@ -256,11 +255,11 @@ def generate(env):
   """SCons entry point for this tool."""
   env = env     # Silence gpylint
 
-  __builtin__.AddTargetGroup = AddTargetGroup
-  __builtin__.AddTargetHelp = AddTargetHelp
-  __builtin__.GetTargetGroups = GetTargetGroups
-  __builtin__.GetTargetModes = GetTargetModes
-  __builtin__.GetTargets = GetTargets
+  builtins.AddTargetGroup = AddTargetGroup
+  builtins.AddTargetHelp = AddTargetHelp
+  builtins.GetTargetGroups = GetTargetGroups
+  builtins.GetTargetModes = GetTargetModes
+  builtins.GetTargets = GetTargets
 
   env.AddMethod(SetTargetDescription)
   env.AddMethod(SetTargetProperty)

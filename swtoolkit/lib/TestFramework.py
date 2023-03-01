@@ -86,7 +86,7 @@ def RunUnitTests(testcase, **kwargs):
 
   # Inject variables into each test
   for t in suite._tests:
-    for k, v in kwargs.items():
+    for k, v in list(kwargs.items()):
       setattr(t, k, v)
 
   # Run test
@@ -247,7 +247,7 @@ MAcGBSsOAwIaBBSplrQz2ypA7MX0qzq5MkSiRQhmtwQUZyfmXRh64tnnJN6H63+L1fRiqWMCAgfQ
     if python_paths is None:
       python_paths = []
 
-    func_path, func_file = os.path.split(function.func_code.co_filename)
+    func_path, func_file = os.path.split(function.__code__.co_filename)
 
     python_paths += [
         # Directory containing the module with the function to call

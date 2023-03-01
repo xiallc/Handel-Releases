@@ -1,3 +1,21 @@
+v1.2.30
+=======
+
+* Updated build system to use Python3 and latest version of SCons. The build
+  environment can now be prepared with `pip install -r requirements.txt`
+
+* Fixed linux build in gcc 10 and 11
+
+* Fixed line ending for Linux shell scripts
+
+* [microDXP] Special fix for USB2 stability in Vega variant firmware 2.0.21
+
+* [Mercury] Added support for list mode mapping for Mercury OEM variant
+
+* Updated USB2 driver to signed driver from Cypress EZ-USB FX3 SDK v1.3, this
+  will fix an error when Windows 10 is updated to Feature Update 20H2
+
+
 v1.2.28
 =======
 
