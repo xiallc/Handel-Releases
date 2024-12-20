@@ -275,7 +275,7 @@ static int dxp_init_utils(Utils* utils)
 static int dxp_download_fpgaconfig(int* ioChan, int* modChan, char *name,
                                    Board* b)
 {
-    int i;
+    unsigned long i;
     int status;
 
 
@@ -1323,7 +1323,7 @@ XERXES_STATIC int dxp_begin_control_task(int* ioChan, int* modChan,
 {
 
     int status;
-    int i;
+    unsigned long i;
 
     for (i = 0; i < N_ELEMS(CONTROL_TASKS); i++) {
         if (CONTROL_TASKS[i].type == (int)*type) {
@@ -1422,7 +1422,7 @@ static int dxp_control_task_params(int* ioChan, int* modChan, short *type,
 static int dxp_control_task_data(int* ioChan, int* modChan, short *type,
                                  Board *board, void *data)
 {
-    int i;
+    unsigned long i;
     int status;
 
 
@@ -1759,7 +1759,7 @@ XERXES_STATIC int dxp_write_mem(int *ioChan, int *modChan, Board *board,
 static int dxp_write_reg(int *ioChan, int *modChan, char *name,
                          unsigned long *data)
 {
-    int i;
+    unsigned long i;
     int status;
 
     UNUSED(ioChan);
@@ -1819,7 +1819,7 @@ static int dxp__write_global_register(int ioChan, unsigned long reg,
 XERXES_STATIC int dxp_read_reg(int *ioChan, int *modChan, char *name,
                                unsigned long *data)
 {
-    int i;
+    unsigned long i;
     int status;
 
     UNUSED(modChan);

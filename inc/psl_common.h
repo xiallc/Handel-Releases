@@ -50,7 +50,7 @@
 #define pslLogInfo(x, y)	utils->funcs->dxp_md_log(MD_INFO, (x), (y), 0, __FILE__, __LINE__)
 #define pslLogDebug(x, y)	utils->funcs->dxp_md_log(MD_DEBUG, (x), (y), 0, __FILE__, __LINE__)
 
-static char info_string[400];
+static char info_string[4096];
 
 /* PSL function pointers and structs */
 

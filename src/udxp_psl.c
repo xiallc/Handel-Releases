@@ -669,10 +669,18 @@ static ParamData_t PARAM_DATA[] =
     },
 };
 
-/* Do not allow write access to  */
+/*
+ * Do not allow write access to the following DSP values.
+ *
+ * HANDEL-52: This array never gets used or called in any file in the repo.
+ * Comment it out to keep the information alive that this is supposed
+ * to be read-only. Will be implemented in HANDEL-69
+ */
+/*
 static const char* READONLY_DSP_VALUES[] = {
     "SLOWLEN"
 };
+ */
 
 /*
  * This routine takes a PSLFuncs structure and points the function pointers
@@ -1241,7 +1249,7 @@ PSL_STATIC int pslDoSpecialRun(int detChan, char *name, void *info,
                                int detector_chan)
 {
     int status;
-    int i;
+    unsigned long i;
     short specialRunType = 0;
 
     UNUSED(detector);
@@ -1725,7 +1733,7 @@ PSL_STATIC int pslUserSetup(int detChan, XiaDefaults *defaults,
  */
 PSL_STATIC unsigned int pslGetNumDefaults(void)
 {
-    int i;
+    unsigned long i;
 
     unsigned int nDefs = 0;
 
@@ -1768,7 +1776,7 @@ PSL_STATIC int pslGetNumParams(int detChan, unsigned short *numParams)
  */
 PSL_STATIC int pslGetParamData(int detChan, char *name, void *value)
 {
-    int i;
+    unsigned long i;
     int status;
 
     ASSERT(name != NULL);
@@ -1850,7 +1858,7 @@ PSL_STATIC int pslGainOperation(int detChan, char *name, void *value,
                                 Detector *det, int modChan, Module *m, XiaDefaults *defs)
 {
     int status;
-    int i;
+    unsigned long i;
 
     ASSERT(name  != NULL);
     ASSERT(value != NULL);
@@ -2225,7 +2233,7 @@ PSL_STATIC int pslSetGainbase(int detChan, char *name, XiaDefaults *defs, void *
 
         GAINBASE = (parameter_t)ROUND(gDB / DB_PER_LSB);
 
-        if (GAINBASE > MAX_GAINBASE || GAINBASE < MIN_GAINBASE) {
+        if (GAINBASE > (float)MAX_GAINBASE || GAINBASE < (float)MIN_GAINBASE) {
             sprintf(info_string, "Gain (%.3f) setting out of range (%d, %d) for detChan %d",
                     g, MIN_GAINBASE, MAX_GAINBASE, detChan);
             pslLogError("pslSetGainbase", info_string, XIA_GAIN_OOR);
@@ -4180,7 +4188,7 @@ PSL_STATIC int pslSaveParset(int detChan, char *name, XiaDefaults *defs,
 
     /* Verify limits on the PARSETs
      */
-    if ((parset >= maxParset) || (parset < 0)) {
+    if ((parset >= maxParset) || (parset < 0.)) {
         sprintf(info_string, "Specified PARSET '%u' is out-of-range", parset);
         pslLogError("pslSaveParset", info_string, XIA_BAD_VALUE);
         return XIA_BAD_VALUE;
@@ -5170,7 +5178,7 @@ PSL_STATIC int pslGetGenset(int detChan, char *name, XiaDefaults *defs, void *va
  */
 PSL_STATIC Udxp_AcquisitionValue *pslFindAV(char *name)
 {
-    int i;
+    unsigned long i;
 
     ASSERT(name != NULL);
 
@@ -5970,7 +5978,7 @@ PSL_STATIC int pslGetBaseLen(int detChan, char *name, XiaDefaults *defs, void *v
  */
 PSL_STATIC int pslInvalidateAll(flag_t member, XiaDefaults *defs)
 {
-    int i;
+    unsigned long i;
     int status;
 
 
@@ -6186,7 +6194,7 @@ PSL_STATIC int pslGetModuleStatistics(int detChan, void *value, XiaDefaults *def
     boolean_t isSuper = dxp_is_supermicro(detChan);
 
     if (!isSuper) {
-        OLD_MICRO_CMD(0, 21);
+        OLD_MICRO_CMD(0., 21);
     }
 
     UNUSED(defs);
@@ -11775,7 +11783,7 @@ PSL_STATIC int pslGetHighVoltage(int detChan, char *name, XiaDefaults *defs,
 
 
 /*
-/* acquisition value high_voltage
+ * acquisition value high_voltage
  * Set the high voltage value if supported (vega variant)
  */
 PSL_STATIC int pslSetHighVoltage(int detChan, char *name, XiaDefaults *defs,
@@ -11798,8 +11806,8 @@ PSL_STATIC int pslSetHighVoltage(int detChan, char *name, XiaDefaults *defs,
     }
 
     if ((volts < UDXP_HV_MIN) || (volts > UDXP_HV_MAX)) {
-        sprintf(info_string, "Specified high voltage value '%hu' is outside "
-                "the valid range of %d-%d for detChan %d.", volts,
+        sprintf(info_string, "Specified high voltage value '%f' is outside "
+                "the valid range of %d-%f for detChan %d.", volts,
                 UDXP_HV_MIN, UDXP_HV_MAX, detChan);
         pslLogError("pslSetHighVoltage", info_string, XIA_HV_OOR);
         return XIA_HV_OOR;
@@ -11822,7 +11830,7 @@ PSL_STATIC int pslSetHighVoltage(int detChan, char *name, XiaDefaults *defs,
     status = dxp_cmd(&detChan, &cmd, &lenS, send, &lenR, receive);
 
     if (status != DXP_SUCCESS) {
-        sprintf(info_string, "Error setting high voltage to %hu "
+        sprintf(info_string, "Error setting high voltage to %f "
                 "for detChan %d", volts, detChan);
         pslLogError("pslSetHighVoltage", info_string, status);
         return status;

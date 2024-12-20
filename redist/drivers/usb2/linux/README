@@ -1,0 +1,4 @@
+To allow all users access to XIA USB2 devices, copy 99-xia-usb.rules to udev
+folder, then reconnect the USB device:
+
+cp 99-xia-usb.rules /etc/udev/rules.d/

@@ -358,6 +358,11 @@ HANDEL_EXPORT int HANDEL_API xiaGetRunData(int detChan, char *name, void *value)
 
     Module *m = NULL;
 
+    if (name == NULL || value == NULL) {
+        status = XIA_NULL_VALUE;
+        xiaLogError("xiaGetRunData", "Input name and value cannot be NULL", status);
+        return status;
+    }
 
     elemType = xiaGetElemType((unsigned int)detChan);
 
@@ -457,6 +462,12 @@ HANDEL_EXPORT int HANDEL_API xiaDoSpecialRun(int detChan, char *name, void *info
     char *detectorAlias;
     int detector_chan;
     unsigned int modChan;
+
+    if (name == NULL) {
+        status = XIA_NULL_VALUE;
+        xiaLogError("xiaDoSpecialRun", "Input name cannot be NULL", status);
+        return status;
+    }
 
     sprintf(info_string, "Starting special run %s on chan %d...", name, detChan);
     xiaLogInfo("xiaDoSpecialRun", info_string);
@@ -568,6 +579,12 @@ HANDEL_EXPORT int HANDEL_API xiaGetSpecialRunData(int detChan, char *name, void 
     DetChanSetElem *detChanSetElem = NULL;
 
     PSLFuncs localFuncs;
+
+    if (name == NULL || value == NULL) {
+        status = XIA_NULL_VALUE;
+        xiaLogError("xiaGetSpecialRunData", "Input name and value cannot be NULL", status);
+        return status;
+    }
 
     elemType = xiaGetElemType((unsigned int)detChan);
 

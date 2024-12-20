@@ -38,65 +38,38 @@
 # this logic is just messy and isn't critical to understanding how the rest of
 # the build works.
 #
-#
 
-
-def update_environment(env):
+def check_platform_support(env, items):
     """
-    Configures the proper EXCLUDE flags for passed in environment based
-    on the protcol/device bits that are set.
+    Checks the compatibility of the items with the provided build environment.
+    :param env: The SCons environment containing the information we need.
+    :param items: A dictionary whose keys correspond to bits that have or can be
+                  set in the provided environment, which need checked.
+    :return: None
     """
-    win = env['PLATFORM'] == 'win32' # The target_platform tool may not have set proper bits yet.
+    for item in [i for i in items.keys() if env.Bit(i)]:
+        archs = items[item].get(env['PLATFORM'], [])
+        if not archs:
+            env.ClearBits(item)
+        else:
+            if env['TARGET_ARCH'] not in archs:
+                env.ClearBits(item)
 
-    if win and env.Bit('x64'):
-        env.ClearBits('usb')
-        env.ClearBits('epp')
-        env.ClearBits('serial')
 
-    if not win:
-        env.ClearBits('plx', 'xw')
+def update_environment(env, build_bits):
+    """
+    Disables devices, protocols, or libraries based on the provided environment.
+    :param env: The SCons environment containing the information we need.
+    :param build_bits: A dictionary containing the known devices, protocols,
+                       libraries, and build options.
+    :return: Nothing
+    """
+    check_platform_support(env, build_bits['libraries'])
+    check_platform_support(env, build_bits['protocols'])
 
-    if not env.Bit('epp') and not env.Bit('usb') and not env.Bit('usb2'):
-        env.ClearBits('saturn')
-
-    if not env.Bit('serial') and not env.Bit('usb2'):
-        env.ClearBits('udxp')
-        env.ClearBits('udxps')
-
-    if not env.Bit('usb2'):
-        env.ClearBits('mercury')
-
-    if not env.Bit('plx'):
-        env.ClearBits('xmap')
-        env.ClearBits('stj')
-
-    # We don't know if the user specified things from the device/protocol
-    # point-of-view or some combination therein. Some of these will overlap
-    # with the protocol logic. It's okay.
-
-    if not env.Bit('saturn'):
-        env.ClearBits('epp')
-        env.ClearBits('usb')
-
-    if not env.Bit('saturn') and \
-            not env.Bit('mercury') and not env.Bit('udxp') \
-            and not env.Bit('udxps'):
-        env.ClearBits('usb2')
-
-    if not env.Bit('udxp') and not env.Bit('udxps'):
-        env.ClearBits('serial')
-        env.ClearBits('xw')
-
-    if not env.Bit('xmap') and not env.Bit('stj'):
-        env.ClearBits('plx')
-
-    print("build options: ")
-
-    for option_item in ['usb','usb2','epp','plx','serial']:
-        if env.Bit(option_item):
-            print(option_item + ',')
-
-    for option_item in ['stj','xmap','saturn','mercury','udxp','udxps']:
-        if env.Bit(option_item):
-            print(option_item + ',')
-    print()
+    for device in [d for d in build_bits['devices'].keys() if env.Bit(d)]:
+        protocols = build_bits['devices'][device]['protocols']
+        libs = build_bits['devices'][device].get('libraries', [])
+        if (not [p for p in protocols if env.Bit(p)] or
+                (libs and not [lib for lib in libs if env.Bit(lib)])):
+            env.ClearBits(device)

@@ -1482,7 +1482,7 @@ static int dxp_modify_dspsymbol(int* ioChan, int* modChan, char* name,
 
     if ((dsp->proglen)<=0) {
         status = DXP_DSPLOAD;
-        sprintf(info_string, "Must Load DSP code before modifying %s", name);
+        sprintf(info_string, "Must Load DSP code before modifying %s", uname);
         dxp_log_error("dxp_modify_dspsymbol", info_string, status);
         return status;
     }
@@ -1596,7 +1596,7 @@ static int dxp_read_dspsymbol(int* ioChan, int* modChan, char* name,
     unsigned short addr=0;  /* address of the symbol in DSP memory   */
     unsigned short addr1=0;  /* address of the 2nd word in DSP memory  */
     unsigned short addr2=0;  /* address of the 3rd word (REALTIME/LIVETIME) */
-    char uname[20]="", tempchar[20]=""; /* Upper case version of the user supplied name */
+    char uname[20]="", tempchar[22]=""; /* Upper case version of the user supplied name */
     unsigned short stemp;  /* Temp location to store word read from DSP */
     double dtemp, dtemp1;       /* Long versions for the temporary variable  */
     Dsp_Info *dsp = NULL;
@@ -1629,7 +1629,7 @@ static int dxp_read_dspsymbol(int* ioChan, int* modChan, char* name,
 
     if ((dsp->proglen)<=0) {
         status = DXP_DSPLOAD;
-        sprintf(info_string, "Must Load DSP code before reading %s", name);
+        sprintf(info_string, "Must Load DSP code before reading %s", uname);
         dxp_log_error("dxp_read_dspsymbol",info_string,status);
         return status;
     }
@@ -1645,7 +1645,7 @@ static int dxp_read_dspsymbol(int* ioChan, int* modChan, char* name,
         status = dxp_loc(tempchar, dsp, &addr);
         if (status != DXP_SUCCESS) {
             /* Failed to find the name with 0 attached, this symbol doesnt exist */
-            sprintf(info_string, "Failed to find symbol %s in DSP memory", name);
+            sprintf(info_string, "Failed to find symbol %s in DSP memory", uname);
             dxp_log_error("dxp_read_dspsymbol", info_string, status);
             return status;
         }
@@ -1654,7 +1654,7 @@ static int dxp_read_dspsymbol(int* ioChan, int* modChan, char* name,
         status = dxp_loc(tempchar, dsp, &addr1);
         if (status != DXP_SUCCESS) {
             /* Failed to find the name with 1 attached, this symbol doesnt exist */
-            sprintf(info_string, "Failed to find symbol %s+1 in DSP memory", name);
+            sprintf(info_string, "Failed to find symbol %s+1 in DSP memory", uname);
             dxp_log_error("dxp_read_dspsymbol", info_string, status);
             return status;
         }
@@ -1666,7 +1666,7 @@ static int dxp_read_dspsymbol(int* ioChan, int* modChan, char* name,
             status = dxp_loc(tempchar, dsp, &addr2);
             if (status != DXP_SUCCESS) {
                 /* Failed to find the name with 1 attached, this symbol doesnt exist */
-                sprintf(info_string, "Failed to find symbol %s+2 in DSP memory", name);
+                sprintf(info_string, "Failed to find symbol %s+2 in DSP memory", uname);
                 dxp_log_error("dxp_read_dspsymbol", info_string, status);
                 return status;
             }
@@ -1678,7 +1678,7 @@ static int dxp_read_dspsymbol(int* ioChan, int* modChan, char* name,
      */
 
     if (dsp->params->parameters[addr].access == 2) {
-        sprintf(info_string, "Parameter %s is Write-Only.  No peeking allowed.", name);
+        sprintf(info_string, "Parameter %s is Write-Only.  No peeking allowed.", uname);
         status = DXP_DSPACCESS;
         dxp_log_error("dxp_read_dspsymbol", info_string, status);
         return status;
@@ -1689,7 +1689,7 @@ static int dxp_read_dspsymbol(int* ioChan, int* modChan, char* name,
     addr = (unsigned short) (dsp->params->parameters[addr].address + startp);
     status = dxp_read_word(ioChan, modChan, &addr, &stemp);
     if (status != DXP_SUCCESS) {
-        sprintf(info_string, "Error writing parameter %s", name);
+        sprintf(info_string, "Error writing parameter %s", uname);
         dxp_log_error("dxp_read_dspsymbol",info_string,status);
         return status;
     }
@@ -1700,7 +1700,7 @@ static int dxp_read_dspsymbol(int* ioChan, int* modChan, char* name,
         addr = (unsigned short) (dsp->params->parameters[addr1].address + startp);
         status = dxp_read_word(ioChan, modChan, &addr, &stemp);
         if (status != DXP_SUCCESS) {
-            sprintf(info_string, "Error writing parameter %s+1", name);
+            sprintf(info_string, "Error writing parameter %s+1", uname);
             dxp_log_error("dxp_read_dspsymbol", info_string, status);
             return status;
         }
@@ -1717,7 +1717,7 @@ static int dxp_read_dspsymbol(int* ioChan, int* modChan, char* name,
         addr = (unsigned short) (dsp->params->parameters[addr2].address + startp);
         status = dxp_read_word(ioChan, modChan, &addr, &stemp);
         if (status != DXP_SUCCESS) {
-            sprintf(info_string, "Error writing parameter %s+2", name);
+            sprintf(info_string, "Error writing parameter %s+2", uname);
             dxp_log_error("dxp_read_dspsymbol", info_string, status);
             return status;
         }
@@ -1857,7 +1857,6 @@ static int dxp_get_baseline_length(int *modChan, Board *b, unsigned int *len)
     return DXP_SUCCESS;
 }
 
-/*
 /*
  * Routine to return the length of the history buffer.
  *

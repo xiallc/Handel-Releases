@@ -56,7 +56,6 @@
 #include "psl_udxp.h"
 
 #define ESCAPE   0x1B
-#define INFO_LEN 400
 #define LINUX_WAIT_BEFORE_READ 0.01
 
 #define udxpc_log_error(x, y, z)    funcs.dxp_md_log(MD_ERROR, (x), (y), (z), __FILE__, __LINE__)

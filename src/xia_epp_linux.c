@@ -103,14 +103,10 @@ XIA_EXPORT int XIA_API DxpInitPortAddress(int port) {
      *
      *     input: port:  Usually 0x378, sometimes 0x278
      */
-    unsigned long EPORT,CPORT;
-
-
     PORT = port;
-    EPORT = PORT + 0x402;
+
     DPORT = PORT + 4;
     APORT = PORT + 3;
-    CPORT = PORT + 2;
     SPORT = PORT + 1;
 
     return 0;
@@ -511,7 +507,7 @@ static UCHAR DlPortReadPortUchar(ULONG port)
 
 static void DlPortReadPortBufferUshort(ULONG port, PUSHORT buffer, ULONG count)
 {
-    int				i;
+    unsigned long				i;
     int status;
 
 
@@ -533,7 +529,7 @@ static void DlPortReadPortBufferUshort(ULONG port, PUSHORT buffer, ULONG count)
 
 static void DlPortReadPortBufferUlong(ULONG port, PULONG buffer, ULONG count)
 {
-    int				i;
+    unsigned long				i;
     int status;
 
 

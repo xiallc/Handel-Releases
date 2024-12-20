@@ -4,28 +4,28 @@ sample_code_env = env.Clone()
 sample_code_env.Append(LIBS=['handel'])
 
 if sample_code_env.Bit('xmap'):
-    sample_code_env.ComponentProgram('hqsg-xmap', ['xmap/hqsg-xmap.c'])
-    sample_code_env.ComponentProgram('hqsg-xmap-preset', ['xmap/hqsg-xmap-preset.c'])
-    sample_code_env.ComponentProgram('hqsg-xmap-mapping', ['xmap/hqsg-xmap-mapping.c'])
+    sample_code_env.Program('hqsg-xmap', ['xmap/hqsg-xmap.c'], LIBS=['handel'])
+    sample_code_env.Program('hqsg-xmap-preset', ['xmap/hqsg-xmap-preset.c'])
+    sample_code_env.Program('hqsg-xmap-mapping', ['xmap/hqsg-xmap-mapping.c'])
 
 if sample_code_env.Bit('udxp'):
-    sample_code_env.ComponentProgram('hqsg-microdxp', ['microdxp/hqsg-microdxp.c'])
-    sample_code_env.ComponentProgram('hqsg-microdxp-snapshot', ['microdxp/hqsg-microdxp-snapshot.c'])
-    sample_code_env.ComponentProgram('hqsg-microdxp-passthrough', ['microdxp/hqsg-microdxp-passthrough.c'])
-    sample_code_env.ComponentProgram('hqsg-microdxp-vega', ['microdxp/hqsg-microdxp-vega.c'])
+    sample_code_env.Program('hqsg-microdxp', ['microdxp/hqsg-microdxp.c'])
+    sample_code_env.Program('hqsg-microdxp-snapshot', ['microdxp/hqsg-microdxp-snapshot.c'])
+    sample_code_env.Program('hqsg-microdxp-passthrough', ['microdxp/hqsg-microdxp-passthrough.c'])
+    sample_code_env.Program('hqsg-microdxp-vega', ['microdxp/hqsg-microdxp-vega.c'])
 
 if sample_code_env.Bit('saturn'):
-    sample_code_env.ComponentProgram('hqsg-saturn', ['saturn/hqsg-saturn.c'])
+    sample_code_env.Program('hqsg-saturn', ['saturn/hqsg-saturn.c'])
 
 if sample_code_env.Bit('mercury'):
-    sample_code_env.ComponentProgram('hqsg-mercury-oem', ['mercury/hqsg-mercury-oem.c'])
+    sample_code_env.Program('hqsg-mercury-oem', ['mercury/hqsg-mercury-oem.c'])
 
 if sample_code_env.Bit('stj'):
-    sample_code_env.ComponentProgram('hqsg-stj-list', ['stj/hqsg-stj-list.c'])
+    sample_code_env.Program('hqsg-stj-list', ['stj/hqsg-stj-list.c'])
 
-sample_code_env.ComponentProgram('handel-sca', ['generic/handel-sca.c'])
-sample_code_env.ComponentProgram('handel-gap_time', ['generic/handel-gap_time.c'])
-sample_code_env.ComponentProgram('handel-preset_run', ['generic/handel-preset_run.c'])
-sample_code_env.ComponentProgram('handel-multi_module', ['generic/handel-multi_module.c'])
-sample_code_env.ComponentProgram('handel-error_code', ['generic/handel-error_code.c'])
-sample_code_env.ComponentProgram('infinite_read_loops', ['generic/infinite_read_loops.c'])
+sample_code_env.Program('handel-sca', ['generic/handel-sca.c'])
+sample_code_env.Program('handel-gap_time', ['generic/handel-gap_time.c'])
+sample_code_env.Program('handel-preset_run', ['generic/handel-preset_run.c'])
+sample_code_env.Program('handel-multi_module', ['generic/handel-multi_module.c'])
+sample_code_env.Program('handel-error_code', ['generic/handel-error_code.c'])
+sample_code_env.Program('infinite_read_loops', ['generic/infinite_read_loops.c'])

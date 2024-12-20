@@ -29,13 +29,10 @@
 
 /* generic helper functions */
 static void CHECK_ERROR(int status);
-static void sleep_seconds(double time_seconds);
 static void print_usage(void);
 static void start_system(char *ini_file);
 static void setup_logging(char *log_name);
 static void INThandler(int sig);
-static double get_time();
-static int get_number_channels();
 static void clean_up();
 
 /* local helper */
@@ -117,45 +114,6 @@ static void INThandler(int sig)
     clean_up();
     exit(1);
 }
-
-static void sleep_seconds(double time_seconds)
-{
-#if _WIN32
-    DWORD wait = (DWORD)(1000.0 * time_seconds);
-    Sleep(wait);
-#else
-    unsigned long secs = (unsigned long)time_seconds;
-    struct timespec req = {
-        .tv_sec = secs,
-        .tv_nsec = ((time_seconds - secs) * 1000000000.0)
-    };
-    struct timespec rem = {
-        .tv_sec = 0,
-        .tv_nsec = 0
-    };
-    while (TRUE_) {
-        if (nanosleep(&req, &rem) == 0)
-        break;
-        req = rem;
-    }
-#endif
-}
-
-double get_time()
-{
-#if _WIN32
-    LARGE_INTEGER t, f;
-    QueryPerformanceCounter(&t);
-    QueryPerformanceFrequency(&f);
-    return (double)t.QuadPart/(double)f.QuadPart;
-#else
-    struct timeval t;
-    struct timezone tzp;
-    gettimeofday(&t, &tzp);
-    return t.tv_sec + t.tv_usec*1e-6;
-#endif
-}
-
 
 /*
  * Clean up and release resources

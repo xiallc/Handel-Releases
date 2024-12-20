@@ -100,9 +100,6 @@ PSL_STATIC int PSL_API pslGetParamName(int detChan, unsigned short index,
                                        char *name);
 PSL_STATIC int pslBoardOperation(int detChan, char *name, void *value,
 								 XiaDefaults *defs);
-
-PSL_STATIC boolean_t PSL_API pslCanRemoveName(char *name);
-
 PSL_STATIC int PSL_API pslUnHook(int detChan);
 
 #endif /* __XIA_PSL_H__ */

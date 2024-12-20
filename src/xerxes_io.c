@@ -52,7 +52,6 @@
 XIA_MD_IMPORT int XIA_MD_API dxp_md_init_util(Xia_Util_Functions *funcs, char *type);
 
 
-#define INFO_LEN 400
 #ifdef XERXES_TRACE_IO
 static char INFO_STRING[INFO_LEN];
 #endif

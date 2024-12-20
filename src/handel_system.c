@@ -805,6 +805,7 @@ HANDEL_STATIC int HANDEL_API xiaValidateDetSet(DetChanElement *head)
 HANDEL_SHARED int HANDEL_API xiaLoadPSL(char *boardType, PSLFuncs *funcs)
 {
     int status;
+    UNUSED(funcs);
 
 
     /* XXX TODO Use a list of function pointers

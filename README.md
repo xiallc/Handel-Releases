@@ -1,40 +1,23 @@
-Handel is built with SCons+swtoolkit. The latest version of Scons
-and swtoolkit are updated to be compatile with python3
+# Handel Software API
+Handel provides a high level interface for a number of XIA’s products. The basic idea 
+is to provide an API that requires as little knowledge about the hardware as is 
+reasonable. We wrote the API using ANSI C for ease of use and compatibility. 
 
-1. Install the latest Python3 Windows installer from [python.org] or
-   using Chocolately. The x86-64 version is fine on a 64-bit system.
-2. Install required libraries
-	pip install -r requirements.txt
+## Documentation
+The [project documentation is available on the web](https://handel.xia.com).
 
-Tests in t_api run with Ruby 2.3+. You will need both x86 and x64
-versions of Ruby in order to test both builds of Handel. For each
-version, `gem install ffi`.
+## API Update Policy
 
+By necessity, we will be making changes to the public API calls and the SDK. We will 
+adopt a process of depreciating interfaces then removing them. We will provide notice of
 
-Building with scons
-===================
+* no less than 6 months before removing an interface, and
+* no less than 3 months before changing an interface.
 
-Handel has many flags that map to defines in the compilation environment. A
-little experimentation may be needed to get the set that supports only the
-products you need.
+Notices will appear in the source code, documentation, and release notes. We will 
+notify users via email 30 days prior to the deprecation date.
 
-The incldued bulid script can be used to invoke SCons build environment.
-
-Here's an example for microDXP USB2:
-
-   build --udxp --no-udxps --no-xw --no-serial --no-xmap --no-stj --no-mercury --no-saturn --verbose
-
-Another example to build the examples with default option:
-
-   build --samples
-
-To search for other flags, search "SetBitFromOption" in main.scons.
-
-
-
-Resources:
-
-* [python.org](https://www.python.org/downloads/)
-* [swtoolkit examples](https://code.google.com/p/swtoolkit/wiki/Examples)
-* [swtoolkit glossary](https://code.google.com/p/swtoolkit/wiki/Glossary#COMPONENT_LIBRARY_PUBLISH)
-* [SCons manual](http://www.scons.org/doc/production/HTML/scons-man.html)
+Deprecated interfaces will receive bug fixes during their deprecation phase, but will 
+receive no added functionality. This policy may not cover all situations, and will 
+evolve over time. For situations that don’t fit neatly into this policy, we will 
+ensure that the information is available in all relevant Release Notes.

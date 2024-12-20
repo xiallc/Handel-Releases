@@ -145,6 +145,15 @@ HANDEL_EXPORT int HANDEL_API xiaSaveSystem(char *type, char *filename)
 {
     int status;
 
+    if (type == NULL) {
+        xiaLogError("xiaSaveSystem", ".INI file 'type' string is NULL", XIA_NULL_TYPE);
+        return XIA_NULL_TYPE;
+    }
+
+    if (filename == NULL) {
+        xiaLogError("xiaSaveSystem", ".INI file 'name' string is NULL", XIA_NO_FILENAME);
+        return XIA_NO_FILENAME;
+    }
 
     if (STREQ(type, "handel_ini")) {
 
@@ -246,8 +255,10 @@ HANDEL_STATIC int HANDEL_API xiaWriteIniFile(char *filename)
 
             default:
                 xia_file_close(iniFile);
-                status = XIA_UNKNOWN;
-                xiaLogError("xiaWriteIniFile", "Impossible polarity error", status);
+                status = XIA_POL_OOR;
+                sprintf(info_string, "Unknown detector polarity %hu for alias %s",
+                        detector->polarity[j], detector->alias);
+                xiaLogError("xiaWriteIniFile", info_string, status);
                 return status;
                 break;
             }

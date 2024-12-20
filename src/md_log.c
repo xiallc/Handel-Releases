@@ -56,8 +56,6 @@
 #include "xia_common.h"
 #include "handel_errors.h"
 
-#define INFO_LEN  400
-
 XIA_MD_STATIC void dxp_md_local_time(struct tm **local, int *milli);
 
 /* Current output for the logging routines. By default, this is set to stdout */

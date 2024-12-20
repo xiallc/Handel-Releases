@@ -75,7 +75,8 @@
 static unsigned int numMod    = 0;
 
 /* error string used as a place holder for calls to dxp_md_error() */
-static char ERROR_STRING[132];
+#define ERROR_STRING_LEN 4096
+static char ERROR_STRING[ERROR_STRING_LEN];
 
 /* maximum number of words able to transfer in a single call to dxp_md_io() */
 static unsigned int maxblk=0;
@@ -756,7 +757,7 @@ XIA_MD_STATIC int XIA_MD_API dxp_md_usb_close(int *camChan)
 XIA_MD_STATIC int dxp_md_serial_initialize(unsigned int *maxMod,
                                            char *dllname)
 {
-    int i;
+    unsigned int i;
 
     UNUSED(maxMod);
     UNUSED(dllname);
@@ -953,7 +954,7 @@ XIA_MD_STATIC int XIA_MD_API dxp_md_serial_io(int *camChan,
         /* Check the incoming data packet length against the size of the
          * user's buffer.
          */
-        if (n_bytes + HEADER_SIZE > *length) {
+        if ((unsigned int)(n_bytes + HEADER_SIZE) > *length) {
             tcflush(fd, TCIOFLUSH);
             sprintf(ERROR_STRING, "Header reports ndata=%hu, larger than "
                     "requested length %u-%d.", n_bytes, *length, HEADER_SIZE);
@@ -990,7 +991,7 @@ XIA_MD_STATIC int XIA_MD_API dxp_md_serial_io(int *camChan,
             buf[i] = (byte_t)us_data[i];
         }
 
-        int wlen = write(fd, buf, *length);
+        unsigned int wlen = write(fd, buf, *length);
 
         if (wlen != *length) {
             dxp_md_free((void *)buf);
@@ -1099,7 +1100,7 @@ static int dxp_md_serial_read_data(int fd,
 {
     byte_t *b = NULL;
     int timeToStall = 5;
-    int totalRead;
+    unsigned int totalRead;
     unsigned long i;
 
     ASSERT(buf != NULL);

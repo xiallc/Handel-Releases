@@ -1474,7 +1474,7 @@ static int XERXES_API dxp_add_fippi(char* filename, Board_Info* board,
 
         if (!(*fippi)->data) {
             dxp_free_fippi(*fippi);
-            sprintf(info_string, "Error allocating %lu bytes for '*fippi->data'",
+            sprintf(info_string, "Error allocating %zu bytes for '*fippi->data'",
                     (*fippi)->maxproglen * sizeof(unsigned short));
             dxp_log_error("dxp_add_fippi", info_string, DXP_NOMEM);
             return DXP_NOMEM;

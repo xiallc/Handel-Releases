@@ -131,6 +131,7 @@ HANDEL_EXPORT int HANDEL_API xiaSetLogOutput(char *filename)
 
 /**
  * This routine outputs the log.
+ * If it's called before Handel is propely initialized do nothing
  */
 HANDEL_SHARED void HANDEL_API xiaLog(int level, const char* file, int line,
                                      int status, const char* func, const char* fmt, ...)
@@ -147,7 +148,8 @@ HANDEL_SHARED void HANDEL_API xiaLog(int level, const char* file, int line,
 
     formatBuffer[sizeof(formatBuffer) - 1] = '\0';
 
-    handel_md_log(level, (char*)func, formatBuffer, status, (char*)file, line);
+    if (handel_md_log != NULL)
+        handel_md_log(level, (char*)func, formatBuffer, status, (char*)file, line);
 
     va_end(args);
 }

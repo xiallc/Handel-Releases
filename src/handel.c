@@ -76,6 +76,7 @@ HANDEL_STATIC int HANDEL_API xiaInitModuleDS(void);
 
 HANDEL_STATIC int HANDEL_API xiaUnHook(void);
 
+char info_string[4096];
 
 /*
  * Used to track if the library functions are initialized.

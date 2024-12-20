@@ -262,10 +262,6 @@ PSL_STATIC int psl__SetMinGapTime(int detChan, int modChan, char *name,
                                   void *value, char *detType,
                                   XiaDefaults *defs, Module *m,
                                   Detector *det, FirmwareSet *fs);
-PSL_STATIC int psl__SetADCRule(int detChan, int modChan, char *name,
-                               void *value, char *detType,
-                               XiaDefaults *defs, Module *m,
-                               Detector *det, FirmwareSet *fs);
 PSL_STATIC int psl__SetDynamicRng(int detChan, int modChan, char *name,
                                   void *value, char *detType,
                                   XiaDefaults *defs, Module *m, Detector *det,
@@ -886,7 +882,7 @@ PSL_STATIC int pslDownloadFirmware(int detChan, char *type, char *file,
                                    Module *m, char *rawFile, XiaDefaults *defs)
 {
     int status;
-    int i;
+    unsigned long int i;
 
     UNUSED(defs);
 
@@ -947,7 +943,7 @@ PSL_STATIC int pslSetAcquisitionValues(int detChan, char *name, void *value,
                                        int detector_chan, Module *m,
                                        int modChan)
 {
-    int i;
+    unsigned long i;
     int status;
     int error_status;
 
@@ -1084,7 +1080,7 @@ PSL_STATIC int psl__UpdateRawParamAcqValue(int detChan, char *name,
 PSL_STATIC int pslGetAcquisitionValues(int detChan, char *name, void *value,
                                        XiaDefaults *defaults)
 {
-    int i;
+    unsigned long i;
     int status;
 
 
@@ -1410,7 +1406,7 @@ PSL_STATIC int pslStopRun(int detChan, Module *m)
 PSL_STATIC int pslGetRunData(int detChan, char *name, void *value,
                              XiaDefaults *defaults, Module *m)
 {
-    int i;
+    unsigned long i;
     int status;
 
 
@@ -1463,6 +1459,7 @@ PSL_STATIC int pslDoSpecialRun(int detChan, char *name, void *info,
 {
     int status;
     int i;
+    unsigned long int element_idx;
 
     boolean_t isDebug;
     boolean_t isMercuryOem = psl__IsMercuryOem(detChan);
@@ -1500,10 +1497,10 @@ PSL_STATIC int pslDoSpecialRun(int detChan, char *name, void *info,
         }
     }
 
-    for (i = 0; i < N_ELEMS(specialRun); i++) {
-        if (STREQ(specialRun[i].name, name)) {
+    for (element_idx = 0; element_idx < N_ELEMS(specialRun); element_idx++) {
+        if (STREQ(specialRun[element_idx].name, name)) {
 
-            status = specialRun[i].fn(detChan, info, defaults);
+            status = specialRun[element_idx].fn(detChan, info, defaults);
 
             if (status != XIA_SUCCESS) {
                 sprintf(info_string, "Error doing special run '%s' on detChan %d",
@@ -1531,7 +1528,7 @@ PSL_STATIC int pslGetSpecialRunData(int detChan, char *name, void *value,
                                     XiaDefaults *defaults)
 {
     int status;
-    int i;
+    unsigned long int i;
 
 
     ASSERT(name     != NULL);
@@ -1568,8 +1565,8 @@ PSL_STATIC int pslGetSpecialRunData(int detChan, char *name, void *value,
  */
 PSL_STATIC int pslGetDefaultAlias(char *alias, char **names, double *values)
 {
-    int i;
-    int def_idx;
+    unsigned long i;
+    unsigned long def_idx;
 
     char *aliasName = "defaults_mercury";
 
@@ -1681,7 +1678,7 @@ PSL_STATIC int pslUserSetup(int detChan, XiaDefaults *defaults,
                             char *detectorType, Detector *detector,
                             int detector_chan, Module *m, int modChan)
 {
-    int i;
+    unsigned long i;
     int status;
 
     XiaDaqEntry *entry = NULL;
@@ -1748,7 +1745,7 @@ nextEntry:
  */
 PSL_STATIC unsigned int pslGetNumDefaults(void)
 {
-    int i;
+    unsigned int i;
 
     unsigned int n;
 
@@ -1791,7 +1788,7 @@ PSL_STATIC int pslGetNumParams(int detChan, unsigned short *numParams)
  */
 PSL_STATIC int PSL_API pslGetParamData(int detChan, char *name, void *value)
 {
-    int i;
+    unsigned long i;
     int status;
 
 
@@ -1858,7 +1855,7 @@ PSL_STATIC int pslGainOperation(int detChan, char *name, void *value,
                                 Detector *det, int modChan, Module *m, XiaDefaults *defs)
 {
     int status;
-    int i;
+    unsigned long i;
 
     ASSERT(name  != NULL);
     ASSERT(value != NULL);
@@ -1897,7 +1894,7 @@ PSL_STATIC int pslBoardOperation(int detChan, char *name, void *value,
                                  XiaDefaults *defs)
 {
     int status;
-    int i;
+    unsigned long i;
 
 
     ASSERT(name  != NULL);
@@ -6367,8 +6364,6 @@ PSL_STATIC int psl__IsMapping(int detChan,  unsigned short allowed,
     if (*isMapping) {
         parameter_t MAPPINGMODE;
 
-        int status;
-
         status = pslGetParameter(detChan, "MAPPINGMODE", &MAPPINGMODE);
 
         if (status != XIA_SUCCESS) {
@@ -6413,7 +6408,7 @@ PSL_STATIC int psl__UpdateParams(int detChan, unsigned short type,
                                  char *detType, XiaDefaults *defs,
                                  Module *m, Detector *det, FirmwareSet *fs)
 {
-    int i;
+    unsigned long i;
     int status;
 
     XiaDaqEntry *entry = NULL;
@@ -8488,7 +8483,7 @@ PSL_STATIC int psl__SetInputAttenuation(int detChan, int modChan, char *name,
 
     INPUTATTEN = (parameter_t)(*((double *)value));
 
-    if (INPUTATTEN > (parameter_t)MERCURY_MAX_INPUTATTEN || INPUTATTEN < 0) {
+    if (INPUTATTEN > (parameter_t)MERCURY_MAX_INPUTATTEN || INPUTATTEN < 0.) {
         sprintf(info_string, "Specified %s (%hu) out of range (0, %hu) "
                 "for detChan %d.", name, INPUTATTEN, MERCURY_MAX_INPUTATTEN, detChan);
         pslLogError("psl__SetInputAttenuation", info_string, XIA_PARAMETER_OOR);
@@ -8590,7 +8585,7 @@ PSL_STATIC int psl__SetInputTermination(int detChan, int modChan, char *name,
 
     INPUTTERM = (parameter_t)(*((double *)value));
 
-    if (INPUTTERM > (parameter_t)MERCURY_MAX_INPUTATTEN || INPUTTERM < 0) {
+    if (INPUTTERM > (parameter_t)MERCURY_MAX_INPUTATTEN || INPUTTERM < 0.) {
         sprintf(info_string, "Specified %s (%hu) out of range (0, %hu) "
                 "for detChan %d.", name, INPUTTERM, MERCURY_MAX_INPUTTERM, detChan);
         pslLogError("psl__SetInputTermination", info_string, XIA_PARAMETER_OOR);
@@ -9562,7 +9557,7 @@ PSL_STATIC int psl__SetRcTimeContstant(int detChan, int modChan, char *name,
 
     TAUCTRL = (parameter_t)(*((double *)value));
 
-    if (TAUCTRL > (parameter_t)MERCURY_MAX_TAUCTRL || TAUCTRL < 0) {
+    if (TAUCTRL > (parameter_t)MERCURY_MAX_TAUCTRL || TAUCTRL < 0.) {
         sprintf(info_string, "Specified %s (%hu) out of range (0, %hu) "
                 "for detChan %d.", name, TAUCTRL, MERCURY_MAX_TAUCTRL, detChan);
         pslLogError("psl__SetRcTimeContstant", info_string, XIA_PARAMETER_OOR);

@@ -104,15 +104,9 @@ HANDEL_EXPORT int HANDEL_API xiaSetAcquisitionValues(int detChan, char *name, vo
     PSLFuncs localFuncs;
 
 
-    /* See Bug ID #66. Protect
-     * against malformed name
-     * strings.
-     */
-    if (name == NULL) {
-        status = XIA_BAD_NAME;
-        xiaLogError("xiaSetAcquisitionValues",
-                    "Name may not be NULL",
-                    status);
+    if (name == NULL || value == NULL) {
+        status = XIA_NULL_VALUE;
+        xiaLogError("xiaSetAcquisitionValues", "Input name and value cannot be NULL", status);
         return status;
     }
 
@@ -283,6 +277,12 @@ HANDEL_EXPORT int HANDEL_API xiaGetAcquisitionValues(int detChan, char *name, vo
 
     PSLFuncs localFuncs;
 
+    if (name == NULL || value == NULL) {
+        status = XIA_NULL_VALUE;
+        xiaLogError("xiaGetAcquisitionValues", "Input name and value cannot be NULL", status);
+        return status;
+    }
+
     elemType = xiaGetElemType((unsigned int)detChan);
 
     switch(elemType)
@@ -383,6 +383,11 @@ HANDEL_EXPORT int HANDEL_API xiaRemoveAcquisitionValues(int detChan, char *name)
     char *firmAlias = NULL;
     char *detAlias  = NULL;
 
+    if (name == NULL) {
+        status = XIA_NULL_VALUE;
+        xiaLogError("xiaRemoveAcquisitionValues", "Input name cannot be NULL", status);
+        return status;
+    }
 
     elemType = xiaGetElemType(detChan);
 
@@ -644,6 +649,12 @@ HANDEL_EXPORT int HANDEL_API xiaGainOperation(int detChan, char *name, void *val
 
     PSLFuncs localFuncs;
 
+    if (name == NULL || value == NULL) {
+        status = XIA_NULL_VALUE;
+        xiaLogError("xiaGainOperation", "Input name and value cannot be NULL", status);
+        return status;
+    }
+
     elemType = xiaGetElemType(detChan);
 
     switch(elemType)
@@ -841,6 +852,11 @@ HANDEL_EXPORT int HANDEL_API xiaGetParameter(int detChan, const char *name, unsi
 
     PSLFuncs localFuncs;
 
+    if (name == NULL || value == NULL) {
+        status = XIA_NULL_VALUE;
+        xiaLogError("xiaGetParameter", "Input name and value cannot be NULL", status);
+        return status;
+    }
 
     elemType = xiaGetElemType((unsigned int)detChan);
 
@@ -914,6 +930,11 @@ HANDEL_EXPORT int HANDEL_API xiaSetParameter(int detChan, const char *name, unsi
 
     PSLFuncs localFuncs;
 
+    if (name == NULL) {
+        status = XIA_NULL_VALUE;
+        xiaLogError("xiaSetParameter", "Input name cannot be NULL", status);
+        return status;
+    }
 
     elemType = xiaGetElemType((unsigned int)detChan);
 
@@ -998,6 +1019,11 @@ HANDEL_EXPORT int HANDEL_API xiaGetNumParams(int detChan, unsigned short *value)
 
     PSLFuncs localFuncs;
 
+    if (value == NULL) {
+        status = XIA_NULL_VALUE;
+        xiaLogError("xiaGetNumParams", "Input value cannot be NULL", status);
+        return status;
+    }
 
     elemType = xiaGetElemType((unsigned int)detChan);
 
@@ -1091,6 +1117,11 @@ HANDEL_EXPORT int HANDEL_API xiaGetParamData(int detChan, char *name, void *valu
 
     PSLFuncs localFuncs;
 
+    if (name == NULL || value == NULL) {
+        status = XIA_NULL_VALUE;
+        xiaLogError("xiaGetParamData", "Input name and value cannot be NULL", status);
+        return status;
+    }
 
     elemType = xiaGetElemType((unsigned int)detChan);
 
@@ -1163,6 +1194,11 @@ HANDEL_EXPORT int HANDEL_API xiaGetParamName(int detChan, unsigned short index, 
 
     PSLFuncs localFuncs;
 
+    if (name == NULL) {
+        status = XIA_NULL_VALUE;
+        xiaLogError("xiaGetParamName", "Input name cannot be NULL", status);
+        return status;
+    }
 
     elemType = xiaGetElemType((unsigned int)detChan);
 

@@ -42,7 +42,7 @@
 #include <math.h>
 
 /* Define the length of the error reporting string info_string */
-#define INFO_LEN 400
+#define INFO_LEN 4096
 /* Define the length of the line string used to read in files */
 #define XIA_LINE_LEN 132
 

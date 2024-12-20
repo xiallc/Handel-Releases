@@ -782,8 +782,8 @@ XERXES_STATIC int dxp_load_symbols_from_file(char *file, Dsp_Params *params)
                                                                   sizeof(unsigned long));
 
             if (!params->chan_offsets) {
-                sprintf(info_string, "Error allocating %d bytes for 'params->"
-                        "chan_offsets'", 4 * sizeof(unsigned long));
+                sprintf(info_string, "Error allocating %zd bytes for 'params->"
+                        "chan_offsets'", (size_t)(4 * sizeof(unsigned long)));
                 dxp_log_error("dxp_load_symbols_from_file", info_string, DXP_NOMEM);
                 return DXP_NOMEM;
             }

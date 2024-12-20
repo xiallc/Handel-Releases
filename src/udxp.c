@@ -65,9 +65,6 @@
 /* For microDXP the parameter data is stored in Board->dsp in the first modChan */
 #define PARAMS(x)   (x)->dsp[0]->params
 
-/* Define the length of the error reporting string info_string */
-#define INFO_LEN 400
-
 /*
  * Pointer to utility functions
  */
@@ -1107,7 +1104,7 @@ XERXES_STATIC int dxp_write_mem(int *ioChan, int *modChan, Board *board,
     us_data = udxp_md_alloc((*offset) * sizeof(unsigned short));
 
     if (!us_data) {
-        sprintf(info_string, "Unable to allocate %lu bytes for 'us_data' for "
+        sprintf(info_string, "Unable to allocate %zu bytes for 'us_data' for "
                 "ioChan = %d, modChan = %d.",
                 (*offset) * sizeof(unsigned short), *ioChan, *modChan);
         dxp_log_error("dxp_write_mem", info_string, DXP_NOMEM);
@@ -1205,11 +1202,17 @@ XERXES_STATIC int XERXES_API dxp_unhook(Board *board)
 XERXES_STATIC int dxp_get_symbol_by_index(int modChan, unsigned short index,
                                           Board *board, char *name)
 {
-    UNUSED(modChan);
+    int status;
 
     ASSERT(name  != NULL);
     ASSERT(board != NULL);
-    ASSERT(index < PARAMS(board)->nsymbol);
+
+    if (index >= PARAMS(board)->nsymbol) {
+        status = DXP_NOSYMBOL;
+        sprintf(info_string, "Index is out of range %d, modChan = %d", index, modChan);
+        dxp_log_error("dxp_get_symbol_by_index", info_string, status);
+        return status;
+    }
 
     strncpy(name, PARAMS(board)->parameters[index].pname, MAX_DSP_PARAM_NAME_LEN);
 

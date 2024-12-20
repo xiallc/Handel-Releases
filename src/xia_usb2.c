@@ -104,7 +104,6 @@ static unsigned long XIA_USB2_SMALL_READ_PACKET_SIZE = 0;
 /* The text of last printf info is reset every time the status code is updated
  * so that callers can retrieve it in case of an error status
  */
-#define INFO_LEN 400
 static char info_string[INFO_LEN];
 
 /*

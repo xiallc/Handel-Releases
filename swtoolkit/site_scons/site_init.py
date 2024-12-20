@@ -203,7 +203,7 @@ def BuildEnvironmentSConscripts(env):
     else:
       raise SCons.Error.UserError(
           'Bad location for a SConscript. "%s" is not under '
-          '\$TARGET_ROOT or \$MAIN_DIR' % c_script)
+          '$TARGET_ROOT or $MAIN_DIR' % c_script)
 
 
 def BuildEnvironments(environments):

@@ -186,7 +186,7 @@
 #define OLD_MICRO_CMD(ls, lr)                           \
                   ASSERT(lenS >= (ls));                 \
                   ASSERT(lenR >= (lr) + RECV_BASE);     \
-                  lenS = (ls);                          \
+                  lenS = (unsigned int)(ls);            \
                   lenR = (lr) + RECV_BASE;
 
 #endif /* _UDXP_COMMAND_H_ */

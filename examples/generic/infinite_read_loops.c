@@ -34,7 +34,7 @@ unsigned long *mca = NULL;
 unsigned short *params = NULL;
 
 boolean_t stop = FALSE_;
-boolean_t disable_safe_exit = FALSE;
+boolean_t disable_safe_exit = FALSE_;
 
 int main(int argc, char *argv[])
 {

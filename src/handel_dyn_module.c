@@ -77,6 +77,7 @@ typedef struct _ModName {
 
 
 static ModName_t KNOWN_MODS[] = {
+    {"none", "none"},
 #ifndef EXCLUDE_SATURN
     {"dxpx10p", "dxpx10p"},
     {"saturn",  "dxpx10p"},
@@ -2136,7 +2137,7 @@ HANDEL_STATIC int _addModuleType(Module *module, void *type, char *name)
 {
     int status;
 
-    unsigned int i;
+    unsigned long i;
 
     size_t n;
 
@@ -2158,7 +2159,7 @@ HANDEL_STATIC int _addModuleType(Module *module, void *type, char *name)
 
     status = XIA_UNKNOWN_BOARD;
 
-    for (i = 0; i < (unsigned int)N_KNOWN_MODS; i++) {
+    for (i = 0; i < N_KNOWN_MODS; i++) {
         if (STREQ(KNOWN_MODS[i].alias, requested)) {
 
             n = strlen(KNOWN_MODS[i].actual) + 1;

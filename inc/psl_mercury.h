@@ -46,7 +46,7 @@
 #define MAX_SLOWFILTER      128
 #define MIN_FASTLEN         2
 #define MAX_FASTLEN         64
-#define MIN_FASTGAP         0
+#define MIN_FASTGAP         0.0
 #define MAX_FASTFILTER      64
 #define MIN_MAXWIDTH        1
 #define MAX_MAXWIDTH        255

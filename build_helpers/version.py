@@ -36,13 +36,11 @@
 # Helper routines to generate the version header for Handel.
 #
 
-
-
-
 import yaml
 import datetime
 import subprocess
 import os.path
+
 
 def generate(target, source, env):
     """
@@ -54,14 +52,14 @@ def generate(target, source, env):
     with open(str(source[0]), 'r') as f:
         version = yaml.safe_load(f)
 
-    assert(version != None)
+    assert (version != None)
 
     revstring = None
-    if os.path.isfile(str(source[1])) :
+    if os.path.isfile(str(source[1])):
         with open(str(source[1]), 'r') as f:
             revstring = yaml.safe_load(f)['versionstring']
 
-    assert(revstring != None)
+    assert (revstring != None)
 
     save_file = str(target[0])
 
@@ -72,7 +70,8 @@ def generate(target, source, env):
         write_handel_rc(save_file, version, revstring, build_options)
     else:
         print("Unsupprted target %s " % save_file)
-        assert(False)
+        assert (False)
+
 
 def get_changeset():
     return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').strip()
@@ -81,7 +80,8 @@ def get_changeset():
 def write_handel_rc(file, version, revstring, build_options):
     version_cs = "%s,%s,%s" % (version['major'], version['minor'], version['revision'])
     if revstring != "":
-        version_ps = "%s.%s.%s - %s" % (version['major'], version['minor'], version['revision'], revstring)
+        version_ps = "%s.%s.%s - %s" % (version['major'], version['minor'],
+                                        version['revision'], revstring)
     else:
         version_ps = "%s.%s.%s" % (version['major'], version['minor'], version['revision'])
 
@@ -160,22 +160,22 @@ def update_version_changeset(version_yml, rev_yml, version_tag):
     version_tag in front of the revision hash, only trigger a
     rebuild if revision or version_tag was updated in versionstring
     """
-    if os.path.isfile(version_yml) :
+    if os.path.isfile(version_yml):
         with open(version_yml, 'r') as f:
             version = yaml.safe_load(f)
     full_version_string = version_tag + get_changeset()
     set_version_string(rev_yml, full_version_string)
 
-def set_version_string(rev_yml, newstring):
 
-    revstring = {'versionstring':""}
-    if os.path.isfile(rev_yml) :
+def set_version_string(rev_yml, newstring):
+    revstring = {'versionstring': ""}
+    if os.path.isfile(rev_yml):
         with open(rev_yml, 'r') as f:
             revstring = yaml.safe_load(f)
 
-    versionstring = revstring.get('versionstring',"")
+    versionstring = revstring.get('versionstring', "")
 
     if versionstring != newstring:
-        revstring['versionstring'] =  newstring
+        revstring['versionstring'] = newstring
         with open(rev_yml, 'w') as f:
-            f.write( yaml.dump(revstring))
+            f.write(yaml.dump(revstring))

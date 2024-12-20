@@ -123,11 +123,11 @@ static char *serialName[MAXMOD];
 static unsigned int numSerial = 0;
 
 /* Serial port globals */
-static int dxp_md_serial_read_header(unsigned short port, unsigned short *bytes,
+static int dxp_md_serial_read_header(unsigned short port_, unsigned short *bytes,
                                      unsigned short *buf);
-static int dxp_md_serial_read_data(unsigned short port, unsigned long baud,
+static int dxp_md_serial_read_data(unsigned short port_, unsigned long baud,
                                    unsigned long size, unsigned short *buf);
-static int dxp_md_serial_reset(unsigned short port, unsigned long baud);
+static int dxp_md_serial_reset(unsigned short port_, unsigned long baud);
 #endif /* EXCLUDE_SERIAL */
 
 
@@ -718,8 +718,7 @@ XIA_MD_STATIC int XIA_MD_API dxp_md_serial_open(char* ioname, int* camChan)
 
     unsigned int i;
 
-    unsigned short port;
-
+    unsigned short port_;
     unsigned long baud;
 
 
@@ -732,15 +731,15 @@ XIA_MD_STATIC int XIA_MD_API dxp_md_serial_open(char* ioname, int* camChan)
     }
 
     /* Parse in the COM port number and baud rate. */
-    sscanf(ioname, "%hu:%lu", &port, &baud);
+    sscanf(ioname, "%hu:%lu", &port_, &baud);
 
     *camChan = numSerial++;
 
-    status = InitSerialPort(port, baud);
+    status = InitSerialPort(port_, baud);
 
     if (status != SERIAL_SUCCESS) {
         sprintf(ERROR_STRING, "Error opening COM%hu, where the driver reports "
-                "%d", port, status);
+                "%d", port_, status);
         dxp_md_log_error("dxp_md_serial_open", ERROR_STRING, DXP_MDOPEN);
         return DXP_MDOPEN;
     }
@@ -932,19 +931,19 @@ XIA_MD_STATIC int XIA_MD_API dxp_md_serial_io(int *camChan,
 /*
  * Closes and re-opens the port
  */
-static int dxp_md_serial_reset(unsigned short port, unsigned long baud)
+static int dxp_md_serial_reset(unsigned short port_, unsigned long baud)
 {
     int status;
 
 
-    status = CloseSerialPort(port);
+    status = CloseSerialPort(port_);
 
     if (status != SERIAL_SUCCESS) {
         dxp_md_log_error("dxp_md_serial_reset", "Error closing port", status);
         return DXP_MDIO;
     }
 
-    status = InitSerialPort(port, baud);
+    status = InitSerialPort(port_, baud);
 
     if (status != SERIAL_SUCCESS) {
         dxp_md_log_error("dxp_md_serial_reset", "Error re-initializing port",
@@ -963,7 +962,7 @@ static int dxp_md_serial_reset(unsigned short port, unsigned long baud)
  * specified buffer. Also calculates the number of bytes remaining
  * in the packet including the XOR checksum.
  */
-static int dxp_md_serial_read_header(unsigned short port, unsigned short *bytes,
+static int dxp_md_serial_read_header(unsigned short port_, unsigned short *bytes,
                                      unsigned short *buf)
 {
     int i;
@@ -983,12 +982,12 @@ static int dxp_md_serial_read_header(unsigned short port, unsigned short *bytes,
 
     for (i = 0; i < HEADER_SIZE; i++) {
 
-        err = ReadSerialPort(port, 1, &b);
+        err = ReadSerialPort(port_, 1, &b);
 
         if (err->status != SERIAL_SUCCESS) {
             sprintf(ERROR_STRING, "Error reading header from COM%hu: actual = %d, "
                     "expected = %d, bytes_in_recv_buf = %d, size_recv_buf = %d, "
-                    "driver reported status %d", port,
+                    "driver reported status %d", port_,
                     err->actual, err->expected, err->bytes_in_recv_buf,
                     err->size_recv_buf, err->status);
             dxp_md_log_error("dxp_md_serial_read_header", ERROR_STRING, DXP_MDIO);
@@ -1034,7 +1033,7 @@ static int dxp_md_serial_read_header(unsigned short port, unsigned short *bytes,
  * Reads the specified number of bytes from the port and copies them to
  *  the buffer.
  */
-static int dxp_md_serial_read_data(unsigned short port, unsigned long baud,
+static int dxp_md_serial_read_data(unsigned short port_, unsigned long baud,
                                    unsigned long size, unsigned short *buf)
 {
     int status;
@@ -1057,7 +1056,7 @@ static int dxp_md_serial_read_data(unsigned short port, unsigned long baud,
         return DXP_NOMEM;
     }
 
-    err = ReadSerialPort(port, size, b);
+    err = ReadSerialPort(port_, size, b);
 
     if (err->status != SERIAL_SUCCESS) {
         md_md_free(b);
@@ -1069,15 +1068,15 @@ static int dxp_md_serial_read_data(unsigned short port, unsigned long baud,
                 err->is_software_overrun > 0 ? "true" : "false");
         dxp_md_log_debug("dxp_md_serial_read_data", ERROR_STRING);
         sprintf(ERROR_STRING, "Error reading data from COM%hu: "
-                "expected = %d, actual = %d", port, err->expected, err->actual);
+                "expected = %d, actual = %d", port_, err->expected, err->actual);
         dxp_md_log_error("dxp_md_serial_read_data", ERROR_STRING, DXP_MDIO);
 
-        status = dxp_md_serial_reset(port, baud);
+        status = dxp_md_serial_reset(port_, baud);
 
         if (status != DXP_SUCCESS) {
             sprintf(ERROR_STRING,
                     "Error attempting to reset COM%hu in response to a "
-                    "communications failure", port);
+                    "communications failure", port_);
             dxp_md_log_error("dxp_md_serial_read_data", ERROR_STRING, status);
         }
 

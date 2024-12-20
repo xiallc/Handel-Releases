@@ -52,6 +52,6 @@ DXP_MD_LOG           handel_md_log;
 #define XIA_LOG_INFO    MD_INFO, XIA_FILE, __LINE__, 0
 #define XIA_LOG_DEBUG   MD_DEBUG, XIA_FILE, __LINE__, 0
 
-static char info_string[400];
+extern char info_string[4096];
 
 #endif /* __HANDEL_LOG_H__ */

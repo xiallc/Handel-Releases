@@ -171,7 +171,7 @@ FDD_EXPORT int FDD_API xiaFddGetFirmware(const char *filename, char *path,
     keywords = (char **)fdd_md_alloc((nother + 1) * sizeof(char *));
 
     if (!keywords) {
-        sprintf(info_string, "Unable to allocate %lu bytes for the keywords "
+        sprintf(info_string, "Unable to allocate %zu bytes for the keywords "
                 "array.", (nother + 1) * sizeof(char *));
         xiaFddLogError("xiaFddGetFirmware", info_string, XIA_NOMEM);
         return XIA_NOMEM;

@@ -322,7 +322,7 @@ static int ParseBuffer(unsigned long *buffer, size_t buffer_len)
     ASSERT(header->tag0 == 0x55AA, "tag0");
     ASSERT(header->tag1 == 0xAA55, "tag1");
     ASSERT(header->header_size == 256, "header size");
-    ASSERT(sizeof(struct header) == 256, "header struct size");
+    ASSERT(sizeof(struct header) == 256 * sizeof (word), "header struct size");
     ASSERT(header->list_mode_variant >= AnodeVariant && header->list_mode_variant <= PMTAllVariant, "header list mode variant");
     ASSERT(header->words_per_event == 272, "words per event");
     ASSERT(buffer_len == MAKE_WORD32(header->total_words) + header->header_size,
@@ -390,7 +390,7 @@ static int WriteBuffer(char buf, unsigned long *buffer, size_t buffer_len)
         exit(1);
     }
     
-    ConvertBuffer(source_bytes, buffer, parsed);
+    ConvertBuffer((unsigned long)source_bytes, buffer, parsed);
 
     /* This sample overwrites buffer_a.bin and buffer_b.bin. The user may
      * restructure to use a shared file handle to stitch a single file for all

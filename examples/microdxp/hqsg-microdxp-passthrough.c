@@ -11,7 +11,6 @@
 #include <signal.h>
 
 #if _WIN32
-#pragma warning(disable : 4115)
 
 /* For Sleep() */
 #include <windows.h>

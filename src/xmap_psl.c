@@ -5002,7 +5002,7 @@ PSL_STATIC int psl__GetSCAData(int detChan, void *value, XiaDefaults *defs,
     sca = (unsigned long *)xmap_psl_md_alloc(totalSCA * sizeof(unsigned long));
 
     if (!sca) {
-        sprintf(info_string, "Error allocating %u bytes for 'sca'",
+        sprintf(info_string, "Error allocating %zu bytes for 'sca'",
                 totalSCA * sizeof(unsigned long));
         pslLogError("psl__GetSCAData", info_string, XIA_NOMEM);
         return XIA_NOMEM;
@@ -5206,9 +5206,6 @@ PSL_STATIC int psl__IsMapping(int detChan, unsigned short allowed,
 
     if (val == 1) {
         parameter_t MAPPINGMODE;
-
-        int status;
-
 
         status = pslGetParameter(detChan, "MAPPINGMODE", &MAPPINGMODE);
 

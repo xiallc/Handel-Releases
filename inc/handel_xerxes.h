@@ -63,6 +63,7 @@ static char *BOARD_LIST[] = {
 #ifndef EXCLUDE_MERCURY
   "mercury",
 #endif /* EXCLUDE_MERCURY */
+  "none" /* End of list */
   };
 
 
@@ -79,7 +80,7 @@ static char *INTERF_LIST[] = {
   "PXI",
 };
 
-#define N_KNOWN_BOARDS  (sizeof(BOARD_LIST) / sizeof(BOARD_LIST[0]))
+#define N_KNOWN_BOARDS  (sizeof(BOARD_LIST) / sizeof(BOARD_LIST[0]) - 1)
 
 #define MAX_INTERF_LEN   24
 #define MAX_MD_LEN       12

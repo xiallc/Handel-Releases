@@ -71,7 +71,9 @@ static bool is_xia_usb2_device(struct usb_device *q);
 static int xia_usb2__send_setup_packet(unsigned long addr,
                                        unsigned long n_bytes, byte_t rw_flag);
 static void xia_usb2__flush_read_ep();
+#ifdef _DEBUG
 static void print_hexbinary_lines(byte_t *buffer, int size, int line_length);
+#endif
 static void print_debug(const char* fmt, ...);
 
 static struct usb_dev_handle        *xia_usb_handle = NULL;
@@ -370,6 +372,7 @@ XIA_EXPORT int XIA_API xia_usb2_readn(HANDLE h, unsigned long addr,
                                       unsigned long n_bytes,
                                       byte_t *buf, unsigned long *n_bytes_read)
 {
+    UNUSED(h);
     int status = 0;
     int rlen = 0;
 
@@ -491,7 +494,8 @@ XIA_EXPORT int XIA_API xia_usb2_write(HANDLE h, unsigned long addr,
                                       unsigned long n_bytes,
                                       byte_t *buf)
 {
-    int     status;
+    unsigned long status;
+    UNUSED(h);
 
     if (xia_usb_handle == NULL) {
         return XIA_USB2_NULL_HANDLE;
@@ -515,7 +519,7 @@ XIA_EXPORT int XIA_API xia_usb2_write(HANDLE h, unsigned long addr,
                             n_bytes, XIA_USB2_TIMEOUT);
 
     if (status != n_bytes) {
-        sprintf(info_string, "usb_bulk_write returned %d should be %lu", status, n_bytes);
+        sprintf(info_string, "usb_bulk_write returned %lu should be %lu", status, n_bytes);
         dxp_md_log_error("xia_usb2_write", info_string, XIA_MD);
         return XIA_USB2_XFER;
     }
@@ -605,7 +609,6 @@ static int xia_usb2__send_setup_packet(unsigned long addr,
     exec_seconds = (double)(clock() - start) * 1000.0 / CLOCKS_PER_SEC;
     sprintf(info_string, "exec time %.4f ms %d bytes", exec_seconds, total_len);
     dxp_md_log_info("xia_usb2__flush_read_ep", info_string);
-    print_debug("xia_usb2__flush_read_ep %s\n", info_string);
 }
 
 /*
@@ -625,6 +628,7 @@ static void print_debug(const char* fmt, ...)
 #endif
 }
 
+#ifdef _DEBUG
 /*
  * Print binary data in hex format in lines of length line_length
  */
@@ -637,3 +641,4 @@ static void print_hexbinary_lines(byte_t *buffer, int size, int line_length)
     }
     if (size % line_length != 0) printf("\n");
 }
+#endif

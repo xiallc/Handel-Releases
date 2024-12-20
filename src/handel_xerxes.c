@@ -395,11 +395,11 @@ HANDEL_STATIC int xia__SetupSingleChan(Module *module, unsigned int detChan,
 
     switch (detector->type) {
     case XIA_DET_RESET:
-        strcpy(detectorType, "RESET");
+        strncpy(detectorType, "RESET", sizeof(detectorType));
         break;
 
     case XIA_DET_RCFEED:
-        strcpy(detectorType, "RC");
+        strncpy(detectorType, "RC", sizeof(detectorType));
         break;
 
     default:
@@ -511,6 +511,7 @@ HANDEL_STATIC int xia__CopyInterfString(Module *m, char *interf)
  */
 HANDEL_STATIC int xia__CopyMDString(Module *m, char *md)
 {
+    UNUSED(md);
     ASSERT(m != NULL);
     ASSERT(md != NULL);
 
@@ -1081,7 +1082,7 @@ HANDEL_STATIC int xia__AddFiPPIA(Module *module, char *sysFippiAName,
  */
 HANDEL_STATIC int xia__AddXerxesSysItems(void)
 {
-    int i;
+    unsigned long i;
     int status;
 
 

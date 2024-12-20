@@ -6,6 +6,7 @@ Import('env')
 win = env.Bit('windows')
 linux = env.Bit('linux')
 
+
 def do_stdcall_and_cdecl_lib(name, lib_inputs, stdcall_defines,
                              other_inputs=None, other_defines=None,
                              lib_env=None):
@@ -25,7 +26,7 @@ def do_stdcall_and_cdecl_lib(name, lib_inputs, stdcall_defines,
     inputs = []
     for i in lib_inputs:
         inputs.append(cdecl_env.ComponentObject(os.path.basename(
-                    os.path.splitext(str(i))[0]) + '_cdecl', i))
+            os.path.splitext(str(i))[0]) + '_cdecl', i))
     if other_inputs:
         inputs.append(other_inputs)
     cdecl_lib = cdecl_env.ComponentLibrary(name, inputs, COMPONENT_STATIC=False,
@@ -37,7 +38,7 @@ def do_stdcall_and_cdecl_lib(name, lib_inputs, stdcall_defines,
         inputs = []
         for i in lib_inputs:
             inputs.append(stdcall_env.ComponentObject(os.path.basename(
-                        os.path.splitext(str(i))[0]) + '_stdcall', i))
+                os.path.splitext(str(i))[0]) + '_stdcall', i))
         if other_inputs:
             inputs.append(other_inputs)
         stdcall_lib = stdcall_env.ComponentLibrary(name + '_vba', inputs,
@@ -74,11 +75,10 @@ if env.Bit('usb'):
     usb_inputs = ['xia_usb.c']
     for lib in do_stdcall_and_cdecl_lib('xia_usb', usb_inputs,
                                         ['WIN32_USBLIB_VBA'],
-					lib_env=protocols_env):
+                                        lib_env=protocols_env):
         md_deps.append(lib)
 else:
     md_defs.append('EXCLUDE_USB')
-
 
 if env.Bit('usb2'):
     md_libs.append('xia_usb2')
@@ -136,7 +136,6 @@ if env.Bit('plx'):
 else:
     md_defs.append('EXCLUDE_PLX')
 
-
 # MD library
 md_inputs = []
 
@@ -154,7 +153,6 @@ md_lib = md_env.ComponentLibrary('md', md_inputs + assert_obj + log_obj,
                                  COMPONENT_STATIC=True,
                                  COMPONENT_LIBRARY_PUBLISH=True)
 md_env.Depends(md_lib, md_deps)
-
 
 projects = ['saturn', 'xmap', 'stj', 'mercury', 'udxp', 'udxps']
 
@@ -210,12 +208,12 @@ fdd_env = env.Clone()
 fdd_env.Append(LIBS=['md', 'xiafile'])
 fdd_inputs = ['fdd.c']
 fdd_lib = fdd_env.ComponentLibrary('fdd', fdd_inputs + assert_obj,
-                                         COMPONENT_STATIC=True,
-                                         COMPONENT_LIBRARY_PUBLISH=True)
+                                   COMPONENT_STATIC=True,
+                                   COMPONENT_LIBRARY_PUBLISH=True)
 fdd_env.Depends(fdd_lib, [md_lib])
 
 # PSL
-handel_libs = ['fdd', 'xerxes', 'md', 'xiafile'] # xerxes must precede md on linux!
+handel_libs = ['fdd', 'xerxes', 'md', 'xiafile']  # xerxes must precede md on linux!
 handel_deps = [md_lib, xerxes_lib, fdd_lib, file_lib]
 
 psl_env = env.Clone()
@@ -250,11 +248,11 @@ for p in projects:
 # Handel
 handel_env = env.Clone()
 handel_env.Append(CPPDEFINES=['HANDEL_MAKE_DLL', 'HANDEL_USE_DLL'] +
-                  xerxes_handel_defs)
+                             xerxes_handel_defs)
 handel_env.Append(LIBS=xerxes_libs)
 handel_env.Append(LIBS=handel_libs)
 handel_env.Append(LIBS=md_libs)
-handel_env.Append(LIBS=device_libs) # static device libs must come after xerxes on linux!
+handel_env.Append(LIBS=device_libs)  # static device libs must come after xerxes on linux!
 
 # Add platform libraries. It would be preferable to add this at the
 # platform level in main.scons, but there doesn't seem to be a built
@@ -269,8 +267,9 @@ handel_inputs = handel_env.Glob('handel*.c')
 
 # Build Handel.rc for DLL version
 rc_cmd = handel_env.Command(['handel.rc'],
-                           ['$MAIN_DIR/tools/releaser/version.yml', '$MAIN_DIR/tools/releaser/changeset.yml'],
-                           build_helpers.version.generate, build_options=device_libs)
+                            ['$MAIN_DIR/tools/releaser/version.yml',
+                             '$MAIN_DIR/tools/releaser/changeset.yml'],
+                            build_helpers.version.generate, build_options=device_libs)
 
 # Add resource file
 handel_resources = []

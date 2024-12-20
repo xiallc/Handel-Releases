@@ -2767,7 +2767,7 @@ PSL_STATIC int pslGetRunData(int detChan, char *name, void *value,
                              XiaDefaults *defs, Module *m)
 {
     int status;
-    int i;
+    unsigned long i;
 
     UNUSED(m);
 
@@ -3770,8 +3770,8 @@ PSL_STATIC int PSL_API pslGetBaseHistory(int detChan, void *value)
  */
 PSL_STATIC int pslGetDefaultAlias(char *alias, char **names, double *values)
 {
-    int i;
-    int def_idx;
+    unsigned long i;
+    unsigned long def_idx;
 
     char *aliasName = "defaults_saturn";
 
@@ -3869,7 +3869,7 @@ PSL_STATIC int PSL_API pslUserSetup(int detChan, XiaDefaults *defaults,
                                     Detector *detector, int detector_chan,
                                     Module *m, int modChan)
 {
-    int i;
+    unsigned long i;
     int status;
 
     XiaDaqEntry *entry = defaults->entry;
@@ -4633,7 +4633,7 @@ PSL_STATIC int PSL_API pslUpdateTriggerFilter(int detChan, XiaDefaults *defaults
 
 PSL_STATIC unsigned int pslGetNumDefaults(void)
 {
-    int i;
+    unsigned long i;
 
     unsigned int n = 0;
 
@@ -4799,7 +4799,7 @@ PSL_STATIC int pslGainOperation(int detChan, char *name, void *value,
                                 Detector *det, int modChan, Module *m, XiaDefaults *defs)
 {
     int status;
-    int i;
+    unsigned long i;
 
     ASSERT(name  != NULL);
     ASSERT(value != NULL);
@@ -5813,7 +5813,7 @@ PSL_STATIC int psl__GetSCAData(int detChan, void *value, XiaDefaults *defs)
 
     addr = (unsigned long)SCADSTART;
 
-    sprintf(info_string, "Reading out %lu SCA value: addr = %#lx", (size_t)nSCA, addr);
+    sprintf(info_string, "Reading out %zu SCA value: addr = %#lx", (size_t)nSCA, addr);
     pslLogDebug("psl__GetSCAData", info_string);
 
     totalSCA = (size_t)nSCA * 2;

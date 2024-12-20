@@ -1,41 +1,174 @@
-import os
 import os.path
-import sys
 
 import build_helpers.logic
 import build_helpers.version
 
-# Default to not build EPP and USB1 drivers
-PROTOCOLS = [['epp',    'Include EPP driver',       False],
-             ['serial', 'Include RS-232 driver',    True],
-             ['usb',    'Include USB driver',       False],
-             ['usb2',   'Include USB2 driver',      True],
-             ['plx',    'Include PLX driver',       True]]
 
-# Default to not build udxps driver
-DEVICES = [['saturn',  'Include Saturn support',            True],
-           ['udxp',    'Include microDXP support',          True],
-           ['udxps',   'Include microDXP setup support',    False],
-           ['xmap',    'Include xMAP support',              True],
-           ['stj',     'Include Stj support',               True],
-           ['mercury', 'Include Mercury/Mercury-4 support', True]]
+def register_bits(build_env, options):
+    """
+    Registers all options contained within the provided dictionary.
+    :param build_env: The environment that we'll declare the bits in.
+    :param options: The dictionary containing the bits that we want to register.
+    :return: None
+    """
+    for bit, info in options.items():
+        DeclareBit(bit, info['description'])
+        build_env.SetBitFromOption(bit, info['enabled'])
+
+
+ENV_BITS = {
+    "devices": {
+        'mercury': {
+            'protocols': ['usb2'],
+            'enabled': True,
+            'description': "Include Mercury/Mercury-4 support"
+        },
+        'saturn': {
+            'protocols': ['epp', 'usb', 'usb2'],
+            'enabled': True,
+            'description': "Include Saturn support"
+        },
+        'stj': {
+            'protocols': ['plx'],
+            'enabled': True,
+            'description': "Include Stj support"
+        },
+        'udxp': {
+            'protocols': ['serial', 'usb2'],
+            'enabled': True,
+            'description': "Include microDXP support"
+        },
+        'udxps': {
+            'libraries': ['xw'],
+            'protocols': ['serial', 'usb2'],
+            'enabled': False,
+            'description': "Include microDXP setup support"
+        },
+        'xmap': {
+            'protocols': ['plx'],
+            'enabled': True,
+            'description': "Include xMAP support"
+        }
+    },
+    "protocols": {
+        'epp': {
+            'win32': ['x86'],
+            'posix': ['x86', 'amd64'],
+            "description": "Include EPP driver",
+            "enabled": False
+        },
+        'plx': {
+            'win32': ['x86', 'amd64'],
+            "description": "Include PLX driver",
+            "enabled": True
+        },
+        'serial': {
+            'win32': ['x86'],
+            'posix': ['x86', 'amd64'],
+            "description": "Include RS-232 driver",
+            "enabled": True
+        },
+        'usb': {
+            'win32': ['x86'],
+            "description": "Include USB driver",
+            "enabled": False
+        },
+        'usb2': {
+            'win32': ['x86', 'amd64'],
+            'posix': ['x86', 'amd64'],
+            "description": "Include USB2 driver",
+            "enabled": True
+        }
+    },
+    "libraries": {
+        "xw": {
+            'devices': ['udxp'],
+            'win32': ['x86', 'amd64'],
+            "description": "Build xw library",
+            "enabled": True
+        }
+    },
+    "build_options": {
+        "alpha": {
+            "description": "Build Handel with support for the alpha udxp",
+            "enabled": False
+        },
+        "analysis": {
+            "description": "Build with code analysis",
+            "enabled": False
+        },
+        "release": {
+            "description": "Release build",
+            "enabled": False
+        },
+        "samples": {
+            "description": "Build example programs",
+            "enabled": False
+        },
+        "tests": {
+            "description": "Build test programs",
+            "enabled": False
+        },
+        "vba": {
+            "description": "Build stdcall dlls for VB applications",
+            "enabled": False
+        },
+        "vld": {
+            "description": "Build with Visual Leak Detector",
+            "enabled": False
+        },
+        "x64": {
+            "description": "Build Handel for x64 platform",
+            "enabled": False
+        }
+    }
+}
 
 base_env = Environment(
-    tools             = ['component_setup'],
-    CPPPATH           = ['$MAIN_DIR/inc'],
-    BUILD_SCONSCRIPTS = ['src/build.scons'],
-    ENV               = {'PATH' : os.environ['PATH'],
-                         'TMP'  : os.environ['TMP']})
+    tools=['component_setup'],
+    CPPPATH=['$MAIN_DIR/inc'],
+    BUILD_SCONSCRIPTS=['src/build.scons'],
+    ENV={'PATH': os.environ['PATH'],
+         'TMP': os.environ['TMP']})
+
+AddTargetGroup('devices', 'devices are supported.')
+register_bits(base_env, ENV_BITS['devices'])
+
+AddTargetGroup('protocols', 'low level interface protocols')
+register_bits(base_env, ENV_BITS['protocols'])
+
+AddTargetGroup('libraries', 'utilities supporting devices and protocols.')
+register_bits(base_env, ENV_BITS['libraries'])
+
+AddTargetGroup('options', 'build options can be used.')
+register_bits(base_env, ENV_BITS['build_options'])
+
+if base_env.Bit('x64'):
+    base_env.Append(TARGET_ARCH='amd64')
+else:
+    base_env.Append(TARGET_ARCH='x86')
+
+build_helpers.logic.update_environment(base_env, ENV_BITS)
+
+print("Platform: ", base_env['PLATFORM'])
+print("Host: ", base_env['HOST_OS'], base_env['HOST_ARCH'])
+print("Target: ", base_env['TARGET_OS'], base_env['TARGET_ARCH'])
+print(f'Devices: {[device for device in ENV_BITS["devices"].keys() if base_env.Bit(device)]}')
+print('Protocols: '
+      f'{[protocol for protocol in ENV_BITS["protocols"].keys() if base_env.Bit(protocol)]}')
+print(f'Libraries: {[lib for lib in ENV_BITS["libraries"].keys() if base_env.Bit(lib)]}')
+print(f'Options: {[opt for opt in ENV_BITS["build_options"].keys() if base_env.Bit(opt)]}')
 
 # Allow customizing the staging directory
 AddOption('--out', dest='out', action='store',
-	  help='Override the build directory')
+          help='Override the build directory')
 if GetOption('out'):
-    base_env.Replace(DESTINATION_ROOT = GetOption('out'))
-print('building to', base_env.Dir('$DESTINATION_ROOT'))
+    base_env.Replace(DESTINATION_ROOT=GetOption('out'))
+print('Build Directory: ', base_env.Dir('$DESTINATION_ROOT'))
 
 # Add external folders as Repository resource
 base_env.Dir('redist').addRepository(base_env.Dir('../redist'))
+redist_files = []
 
 # Add defines on the command line, e.g. cppdefine=XERXES_TRACE_IO
 cppdefines = []
@@ -44,92 +177,44 @@ for key, value in ARGLIST:
         cppdefines.append(value)
 base_env.Append(CPPDEFINES=cppdefines)
 
-# List of redist files
-redist_files = []
-
-
 # For official build use the revision id as version string.
 # Otherwise add a development tag
-DeclareBit("release", "Release build")
-base_env.SetBitFromOption('release', False)
-version_tag = "" if  base_env.Bit('release') else "development:"
+version_tag = "" if base_env.Bit('release') else "development:"
 
 if base_env.Bit('release'):
     build_helpers.version.update_version_changeset('tools/releaser/version.yml',
-              'tools/releaser/changeset.yml', version_tag)
+                                                   'tools/releaser/changeset.yml', version_tag)
 else:
     build_helpers.version.set_version_string('tools/releaser/changeset.yml', "development")
 
 ver_cmd = base_env.Command('inc/xia_version.h',
-             ['tools/releaser/version.yml', 'tools/releaser/changeset.yml'],
-             build_helpers.version.generate)
+                           ['tools/releaser/version.yml', 'tools/releaser/changeset.yml'],
+                           build_helpers.version.generate)
 
 base_env.Depends('src/xerxes.c', ['inc/xia_version.h'])
 base_env.Depends('src/handel.c', ['inc/xia_version.h'])
 
-# Command-line options to build the different products and protocols
-AddTargetGroup('protocols', 'low level interface protocols')
-for p in PROTOCOLS:
-    DeclareBit(p[0], p[1])
-    base_env.SetBitFromOption(p[0], p[2])
-
-for d in DEVICES:
-    DeclareBit(d[0], d[1])
-    base_env.SetBitFromOption(d[0], d[2])
-
-DeclareBit('analysis', 'Build with code analysis')
-base_env.SetBitFromOption('analysis', False)
-
-DeclareBit('alpha', 'Build Handel with support for the alpha udxp')
-base_env.SetBitFromOption('alpha', False)
-
-DeclareBit('vba', 'Build stdcall dlls for VB applications')
-base_env.SetBitFromOption('vba', False)
-
-# In some cases the need for xw could be determined automatically in
-# update_environment, but customers need a way to disable it.
-DeclareBit('xw', 'Build xw library')
-base_env.SetBitFromOption('xw', True)
-
-DeclareBit('x64', 'Build Handel for x64 platform')
-base_env.SetBitFromOption('x64', False)
-
-if base_env.Bit('x64'):
-    print('Setting target arch to amd64')
-    base_env.Append(TARGET_ARCH = 'amd64')
-else:
-    print('Setting target arch to x86')
-    base_env.Append(TARGET_ARCH = 'x86')
-
-build_helpers.logic.update_environment(base_env)
-
-# Set options to build test programs
-DeclareBit('tests', 'Build and run tests')
-base_env.SetBitFromOption('tests', False)
-
-if base_env.Bit('tests') :
-    print('Adding tests build.\n')
-    base_env.Append(BUILD_SCONSCRIPTS=['tests/generic_c_tests/build.scons'])
-    if base_env.Bit('xmap') :
+if base_env.Bit('tests'):
+    print('Adding tests')
+    base_env.Append(BUILD_SCONSCRIPTS=['tests/integration/generic_c_tests/build.scons'])
+    base_env.Append(BUILD_SCONSCRIPTS=['tests/unit/build.scons'])
+    if base_env.Bit('xmap'):
         base_env.Append(BUILD_SCONSCRIPTS=['benchmarks/xmap/mapping/build.scons',
-                         'tests/xmap_list_mode_stress_test/build.scons'])
-    if base_env.Bit('mercury') :
+                                           'tests/product/xmap/xmap_list_mode_stress_test/build.scons'])
+    if base_env.Bit('mercury'):
         base_env.Append(BUILD_SCONSCRIPTS=[
-                         'tests/mercury_oem_test/build.scons'])
+            'tests/product/mercury/mercury_oem_test/build.scons'])
 
-# Set options to build sample program
-DeclareBit('samples', 'Build samples')
-base_env.SetBitFromOption('samples', False)
-
-if base_env.Bit('samples') :
-	base_env.Append(BUILD_SCONSCRIPTS=['examples/build.scons'])
+if base_env.Bit('samples'):
+    print('Adding examples')
+    base_env.Append(BUILD_SCONSCRIPTS=['examples/build.scons'])
 
 # Add COMMDRV libs
 if base_env.Bit('serial'):
     print('Adding COMMDRV libs')
     serial_path = '$MAIN_DIR/redist/commdrv'
     if not base_env.Bit('x64'):
-        base_env.Append(LIBPATH = [serial_path])
+        base_env.Append(LIBPATH=[serial_path])
         redist_files += Glob('redist/drivers/rs232/*.dll')
 
 # Add PLX libs
@@ -142,14 +227,14 @@ if base_env.Bit('plx'):
     else:
         plx_path = os.path.join(plx_path, 'x86')
         redist_files += Glob('redist/plxapi/x86/*.dll')
-    base_env.Append(LIBPATH = [plx_path])
+    base_env.Append(LIBPATH=[plx_path])
 
 # Add xw build_helpers
 if base_env.Bit('xw'):
     print('Adding xw build_helpers')
     base_env.Dir('ccomponents').addRepository(base_env.Dir('../ccomponents'))
     xw_path = '$MAIN_DIR/ccomponents/xia_xup_writer'
-    base_env.Append(CPPPATH = [os.path.join(xw_path, 'src')])
+    base_env.Append(CPPPATH=[os.path.join(xw_path, 'src')])
     base_env.Append(BUILD_SCONSCRIPTS=['ccomponents/xia_assert/src/build.scons',
                                        'ccomponents/xia_xup_writer/src/build.scons'])
 
@@ -158,53 +243,54 @@ if base_env.Bit('epp'):
     print('Adding EPP libs')
     epp_path = '$MAIN_DIR/redist/dlportio'
     if not base_env.Bit('x64'):
-        base_env.Append(LIBPATH = [epp_path])
+        base_env.Append(LIBPATH=[epp_path])
 
 # LINUX
 linux_env = base_env.Clone(
-    tools = ['target_platform_linux'])
-linux_env['STATIC_AND_SHARED_OBJECTS_ARE_THE_SAME']=1
+    tools=['target_platform_linux'])
+linux_env['STATIC_AND_SHARED_OBJECTS_ARE_THE_SAME'] = 1
 
 linux_env.Append(CCFLAGS=['-pipe', '-fPIC', '-Wall', '-fcommon'])
 linux_env.Append(CCFLAGS_DEBUG=['-g', '-O0'])
 linux_env.Append(LINKFLAGS=['-Wl,--no-undefined'])
+linux_env.Append(LIBS=['m'])
 
 if base_env.Bit('x64'):
     linux_dbg_env = linux_env.Clone(
-        BUILD_TYPE = 'dbg-x64',
-        BUILD_TYPE_DESCRIPTION = 'Linux debug build - x64',
-        BUILD_GROUPS = ['default'],
-        tools = ['target_debug'])
+        BUILD_TYPE='dbg-x64',
+        BUILD_TYPE_DESCRIPTION='Linux debug build - x64',
+        BUILD_GROUPS=['default'],
+        tools=['target_debug'])
     linux_rel_env = linux_env.Clone(
-        BUILD_TYPE = 'rel-x64',
-        BUILD_TYPE_DESCRIPTION = 'Linux optimized build - x64',
-        BUILD_GROUPS = ['default'],
-        tools = ['target_optimized'])
+        BUILD_TYPE='rel-x64',
+        BUILD_TYPE_DESCRIPTION='Linux optimized build - x64',
+        BUILD_GROUPS=['default'],
+        tools=['target_optimized'])
 else:
     linux_dbg_env = linux_env.Clone(
-        BUILD_TYPE = 'dbg-x86',
-        BUILD_TYPE_DESCRIPTION = 'Linux debug build - x86',
-        BUILD_GROUPS = ['default'],
-        tools = ['target_debug'])
+        BUILD_TYPE='dbg-x86',
+        BUILD_TYPE_DESCRIPTION='Linux debug build - x86',
+        BUILD_GROUPS=['default'],
+        tools=['target_debug'])
 
     linux_rel_env = linux_env.Clone(
-        BUILD_TYPE = 'rel-x86',
-        BUILD_TYPE_DESCRIPTION = 'Linux optimized build - x86',
-        BUILD_GROUPS = ['default'],
-        tools = ['target_optimized'])
+        BUILD_TYPE='rel-x86',
+        BUILD_TYPE_DESCRIPTION='Linux optimized build - x86',
+        BUILD_GROUPS=['default'],
+        tools=['target_optimized'])
 
 # Remove variable not used warning when ASSERT is not built
 linux_rel_env.Append(CCFLAGS=['-Wno-unused-but-set-variable'])
 
 # WIN32
 windows_env = base_env.Clone(
-    tools        = ['target_platform_windows'],
-    MSVC_VERSION = '10.0',
+    tools=['target_platform_windows'],
+    MSVC_VERSION='10.0',
     # If called from VS makefile project, vcvars are already set. Save ~150ms.
     # We could save another 150ms by explicitly setting CC and AR here, but that's
     # harder to do cleanly as paths may different per machine.
-    MSVC_USE_SCRIPT = not 'VISUALSTUDIOVERSION' in os.environ,
-    MANIFEST_TILE = None)
+    MSVC_USE_SCRIPT=not 'VISUALSTUDIOVERSION' in os.environ,
+    MANIFEST_TILE=None)
 windows_env.Append(CPPDEFINES=['_CRT_SECURE_NO_WARNINGS',
                                '_BIND_TO_CURRENT_VCLIBS_VERSION'])
 
@@ -223,53 +309,48 @@ windows_env.FilterOut(CCFLAGS_OPTIMIZED=['/W3'])
 windows_env.Append(CCFLAGS_DEBUG=['/W4'])
 windows_env.Append(CCFLAGS_OPTIMIZED=['/W4'])
 
-
 # generate dbg and rel envs
 if base_env.Bit('x64'):
     windows_dbg_env = windows_env.Clone(
-        BUILD_TYPE             = 'dbg-x64',
-        BUILD_TYPE_DESCRIPTION = 'Windows debug build - x64',
-        BUILD_GROUPS           = ['default'],
-        tools                  = ['target_debug'])
+        BUILD_TYPE='dbg-x64',
+        BUILD_TYPE_DESCRIPTION='Windows debug build - x64',
+        BUILD_GROUPS=['default'],
+        tools=['target_debug'])
     windows_rel_env = windows_env.Clone(
-        BUILD_TYPE             = 'rel-x64',
-        BUILD_TYPE_DESCRIPTION = 'Windows release build - x64',
-        BUILD_GROUPS           = ['default'],
-        tools                  = ['target_optimized'])
+        BUILD_TYPE='rel-x64',
+        BUILD_TYPE_DESCRIPTION='Windows release build - x64',
+        BUILD_GROUPS=['default'],
+        tools=['target_optimized'])
 else:
     windows_dbg_env = windows_env.Clone(
-        BUILD_TYPE             = 'dbg-x86',
-        BUILD_TYPE_DESCRIPTION = 'Windows debug build - x86',
-        BUILD_GROUPS           = ['default'],
-        tools                  = ['target_debug'])
+        BUILD_TYPE='dbg-x86',
+        BUILD_TYPE_DESCRIPTION='Windows debug build - x86',
+        BUILD_GROUPS=['default'],
+        tools=['target_debug'])
     windows_rel_env = windows_env.Clone(
-        BUILD_TYPE             = 'rel-x86',
-        BUILD_TYPE_DESCRIPTION = 'Windows release build - x86',
-        BUILD_GROUPS           = ['default'],
-        tools                  = ['target_optimized'])
-
-# Add VLD memory leak detection options in debug build
-DeclareBit('vld', 'Build with Visual Leak Detector')
-base_env.SetBitFromOption('vld', False)
+        BUILD_TYPE='rel-x86',
+        BUILD_TYPE_DESCRIPTION='Windows release build - x86',
+        BUILD_GROUPS=['default'],
+        tools=['target_optimized'])
 
 # VLD and code analysis are built separately from regular builds
-if base_env.Bit('vld') :
+if base_env.Bit('vld'):
     print('Setting up Visual Leak Detector environment.\n')
     base_env.Dir('tools').addRepository(base_env.Dir('../tools'))
     vld_path = '$MAIN_DIR/tools/vld'
 
     if base_env.Bit('x64'):
         vld_env = windows_dbg_env.Clone(
-            BUILD_TYPE             = 'vld-x64',
-            BUILD_TYPE_DESCRIPTION = 'VLD x64 build')
+            BUILD_TYPE='vld-x64',
+            BUILD_TYPE_DESCRIPTION='VLD x64 build')
         redist_files += Glob('tools/vld/bin/Win64/*')
-        vld_env.Append(LIBPATH = [os.path.join(vld_path, 'lib/Win64')])
+        vld_env.Append(LIBPATH=[os.path.join(vld_path, 'lib/Win64')])
     else:
         vld_env = windows_dbg_env.Clone(
-            BUILD_TYPE             = 'vld-x86',
-            BUILD_TYPE_DESCRIPTION = 'VLD x86 build')
+            BUILD_TYPE='vld-x86',
+            BUILD_TYPE_DESCRIPTION='VLD x86 build')
         redist_files += Glob('tools/vld/bin/Win32/*')
-        vld_env.Append(LIBPATH = [os.path.join(vld_path, 'lib/Win32')])
+        vld_env.Append(LIBPATH=[os.path.join(vld_path, 'lib/Win32')])
 
     vld_env.Append(CPPDEFINES=['__VLD_MEM_DBG__'])
     vld_env.Append(CCFLAGS_DEBUG=['/Zi'])
@@ -277,16 +358,16 @@ if base_env.Bit('vld') :
     vld_env.Append(CCFLAGS_DEBUG=['/Ob0'])
     vld_env.Append(CCFLAGS_DEBUG=['/MT'])
     vld_env.Append(CCFLAGS_DEBUG=['/EHsc'])
-    vld_env.Append(CPPPATH = [os.path.join(vld_path, 'include')])
-    vld_env.Append(BUILD_SCONSCRIPTS=['tests/memory_leak_test/build.scons'])
+    vld_env.Append(CPPPATH=[os.path.join(vld_path, 'include')])
+    vld_env.Append(BUILD_SCONSCRIPTS=['tests/integration/memory_leak_test/build.scons'])
 
     BuildEnvironments([vld_env])
     vld_env.Replicate('$STAGING_DIR', redist_files)
 elif base_env.Bit('analysis'):
     analysis_env = windows_dbg_env.Clone(
-        BUILD_TYPE             = 'analysis',
-        BUILD_TYPE_DESCRIPTION = 'Code analysis build',
-        MSVC_VERSION           = '14.0')
+        BUILD_TYPE='analysis',
+        BUILD_TYPE_DESCRIPTION='Code analysis build',
+        MSVC_VERSION='14.0')
     analysis_env.Append(CCFLAGS=['/analyze'])
     BuildEnvironments([analysis_env])
 else:
