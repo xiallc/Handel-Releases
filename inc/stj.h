@@ -34,30 +34,28 @@
  * SUCH DAMAGE.
  */
 
-
 #ifndef __STJ_H__
 #define __STJ_H__
 
 /* This value is in words. The maximum length of the DSP in 24-bit program
  * memory values is 0x8000.
  */
-#define MAXDSP_LEN      0x10000
-#define MAXFIP_LEN   0x00200000
-#define MAX_FIPPI			  5
+#define MAXDSP_LEN 0x10000
+#define MAXFIP_LEN 0x00200000
+#define MAX_FIPPI 5
 
-#define STJ_CHANNELS_PER_BANK  8
+#define STJ_CHANNELS_PER_BANK 8
 
 #define STJ_ADC_PER_EV 2048
 
 /* Control Tasks */
 enum {
-  STJ_CT_ADC = 0,
-  STJ_CT_APPLY,
-  STJ_CT_WAKE_DSP,
-  STJ_CT_ADJUST_OFFSETS,
-  STJ_CT_BIAS_SCAN,
-  STJ_CT_BIAS_SET_DAC
+    STJ_CT_ADC = 0,
+    STJ_CT_APPLY,
+    STJ_CT_WAKE_DSP,
+    STJ_CT_ADJUST_OFFSETS,
+    STJ_CT_BIAS_SCAN,
+    STJ_CT_BIAS_SET_DAC
 };
-
 
 #endif /* __STJ_H__ */

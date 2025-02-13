@@ -34,11 +34,11 @@
  *
  */
 
-
 #ifndef __XIA_TIMING_HELPERS_H__
 #define __XIA_TIMING_HELPERS_H__
 
-/* The actual macros, etc. are defined on a per-platform basis. If
+/*
+ * The actual macros, etc. are defined on a per-platform basis. If
  * the platform isn't supported then the routines are nop-d.
  */
 #ifdef XIA_ENABLE_TIMING_HELPERS
@@ -49,7 +49,8 @@
 
 #else /* XIA_ENABLE_TIMING_HELPERS */
 
-/* This is the API that needs to be implemented for any platform that wants
+/*
+ * This is the API that needs to be implemented for any platform that wants
  * to use the timing helpers.
  */
 #define INIT_TIMER_VARS

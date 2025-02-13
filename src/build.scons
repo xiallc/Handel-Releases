@@ -252,7 +252,8 @@ handel_env.Append(CPPDEFINES=['HANDEL_MAKE_DLL', 'HANDEL_USE_DLL'] +
 handel_env.Append(LIBS=xerxes_libs)
 handel_env.Append(LIBS=handel_libs)
 handel_env.Append(LIBS=md_libs)
-handel_env.Append(LIBS=device_libs)  # static device libs must come after xerxes on linux!
+handel_env.Append(
+    LIBS=device_libs)  # static device libs must come after xerxes on linux!
 
 # Add platform libraries. It would be preferable to add this at the
 # platform level in main.scons, but there doesn't seem to be a built

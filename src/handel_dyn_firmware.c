@@ -36,7 +36,6 @@
  * SUCH DAMAGE.
  */
 
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -56,25 +55,20 @@
 #include "handel_errors.h"
 #include "handel_log.h"
 
-
-HANDEL_STATIC int HANDEL_API xiaSetFirmwareItem(FirmwareSet *fs, Firmware *f,
-                                                char *name, void *value);
-HANDEL_STATIC boolean_t HANDEL_API xiaIsPTRRFree(Firmware *firmware,
+HANDEL_STATIC int HANDEL_API xiaSetFirmwareItem(FirmwareSet* fs, Firmware* f,
+                                                char* name, void* value);
+HANDEL_STATIC boolean_t HANDEL_API xiaIsPTRRFree(Firmware* firmware,
                                                  unsigned short pttr);
 
-
-HANDEL_EXPORT int HANDEL_API xiaNewFirmware(char *alias)
-{
+HANDEL_EXPORT int HANDEL_API xiaNewFirmware(char* alias) {
     int status = XIA_SUCCESS;
 
-    FirmwareSet *current=NULL;
+    FirmwareSet* current = NULL;
 
     /* If HanDeL isn't initialized, go ahead and call it... */
-    if (!isHandelInit)
-    {
+    if (!isHandelInit) {
         status = xiaInitHandel();
-        if (status != XIA_SUCCESS)
-        {
+        if (status != XIA_SUCCESS) {
             fprintf(stderr, "FATAL ERROR: Unable to load libraries.\n");
             exit(XIA_INITIALIZE);
         }
@@ -82,8 +76,7 @@ HANDEL_EXPORT int HANDEL_API xiaNewFirmware(char *alias)
         xiaLogWarning("xiaNewFirmware", "HanDeL was initialized silently");
     }
 
-    if ((strlen(alias) + 1) > MAXALIAS_LEN)
-    {
+    if ((strlen(alias) + 1) > MAXALIAS_LEN) {
         status = XIA_ALIAS_SIZE;
         sprintf(info_string, "Alias contains too many characters");
         xiaLogError("xiaFirmwareDetector", info_string, status);
@@ -96,112 +89,100 @@ HANDEL_EXPORT int HANDEL_API xiaNewFirmware(char *alias)
     /* First check if this alias exists already? */
     current = xiaFindFirmware(alias);
 
-    if (current != NULL)
-    {
+    if (current != NULL) {
         status = XIA_ALIAS_EXISTS;
-        sprintf(info_string,"Alias %s already in use.", alias);
+        sprintf(info_string, "Alias %s already in use.", alias);
         xiaLogError("xiaNewFirmware", info_string, status);
         return status;
     }
 
     /* Check that the Head of the linked list exists */
-    if (xiaFirmwareSetHead == NULL)
-    {
+    if (xiaFirmwareSetHead == NULL) {
         /* Create an entry that is the Head of the linked list */
-        xiaFirmwareSetHead = (FirmwareSet *) handel_md_alloc(sizeof(FirmwareSet));
+        xiaFirmwareSetHead = (FirmwareSet*) handel_md_alloc(sizeof(FirmwareSet));
         current = xiaFirmwareSetHead;
-
     } else {
         /* Find the end of the linked list */
-        current= xiaFirmwareSetHead;
+        current = xiaFirmwareSetHead;
 
-        while (current->next != NULL)
-        {
-            current= current->next;
+        while (current->next != NULL) {
+            current = current->next;
         }
-        current->next = (FirmwareSet *) handel_md_alloc(sizeof(FirmwareSet));
-        current= current->next;
+        current->next = (FirmwareSet*) handel_md_alloc(sizeof(FirmwareSet));
+        current = current->next;
     }
 
     /* Make sure memory was allocated */
-    if (current == NULL)
-    {
+    if (current == NULL) {
         status = XIA_NOMEM;
-        sprintf(info_string,"Unable to allocate memory for Firmware alias %s.", alias);
+        sprintf(info_string, "Unable to allocate memory for Firmware alias %s.", alias);
         xiaLogError("xiaNewFirmware", info_string, status);
         return status;
     }
 
     /* Do any other allocations, or initialize to NULL/0 */
-    current->alias = (char *) handel_md_alloc((strlen(alias) + 1) * sizeof(char));
-    if (current->alias == NULL)
-    {
+    current->alias = (char*) handel_md_alloc((strlen(alias) + 1) * sizeof(char));
+    if (current->alias == NULL) {
         status = XIA_NOMEM;
-        xiaLogError("xiaNewFirmware", "Unable to allocate memory for current->alias", status);
+        xiaLogError("xiaNewFirmware", "Unable to allocate memory for current->alias",
+                    status);
         return status;
     }
 
-    strcpy(current->alias,alias);
+    strcpy(current->alias, alias);
 
-    current->filename    = NULL;
-    current->keywords    = NULL;
+    current->filename = NULL;
+    current->keywords = NULL;
     current->numKeywords = 0;
-    current->tmpPath     = NULL;
-    current->mmu         = NULL;
-    current->firmware    = NULL;
-    current->next        = NULL;
+    current->tmpPath = NULL;
+    current->mmu = NULL;
+    current->firmware = NULL;
+    current->next = NULL;
 
     return XIA_SUCCESS;
 }
 
-
-HANDEL_EXPORT int HANDEL_API xiaAddFirmwareItem(char *alias, char *name, void *value)
-{
+HANDEL_EXPORT int HANDEL_API xiaAddFirmwareItem(char* alias, char* name, void* value) {
     int status = XIA_SUCCESS;
 
     unsigned int i;
 
     char strtemp[MAXALIAS_LEN];
 
-    FirmwareSet *chosen = NULL;
+    FirmwareSet* chosen = NULL;
 
     /* Have to keep a pointer for the current Firmware ptrr */
-    static Firmware *current = NULL;
+    static Firmware* current = NULL;
 
     /* Locate the FirmwareSet entry first */
     chosen = xiaFindFirmware(alias);
-    if (chosen == NULL)
-    {
+    if (chosen == NULL) {
         status = XIA_NO_ALIAS;
-        sprintf(info_string,"Alias %s has not been created.", alias);
+        sprintf(info_string, "Alias %s has not been created.", alias);
         xiaLogError("xiaAddFirmwareItem", info_string, status);
         return status;
     }
 
     /* convert the name to lower case */
-    for (i = 0; i < (unsigned int)strlen(name); i++)
-    {
-        strtemp[i] = (char)tolower((int)name[i]);
+    for (i = 0; i < (unsigned int) strlen(name); i++) {
+        strtemp[i] = (char) tolower((int) name[i]);
     }
     strtemp[strlen(name)] = '\0';
 
     /* Check that the value is not NULL */
-    if (value == NULL)
-    {
+    if (value == NULL) {
         status = XIA_BAD_VALUE;
-        sprintf(info_string,"Value for item '%s' can not be NULL", name);
+        sprintf(info_string, "Value for item '%s' can not be NULL", name);
         xiaLogError("xiaAddFirmwareItem", info_string, status);
         return status;
     }
 
-    /* Switch thru the possible entries */
-    if (STREQ(strtemp, "filename"))
-    {
+    /* Switch through the possible entries */
+    if (STREQ(strtemp, "filename")) {
         status = xiaSetFirmwareItem(chosen, NULL, strtemp, value);
 
-        if (status != XIA_SUCCESS)
-        {
-            sprintf(info_string,"Failure to set Firmware data: %s", name);
+        if (status != XIA_SUCCESS) {
+            sprintf(info_string, "Failure to set Firmware data: %s", name);
             xiaLogError("xiaAddFirmwareItem", info_string, status);
             return status;
         }
@@ -210,56 +191,50 @@ HANDEL_EXPORT int HANDEL_API xiaAddFirmwareItem(char *alias, char *name, void *v
     } else if (STREQ(strtemp, "ptrr")) {
         /* Create a new firmware structure */
 
-        if (!xiaIsPTRRFree(chosen->firmware, *((unsigned short *)value)))
-        {
+        if (!xiaIsPTRRFree(chosen->firmware, *((unsigned short*) value))) {
             status = XIA_BAD_PTRR;
-            sprintf(info_string, "PTRR %u already exists", *((unsigned short *)value));
+            sprintf(info_string, "PTRR %u already exists", *((unsigned short*) value));
             xiaLogError("xiaAddFirmwareItem", info_string, status);
             return status;
         }
 
-        if (chosen->firmware == NULL)
-        {
-            chosen->firmware = (Firmware *) handel_md_alloc(sizeof(Firmware));
+        if (chosen->firmware == NULL) {
+            chosen->firmware = (Firmware*) handel_md_alloc(sizeof(Firmware));
             current = chosen->firmware;
             current->prev = NULL;
-
         } else {
-
-            current->next = (Firmware *) handel_md_alloc(sizeof(Firmware));
+            current->next = (Firmware*) handel_md_alloc(sizeof(Firmware));
             current->next->prev = current;
             current = current->next;
         }
 
-        if (current == NULL)
-        {
+        if (current == NULL) {
             status = XIA_NOMEM;
-            xiaLogError("xiaAddFirmwareItem", "Unable to allocate memory for firmware", status);
+            xiaLogError("xiaAddFirmwareItem", "Unable to allocate memory for firmware",
+                        status);
             return status;
         }
 
-        current->ptrr = *((unsigned short *) value);
+        current->ptrr = *((unsigned short*) value);
         /* Initialize the elements */
-        current->max_ptime    = 0.;
-        current->min_ptime    = 0.;
-        current->user_fippi   = NULL;
-        current->user_dsp     = NULL;
-        current->system_fpga  = NULL;
-        current->dsp          = NULL;
-        current->fippi        = NULL;
-        current->next         = NULL;
-        current->numFilter    = 0;
-        current->filterInfo   = NULL;
+        current->max_ptime = 0.;
+        current->min_ptime = 0.;
+        current->user_fippi = NULL;
+        current->user_dsp = NULL;
+        current->system_fpga = NULL;
+        current->dsp = NULL;
+        current->fippi = NULL;
+        current->next = NULL;
+        current->numFilter = 0;
+        current->filterInfo = NULL;
 
         /* one of the FPGA values? */
     } else {
-
         status = xiaSetFirmwareItem(chosen, current, strtemp, value);
 
-        if (status != XIA_SUCCESS)
-        {
+        if (status != XIA_SUCCESS) {
             status = XIA_BAD_VALUE;
-            sprintf(info_string,"Failure to set Firmware data: %s", name);
+            sprintf(info_string, "Failure to set Firmware data: %s", name);
             xiaLogError("xiaAddFirmwareItem", info_string, status);
             return status;
         }
@@ -268,53 +243,47 @@ HANDEL_EXPORT int HANDEL_API xiaAddFirmwareItem(char *alias, char *name, void *v
     return XIA_SUCCESS;
 }
 
-
-HANDEL_EXPORT int HANDEL_API xiaModifyFirmwareItem(char *alias, unsigned short ptrr, char *name, void *value)
-{
+HANDEL_EXPORT int HANDEL_API xiaModifyFirmwareItem(char* alias, unsigned short ptrr,
+                                                   char* name, void* value) {
     int status = XIA_SUCCESS;
 
     unsigned int i;
 
     char strtemp[MAXALIAS_LEN];
 
-    FirmwareSet *chosen = NULL;
+    FirmwareSet* chosen = NULL;
 
-    Firmware *current = NULL;
+    Firmware* current = NULL;
 
     /* Check that the value is not NULL */
-    if (value == NULL)
-    {
+    if (value == NULL) {
         status = XIA_BAD_VALUE;
-        sprintf(info_string,"Value can not be NULL");
+        sprintf(info_string, "Value can not be NULL");
         xiaLogError("xiaModifyFirmwareItem", info_string, status);
         return status;
     }
 
     /* convert the name to lower case */
-    for (i = 0; i < (unsigned int)strlen(name); i++)
-    {
-        strtemp[i] = (char)tolower((int)name[i]);
+    for (i = 0; i < (unsigned int) strlen(name); i++) {
+        strtemp[i] = (char) tolower((int) name[i]);
     }
     strtemp[strlen(name)] = '\0';
 
     /* Locate the FirmwareSet entry first */
     chosen = xiaFindFirmware(alias);
-    if (chosen == NULL)
-    {
+    if (chosen == NULL) {
         status = XIA_NO_ALIAS;
-        sprintf(info_string,"Alias %s was not found.", alias);
+        sprintf(info_string, "Alias %s was not found.", alias);
         xiaLogError("xiaModifyFirmwareItem", info_string, status);
         return status;
     }
 
-    /* Check to see if the name is a ptrr-invariant name since some
+    /*
+     * Check to see if the name is a ptrr-invariant name since some
      * users will probably set ptrr to NULL under these circumstances
      * which breaks the code if a ptrr check is performed
      */
-    if (STREQ(name, "filename") ||
-            STREQ(name, "mmu") ||
-            STREQ(name, "fdd_tmp_path"))
-    {
+    if (STREQ(name, "filename") || STREQ(name, "mmu") || STREQ(name, "fdd_tmp_path")) {
         status = xiaSetFirmwareItem(chosen, current, name, value);
 
         if (status != XIA_SUCCESS) {
@@ -326,27 +295,23 @@ HANDEL_EXPORT int HANDEL_API xiaModifyFirmwareItem(char *alias, unsigned short p
         return status;
     }
 
-
     /* Now find the ptrr only if the name being modified requires it */
     current = chosen->firmware;
-    while ((current != NULL) && (current->ptrr != ptrr))
-    {
-        current=current->next;
+    while ((current != NULL) && (current->ptrr != ptrr)) {
+        current = current->next;
     }
 
-    if (current == NULL)
-    {
+    if (current == NULL) {
         status = XIA_BAD_VALUE;
-        sprintf(info_string,"ptrr (%u) not found.", ptrr);
+        sprintf(info_string, "ptrr (%u) not found.", ptrr);
         xiaLogError("xiaModifyFirmwareItem", info_string, status);
         return status;
     }
 
     /* Now modify the value */
     status = xiaSetFirmwareItem(chosen, current, strtemp, value);
-    if (status != XIA_SUCCESS)
-    {
-        sprintf(info_string,"Failure to set Firmware data: %s", name);
+    if (status != XIA_SUCCESS) {
+        sprintf(info_string, "Failure to set Firmware data: %s", name);
         xiaLogError("xiaModifyFirmwareItem", info_string, status);
         return status;
     }
@@ -354,9 +319,8 @@ HANDEL_EXPORT int HANDEL_API xiaModifyFirmwareItem(char *alias, unsigned short p
     return status;
 }
 
-
-HANDEL_EXPORT int HANDEL_API xiaGetFirmwareItem(char *alias, unsigned short ptrr, char *name, void *value)
-{
+HANDEL_EXPORT int HANDEL_API xiaGetFirmwareItem(char* alias, unsigned short ptrr,
+                                                char* name, void* value) {
     int status = XIA_SUCCESS;
 
     unsigned int i;
@@ -365,18 +329,16 @@ HANDEL_EXPORT int HANDEL_API xiaGetFirmwareItem(char *alias, unsigned short ptrr
 
     char strtemp[MAXALIAS_LEN];
 
-    unsigned short *filterInfo = NULL;
+    unsigned short* filterInfo = NULL;
 
-    FirmwareSet *chosen = NULL;
+    FirmwareSet* chosen = NULL;
 
-    Firmware    *current = NULL;
-
+    Firmware* current = NULL;
 
     /* Find Firmware corresponding to alias */
     chosen = xiaFindFirmware(alias);
 
     if (chosen == NULL) {
-
         status = XIA_NO_ALIAS;
         sprintf(info_string, "Alias %s has not been created", alias);
         xiaLogError("xiaGetFirmwareItem", info_string, status);
@@ -384,33 +346,28 @@ HANDEL_EXPORT int HANDEL_API xiaGetFirmwareItem(char *alias, unsigned short ptrr
     }
 
     /* Convert name to lower case */
-    for (i = 0; i < (unsigned int)strlen(name); i++) {
-        strtemp[i] = (char)tolower((int)name[i]);
+    for (i = 0; i < (unsigned int) strlen(name); i++) {
+        strtemp[i] = (char) tolower((int) name[i]);
     }
 
     strtemp[strlen(name)] = '\0';
 
     /* Decide which value to return. Start with the ptrr-invariant values */
     if (STREQ(strtemp, "filename")) {
-
-        /* Reference: BUG ID #13
-         * Reference: BUG ID #69
-         * The new default behavior is to return
-         * a blank string in place of the filename
-         * and to not error out.
+        /*
+         * The new default behavior is to return a blank string in place of the
+         * filename and to not error out.
          */
         if (chosen->filename == NULL) {
-            sprintf(info_string, "No filename defined for firmware with alias %s", chosen->alias);
+            sprintf(info_string, "No filename defined for firmware with alias %s",
+                    chosen->alias);
             xiaLogInfo("xiaGetFirmwareItem", info_string);
 
-            strcpy((char *)value, "");
-
+            strcpy((char*) value, "");
         } else {
-            strcpy((char *)value, chosen->filename);
+            strcpy((char*) value, chosen->filename);
         }
-
     } else if (STREQ(strtemp, "fdd_tmp_path")) {
-
         if (chosen->filename == NULL) {
             sprintf(info_string, "No FDD file for '%s'", chosen->alias);
             xiaLogError("xiaGetFirmwareItem", info_string, XIA_NO_FILENAME);
@@ -426,45 +383,40 @@ HANDEL_EXPORT int HANDEL_API xiaGetFirmwareItem(char *alias, unsigned short ptrr
 
         ASSERT((strlen(chosen->tmpPath) + 1) < MAXITEM_LEN);
 
-        strcpy((char *)value, chosen->tmpPath);
-
+        strcpy((char*) value, chosen->tmpPath);
     } else if (STREQ(strtemp, "mmu")) {
-
-        /* Reference: BUG ID #12 */
         if (chosen->mmu == NULL) {
-
             status = XIA_NO_FILENAME;
-            sprintf(info_string, "No MMU file defined for firmware with alias %s", chosen->alias);
+            sprintf(info_string, "No MMU file defined for firmware with alias %s",
+                    chosen->alias);
             xiaLogError("xiaGetFirmwareItem", info_string, status);
             return status;
         }
 
-        strcpy((char *)value, chosen->mmu);
-
+        strcpy((char*) value, chosen->mmu);
     } else {
-        /* Should be branching into names that require the ptrr value...if not
+        /*
+         * Should be branching into names that require the ptrr value...if not
          * we'll still catch it at the end and everything will be fine
          */
         current = chosen->firmware;
-        /* Have to check to see if current is initally NULL as well. While this should
+        /*
+         * Have to check to see if current is NULL as well. While this should
          * be a rare case and was discovered my a malicious test that I wrote, we need
          * to protect against it.
          */
-        if (current == NULL)
-        {
+        if (current == NULL) {
             status = XIA_BAD_VALUE;
             sprintf(info_string, "No ptrr(s) defined for this alias: %s", alias);
             xiaLogError("xiaGetFirmwareItem", info_string, status);
             return status;
         }
 
-        while (current->ptrr != ptrr)
-        {
+        while (current->ptrr != ptrr) {
             /* Check to see if we ran into the end of the list here... */
             current = current->next;
 
-            if (current == NULL)
-            {
+            if (current == NULL) {
                 status = XIA_BAD_PTRR;
                 sprintf(info_string, "ptrr %u is not valid for this alias", ptrr);
                 xiaLogError("xiaGetFirmwareItem", info_string, status);
@@ -472,49 +424,26 @@ HANDEL_EXPORT int HANDEL_API xiaGetFirmwareItem(char *alias, unsigned short ptrr
             }
         }
 
-
-        if (STREQ(strtemp, "min_peaking_time"))
-        {
-            *((double *)value) = current->min_ptime;
-
+        if (STREQ(strtemp, "min_peaking_time")) {
+            *((double*) value) = current->min_ptime;
         } else if (STREQ(strtemp, "max_peaking_time")) {
-
-            *((double *)value) = current->max_ptime;
-
+            *((double*) value) = current->max_ptime;
         } else if (STREQ(strtemp, "fippi")) {
-
-            strcpy((char *)value, current->fippi);
-
+            strcpy((char*) value, current->fippi);
         } else if (STREQ(strtemp, "dsp")) {
-
-            strcpy((char *)value, current->dsp);
-
+            strcpy((char*) value, current->dsp);
         } else if (STREQ(strtemp, "user_fippi")) {
-
-            strcpy((char *)value, current->user_fippi);
-
+            strcpy((char*) value, current->user_fippi);
         } else if (STREQ(strtemp, "user_dsp")) {
-
-            strcpy((char *)value, current->user_dsp);
-
+            strcpy((char*) value, current->user_dsp);
         } else if (STREQ(strtemp, "num_filter")) {
-
-            /* Reference: BUG ID #8 */
-
-            *((unsigned short *)value) = current->numFilter;
-
+            *((unsigned short*) value) = current->numFilter;
         } else if (STREQ(strtemp, "filter_info")) {
-
-            /* Do a full copy here
-             * Reference: BUG ID #8
-             */
-            filterInfo = (unsigned short *)value;
-
+            /* Do a full copy here */
+            filterInfo = (unsigned short*) value;
             for (j = 0; j < current->numFilter; j++) {
-
                 filterInfo[j] = current->filterInfo[j];
             }
-
         } else {
             /* Bad name */
             status = XIA_BAD_NAME;
@@ -522,7 +451,8 @@ HANDEL_EXPORT int HANDEL_API xiaGetFirmwareItem(char *alias, unsigned short ptrr
             xiaLogError("xiaGetFirmwareItem", info_string, status);
             return status;
         }
-        /* Bad names propogate all the way to the end so there is no reason
+        /*
+         * Bad names propagate all the way to the end so there is no reason
          * to report an error message here.
          */
     }
@@ -530,16 +460,12 @@ HANDEL_EXPORT int HANDEL_API xiaGetFirmwareItem(char *alias, unsigned short ptrr
     return status;
 }
 
-
-HANDEL_EXPORT int HANDEL_API xiaGetNumFirmwareSets(unsigned int *numFirmware)
-{
+HANDEL_EXPORT int HANDEL_API xiaGetNumFirmwareSets(unsigned int* numFirmware) {
     unsigned int count = 0;
 
-    FirmwareSet *current = xiaFirmwareSetHead;
-
+    FirmwareSet* current = xiaFirmwareSetHead;
 
     while (current != NULL) {
-
         count++;
         current = getListNext(current);
     }
@@ -549,38 +475,28 @@ HANDEL_EXPORT int HANDEL_API xiaGetNumFirmwareSets(unsigned int *numFirmware)
     return XIA_SUCCESS;
 }
 
-
-HANDEL_EXPORT int HANDEL_API xiaGetFirmwareSets(char *firmwares[])
-{
+HANDEL_EXPORT int HANDEL_API xiaGetFirmwareSets(char* firmwares[]) {
     int i;
 
-    FirmwareSet *current = xiaFirmwareSetHead;
-
+    FirmwareSet* current = xiaFirmwareSetHead;
 
     for (i = 0; current != NULL; current = getListNext(current)) {
-
         strcpy(firmwares[i], current->alias);
     }
 
     return XIA_SUCCESS;
 }
 
-
-HANDEL_EXPORT int HANDEL_API xiaGetFirmwareSets_VB(unsigned int index, char *alias)
-{
+HANDEL_EXPORT int HANDEL_API xiaGetFirmwareSets_VB(unsigned int index, char* alias) {
     int status;
 
     unsigned int curIdx;
 
-    FirmwareSet *current = xiaFirmwareSetHead;
-
+    FirmwareSet* current = xiaFirmwareSetHead;
 
     for (curIdx = 0; current != NULL; current = getListNext(current), curIdx++) {
-
         if (curIdx == index) {
-
             strcpy(alias, current->alias);
-
             return XIA_SUCCESS;
         }
     }
@@ -591,22 +507,18 @@ HANDEL_EXPORT int HANDEL_API xiaGetFirmwareSets_VB(unsigned int index, char *ali
     return status;
 }
 
-
-HANDEL_EXPORT int HANDEL_API xiaGetNumPTRRs(char *alias, unsigned int *numPTRR)
-{
+HANDEL_EXPORT int HANDEL_API xiaGetNumPTRRs(char* alias, unsigned int* numPTRR) {
     int status;
 
     unsigned int count = 0;
 
-    FirmwareSet *chosen = NULL;
+    FirmwareSet* chosen = NULL;
 
-    Firmware *current = NULL;
-
+    Firmware* current = NULL;
 
     chosen = xiaFindFirmware(alias);
 
     if (chosen == NULL) {
-
         status = XIA_NO_ALIAS;
         sprintf(info_string, "Alias %s has not been created yet", alias);
         xiaLogError("xiaGetNumPTRRs", info_string, status);
@@ -614,10 +526,9 @@ HANDEL_EXPORT int HANDEL_API xiaGetNumPTRRs(char *alias, unsigned int *numPTRR)
     }
 
     if (chosen->filename != NULL) {
-
         status = XIA_LOOKING_PTRR;
-        sprintf(info_string,
-                "Looking for PTRRs and found an FDD file for alias %s", alias);
+        sprintf(info_string, "Looking for PTRRs and found an FDD file for alias %s",
+                alias);
         xiaLogError("xiaGetNumPTRRs", info_string, status);
         return status;
     }
@@ -625,9 +536,7 @@ HANDEL_EXPORT int HANDEL_API xiaGetNumPTRRs(char *alias, unsigned int *numPTRR)
     current = chosen->firmware;
 
     while (current != NULL) {
-
         count++;
-
         current = getListNext(current);
     }
 
@@ -636,145 +545,139 @@ HANDEL_EXPORT int HANDEL_API xiaGetNumPTRRs(char *alias, unsigned int *numPTRR)
     return XIA_SUCCESS;
 }
 
-
 /*
  * This routine modifies information about a Firmware Item entry
  */
-HANDEL_STATIC int HANDEL_API xiaSetFirmwareItem(FirmwareSet *fs, Firmware *f, char *name, void *value)
-{
+HANDEL_STATIC int HANDEL_API xiaSetFirmwareItem(FirmwareSet* fs, Firmware* f,
+                                                char* name, void* value) {
     int status = XIA_SUCCESS;
 
     unsigned int i;
     unsigned int len;
 
-    char **oldKeywords = NULL;
+    char** oldKeywords = NULL;
 
-    parameter_t *oldFilterInfo = NULL;
-
+    parameter_t* oldFilterInfo = NULL;
 
     /* Specify the mmu */
-    if (STREQ(name, "mmu"))
-    {
+    if (STREQ(name, "mmu")) {
         /* If allocated already, then free */
-        if (fs->mmu != NULL)
-        {
-            handel_md_free((void *)fs->mmu);
+        if (fs->mmu != NULL) {
+            handel_md_free((void*) fs->mmu);
         }
         /* Allocate memory for the filename */
-        len = (unsigned int)strlen((char *) value);
-        fs->mmu = (char *) handel_md_alloc((len + 1) * sizeof(char));
-        if (fs->mmu == NULL)
-        {
+        len = (unsigned int) strlen((char*) value);
+        fs->mmu = (char*) handel_md_alloc((len + 1) * sizeof(char));
+        if (fs->mmu == NULL) {
             status = XIA_NOMEM;
-            xiaLogError("xiaSetFirmwareItem", "Unable to allocate memory for fs->mmu", status);
+            xiaLogError("xiaSetFirmwareItem", "Unable to allocate memory for fs->mmu",
+                        status);
             return status;
         }
 
         /* Copy the filename into the firmware structure */
-        strcpy(fs->mmu,(char *) value);
-
+        strcpy(fs->mmu, (char*) value);
     } else if (STREQ(name, "filename")) {
-
         if (fs->filename != NULL) {
-
-            handel_md_free((void *)fs->filename);
+            handel_md_free((void*) fs->filename);
         }
-        len = (unsigned int)strlen((char *)value);
-        fs->filename = (char *)handel_md_alloc((len + 1) * sizeof(char));
-        if (fs->filename == NULL)
-        {
+        len = (unsigned int) strlen((char*) value);
+        fs->filename = (char*) handel_md_alloc((len + 1) * sizeof(char));
+        if (fs->filename == NULL) {
             status = XIA_NOMEM;
-            xiaLogError("xiaSetFirmwareItem", "Unable to allocate memory for fs->filename", status);
+            xiaLogError("xiaSetFirmwareItem",
+                        "Unable to allocate memory for fs->filename", status);
             return status;
         }
-
-        strcpy(fs->filename, (char *)value);
-
+        strcpy(fs->filename, (char*) value);
     } else if (STREQ(name, "fdd_tmp_path")) {
-
-        len = (unsigned int)strlen((char *)value);
+        len = (unsigned int) strlen((char*) value);
 
         fs->tmpPath = handel_md_alloc(len + 1);
 
         if (!fs->tmpPath) {
-            sprintf(info_string, "Unable to allocated %u bytes for "
-                    "'fs->tmpPath' with alias = '%s'", len + 1, fs->alias);
+            sprintf(info_string,
+                    "Unable to allocated %u bytes for "
+                    "'fs->tmpPath' with alias = '%s'",
+                    len + 1, fs->alias);
             xiaLogError("xiaSetFirmwareItem", info_string, XIA_NOMEM);
             return XIA_NOMEM;
         }
 
-        strcpy(fs->tmpPath, (char *)value);
-
+        strcpy(fs->tmpPath, (char*) value);
     } else if (STREQ(name, "keyword")) {
-        /* Check to see if the filename exists, because if it doesn't, then there is
+        /*
+         * Check to see if the filename exists, because if it doesn't, then there is
          * no reason to be entering keywords. N.b. There is no _real_ reason that the
          * user should have to enter the filename first...it's just that it makes sense
          * from a "logic" standpoint. This restriction _may_ be eased in the future.
+         *
+         * This should work, even if the number of keywords is zero
          */
-        /* This should work, even if the number of keywords is zero */
-        oldKeywords = (char **)handel_md_alloc(fs->numKeywords * sizeof(char *));
+        oldKeywords = (char**) handel_md_alloc(fs->numKeywords * sizeof(char*));
 
-        for (i = 0; i < fs->numKeywords; i++)
-        {
-            oldKeywords[i] = (char *)handel_md_alloc((strlen(fs->keywords[i]) + 1) * sizeof(char));
+        for (i = 0; i < fs->numKeywords; i++) {
+            oldKeywords[i] =
+                (char*) handel_md_alloc((strlen(fs->keywords[i]) + 1) * sizeof(char));
             strcpy(oldKeywords[i], fs->keywords[i]);
-            handel_md_free((void *)(fs->keywords[i]));
+            handel_md_free((void*) (fs->keywords[i]));
         }
 
-        handel_md_free((void *)fs->keywords);
+        handel_md_free((void*) fs->keywords);
         fs->keywords = NULL;
 
-        /* The original keywords array should be free (if it previously held keywords)
+        /* The original keywords array should be free
+         * (if it previously held keywords)
          */
         fs->numKeywords++;
-        fs->keywords = (char **)handel_md_alloc(fs->numKeywords * sizeof(char *));
-        if (fs->keywords == NULL)
-        {
+        fs->keywords = (char**) handel_md_alloc(fs->numKeywords * sizeof(char*));
+        if (fs->keywords == NULL) {
             status = XIA_NOMEM;
-            xiaLogError("xiaSetFirmwareItem", "Unable to allocate memory for fs->keywords", status);
+            xiaLogError("xiaSetFirmwareItem",
+                        "Unable to allocate memory for fs->keywords", status);
             return status;
         }
 
-        for (i = 0; i < (fs->numKeywords - 1); i++)
-        {
-            fs->keywords[i] = (char *)handel_md_alloc((strlen(oldKeywords[i]) + 1) * sizeof(char));
-            if (fs->keywords[i] == NULL)
-            {
+        for (i = 0; i < (fs->numKeywords - 1); i++) {
+            fs->keywords[i] =
+                (char*) handel_md_alloc((strlen(oldKeywords[i]) + 1) * sizeof(char));
+            if (fs->keywords[i] == NULL) {
                 status = XIA_NOMEM;
-                xiaLogError("xiaSetFirmwareItem", "Unable to allocate memory for fs->keywords[i]", status);
+                xiaLogError("xiaSetFirmwareItem",
+                            "Unable to allocate memory for fs->keywords[i]", status);
                 return status;
             }
 
             strcpy(fs->keywords[i], oldKeywords[i]);
-            handel_md_free((void *)oldKeywords[i]);
+            handel_md_free((void*) oldKeywords[i]);
         }
 
-        handel_md_free((void *)oldKeywords);
+        handel_md_free((void*) oldKeywords);
 
-        len = (unsigned int)strlen((char *)value);
-        fs->keywords[fs->numKeywords - 1] = (char *)handel_md_alloc((len + 1) * sizeof(char));
-        if (fs->keywords[fs->numKeywords - 1] == NULL)
-        {
+        len = (unsigned int) strlen((char*) value);
+        fs->keywords[fs->numKeywords - 1] =
+            (char*) handel_md_alloc((len + 1) * sizeof(char));
+        if (fs->keywords[fs->numKeywords - 1] == NULL) {
             status = XIA_NOMEM;
-            xiaLogError("xiaSetFirmwareItem", "Unable to allocate memory for fs->keywords[fs->numKeywords - 1]", status);
+            xiaLogError(
+                "xiaSetFirmwareItem",
+                "Unable to allocate memory for fs->keywords[fs->numKeywords - 1]",
+                status);
             return status;
         }
-
-        strcpy(fs->keywords[fs->numKeywords - 1], (char *)value);
-
+        strcpy(fs->keywords[fs->numKeywords - 1], (char*) value);
     } else {
         /* Check to make sure a valid Firmware structure exists */
-        if (f == NULL)
-        {
+        if (f == NULL) {
             status = XIA_BAD_VALUE;
-            sprintf(info_string,"PTRR not specified, no Firmware object exists");
+            sprintf(info_string, "PTRR not specified, no Firmware object exists");
             xiaLogError("xiaAddFirmwareItem", info_string, status);
             return status;
         }
 
-        if (STREQ(name, "min_peaking_time"))
-        {
-            /* HanDeL doesn't have enough information to validate the peaking
+        if (STREQ(name, "min_peaking_time")) {
+            /*
+             * HanDeL doesn't have enough information to validate the peaking
              * time values here. It only has enough information to check that they
              * are correct relative to one another. We consider "0" to signify that
              * the min/max_peaking_times are not defined yet and, therefore, we only
@@ -782,115 +685,100 @@ HANDEL_STATIC int HANDEL_API xiaSetFirmwareItem(FirmwareSet *fs, Firmware *f, ch
              * In the future I will try and simplify this logic a little bit. For now,
              * brute force!
              */
-            f->min_ptime = *((double *)value);
-            if ((f->min_ptime != 0) && (f->max_ptime != 0))
-            {
-                if (f->min_ptime > f->max_ptime)
-                {
+            f->min_ptime = *((double*) value);
+            if ((f->min_ptime != 0) && (f->max_ptime != 0)) {
+                if (f->min_ptime > f->max_ptime) {
                     status = XIA_BAD_VALUE;
-                    sprintf(info_string, "Min. peaking time = %f not smaller then max. peaking time", f->min_ptime);
+                    sprintf(info_string,
+                            "Min. peaking time = %f not smaller then max. peaking time",
+                            f->min_ptime);
                     xiaLogError("xiaSetFirmwareItem", info_string, status);
                     return status;
                 }
             }
-
         } else if (STREQ(name, "max_peaking_time")) {
-
-            f->max_ptime = *((double *)value);
-            if ((f->min_ptime != 0) && (f->max_ptime != 0))
-            {
-                if (f->max_ptime < f->min_ptime)
-                {
+            f->max_ptime = *((double*) value);
+            if ((f->min_ptime != 0) && (f->max_ptime != 0)) {
+                if (f->max_ptime < f->min_ptime) {
                     status = XIA_BAD_VALUE;
-                    sprintf(info_string, "Max. peaking time = %f not larger then min. peaking time", f->max_ptime);
+                    sprintf(info_string,
+                            "Max. peaking time = %f not larger then min. peaking time",
+                            f->max_ptime);
                     xiaLogError("xiaSetFirmwareItem", info_string, status);
                     return status;
                 }
             }
-
         } else if (STREQ(name, "fippi")) {
             /* If allocated already, then free */
-            if (f->fippi != NULL)
-            {
+            if (f->fippi != NULL) {
                 handel_md_free(f->fippi);
             }
             /* Allocate memory for the filename */
-            len = (unsigned int)strlen((char *) value);
-            f->fippi = (char *) handel_md_alloc((len + 1) * sizeof(char));
-            if (f->fippi == NULL)
-            {
+            len = (unsigned int) strlen((char*) value);
+            f->fippi = (char*) handel_md_alloc((len + 1) * sizeof(char));
+            if (f->fippi == NULL) {
                 status = XIA_NOMEM;
-                xiaLogError("xiaSetFirmwareItem", "Unable to allocate memory for f->fippi", status);
+                xiaLogError("xiaSetFirmwareItem",
+                            "Unable to allocate memory for f->fippi", status);
                 return status;
             }
-
-            strcpy(f->fippi, (char *) value);
-
+            strcpy(f->fippi, (char*) value);
         } else if (STREQ(name, "user_fippi")) {
-
-            if (f->user_fippi != NULL)
-            {
+            if (f->user_fippi != NULL) {
                 handel_md_free(f->user_fippi);
             }
 
-            len = (unsigned int)strlen((char *) value);
-            f->user_fippi = (char *) handel_md_alloc((len + 1) * sizeof(char));
-            if (f->user_fippi == NULL)
-            {
+            len = (unsigned int) strlen((char*) value);
+            f->user_fippi = (char*) handel_md_alloc((len + 1) * sizeof(char));
+            if (f->user_fippi == NULL) {
                 status = XIA_NOMEM;
-                xiaLogError("xiaSetFirmwareItem", "Unable to allocate memory for f->user_fippi", status);
+                xiaLogError("xiaSetFirmwareItem",
+                            "Unable to allocate memory for f->user_fippi", status);
                 return status;
             }
 
-            strcpy(f->user_fippi, (char *) value);
-
+            strcpy(f->user_fippi, (char*) value);
         } else if (STREQ(name, "dsp")) {
-
-            if (f->dsp != NULL)
-            {
+            if (f->dsp != NULL) {
                 handel_md_free(f->dsp);
             }
 
             /* Allocate memory for the filename */
-            len = (unsigned int)strlen((char *) value);
-            f->dsp = (char *) handel_md_alloc((len + 1) * sizeof(char));
-            if (f->dsp == NULL)
-            {
+            len = (unsigned int) strlen((char*) value);
+            f->dsp = (char*) handel_md_alloc((len + 1) * sizeof(char));
+            if (f->dsp == NULL) {
                 status = XIA_NOMEM;
-                xiaLogError("xiaSetFirmwareItem", "Unable to allocate memory for f->dsp", status);
+                xiaLogError("xiaSetFirmwareItem",
+                            "Unable to allocate memory for f->dsp", status);
                 return status;
             }
 
-            strcpy(f->dsp, (char *) value);
-
+            strcpy(f->dsp, (char*) value);
         } else if (STREQ(name, "filter_info")) {
+            oldFilterInfo =
+                (parameter_t*) handel_md_alloc(f->numFilter * sizeof(parameter_t));
 
-            oldFilterInfo = (parameter_t *)handel_md_alloc(f->numFilter * sizeof(parameter_t));
-
-            for (i = 0; i < f->numFilter; i++)
-            {
+            for (i = 0; i < f->numFilter; i++) {
                 oldFilterInfo[i] = f->filterInfo[i];
             }
 
-            handel_md_free((void *)f->filterInfo);
+            handel_md_free((void*) f->filterInfo);
             f->filterInfo = NULL;
 
             f->numFilter++;
-            f->filterInfo = (parameter_t *)handel_md_alloc(f->numFilter * sizeof(parameter_t));
+            f->filterInfo =
+                (parameter_t*) handel_md_alloc(f->numFilter * sizeof(parameter_t));
 
-            for (i = 0; i < (unsigned short)(f->numFilter - 1); i++)
-            {
+            for (i = 0; i < (unsigned short) (f->numFilter - 1); i++) {
                 f->filterInfo[i] = oldFilterInfo[i];
             }
-            f->filterInfo[f->numFilter - 1] = *((parameter_t *)value);
+            f->filterInfo[f->numFilter - 1] = *((parameter_t*) value);
 
-            handel_md_free((void *)oldFilterInfo);
+            handel_md_free((void*) oldFilterInfo);
             oldFilterInfo = NULL;
-
         } else {
-
             status = XIA_BAD_NAME;
-            sprintf(info_string,"Invalid name %s.", name);
+            sprintf(info_string, "Invalid name %s.", name);
             xiaLogError("xiaSetFirmwareItem", info_string, status);
             return status;
         }
@@ -899,22 +787,18 @@ HANDEL_STATIC int HANDEL_API xiaSetFirmwareItem(FirmwareSet *fs, Firmware *f, ch
     return status;
 }
 
-
-HANDEL_EXPORT int HANDEL_API xiaRemoveFirmware(char *alias)
-{
+HANDEL_EXPORT int HANDEL_API xiaRemoveFirmware(char* alias) {
     int status = XIA_SUCCESS;
 
     unsigned int i;
 
     char strtemp[MAXALIAS_LEN];
 
-    FirmwareSet *prev = NULL;
-    FirmwareSet *current = NULL;
-    FirmwareSet *next = NULL;
+    FirmwareSet* prev = NULL;
+    FirmwareSet* current = NULL;
+    FirmwareSet* next = NULL;
 
-
-    if (isListEmpty(xiaFirmwareSetHead))
-    {
+    if (isListEmpty(xiaFirmwareSetHead)) {
         status = XIA_NO_ALIAS;
         sprintf(info_string, "Alias %s does not exist", alias);
         xiaLogError("xiaRemoveFirmware", info_string, status);
@@ -922,9 +806,8 @@ HANDEL_EXPORT int HANDEL_API xiaRemoveFirmware(char *alias)
     }
 
     /* Turn the alias into lower case version, and terminate with a null char */
-    for (i = 0; i < (unsigned int)strlen(alias); i++)
-    {
-        strtemp[i] = (char)tolower((int)alias[i]);
+    for (i = 0; i < (unsigned int) strlen(alias); i++) {
+        strtemp[i] = (char) tolower((int) alias[i]);
     }
     strtemp[strlen(alias)] = '\0';
 
@@ -933,30 +816,24 @@ HANDEL_EXPORT int HANDEL_API xiaRemoveFirmware(char *alias)
     current = xiaFirmwareSetHead;
     next = current->next;
 
-    while (!STREQ(strtemp, current->alias))
-    {
+    while (!STREQ(strtemp, current->alias)) {
         prev = current;
         current = next;
         next = current->next;
     }
 
     /* Check if we found nothing */
-    if ((next == NULL) &&
-            (current == NULL))
-    {
+    if ((next == NULL) && (current == NULL)) {
         status = XIA_NO_ALIAS;
-        sprintf(info_string,"Alias %s does not exist.", alias);
+        sprintf(info_string, "Alias %s does not exist.", alias);
         xiaLogError("xiaRemoveFirmware", info_string, status);
         return status;
     }
 
     /* Check if match is the head of the list */
-    if (current == xiaFirmwareSetHead)
-    {
+    if (current == xiaFirmwareSetHead) {
         xiaFirmwareSetHead = next;
-
     } else {
-
         prev->next = next;
     }
 
@@ -965,87 +842,71 @@ HANDEL_EXPORT int HANDEL_API xiaRemoveFirmware(char *alias)
     return status;
 }
 
-
 /*
  * This routine returns the entry of the Firmware linked list that matches
- * the alias.  If NULL is returned, then no match was found.
+ * the alias. If NULL is returned, then no match was found.
  */
-HANDEL_SHARED FirmwareSet* HANDEL_API xiaFindFirmware(char *alias)
-{
+HANDEL_SHARED FirmwareSet* HANDEL_API xiaFindFirmware(char* alias) {
     unsigned int i;
 
     char strtemp[MAXALIAS_LEN];
 
-    FirmwareSet *current = NULL;
-
+    FirmwareSet* current = NULL;
 
     /* Turn the alias into lower case version, and terminate with a null char */
-    for (i = 0; i < (unsigned int)strlen(alias); i++)
-    {
-        strtemp[i] = (char)tolower((int)alias[i]);
+    for (i = 0; i < (unsigned int) strlen(alias); i++) {
+        strtemp[i] = (char) tolower((int) alias[i]);
     }
     strtemp[strlen(alias)] = '\0';
 
     /* First check if this alias exists already? */
-    current= xiaFirmwareSetHead;
-    while (current != NULL)
-    {
+    current = xiaFirmwareSetHead;
+    while (current != NULL) {
         /* If the alias matches, return a pointer to the detector */
-        if (STREQ(strtemp, current->alias))
-        {
+        if (STREQ(strtemp, current->alias)) {
             return current;
         }
-
         current = current->next;
     }
 
     return NULL;
 }
 
-
 /*
  * Searches the Firmware LL and returns TRUE if the specified PTTR already
  * is in the list.
  */
-HANDEL_STATIC boolean_t HANDEL_API xiaIsPTRRFree(Firmware *firmware, unsigned short pttr)
-{
-    while (firmware != NULL)
-    {
-        if (firmware->ptrr == pttr)
-        {
+HANDEL_STATIC boolean_t HANDEL_API xiaIsPTRRFree(Firmware* firmware,
+                                                 unsigned short pttr) {
+    while (firmware != NULL) {
+        if (firmware->ptrr == pttr) {
             return FALSE_;
         }
-
         firmware = firmware->next;
     }
 
     return TRUE_;
 }
 
-
 /*
  * Returns the head of the FirmwareSet LL
  */
-HANDEL_SHARED FirmwareSet* HANDEL_API xiaGetFirmwareSetHead(void)
-{
+HANDEL_SHARED FirmwareSet* HANDEL_API xiaGetFirmwareSetHead(void) {
     return xiaFirmwareSetHead;
 }
 
 /*
  * This routine returns the number of firmware in a Firmware LL
  */
-HANDEL_SHARED int HANDEL_API xiaGetNumFirmware(Firmware *firmware)
-{
+HANDEL_SHARED int HANDEL_API xiaGetNumFirmware(Firmware* firmware) {
     int numFirm;
 
-    Firmware *current = NULL;
-
+    Firmware* current = NULL;
 
     current = firmware;
     numFirm = 0;
 
-    while (current != NULL)
-    {
+    while (current != NULL) {
         numFirm++;
         current = current->next;
     }
@@ -1053,28 +914,20 @@ HANDEL_SHARED int HANDEL_API xiaGetNumFirmware(Firmware *firmware)
     return numFirm;
 }
 
-
 /*
  * This routine compares two Firmware elements (actually, the min peaking time
  * value of each) and returns 1 if key1 > key2, 0 if key1 == key2, and -1 if
  * key1 < key2.
  */
-HANDEL_SHARED int xiaFirmComp(const void *key1, const void *key2)
-{
-    Firmware *key1_f = (Firmware *)key1;
-    Firmware *key2_f = (Firmware *)key2;
+HANDEL_SHARED int xiaFirmComp(const void* key1, const void* key2) {
+    Firmware* key1_f = (Firmware*) key1;
+    Firmware* key2_f = (Firmware*) key2;
 
-
-    if (key1_f->min_ptime > key2_f->min_ptime)
-    {
+    if (key1_f->min_ptime > key2_f->min_ptime) {
         return 1;
-
     } else if (key1_f->min_ptime == key2_f->min_ptime) {
-
         return 0;
-
     } else if (key1_f->min_ptime < key2_f->min_ptime) {
-
         return -1;
     }
 
@@ -1082,23 +935,19 @@ HANDEL_SHARED int xiaFirmComp(const void *key1, const void *key2)
     return 0;
 }
 
-
 /*
  * This routine returns the name of the dsp code associated with the alias
  * and peakingTime.
  */
-HANDEL_SHARED int HANDEL_API xiaGetDSPNameFromFirmware(char *alias, double peakingTime, char *dspName)
-{
-    FirmwareSet *current = NULL;
-
-    Firmware *firmware = NULL;
+HANDEL_SHARED int HANDEL_API xiaGetDSPNameFromFirmware(char* alias, double peakingTime,
+                                                       char* dspName) {
+    FirmwareSet* current = NULL;
+    Firmware* firmware = NULL;
 
     int status;
 
-
     current = xiaFindFirmware(alias);
-    if (current == NULL)
-    {
+    if (current == NULL) {
         status = XIA_NO_ALIAS;
         sprintf(info_string, "Unable to find firmware %s", alias);
         xiaLogError("xiaGetDSPNameFromFirmware", info_string, status);
@@ -1106,11 +955,9 @@ HANDEL_SHARED int HANDEL_API xiaGetDSPNameFromFirmware(char *alias, double peaki
     }
 
     firmware = current->firmware;
-    while (firmware != NULL)
-    {
+    while (firmware != NULL) {
         if ((peakingTime >= firmware->min_ptime) &&
-                (peakingTime <= firmware->max_ptime))
-        {
+            (peakingTime <= firmware->max_ptime)) {
             strcpy(dspName, firmware->dsp);
             return XIA_SUCCESS;
         }
@@ -1119,28 +966,26 @@ HANDEL_SHARED int HANDEL_API xiaGetDSPNameFromFirmware(char *alias, double peaki
     }
 
     status = XIA_BAD_VALUE;
-    sprintf(info_string, "peakingTime %f does not match any of the PTRRs in %s", peakingTime, alias);
+    sprintf(info_string, "peakingTime %f does not match any of the PTRRs in %s",
+            peakingTime, alias);
     xiaLogError("xiaGetDSPNameFromFirmware", info_string, status);
     return status;
 }
-
 
 /*
  * This returns the name of the FiPPI code associated with the alias and
  * peaking time.
  */
-HANDEL_SHARED int HANDEL_API xiaGetFippiNameFromFirmware(char *alias, double peakingTime, char *fippiName)
-{
-    FirmwareSet *current = NULL;
-
-    Firmware *firmware = NULL;
+HANDEL_SHARED int HANDEL_API xiaGetFippiNameFromFirmware(char* alias,
+                                                         double peakingTime,
+                                                         char* fippiName) {
+    FirmwareSet* current = NULL;
+    Firmware* firmware = NULL;
 
     int status;
 
-
     current = xiaFindFirmware(alias);
-    if (current == NULL)
-    {
+    if (current == NULL) {
         status = XIA_NO_ALIAS;
         sprintf(info_string, "Unable to find firmware %s", alias);
         xiaLogError("xiaGetFippiNameFromFirmware", info_string, status);
@@ -1149,11 +994,9 @@ HANDEL_SHARED int HANDEL_API xiaGetFippiNameFromFirmware(char *alias, double pea
 
     firmware = current->firmware;
 
-    while (firmware != NULL)
-    {
+    while (firmware != NULL) {
         if ((peakingTime >= firmware->min_ptime) &&
-                (peakingTime <= firmware->max_ptime))
-        {
+            (peakingTime <= firmware->max_ptime)) {
             strcpy(fippiName, firmware->fippi);
             return XIA_SUCCESS;
         }
@@ -1162,39 +1005,33 @@ HANDEL_SHARED int HANDEL_API xiaGetFippiNameFromFirmware(char *alias, double pea
     }
 
     status = XIA_BAD_VALUE;
-    sprintf(info_string, "peakingTime %f does not match any of the PTRRs in %s", peakingTime, alias);
+    sprintf(info_string, "peakingTime %f does not match any of the PTRRs in %s",
+            peakingTime, alias);
     xiaLogError("xiaGetFippiNameFromFirmware", info_string, status);
     return status;
 }
-
 
 /*
  * This routine looks to replace the get*FromFirmware() routines by using
  * a generic search based on peakingTime.
  */
-HANDEL_SHARED int HANDEL_API xiaGetValueFromFirmware(char *alias, double peakingTime, char *name, char *value)
-{
+HANDEL_SHARED int HANDEL_API xiaGetValueFromFirmware(char* alias, double peakingTime,
+                                                     char* name, char* value) {
     int status;
 
-    FirmwareSet *current = NULL;
-
-    Firmware *firmware = NULL;
-
+    FirmwareSet* current = NULL;
+    Firmware* firmware = NULL;
 
     current = xiaFindFirmware(alias);
-    if (current == NULL)
-    {
+    if (current == NULL) {
         status = XIA_NO_ALIAS;
         sprintf(info_string, "Unable to find firmware %s", alias);
         xiaLogError("xiaGetValueFromFirmware", info_string, status);
         return status;
     }
 
-
-    if (STREQ(name, "mmu"))
-    {
-        if (current->mmu == NULL)
-        {
+    if (STREQ(name, "mmu")) {
+        if (current->mmu == NULL) {
             status = XIA_BAD_VALUE;
             xiaLogError("xiaGetValueFromFirmware", "MMU is NULL", status);
             return status;
@@ -1204,30 +1041,21 @@ HANDEL_SHARED int HANDEL_API xiaGetValueFromFirmware(char *alias, double peaking
         return XIA_SUCCESS;
     }
 
-    /* Hacky way of dealing with the
+    /*
+     * Hacky way of dealing with the
      * special uDXP FiPPI types.
      */
-    if (STREQ(name, "fippi0") ||
-            STREQ(name, "fippi1") ||
-            STREQ(name, "fippi2"))
-    {
+    if (STREQ(name, "fippi0") || STREQ(name, "fippi1") || STREQ(name, "fippi2")) {
         strcpy(value, name);
         return XIA_SUCCESS;
     }
 
-
-
-
     firmware = current->firmware;
-    while (firmware != NULL)
-    {
+    while (firmware != NULL) {
         if ((peakingTime >= firmware->min_ptime) &&
-                (peakingTime <= firmware->max_ptime))
-        {
-            if (STREQ(name, "fippi"))
-            {
-                if (firmware->fippi == NULL)
-                {
+            (peakingTime <= firmware->max_ptime)) {
+            if (STREQ(name, "fippi")) {
+                if (firmware->fippi == NULL) {
                     status = XIA_BAD_VALUE;
                     xiaLogError("xiaGetValueFromFirmware", "FiPPI is NULL", status);
                     return status;
@@ -1236,24 +1064,19 @@ HANDEL_SHARED int HANDEL_API xiaGetValueFromFirmware(char *alias, double peaking
                 strcpy(value, firmware->fippi);
 
                 return XIA_SUCCESS;
-
             } else if (STREQ(name, "user_fippi")) {
-
-                if (firmware->user_fippi == NULL)
-                {
+                if (firmware->user_fippi == NULL) {
                     status = XIA_BAD_VALUE;
-                    xiaLogError("xiaGetValueFromFirmware", "User FiPPI is NULL", status);
+                    xiaLogError("xiaGetValueFromFirmware", "User FiPPI is NULL",
+                                status);
                     return status;
                 }
 
                 strcpy(value, firmware->user_fippi);
 
                 return XIA_SUCCESS;
-
             } else if (STREQ(name, "dsp")) {
-
-                if (firmware->dsp == NULL)
-                {
+                if (firmware->dsp == NULL) {
                     status = XIA_BAD_VALUE;
                     xiaLogError("xiaGetValueFromFirmware", "DSP is NULL", status);
                     return status;
@@ -1262,20 +1085,14 @@ HANDEL_SHARED int HANDEL_API xiaGetValueFromFirmware(char *alias, double peaking
                 strcpy(value, firmware->dsp);
 
                 return XIA_SUCCESS;
-
             } else if (STREQ(name, "user_dsp")) {
-
-                if (firmware->user_dsp == NULL)
-                {
+                if (firmware->user_dsp == NULL) {
                     status = XIA_BAD_VALUE;
                     xiaLogError("xiaGetValueFromFirmware", "User DSP is NULL", status);
                     return status;
                 }
-
                 strcpy(value, firmware->user_dsp);
-
                 return XIA_SUCCESS;
-
             }
         }
 

@@ -23,26 +23,23 @@
 #include "handel_errors.h"
 #include "md_generic.h"
 
-
 static void CHECK_ERROR(int status);
 static void print_usage(void);
-static void start_system(char *ini_file);
-static void setup_logging(char *log_name);
+static void start_system(char* ini_file);
+static void setup_logging(char* log_name);
 static void clean_up();
 static void INThandler(int sig);
 
-unsigned long *mca = NULL;
+unsigned long* mca = NULL;
 boolean_t stop = FALSE_;
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char* argv[]) {
     int status;
     int i;
 
-    byte_t send[32] = {0x1B, 0xCC, 0x1B, 0x00, 0x00, 0x01, 0x02, 0x03,
-                       0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B,
-                       0x0C, 0x0D, 0x0E, 0x0F, 0x00, 0x01, 0x02, 0x03,
-                       0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0xDC};
+    byte_t send[32] = {0x1B, 0xCC, 0x1B, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
+                       0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x00, 0x01,
+                       0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0xDC};
 
     int send_len = sizeof(send) / sizeof(send[0]);
 
@@ -61,12 +58,13 @@ int main(int argc, char *argv[])
     setup_logging("handel.log");
     start_system(argv[1]);
 
-    printf("Passthrough for microDxp, sending %d, receiving %d.\n",
-            send_len, receive_len);
+    printf("Passthrough for microDxp, sending %d, receiving %d.\n", send_len,
+           receive_len);
     printf("Send (0x)\n");
     for (i = 0; i < send_len; i++) {
         printf("%02X ", send[i]);
-        if ((i + 1) % 16 == 0) printf("\n");
+        if ((i + 1) % 16 == 0)
+            printf("\n");
     }
 
     status = xiaBoardOperation(0, "passthrough", value);
@@ -79,7 +77,8 @@ int main(int argc, char *argv[])
     printf("Response (0x)\n");
     for (i = 0; i < receive_len; i++) {
         printf("%02X ", receive[i]);
-        if ((i + 1) % 16 == 0) printf("\n");
+        if ((i + 1) % 16 == 0)
+            printf("\n");
     }
     printf("\n");
 
@@ -87,14 +86,12 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-static void INThandler(int sig)
-{
+static void INThandler(int sig) {
     UNUSED(sig);
     stop = TRUE_;
 }
 
-static void start_system(char *ini_file)
-{
+static void start_system(char* ini_file) {
     int status;
 
     printf("Loading the .ini file.\n");
@@ -107,46 +104,40 @@ static void start_system(char *ini_file)
     CHECK_ERROR(status);
 }
 
-static void setup_logging(char *log_name)
-{
+static void setup_logging(char* log_name) {
     printf("Configuring the log file in %s.\n", log_name);
     xiaSetLogLevel(MD_DEBUG);
     xiaSetLogOutput(log_name);
 }
 
-static void clean_up()
-{
+static void clean_up() {
     printf("\nCleaning up Handel.\n");
     xiaExit();
 
     printf("Closing the Handel log file.\n");
     xiaCloseLog();
 
-    if (mca) free(mca);
+    if (mca)
+        free(mca);
 }
-
 
 /*
  * This is just an example of how to handle error values.  A program
  * of any reasonable size should implement a more robust error
  * handling mechanism.
  */
-static void CHECK_ERROR(int status)
-{
+static void CHECK_ERROR(int status) {
     /* XIA_SUCCESS is defined in handel_errors.h */
     if (status != XIA_SUCCESS) {
-        printf("Error encountered! Status = %d, %s\n", status,
-            xiaGetErrorText(status));
+        printf("Error encountered! Status = %d, %s\n", status, xiaGetErrorText(status));
         clean_up();
         exit(status);
     }
 }
 
-static void print_usage(void)
-{
+static void print_usage(void) {
     fprintf(stdout, "\n");
     fprintf(stdout, "* argument: [.ini file]\n");
     fprintf(stdout, "\n");
     return;
 }
-

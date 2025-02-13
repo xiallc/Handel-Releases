@@ -45,23 +45,24 @@
 XIA_MD_SHARED int dxp_md_enable_log(void);
 XIA_MD_SHARED int dxp_md_suppress_log(void);
 XIA_MD_SHARED int dxp_md_set_log_level(int level);
-XIA_MD_SHARED void dxp_md_log(int level, const char *routine, const char *message,
-                           int error, const char *file, int line);
-XIA_MD_SHARED void dxp_md_output(const char *filename);
+XIA_MD_SHARED void dxp_md_log(int level, const char* routine, const char* message,
+                              int error, const char* file, int line);
+XIA_MD_SHARED void dxp_md_output(const char* filename);
 
 XIA_MD_SHARED void dxp_md_error(const char* routine, const char* message,
-                                int* error_code, const char *file, int line);
-XIA_MD_SHARED void dxp_md_warning(const char *routine, const char *message,
-                                  const char *file, int line);
-XIA_MD_SHARED void dxp_md_info(const char *routine, const char *message,
-                               const char *file, int line);
-XIA_MD_SHARED void dxp_md_debug(const char *routine, const char *message,
-                                const char *file, int line);
+                                int* error_code, const char* file, int line);
+XIA_MD_SHARED void dxp_md_warning(const char* routine, const char* message,
+                                  const char* file, int line);
+XIA_MD_SHARED void dxp_md_info(const char* routine, const char* message,
+                               const char* file, int line);
+XIA_MD_SHARED void dxp_md_debug(const char* routine, const char* message,
+                                const char* file, int line);
 
 /* Generic logging macros for use outside of context of XERXES */
-#define dxp_md_log_error(x, y, z)	dxp_md_log(MD_ERROR,   (x), (y), (z), __FILE__, __LINE__)
-#define dxp_md_log_warning(x, y)	dxp_md_log(MD_WARNING, (x), (y), 0,   __FILE__, __LINE__)
-#define dxp_md_log_info(x, y)		dxp_md_log(MD_INFO,    (x), (y), 0,   __FILE__, __LINE__)
-#define dxp_md_log_debug(x, y)		dxp_md_log(MD_DEBUG,   (x), (y), 0,   __FILE__, __LINE__)
+#define dxp_md_log_error(x, y, z)                                                      \
+    dxp_md_log(MD_ERROR, (x), (y), (z), __FILE__, __LINE__)
+#define dxp_md_log_warning(x, y) dxp_md_log(MD_WARNING, (x), (y), 0, __FILE__, __LINE__)
+#define dxp_md_log_info(x, y) dxp_md_log(MD_INFO, (x), (y), 0, __FILE__, __LINE__)
+#define dxp_md_log_debug(x, y) dxp_md_log(MD_DEBUG, (x), (y), 0, __FILE__, __LINE__)
 
 #endif /* MD_SHIM_H */

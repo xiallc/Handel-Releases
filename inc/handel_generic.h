@@ -34,7 +34,6 @@
  * SUCH DAMAGE.
  */
 
-
 #ifndef HANDEL_GENERIC_H
 #define HANDEL_GENERIC_H
 
@@ -44,21 +43,22 @@
 #include "xia_common.h"
 
 /* Define some maximum lengths for strings and arrays */
-#define MAXALIAS_LEN		  200
-#define MAXFILENAME_LEN		  200
-#define MAXITEM_LEN		      200
-#define MAX_PATH_LEN          1024
+#define MAXALIAS_LEN 200
+#define MAXFILENAME_LEN 200
+#define MAXITEM_LEN 200
+#define MAX_PATH_LEN 1024
 
-/* This is a little sketchy right now. I only added it to provide _some_
+/*
+ * This is a little sketchy right now. I only added it to provide _some_
  * mechanism for verifying the gain info. at the PSL layer. Should probably
  * remove it and come up with a better way...
  */
-#define XIA_GAIN_MIN		0.0
-#define XIA_GAIN_MAX		9999.99
+#define XIA_GAIN_MIN 0.0
+#define XIA_GAIN_MAX 9999.99
 
 /* XiaDaqEntry states */
-#define AV_STATE_UNKNOWN  0x01
+#define AV_STATE_UNKNOWN 0x01
 #define AV_STATE_MODIFIED 0x02
-#define AV_STATE_SYNCD    0x04
+#define AV_STATE_SYNCD 0x04
 
 #endif /* HANDEL_GENERIC_H */

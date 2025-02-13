@@ -10,8 +10,10 @@ if sample_code_env.Bit('xmap'):
 
 if sample_code_env.Bit('udxp'):
     sample_code_env.Program('hqsg-microdxp', ['microdxp/hqsg-microdxp.c'])
-    sample_code_env.Program('hqsg-microdxp-snapshot', ['microdxp/hqsg-microdxp-snapshot.c'])
-    sample_code_env.Program('hqsg-microdxp-passthrough', ['microdxp/hqsg-microdxp-passthrough.c'])
+    sample_code_env.Program('hqsg-microdxp-snapshot',
+                            ['microdxp/hqsg-microdxp-snapshot.c'])
+    sample_code_env.Program('hqsg-microdxp-passthrough',
+                            ['microdxp/hqsg-microdxp-passthrough.c'])
     sample_code_env.Program('hqsg-microdxp-vega', ['microdxp/hqsg-microdxp-vega.c'])
 
 if sample_code_env.Bit('saturn'):

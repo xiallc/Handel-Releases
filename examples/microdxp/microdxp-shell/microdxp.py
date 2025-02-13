@@ -21,6 +21,16 @@ limitations under the License.
 
 """
 
+MAX_MCA_SNAPSHOT_SIZE = 4096
+
+PRESET_RUN_TYPES = {
+    'none': 0.,
+    'real': 1.,
+    'live': 2.,
+    'event': 3.,
+    'trigger': 4.
+}
+
 
 class LedPayload(ctypes.Structure):
     _fields_ = [
@@ -28,6 +38,23 @@ class LedPayload(ctypes.Structure):
         ("enable", ctypes.c_char),
         ("period", ctypes.c_char * 2),
         ("width", ctypes.c_char * 2),
+    ]
+
+
+class McaStats(ctypes.Structure):
+    """
+    MCA statistics object obtained from the module_statistics_2 run data.
+    """
+    _fields_ = [
+        ("run_time", ctypes.c_double),
+        ("trigger_livetime", ctypes.c_double),
+        ("energy_livetime", ctypes.c_double),
+        ("triggers", ctypes.c_double),
+        ("events", ctypes.c_double),
+        ("icr", ctypes.c_double),
+        ("ocr", ctypes.c_double),
+        ("underflows", ctypes.c_double),
+        ("overflows", ctypes.c_double)
     ]
 
 

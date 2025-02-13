@@ -34,7 +34,6 @@
  * SUCH DAMAGE.
  */
 
-
 #ifndef XIA_FDD_H
 #define XIA_FDD_H
 
@@ -58,20 +57,23 @@ extern "C" {
  */
 FDD_IMPORT int FDD_API xiaFddInitialize(void);
 FDD_IMPORT int FDD_API xiaFddInitLibrary(void);
-FDD_IMPORT int FDD_API xiaFddGetFirmware(const char *filename, char *path,
-                                           const char *ftype,
-                                           double pt, unsigned int nother,
-                                           char **others,
-                                           const char *detectorType,
-                                           const char *newfilename,
-										   const char *rawFilename);
-FDD_IMPORT int FDD_API xiaFddGetNumFilter(const char *filename, double peakingTime, unsigned int nKey,
-					  char **keywords, unsigned short *numFilter);
-FDD_IMPORT int FDD_API xiaFddGetFilterInfo(const char *filename, double peakingTime, unsigned int nKey,
-                              const char **keywords, double *ptMin, double *ptMax, parameter_t *filterInfo);
-FDD_IMPORT int FDD_API xiaFddGetAndCacheFirmware(FirmwareSet *fs,
-					const char *ftype, double pt, char *detType, char *file, char *rawFile);
-#else									/* Begin old style C prototypes */
+FDD_IMPORT int FDD_API xiaFddGetFirmware(const char* filename, char* path,
+                                         const char* ftype, double pt,
+                                         unsigned int nother, char** others,
+                                         const char* detectorType,
+                                         const char* newfilename,
+                                         const char* rawFilename);
+FDD_IMPORT int FDD_API xiaFddGetNumFilter(const char* filename, double peakingTime,
+                                          unsigned int nKey, char** keywords,
+                                          unsigned short* numFilter);
+FDD_IMPORT int FDD_API xiaFddGetFilterInfo(const char* filename, double peakingTime,
+                                           unsigned int nKey, const char** keywords,
+                                           double* ptMin, double* ptMax,
+                                           parameter_t* filterInfo);
+FDD_IMPORT int FDD_API xiaFddGetAndCacheFirmware(FirmwareSet* fs, const char* ftype,
+                                                 double pt, char* detType, char* file,
+                                                 char* rawFile);
+#else /* Begin old style C prototypes */
 /*
  * following are internal prototypes for fdd.c routines
  */
@@ -81,11 +83,11 @@ FDD_IMPORT int FDD_API xiaFddGetFirmware();
 FDD_IMPORT int FDD_API xiaFddGetNumFilter();
 FDD_IMPORT int FDD_API xiaFddGetFilterInfo();
 FDD_IMPORT int FDD_API xiaFddGetAndCacheFirmware();
-#endif                                  /*   end if _FDD_PROTO_ */
+#endif /*   end if _FDD_PROTO_ */
 
 /* If this is compiled by a C++ compiler, make it clear that these are C routines */
 #ifdef __cplusplus
 }
 #endif
 
-#endif						/* Endif for XIA_FDD_H */
+#endif /* Endif for XIA_FDD_H */

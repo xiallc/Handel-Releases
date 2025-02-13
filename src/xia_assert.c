@@ -48,12 +48,9 @@
 
 #include "xia_assert.h"
 
-
-void _Assert(char *file, unsigned line)
-{
+void _Assert(char* file, unsigned line) {
     fflush(NULL);
-    fprintf(stderr, "\nAssertion failed: %s, line %u\n",
-            file, line);
+    fprintf(stderr, "\nAssertion failed: %s, line %u\n", file, line);
     fflush(stderr);
     abort();
 }

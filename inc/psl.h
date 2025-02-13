@@ -34,29 +34,28 @@
  * SUCH DAMAGE.
  */
 
-
 #ifndef PSL_H
 #define PSL_H
 
 #include "psldef.h"
 
 #ifndef EXCLUDE_SATURN
-PSL_IMPORT int PSL_API saturn_PSLInit(PSLFuncs *funcs);
+PSL_IMPORT int PSL_API saturn_PSLInit(PSLFuncs* funcs);
 #endif /* EXCLUDE_SATURN */
 #ifndef EXCLUDE_UDXPS
-PSL_IMPORT int PSL_API udxps_PSLInit(PSLFuncs *funcs);
+PSL_IMPORT int PSL_API udxps_PSLInit(PSLFuncs* funcs);
 #endif /* EXCLUDE_UDXPS */
 #ifndef EXCLUDE_UDXP
-PSL_IMPORT int PSL_API udxp_PSLInit(PSLFuncs *funcs);
+PSL_IMPORT int PSL_API udxp_PSLInit(PSLFuncs* funcs);
 #endif /* EXCLUDE_UDXP */
 #ifndef EXCLUDE_XMAP
-PSL_IMPORT int PSL_API xmap_PSLInit(PSLFuncs *funcs);
+PSL_IMPORT int PSL_API xmap_PSLInit(PSLFuncs* funcs);
 #endif /* EXCLUDE_XMAP */
 #ifndef EXCLUDE_STJ
-PSL_IMPORT int PSL_API stj_PSLInit(PSLFuncs *funcs);
+PSL_IMPORT int PSL_API stj_PSLInit(PSLFuncs* funcs);
 #endif /* EXCLUDE_STJ */
 #ifndef EXCLUDE_MERCURY
-PSL_IMPORT int PSL_API mercury_PSLInit(PSLFuncs *funcs);
+PSL_IMPORT int PSL_API mercury_PSLInit(PSLFuncs* funcs);
 #endif /* EXCLUDE_MERCURY */
 
 #endif /* PSL_H */

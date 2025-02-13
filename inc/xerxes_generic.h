@@ -34,20 +34,17 @@
  * SUCH DAMAGE.
  */
 
-
 #ifndef XERXES_GENERIC_H
 #define XERXES_GENERIC_H
-
 
 /* GLOBAL constants needed by both xia_xerxes.h and xerxes.h */
 
 #define ALLCHAN -1
 
-#define MAXSYM              500
-#define MAXFILENAME_LEN     200
-#define MAXDXP				100		/* Maximum number of DXP modules in system */
-#define MAXBOARDNAME_LEN	 20
+#define MAXSYM 500
+#define MAXFILENAME_LEN 200
+#define MAXDXP 100 /* Maximum number of DXP modules in system */
+#define MAXBOARDNAME_LEN 20
 #define MAX_DSP_PARAM_NAME_LEN 30
 
-
-#endif						/* Endif for XERXES_GENERIC_H */
+#endif /* Endif for XERXES_GENERIC_H */

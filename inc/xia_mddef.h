@@ -33,10 +33,8 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- *
  *    Following are prototypes for dxp driver routines
  */
-
 
 #ifndef XIA_MDDEF_H
 #define XIA_MDDEF_H
@@ -49,8 +47,7 @@
 
 #define XIA_MD_SHARED
 
-
-#ifdef XIA_MD_USE_DLL		/* Linking to a DLL libraries */
+#ifdef XIA_MD_USE_DLL /* Linking to a DLL libraries */
 
 #ifdef _WIN32
 
@@ -58,71 +55,71 @@
 #define XIA_MD_EXPORT __declspec(dllexport)
 #define XIA_MD_IMPORT __declspec(dllimport)
 #define XIA_MD_API
-#else					/* Then we are making a static link library */
-#define XIA_MD_EXPORT 	
+#else /* Then we are making a static link library */
+#define XIA_MD_EXPORT
 #define XIA_MD_IMPORT __declspec(dllimport)
 #define XIA_MD_API
-#endif					/* Endif for XIA_MD_MAKE_DLL */
+#endif /* Endif for XIA_MD_MAKE_DLL */
 
-#else		
+#else
 
 #ifdef XIA_MD_MAKE_DLL
-#define XIA_MD_EXPORT 
+#define XIA_MD_EXPORT
 #define XIA_MD_IMPORT extern
 #define XIA_MD_API
-#else					/* Then we are making a static link library */
-#define XIA_MD_EXPORT 	
+#else /* Then we are making a static link library */
+#define XIA_MD_EXPORT
 #define XIA_MD_IMPORT extern
 #define XIA_MD_API
-#endif					/* Endif for XIA_MD_MAKE_DLL */
+#endif /* Endif for XIA_MD_MAKE_DLL */
 
-#endif					/* Endif for _WIN32 */
+#endif /* Endif for _WIN32 */
 
-#else					/* We are using static libraries */
+#else /* We are using static libraries */
 
-#ifdef _WIN32	
+#ifdef _WIN32
 
 #ifdef XIA_MD_MAKE_DLL
 #define XIA_MD_EXPORT __declspec(dllexport)
 #define XIA_MD_IMPORT extern
 #define XIA_MD_API
-#else					/* Then we are making a static link library */
-#define XIA_MD_EXPORT 	
+#else /* Then we are making a static link library */
+#define XIA_MD_EXPORT
 #define XIA_MD_IMPORT extern
 #define XIA_MD_API
-#endif					/* Endif for XIA_MD_MAKE_DLL */
+#endif /* Endif for XIA_MD_MAKE_DLL */
 
 #else
 
 #ifdef XIA_MD_MAKE_DLL
-#define XIA_MD_EXPORT 
+#define XIA_MD_EXPORT
 #define XIA_MD_IMPORT extern
 #define XIA_MD_API
-#else					/* Then we are making a static link library */
-#define XIA_MD_EXPORT 	
+#else /* Then we are making a static link library */
+#define XIA_MD_EXPORT
 #define XIA_MD_IMPORT extern
 #define XIA_MD_API
-#endif					/* Endif for XIA_MD_MAKE_DLL */
+#endif /* Endif for XIA_MD_MAKE_DLL */
 
-#endif					/* Endif for _WIN32 */
+#endif /* Endif for _WIN32 */
 
-#endif					/* Endif for XIA_MD_USE_DLL */
+#endif /* Endif for XIA_MD_USE_DLL */
 
-#endif					/* Endif for XIA_MD_DXP_DLL_DEFINED */
+#endif /* Endif for XIA_MD_DXP_DLL_DEFINED */
 
 #ifndef _DXP_SWITCH_
 #define _DXP_SWITCH_ 1
 
 #ifdef __STDC__
-#define _DXP_PROTO_  1
-#endif                /* end of __STDC__    */
+#define _DXP_PROTO_ 1
+#endif /* end of __STDC__    */
 
 #ifdef _MSC_VER
 #ifndef _DXP_PROTO_
-#define _DXP_PROTO_  1
+#define _DXP_PROTO_ 1
 #endif
-#endif                /* end of _MSC_VER    */
+#endif /* end of _MSC_VER    */
 
-#endif               /* end of _DXP_SWITCH_*/
+#endif /* end of _DXP_SWITCH_*/
 
-#endif				 /* Endif for XIA_MDDEF_H */
+#endif /* Endif for XIA_MDDEF_H */

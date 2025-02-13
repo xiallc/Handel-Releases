@@ -48,12 +48,11 @@ extern "C" {
 #endif /* __cplusplus */
 
 #ifdef _DXP_PROTO_ /* ANSI C Prototypes go here */
-XIA_MD_EXPORT int XIA_MD_API dxp_md_init_util(Xia_Util_Functions *funcs, char *type);
-XIA_MD_EXPORT int XIA_MD_API dxp_md_init_io(Xia_Io_Functions *funcs, char *type);
+XIA_MD_EXPORT int XIA_MD_API dxp_md_init_util(Xia_Util_Functions* funcs, char* type);
+XIA_MD_EXPORT int XIA_MD_API dxp_md_init_io(Xia_Io_Functions* funcs, char* type);
 
-XIA_MD_SHARED void XIA_MD_API *dxp_md_alloc(size_t);
-XIA_MD_SHARED void XIA_MD_API dxp_md_free(void *);
-
+XIA_MD_SHARED void XIA_MD_API* dxp_md_alloc(size_t);
+XIA_MD_SHARED void XIA_MD_API dxp_md_free(void*);
 
 #else /* _DXP_PROTO_ */
 
@@ -67,7 +66,6 @@ XIA_MD_EXPORT int XIA_MD_API dxp_md_init_io();
 #endif /* __cplusplus */
 
 DXP_MD_ALLOC md_md_alloc;
-DXP_MD_FREE  md_md_free;
-
+DXP_MD_FREE md_md_free;
 
 #endif /* XIA_MD_H */

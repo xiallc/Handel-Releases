@@ -1,0 +1,2 @@
+PyYAML
+SCons==4.4.0

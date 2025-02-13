@@ -45,7 +45,6 @@
 
 #include "Dlldefs.h"
 
-
 #define CTRL_SIZE 5
 
 #ifdef __linux__
@@ -60,30 +59,27 @@
 #define OUT4 3
 #endif /* __linux__ */
 
-
 /* Few definitions shamelessly copied from ezusbsys.h provided by Cypress */
 
-#define Ezusb_IOCTL_INDEX  0x0800
+#define Ezusb_IOCTL_INDEX 0x0800
 
-typedef struct _BULK_TRANSFER_CONTROL
-{
-  ULONG pipeNum;
+typedef struct _BULK_TRANSFER_CONTROL {
+    ULONG pipeNum;
 } BULK_TRANSFER_CONTROL, *PBULK_TRANSFER_CONTROL;
 
 /*
  * Perform an IN transfer over the specified bulk or interrupt pipe.
  *
- *lpInBuffer: BULK_TRANSFER_CONTROL stucture specifying the pipe number to read from
- *nInBufferSize: sizeof(BULK_TRANSFER_CONTROL)
- *lpOutBuffer: Buffer to hold data read from the device.
- *nOutputBufferSize: size of lpOutBuffer.  This parameter determines
- *   the size of the USB transfer.
- *lpBytesReturned: actual number of bytes read
+ * lpInBuffer: BULK_TRANSFER_CONTROL stucture specifying the pipe number to read from
+ * nInBufferSize: sizeof(BULK_TRANSFER_CONTROL)
+ * lpOutBuffer: Buffer to hold data read from the device.
+ * nOutputBufferSize: size of lpOutBuffer.  This parameter determines
+ *    the size of the USB transfer.
+ * lpBytesReturned: actual number of bytes read
  */
-#define IOCTL_EZUSB_BULK_READ             CTL_CODE(FILE_DEVICE_UNKNOWN,  \
-                                                   Ezusb_IOCTL_INDEX+19,\
-                                                   METHOD_OUT_DIRECT,  \
-                                                   FILE_ANY_ACCESS)
+#define IOCTL_EZUSB_BULK_READ                                                          \
+    CTL_CODE(FILE_DEVICE_UNKNOWN, Ezusb_IOCTL_INDEX + 19, METHOD_OUT_DIRECT,           \
+             FILE_ANY_ACCESS)
 
 /*
  * Perform an OUT transfer over the specified bulk or interrupt pipe.
@@ -95,19 +91,16 @@ typedef struct _BULK_TRANSFER_CONTROL
  *    the size of the USB transfer.
  * lpBytesReturned: actual number of bytes written
  */
-#define IOCTL_EZUSB_BULK_WRITE            CTL_CODE(FILE_DEVICE_UNKNOWN,  \
-                                                   Ezusb_IOCTL_INDEX+20,\
-                                                   METHOD_IN_DIRECT,  \
-                                                   FILE_ANY_ACCESS)
-
+#define IOCTL_EZUSB_BULK_WRITE                                                         \
+    CTL_CODE(FILE_DEVICE_UNKNOWN, Ezusb_IOCTL_INDEX + 20, METHOD_IN_DIRECT,            \
+             FILE_ANY_ACCESS)
 
 /* Function Prototypes */
 XIA_EXPORT int XIA_API xia_usb_close(HANDLE hDevice);
-XIA_EXPORT int XIA_API xia_usb_open(char *device, HANDLE *hDevice);
-XIA_EXPORT int XIA_API xia_usb_read(long address, long nWords, char *device,
-                                    unsigned short *buffer);
-XIA_EXPORT int XIA_API xia_usb_write(long address, long nWords, char *device,
-                                     unsigned short *buffer);
-
+XIA_EXPORT int XIA_API xia_usb_open(char* device, HANDLE* hDevice);
+XIA_EXPORT int XIA_API xia_usb_read(long address, long nWords, char* device,
+                                    unsigned short* buffer);
+XIA_EXPORT int XIA_API xia_usb_write(long address, long nWords, char* device,
+                                     unsigned short* buffer);
 
 #endif /* __USBLIB_H__ */

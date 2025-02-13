@@ -36,7 +36,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 #include "xia_mddef.h"
 #include "xia_assert.h"
 
@@ -49,16 +48,15 @@
 #include "xerxes_io.h"
 
 /* Import the necessary MD routine here */
-XIA_MD_IMPORT int XIA_MD_API dxp_md_init_util(Xia_Util_Functions *funcs, char *type);
-
+XIA_MD_IMPORT int XIA_MD_API dxp_md_init_util(Xia_Util_Functions* funcs, char* type);
 
 #ifdef XERXES_TRACE_IO
 static char INFO_STRING[INFO_LEN];
 #endif
 
-#define MD_IO_READ  0
+#define MD_IO_READ 0
 #define MD_IO_WRITE 1
-#define MD_IO_OPEN  2
+#define MD_IO_OPEN 2
 #define MD_IO_CLOSE 3
 
 /*
@@ -67,49 +65,48 @@ static char INFO_STRING[INFO_LEN];
  * directly.
  */
 
-
 /*
  * Performs MD IO using interface functions contained in the given
  * Board. This provides a single point of control to do IO tracing for any
  * device and any MD implementation.
  */
-XERXES_SHARED int dxp_md_io(Board *board, unsigned int function,
-                            unsigned long addr, void *data, unsigned int len)
-{
-
+XERXES_SHARED int dxp_md_io(Board* board, unsigned int function, unsigned long addr,
+                            void* data, unsigned int len) {
     Xia_Util_Functions funcs;
 
     int status;
 
     dxp_md_init_util(&funcs, NULL);
-    status = board->iface->funcs->dxp_md_io(&board->ioChan, &function, &addr, data, &len);
+    status =
+        board->iface->funcs->dxp_md_io(&board->ioChan, &function, &addr, data, &len);
 
 #ifdef XERXES_TRACE_IO
 
     /* Don't bother tracing e.g. usb2 address caching. */
     if (len > 0) {
-        unsigned short *buf = (unsigned short *)data;
+        unsigned short* buf = (unsigned short*) data;
         unsigned int i;
         char op = function == MD_IO_READ ? 'R' : 'W';
-        char *pos = INFO_STRING;
+        char* pos = INFO_STRING;
 
-        pos += sprintf(pos, "%s %c ch%d [0x%08X..%lu]",
-                       board->iface->dllname, op, board->ioChan, addr, len * 2);
+        pos += sprintf(pos, "%s %c ch%d [0x%08X..%lu]", board->iface->dllname, op,
+                       board->ioChan, addr, len * 2);
 
         if (status != DXP_SUCCESS) {
             pos += sprintf(pos, " [%d]", status);
-            funcs.dxp_md_log(MD_ERROR, "dxp_md_usb2_io", INFO_STRING, 0, __FILE__, __LINE__);
+            funcs.dxp_md_log(MD_ERROR, "dxp_md_usb2_io", INFO_STRING, 0, __FILE__,
+                             __LINE__);
         } else {
-            pos += sprintf(pos, "%s %c ch%d [0x%08X..%lu]",
-                           board->iface->dllname, op, board->ioChan, addr, len * 2);
+            pos += sprintf(pos, "%s %c ch%d [0x%08X..%lu]", board->iface->dllname, op,
+                           board->ioChan, addr, len * 2);
 
             for (i = 0; i < len && strlen(INFO_STRING) < sizeof(INFO_STRING) - 7; i++) {
-                pos += sprintf(pos, " %02X %02X",
-                               (byte_t)(buf[i] & 0xFF),
-                               (byte_t)((buf[i] >> 8) & 0xFF));
+                pos += sprintf(pos, " %02X %02X", (byte_t) (buf[i] & 0xFF),
+                               (byte_t) ((buf[i] >> 8) & 0xFF));
             }
 
-            funcs.dxp_md_log(MD_INFO, "dxp_md_usb2_io", INFO_STRING, 0, __FILE__, __LINE__);
+            funcs.dxp_md_log(MD_INFO, "dxp_md_usb2_io", INFO_STRING, 0, __FILE__,
+                             __LINE__);
         }
     }
 #endif

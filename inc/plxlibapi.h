@@ -53,31 +53,26 @@
 #pragma warning(default : 4214)
 #endif /* _WIN32 */
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-  XIA_IMPORT void XIA_API plx_print_error(int err, char *errorstring);
-  XIA_IMPORT int XIA_API plx_open_slot(unsigned short dev_id, byte_t bus,
-									   byte_t slot, HANDLE *h);
-  XIA_IMPORT int XIA_API plx_close_slot(HANDLE h);
-  XIA_IMPORT int XIA_API plx_read_long(HANDLE h, unsigned long addr,
-									   unsigned long *data);
-  XIA_IMPORT int XIA_API plx_write_long(HANDLE h, unsigned long addr,
-										unsigned long data);
-  XIA_IMPORT int XIA_API plx_read_block(HANDLE h, unsigned long addr,
-										unsigned long len, unsigned long n_dead,
-										unsigned long *data);
+XIA_IMPORT void XIA_API plx_print_error(int err, char* errorstring);
+XIA_IMPORT int XIA_API plx_open_slot(unsigned short dev_id, byte_t bus, byte_t slot,
+                                     HANDLE* h);
+XIA_IMPORT int XIA_API plx_close_slot(HANDLE h);
+XIA_IMPORT int XIA_API plx_read_long(HANDLE h, unsigned long addr, unsigned long* data);
+XIA_IMPORT int XIA_API plx_write_long(HANDLE h, unsigned long addr, unsigned long data);
+XIA_IMPORT int XIA_API plx_read_block(HANDLE h, unsigned long addr, unsigned long len,
+                                      unsigned long n_dead, unsigned long* data);
 
 #ifdef PLXLIB_DEBUG
-  XIA_IMPORT void XIA_API plx_set_file_DEBUG(char *f);
-  XIA_IMPORT void XIA_API plx_dump_vmap_DEBUG(void);
+XIA_IMPORT void XIA_API plx_set_file_DEBUG(char* f);
+XIA_IMPORT void XIA_API plx_dump_vmap_DEBUG(void);
 #endif
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif /* __PLXAPILIB_H__ */

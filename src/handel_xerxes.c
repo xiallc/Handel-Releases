@@ -34,7 +34,6 @@
  * SUCH DAMAGE.
  */
 
-
 #include <stdio.h>
 #include <limits.h>
 
@@ -53,89 +52,80 @@
 
 #include "fdd.h"
 
+HANDEL_STATIC int xia__GetSystemFPGAName(Module* module, char* detType,
+                                         char* sysFPGAName, char* rawFilename,
+                                         boolean_t* found);
+HANDEL_STATIC int xia__GetSystemDSPName(Module* module, char* detType, char* sysDSPName,
+                                        char* rawFilename, boolean_t* found);
+HANDEL_STATIC int xia__GetDSPName(Module* module, int channel, double peakingTime,
+                                  char* dspName, char* detectorType, char* rawFilename);
+HANDEL_STATIC int xia__GetFiPPIAName(Module* module, char* detType, char* sysDSPName,
+                                     char* rawFilename, boolean_t* found);
+HANDEL_STATIC int xia__GetFiPPIName(Module* module, int channel, double peakingTime,
+                                    char* fippiName, char* detectorType,
+                                    char* rawFilename, boolean_t* found);
+HANDEL_STATIC int xia__GetSystemFiPPIName(Module* module, char* detType,
+                                          char* sysFipName, char* rawFilename,
+                                          boolean_t* found);
 
-HANDEL_STATIC int xia__GetSystemFPGAName(Module *module, char *detType,
-                                         char *sysFPGAName, char *rawFilename,
-                                         boolean_t *found);
-HANDEL_STATIC int xia__GetSystemDSPName(Module *module, char *detType,
-                                        char *sysDSPName, char *rawFilename,
-                                        boolean_t *found);
-HANDEL_STATIC int xia__GetDSPName(Module *module, int channel,
-                                  double peakingTime, char *dspName,
-                                  char *detectorType, char *rawFilename);
-HANDEL_STATIC int xia__GetFiPPIAName(Module *module, char *detType,
-                                     char *sysDSPName, char *rawFilename,
-                                     boolean_t *found);
-HANDEL_STATIC int xia__GetFiPPIName(Module *module, int channel,
-                                    double peakingTime, char *fippiName,
-                                    char *detectorType, char *rawFilename,
-                                     boolean_t *found);
-HANDEL_STATIC int xia__GetSystemFiPPIName(Module *module, char *detType,
-                                          char *sysFipName, char *rawFilename,
-                                          boolean_t *found);
-
-
-HANDEL_STATIC int xia__CopyInterfString(Module *m, char *interf);
-HANDEL_STATIC int xia__CopyMDString(Module *m, char *md);
-HANDEL_STATIC int xia__CopyChanString(Module *m, char *chan);
+HANDEL_STATIC int xia__CopyInterfString(Module* m, char* interf);
+HANDEL_STATIC int xia__CopyMDString(Module* m, char* md);
+HANDEL_STATIC int xia__CopyChanString(Module* m, char* chan);
 
 HANDEL_STATIC int xia__AddXerxesSysItems(void);
-HANDEL_STATIC int xia__AddXerxesBoardType(Module *m);
-HANDEL_STATIC int xia__AddXerxesInterface(Module *m);
-HANDEL_STATIC int xia__AddXerxesModule(Module *m);
+HANDEL_STATIC int xia__AddXerxesBoardType(Module* m);
+HANDEL_STATIC int xia__AddXerxesInterface(Module* m);
+HANDEL_STATIC int xia__AddXerxesModule(Module* m);
 
-HANDEL_STATIC int xia__AddSystemFPGA(Module *module, char *sysFPGAName,
-                                     char *rawFilename);
-HANDEL_STATIC int xia__AddSystemDSP(Module *module, char *sysDSPName,
-                                    char *rawFilename);
-HANDEL_STATIC int xia__AddFiPPIA(Module *module, char *sysDSPName,
-                                 char *rawFilename);
-HANDEL_STATIC int xia__AddSystemFiPPI(Module *module, char *sysFipName,
-                                      char *rawFilename);
+HANDEL_STATIC int xia__AddSystemFPGA(Module* module, char* sysFPGAName,
+                                     char* rawFilename);
+HANDEL_STATIC int xia__AddSystemDSP(Module* module, char* sysDSPName,
+                                    char* rawFilename);
+HANDEL_STATIC int xia__AddFiPPIA(Module* module, char* sysDSPName, char* rawFilename);
+HANDEL_STATIC int xia__AddSystemFiPPI(Module* module, char* sysFipName,
+                                      char* rawFilename);
 
-HANDEL_STATIC int xia__DoMMUConfig(Module *m);
-HANDEL_STATIC int xia__DoSystemFPGA(Module *m);
-HANDEL_STATIC int xia__DoSystemDSP(Module *m, boolean_t *found);
-HANDEL_STATIC int xia__DoDSP(Module *m);
-HANDEL_STATIC int xia__DoFiPPIA(Module *m, boolean_t *found);
-HANDEL_STATIC int xia__DoFiPPI(Module *m, boolean_t *found);
-HANDEL_STATIC int xia__DoSystemFiPPI(Module *m, boolean_t *found);
+HANDEL_STATIC int xia__DoMMUConfig(Module* m);
+HANDEL_STATIC int xia__DoSystemFPGA(Module* m);
+HANDEL_STATIC int xia__DoSystemDSP(Module* m, boolean_t* found);
+HANDEL_STATIC int xia__DoDSP(Module* m);
+HANDEL_STATIC int xia__DoFiPPIA(Module* m, boolean_t* found);
+HANDEL_STATIC int xia__DoFiPPI(Module* m, boolean_t* found);
+HANDEL_STATIC int xia__DoSystemFiPPI(Module* m, boolean_t* found);
 
-HANDEL_STATIC int xia__GetDetStringFromDetChan(int detChan, Module *m,
-                                               char *type);
-HANDEL_STATIC int xia__SetupSingleChan(Module *module, unsigned int detChan,
-                                       PSLFuncs *localFuncs);
-
+HANDEL_STATIC int xia__GetDetStringFromDetChan(int detChan, Module* m, char* type);
+HANDEL_STATIC int xia__SetupSingleChan(Module* module, unsigned int detChan,
+                                       PSLFuncs* localFuncs);
 
 /*
  * This routine calls XerXes routines in order to build a proper XerXes
  * configuration based on the HanDeL information.
  */
-HANDEL_SHARED int HANDEL_API xiaBuildXerxesConfig(void)
-{
-
+HANDEL_SHARED int HANDEL_API xiaBuildXerxesConfig(void) {
     int status;
 
     boolean_t found;
     boolean_t isSysFip;
 
-    Module *current = NULL;
-
+    Module* current = NULL;
 
     status = dxp_init_ds();
 
     if (status != DXP_SUCCESS) {
-        xiaLogError("xiaBuildXerxesConfig", "Error initializing Xerxes internal "
-                    "data structures", status);
+        xiaLogError("xiaBuildXerxesConfig",
+                    "Error initializing Xerxes internal "
+                    "data structures",
+                    status);
         return status;
     }
-
 
     status = xia__AddXerxesSysItems();
 
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaBuildXerxesConfig", "Error adding system items to Xerxes "
-                    "configuration", status);
+        xiaLogError("xiaBuildXerxesConfig",
+                    "Error adding system items to Xerxes "
+                    "configuration",
+                    status);
         return status;
     }
 
@@ -143,7 +133,6 @@ HANDEL_SHARED int HANDEL_API xiaBuildXerxesConfig(void)
     current = xiaGetModuleHead();
 
     while (current != NULL) {
-
         status = xia__AddXerxesBoardType(current);
 
         if (status != XIA_SUCCESS) {
@@ -171,8 +160,9 @@ HANDEL_SHARED int HANDEL_API xiaBuildXerxesConfig(void)
             return status;
         }
 
-        /* This section begins the firmware configuration area. Not all firmwares
-         * are required for each product, but we check to see what is available
+        /*
+         * This section begins the firmware configuration area. Not all firmwares
+         * are required for each product, but we check to see what is available,
          * and we add it to the configuration if it is found.
          */
 
@@ -211,7 +201,8 @@ HANDEL_SHARED int HANDEL_API xiaBuildXerxesConfig(void)
             return status;
         }
 
-        /* If we didn't find a system DSP then we assume that the hardware supports
+        /*
+         * If we didn't find a system DSP then we assume that the hardware supports
          * a single DSP for each channel.
          */
         if (!found && !isSysFip) {
@@ -251,51 +242,50 @@ HANDEL_SHARED int HANDEL_API xiaBuildXerxesConfig(void)
     return XIA_SUCCESS;
 }
 
-
 /*
  * Essentially a wrapper around dxp_user_setup().
  */
-HANDEL_SHARED int HANDEL_API xiaUserSetup(void)
-{
-
+HANDEL_SHARED int HANDEL_API xiaUserSetup(void) {
     int status;
 
     unsigned int i;
     int detChanInModule;
 
-    DetChanElement *chan = NULL;
+    DetChanElement* chan = NULL;
 
-    Module *module = NULL;
+    Module* module = NULL;
 
     PSLFuncs localFuncs;
 
-    XiaDefaults *defaults = NULL;
+    XiaDefaults* defaults = NULL;
 
     status = dxp_user_setup();
 
     if (status != DXP_SUCCESS) {
-        xiaLogError("xiaUserSetup", "Error downloading firmware via Xerxes.",
-                    status);
+        xiaLogError("xiaUserSetup", "Error downloading firmware via Xerxes.", status);
         return status;
     }
 
     module = xiaGetModuleHead();
     ASSERT(module);
 
-    /* The user setup function is iterated on modules first
+    /*
+     * The user setup function is iterated on modules first
      * this will allow insertion of per-module setup calls
      */
     while (module != NULL) {
-
-        /* Clear the isSetup flag which will be toggled after the first channel
+        /*
+         * Clear the isSetup flag which will be toggled after the first channel
          * in the module is set up.
          */
         module->isSetup = FALSE_;
         status = xiaLoadPSL(module->type, &localFuncs);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Unable to load PSL funcs for "
-                    "module type %s.", module->type);
+            sprintf(info_string,
+                    "Unable to load PSL funcs for "
+                    "module type %s.",
+                    module->type);
             xiaLogError("xiaUserSetup", info_string, status);
             return status;
         }
@@ -304,24 +294,24 @@ HANDEL_SHARED int HANDEL_API xiaUserSetup(void)
         chan = xiaGetDetChanHead();
 
         while (chan != NULL) {
-
-            if (xiaGetElemType(chan->detChan) == SINGLE
-                    && STREQ(chan->data.modAlias, module->alias)) {
-
+            if (xiaGetElemType(chan->detChan) == SINGLE &&
+                STREQ(chan->data.modAlias, module->alias)) {
                 status = xia__SetupSingleChan(module, chan->detChan, &localFuncs);
 
                 if (status != XIA_SUCCESS) {
-                    sprintf(info_string, "Unable to set up channel %u for "
-                            "module alias %s.", chan->detChan, module->alias);
+                    sprintf(info_string,
+                            "Unable to set up channel %u for "
+                            "module alias %s.",
+                            chan->detChan, module->alias);
                     xiaLogError("xiaUserSetup", info_string, status);
                     return status;
                 }
             }
-
             chan = getListNext(chan);
         }
 
-        /* Module level setup function, need a detChan for the user functions
+        /*
+         * Module level setup function, need a detChan for the user functions
          * we could just use the first active channel in the module
          */
         for (i = 0; i < module->number_of_channels; i++) {
@@ -354,30 +344,28 @@ HANDEL_SHARED int HANDEL_API xiaUserSetup(void)
     return XIA_SUCCESS;
 }
 
-
 /*
  * Set up a single channel in given module
  */
-HANDEL_STATIC int xia__SetupSingleChan(Module *module, unsigned int detChan,
-                                       PSLFuncs *localFuncs)
-{
+HANDEL_STATIC int xia__SetupSingleChan(Module* module, unsigned int detChan,
+                                       PSLFuncs* localFuncs) {
     int status;
 
     int detector_chan;
     unsigned int modChan;
 
-    char *detAlias;
-    char *firmAlias;
+    char* detAlias;
+    char* firmAlias;
 
     char detectorType[MAXITEM_LEN];
 
-    FirmwareSet *firmwareSet = NULL;
+    FirmwareSet* firmwareSet = NULL;
 
-    CurrentFirmware *currentFirmware = NULL;
+    CurrentFirmware* currentFirmware = NULL;
 
-    Detector *detector = NULL;
+    Detector* detector = NULL;
 
-    XiaDefaults *defaults = NULL;
+    XiaDefaults* defaults = NULL;
 
     ASSERT(module != NULL);
     ASSERT(localFuncs != NULL);
@@ -385,39 +373,38 @@ HANDEL_STATIC int xia__SetupSingleChan(Module *module, unsigned int detChan,
     modChan = xiaGetModChan(detChan);
     ASSERT(modChan < module->number_of_channels);
 
-    firmAlias         = module->firmware[modChan];
-    firmwareSet       = xiaFindFirmware(firmAlias);
-    detAlias          = module->detector[modChan];
-    detector_chan     = module->detector_chan[modChan];
-    detector          = xiaFindDetector(detAlias);
-    currentFirmware   = &module->currentFirmware[modChan];
-    defaults          = xiaGetDefaultFromDetChan(detChan);
+    firmAlias = module->firmware[modChan];
+    firmwareSet = xiaFindFirmware(firmAlias);
+    detAlias = module->detector[modChan];
+    detector_chan = module->detector_chan[modChan];
+    detector = xiaFindDetector(detAlias);
+    currentFirmware = &module->currentFirmware[modChan];
+    defaults = xiaGetDefaultFromDetChan(detChan);
 
     switch (detector->type) {
-    case XIA_DET_RESET:
-        strncpy(detectorType, "RESET", sizeof(detectorType));
-        break;
-
-    case XIA_DET_RCFEED:
-        strncpy(detectorType, "RC", sizeof(detectorType));
-        break;
-
-    default:
-    case XIA_DET_UNKNOWN:
-        sprintf(info_string, "No detector type specified for detChan %u.", detChan);
-        xiaLogError("xia__SetupSingleChan", info_string, XIA_MISSING_TYPE);
-        return XIA_MISSING_TYPE;
-        break;
+        case XIA_DET_RESET:
+            strncpy(detectorType, "RESET", sizeof(detectorType));
+            break;
+        case XIA_DET_RCFEED:
+            strncpy(detectorType, "RC", sizeof(detectorType));
+            break;
+        default:
+        case XIA_DET_UNKNOWN:
+            sprintf(info_string, "No detector type specified for detChan %u.", detChan);
+            xiaLogError("xia__SetupSingleChan", info_string, XIA_MISSING_TYPE);
+            return XIA_MISSING_TYPE;
+            break;
     }
 
-    status = localFuncs->userSetup(detChan, defaults,
-                                   firmwareSet, currentFirmware,
-                                   detectorType, detector, detector_chan,
-                                   module, modChan);
+    status =
+        localFuncs->userSetup(detChan, defaults, firmwareSet, currentFirmware,
+                              detectorType, detector, detector_chan, module, modChan);
 
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Unable to complete user setup for "
-                "detChan %u.", detChan);
+        sprintf(info_string,
+                "Unable to complete user setup for "
+                "detChan %u.",
+                detChan);
         xiaLogError("xia__SetupSingleChan", info_string, status);
         return status;
     }
@@ -429,8 +416,10 @@ HANDEL_STATIC int xia__SetupSingleChan(Module *module, unsigned int detChan,
     status = xiaUpdateUserParams(detChan);
 
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Unable to update user parameters for "
-                "detChan %u.", detChan);
+        sprintf(info_string,
+                "Unable to update user parameters for "
+                "detChan %u.",
+                detChan);
         xiaLogError("xia__SetupSingleChan", info_string, status);
         return status;
     }
@@ -438,147 +427,129 @@ HANDEL_STATIC int xia__SetupSingleChan(Module *module, unsigned int detChan,
     return XIA_SUCCESS;
 }
 
-
 /*
- * Copy the interface specfic information into the target string.
+ * Copy the interface specific information into the target string.
  *
  * Assumes that interf has already been allocated to the proper size. This
- * routine is meant to encapsulate all of the product-specific logic in it.
+ * routine is meant to encapsulate all the product-specific logic in it.
  */
-HANDEL_STATIC int xia__CopyInterfString(Module *m, char *interf)
-{
-    ASSERT(m      != NULL);
+HANDEL_STATIC int xia__CopyInterfString(Module* m, char* interf) {
+    ASSERT(m != NULL);
     ASSERT(interf != NULL);
 
-
     switch (m->interface_info->type) {
-    case XIA_INTERFACE_NONE:
-    default:
-        sprintf(info_string, "No interface string specified for alias '%s'",
-                m->alias);
-        xiaLogError("xia__CopyInterfString", info_string, XIA_MISSING_INTERFACE);
-        return XIA_MISSING_INTERFACE;
-        break;
-
+        case XIA_INTERFACE_NONE:
+        default:
+            sprintf(info_string, "No interface string specified for alias '%s'",
+                    m->alias);
+            xiaLogError("xia__CopyInterfString", info_string, XIA_MISSING_INTERFACE);
+            return XIA_MISSING_INTERFACE;
+            break;
 
 #ifndef EXCLUDE_EPP
-    case XIA_EPP:
-    case XIA_GENERIC_EPP:
-        sprintf(interf, "%#x", m->interface_info->info.epp->epp_address);
-        break;
+        case XIA_EPP:
+        case XIA_GENERIC_EPP:
+            sprintf(interf, "%#x", m->interface_info->info.epp->epp_address);
+            break;
 #endif /* EXCLUDE_EPP */
 
 #ifndef EXCLUDE_USB
-    case XIA_USB:
-        sprintf(interf, "%u", m->interface_info->info.usb->device_number);
-        break;
+        case XIA_USB:
+            sprintf(interf, "%u", m->interface_info->info.usb->device_number);
+            break;
 #endif /* EXCLUDE_USB */
 
 #ifndef EXCLUDE_USB2
-    case XIA_USB2:
-        sprintf(interf, "%u", m->interface_info->info.usb2->device_number);
-        break;
+        case XIA_USB2:
+            sprintf(interf, "%u", m->interface_info->info.usb2->device_number);
+            break;
 #endif /* EXCLUDE_USB2 */
 
 #ifndef EXCLUDE_SERIAL
-    case XIA_SERIAL:
-        if (m->interface_info->info.serial->device_file) {
-            sprintf(interf, "%s", m->interface_info->info.serial->device_file);
-        }
-        else {
-            sprintf(interf, "COM%u", m->interface_info->info.serial->com_port);
-        }
-        break;
+        case XIA_SERIAL:
+            if (m->interface_info->info.serial->device_file) {
+                sprintf(interf, "%s", m->interface_info->info.serial->device_file);
+            } else {
+                sprintf(interf, "COM%u", m->interface_info->info.serial->com_port);
+            }
+            break;
 #endif /* EXCLUDE_SERIAL */
 
 #ifndef EXCLUDE_PLX
-    case XIA_PLX:
-        sprintf(interf, "pxi");
-        break;
+        case XIA_PLX:
+            sprintf(interf, "pxi");
+            break;
 #endif /* EXCLUDE_PLX */
-
     }
 
     return XIA_SUCCESS;
 }
-
 
 /*
  * Builds the MD string required by Xerxes.
  *
  * Assumes that md has already been allocated. This routine is meant to
- * encapsulate all of the hardware specific logic for building the MD string.
+ * encapsulate all the hardware specific logic for building the MD string.
  */
-HANDEL_STATIC int xia__CopyMDString(Module *m, char *md)
-{
+HANDEL_STATIC int xia__CopyMDString(Module* m, char* md) {
     UNUSED(md);
     ASSERT(m != NULL);
     ASSERT(md != NULL);
 
-
     switch (m->interface_info->type) {
-    case XIA_INTERFACE_NONE:
-    default:
-        sprintf(info_string, "No interface string specified for alias '%s'",
-                m->alias);
-        xiaLogError("xia__CopyMDString", info_string, XIA_MISSING_INTERFACE);
-        return XIA_MISSING_INTERFACE;
-        break;
+        case XIA_INTERFACE_NONE:
+        default:
+            sprintf(info_string, "No interface string specified for alias '%s'",
+                    m->alias);
+            xiaLogError("xia__CopyMDString", info_string, XIA_MISSING_INTERFACE);
+            return XIA_MISSING_INTERFACE;
+            break;
 
 #ifndef EXCLUDE_EPP
-    case XIA_EPP:
-    case XIA_GENERIC_EPP:
-        /* If default then dont change anything, else tack on a : in front
-         * of the string (tells XerXes to
-         * treat this as a multi-module EPP chain
-         */
-        if (m->interface_info->info.epp->daisy_chain_id == UINT_MAX) {
-            sprintf(md, "0");
-        } else {
-            sprintf(md, ":%u", m->interface_info->info.epp->daisy_chain_id);
-        }
-        break;
+        case XIA_EPP:
+        case XIA_GENERIC_EPP:
+            /* If default then don't change anything, else tack on a : in front
+             * of the string (tells XerXes to
+             * treat this as a multi-module EPP chain
+             */
+            if (m->interface_info->info.epp->daisy_chain_id == UINT_MAX) {
+                sprintf(md, "0");
+            } else {
+                sprintf(md, ":%u", m->interface_info->info.epp->daisy_chain_id);
+            }
+            break;
 #endif /* EXCLUDE_EPP */
-
 #ifndef EXCLUDE_USB
-    case XIA_USB:
-        sprintf(md, "%u", m->interface_info->info.usb->device_number);
-        break;
+        case XIA_USB:
+            sprintf(md, "%u", m->interface_info->info.usb->device_number);
+            break;
 #endif /* EXCLUDE_USB */
-
 #ifndef EXCLUDE_USB2
-    case XIA_USB2:
-        sprintf(md, "%u", m->interface_info->info.usb2->device_number);
-        break;
+        case XIA_USB2:
+            sprintf(md, "%u", m->interface_info->info.usb2->device_number);
+            break;
 #endif /* EXCLUDE_USB2 */
-
 #ifndef EXCLUDE_SERIAL
-    case XIA_SERIAL:
-        if (m->interface_info->info.serial->device_file) {
-            sprintf(md, "%s:%u", m->interface_info->info.serial->device_file,
-                    m->interface_info->info.serial->baud_rate);
-        }
-        else {
-            sprintf(md, "%u:%u", m->interface_info->info.serial->com_port,
-                    m->interface_info->info.serial->baud_rate);
-        }
-        break;
+        case XIA_SERIAL:
+            if (m->interface_info->info.serial->device_file) {
+                sprintf(md, "%s:%u", m->interface_info->info.serial->device_file,
+                        m->interface_info->info.serial->baud_rate);
+            } else {
+                sprintf(md, "%u:%u", m->interface_info->info.serial->com_port,
+                        m->interface_info->info.serial->baud_rate);
+            }
+            break;
 #endif /* EXCLUDE_SERIAL */
-
 #ifndef EXCLUDE_PLX
-    case XIA_PLX:
-        sprintf(md, "%u:%u", m->interface_info->info.plx->bus,
-                m->interface_info->info.plx->slot);
-        break;
-
+        case XIA_PLX:
+            sprintf(md, "%u:%u", m->interface_info->info.plx->bus,
+                    m->interface_info->info.plx->slot);
+            break;
 #endif /* EXCLUDE_PLX */
-
-
     }
 
     return XIA_SUCCESS;
 }
-
 
 /*
  * Get the DSP name for the specified channel.
@@ -587,37 +558,37 @@ HANDEL_STATIC int xia__CopyMDString(Module *m, char *md)
  * Structure. Otherwise, the DSP code is retrieved from the FDD file using
  * the FDD library.
  */
-HANDEL_STATIC int xia__GetDSPName(Module *module, int channel,
-                                  double peakingTime, char *dspName,
-                                  char *detectorType, char *rawFilename)
-{
-    char *firmAlias;
+HANDEL_STATIC int xia__GetDSPName(Module* module, int channel, double peakingTime,
+                                  char* dspName, char* detectorType,
+                                  char* rawFilename) {
+    char* firmAlias;
     int status;
 
-    FirmwareSet *firmwareSet = NULL;
+    FirmwareSet* firmwareSet = NULL;
 
-
-    firmAlias   = module->firmware[channel];
+    firmAlias = module->firmware[channel];
     firmwareSet = xiaFindFirmware(firmAlias);
 
     if (firmwareSet->filename == NULL) {
         status = xiaGetDSPNameFromFirmware(firmAlias, peakingTime, dspName);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error getting DSP code for firmware %s @ "
-                    "peaking time = %f", firmAlias, peakingTime);
+            sprintf(info_string,
+                    "Error getting DSP code for firmware %s @ "
+                    "peaking time = %f",
+                    firmAlias, peakingTime);
             xiaLogError("xiaGetDSPName", info_string, status);
             return status;
         }
-
     } else {
-
         status = xiaFddGetAndCacheFirmware(firmwareSet, "dsp", peakingTime,
                                            detectorType, dspName, rawFilename);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error getting DSP code from FDD file %s @ "
-                    "peaking time = %f", firmwareSet->filename, peakingTime);
+            sprintf(info_string,
+                    "Error getting DSP code from FDD file %s @ "
+                    "peaking time = %f",
+                    firmwareSet->filename, peakingTime);
             xiaLogError("xiaGetDSPName", info_string, status);
             return status;
         }
@@ -626,20 +597,17 @@ HANDEL_STATIC int xia__GetDSPName(Module *module, int channel,
     return XIA_SUCCESS;
 }
 
-
 /*
  * Gets the FiPPI name from the firmware configuration.
  */
-HANDEL_STATIC int xia__GetFiPPIName(Module *module, int channel,
-                                    double peakingTime, char *fippiName,
-                                    char *detectorType, char *rawFilename,
-                                    boolean_t *found)
-{
-    char *firmAlias;
+HANDEL_STATIC int xia__GetFiPPIName(Module* module, int channel, double peakingTime,
+                                    char* fippiName, char* detectorType,
+                                    char* rawFilename, boolean_t* found) {
+    char* firmAlias;
 
     int status;
 
-    FirmwareSet *firmwareSet = NULL;
+    FirmwareSet* firmwareSet = NULL;
 
     firmAlias = module->firmware[channel];
 
@@ -647,29 +615,27 @@ HANDEL_STATIC int xia__GetFiPPIName(Module *module, int channel,
 
     *found = FALSE_;
 
-    if (firmwareSet->filename == NULL)
-    {
+    if (firmwareSet->filename == NULL) {
         status = xiaGetFippiNameFromFirmware(firmAlias, peakingTime, fippiName);
 
-        if (status != XIA_SUCCESS)
-        {
-            sprintf(info_string, "Error getting FiPPI code for firmware %s @ peaking time = %f", firmAlias, peakingTime);
+        if (status != XIA_SUCCESS) {
+            sprintf(info_string,
+                    "Error getting FiPPI code for firmware %s @ peaking time = %f",
+                    firmAlias, peakingTime);
             xiaLogError("xia__GetFiPPIName", info_string, status);
             return status;
         }
 
         /* I think that we need this! */
         strcpy(rawFilename, fippiName);
-
     } else {
-
         status = xiaFddGetAndCacheFirmware(firmwareSet, "fippi", peakingTime,
                                            detectorType, fippiName, rawFilename);
 
         /* This is not necessarily an error. We will still pass the error value
          * up to the top-level but only use an informational message. For products
          * without system_fpga defined in their FDD files this message will always
-         * appear and we don't want them to be confused by spurious ERRORs.
+         * appear, and we don't want them to be confused by spurious ERRORs.
          */
         if (status == XIA_FILEERR) {
             sprintf(info_string, "No fippi defined in %s", firmwareSet->filename);
@@ -679,9 +645,10 @@ HANDEL_STATIC int xia__GetFiPPIName(Module *module, int channel,
 
         *found = TRUE_;
 
-        if (status != XIA_SUCCESS)
-        {
-            sprintf(info_string, "Error getting FiPPI code from FDD file %s @ peaking time = %f", firmwareSet->filename, peakingTime);
+        if (status != XIA_SUCCESS) {
+            sprintf(info_string,
+                    "Error getting FiPPI code from FDD file %s @ peaking time = %f",
+                    firmwareSet->filename, peakingTime);
             xiaLogError("xia__GetFiPPIName", info_string, status);
             return status;
         }
@@ -690,24 +657,20 @@ HANDEL_STATIC int xia__GetFiPPIName(Module *module, int channel,
     return XIA_SUCCESS;
 }
 
-
 /*
  * Get the name of the MMU firmware, if it is defined.
  *
  * Returns status indicating if the MMU firmware was found or not.
  */
-HANDEL_STATIC int xia__GetMMUName(Module *m, int channel, char *mmuName,
-                                  char *rawFilename)
-{
-    char *firmAlias = NULL;
+HANDEL_STATIC int xia__GetMMUName(Module* m, int channel, char* mmuName,
+                                  char* rawFilename) {
+    char* firmAlias = NULL;
 
-    FirmwareSet *firmware = NULL;
-
+    FirmwareSet* firmware = NULL;
 
     ASSERT(m != NULL);
     ASSERT(m->firmware != NULL);
     ASSERT(m->firmware[channel] != NULL);
-
 
     firmAlias = m->firmware[channel];
 
@@ -715,14 +678,12 @@ HANDEL_STATIC int xia__GetMMUName(Module *m, int channel, char *mmuName,
     ASSERT(firmware != NULL);
 
     if (firmware->filename == NULL) {
-
         if (firmware->mmu == NULL) {
             return XIA_NO_MMU;
         }
 
         strcpy(mmuName, firmware->mmu);
         strcpy(rawFilename, firmware->mmu);
-
     } else {
         /* Do something with the FDD here */
         return XIA_NO_MMU;
@@ -731,25 +692,21 @@ HANDEL_STATIC int xia__GetMMUName(Module *m, int channel, char *mmuName,
     return XIA_SUCCESS;
 }
 
-
 /*
  * Adds a system FPGA to the Xerxes configuration.
  */
-HANDEL_STATIC int xia__AddSystemFPGA(Module *module, char *sysFPGAName,
-                                     char *rawFilename)
-{
+HANDEL_STATIC int xia__AddSystemFPGA(Module* module, char* sysFPGAName,
+                                     char* rawFilename) {
     int status;
 
-    char *sysFPGAStr[1];
+    char* sysFPGAStr[1];
 
     UNUSED(rawFilename);
     UNUSED(module);
 
-
     ASSERT(sysFPGAName != NULL);
 
-
-    sysFPGAStr[0] = (char *)handel_md_alloc(strlen(sysFPGAName) + 1);
+    sysFPGAStr[0] = (char*) handel_md_alloc(strlen(sysFPGAName) + 1);
 
     if (!sysFPGAStr[0]) {
         sprintf(info_string, "Unable to allocate %zu bytes for 'sysFPGAStr[0]'",
@@ -760,7 +717,7 @@ HANDEL_STATIC int xia__AddSystemFPGA(Module *module, char *sysFPGAName,
 
     strncpy(sysFPGAStr[0], sysFPGAName, strlen(sysFPGAName) + 1);
 
-    status = dxp_add_board_item("system_fpga", (char **)sysFPGAStr);
+    status = dxp_add_board_item("system_fpga", (char**) sysFPGAStr);
 
     handel_md_free(sysFPGAStr[0]);
 
@@ -773,7 +730,6 @@ HANDEL_STATIC int xia__AddSystemFPGA(Module *module, char *sysFPGAName,
     return XIA_SUCCESS;
 }
 
-
 /*
  * Retrieves the system FPGA name from the firmware, if it has
  * been defined.
@@ -784,7 +740,7 @@ HANDEL_STATIC int xia__AddSystemFPGA(Module *module, char *sysFPGAName,
  *
  * Future versions of this routine should also include calling
  * parameters for the length of sysFPGAName and rawFilename to prevent
- * buffer overflows from occuring.
+ * buffer overflows from occurring.
  *
  * The FDD file associates a peaking time range with each entry, but some
  * firmware types, such as the system FPGA, are global so we pass in a fake
@@ -793,23 +749,20 @@ HANDEL_STATIC int xia__AddSystemFPGA(Module *module, char *sysFPGAName,
  * The System FPGA is always assumed to be defined in the firmware for
  * channel 0 in the module.
  */
-HANDEL_STATIC int xia__GetSystemFPGAName(Module *module, char *detType,
-                                         char *sysFPGAName, char *rawFilename,
-                                         boolean_t *found)
-{
+HANDEL_STATIC int xia__GetSystemFPGAName(Module* module, char* detType,
+                                         char* sysFPGAName, char* rawFilename,
+                                         boolean_t* found) {
     int status;
 
     double fake_pt = 1.0;
 
-    FirmwareSet *fs = NULL;
-
+    FirmwareSet* fs = NULL;
 
     ASSERT(module != NULL);
     ASSERT(detType != NULL);
     ASSERT(sysFPGAName != NULL);
     ASSERT(rawFilename != NULL);
     ASSERT(found != NULL);
-
 
     *found = FALSE_;
 
@@ -822,13 +775,13 @@ HANDEL_STATIC int xia__GetSystemFPGAName(Module *module, char *detType,
         return XIA_NULL_FIRMWARE;
     }
 
-    status = xiaFddGetAndCacheFirmware(fs, "system_fpga", fake_pt,
-                                       detType, sysFPGAName, rawFilename);
+    status = xiaFddGetAndCacheFirmware(fs, "system_fpga", fake_pt, detType, sysFPGAName,
+                                       rawFilename);
 
     /* This is not necessarily an error. We will still pass the error value
      * up to the top-level but only use an informational message. For products
      * without system_fpga defined in their FDD files this message will always
-     * appear and we don't want them to be confused by spurious ERRORs.
+     * appear, and we don't want them to be confused by spurious ERRORs.
      */
     if (status == XIA_FILEERR) {
         sprintf(info_string, "No system_fpga defined in %s", fs->filename);
@@ -848,7 +801,6 @@ HANDEL_STATIC int xia__GetSystemFPGAName(Module *module, char *detType,
     return XIA_SUCCESS;
 }
 
-
 /*
  * Get the system DSP name from the FDD file, if either exists.
  *
@@ -858,7 +810,7 @@ HANDEL_STATIC int xia__GetSystemFPGAName(Module *module, char *detType,
  *
  * Future versions of this routine should also include calling parameters
  * for the length of sysDSPName and rawFilename to prevent buffer
- * overflows from occuring.
+ * overflows from occurring.
  *
  * XXX: This routine contains a hard-coded peaking time since most FDDs only
  * contain one DSP for the entire range of peaking times. This is a hack and
@@ -867,22 +819,18 @@ HANDEL_STATIC int xia__GetSystemFPGAName(Module *module, char *detType,
  * The System DSP is always assumed to be defined in the firmware for
  * channel 0 in the module.
  */
-HANDEL_STATIC int xia__GetSystemDSPName(Module *module, char *detType,
-                                        char *sysDSPName, char *rawFilename,
-                                        boolean_t *found)
-{
+HANDEL_STATIC int xia__GetSystemDSPName(Module* module, char* detType, char* sysDSPName,
+                                        char* rawFilename, boolean_t* found) {
     int status;
 
     double fake_pt = 1.0;
-    FirmwareSet *fs = NULL;
-
+    FirmwareSet* fs = NULL;
 
     ASSERT(module != NULL);
     ASSERT(detType != NULL);
     ASSERT(sysDSPName != NULL);
     ASSERT(rawFilename != NULL);
     ASSERT(found != NULL);
-
 
     *found = FALSE_;
 
@@ -895,14 +843,15 @@ HANDEL_STATIC int xia__GetSystemDSPName(Module *module, char *detType,
         return XIA_NULL_FIRMWARE;
     }
 
-    status = xiaFddGetAndCacheFirmware(fs, "system_dsp", fake_pt,
-                                       detType, sysDSPName, rawFilename);
+    status = xiaFddGetAndCacheFirmware(fs, "system_dsp", fake_pt, detType, sysDSPName,
+                                       rawFilename);
 
-    /* This is not necessarily an error. We will still pass the error value
-    * up to the top-level but only use an informational message. For products
-    * without system_dsp defined in their FDD files this message will always
-    * appear and we don't want them to be confused by spurious ERRORs.
-    */
+    /*
+     * This is not necessarily an error. We will still pass the error value
+     * up to the top-level but only use an informational message. For products
+     * without system_dsp defined in their FDD files this message will always
+     * appear, and we don't want them to be confused by spurious ERRORs.
+     */
     if (status == XIA_FILEERR) {
         sprintf(info_string, "No system_dsp defined in %s", fs->filename);
         xiaLogInfo("xia__GetSystemDSPName", info_string);
@@ -919,28 +868,23 @@ HANDEL_STATIC int xia__GetSystemDSPName(Module *module, char *detType,
     }
 
     return XIA_SUCCESS;
-
 }
-
 
 /*
  * Add the specified system DSP to the Xerxes configuration.
  */
-HANDEL_STATIC int xia__AddSystemDSP(Module *module, char *sysDSPName,
-                                    char *rawFilename)
-{
+HANDEL_STATIC int xia__AddSystemDSP(Module* module, char* sysDSPName,
+                                    char* rawFilename) {
     int status;
 
-    char *sysDSPStr[1];
+    char* sysDSPStr[1];
 
     UNUSED(rawFilename);
     UNUSED(module);
 
-
     ASSERT(sysDSPName != NULL);
 
-
-    sysDSPStr[0] = (char *)handel_md_alloc(strlen(sysDSPName) + 1);
+    sysDSPStr[0] = (char*) handel_md_alloc(strlen(sysDSPName) + 1);
 
     if (!sysDSPStr[0]) {
         sprintf(info_string, "Unable to allocate %zu bytes for 'sysDSPStr[0]'",
@@ -951,19 +895,17 @@ HANDEL_STATIC int xia__AddSystemDSP(Module *module, char *sysDSPName,
 
     strncpy(sysDSPStr[0], sysDSPName, strlen(sysDSPName) + 1);
 
-    status = dxp_add_board_item("system_dsp", (char **)sysDSPStr);
+    status = dxp_add_board_item("system_dsp", (char**) sysDSPStr);
 
     handel_md_free(sysDSPStr[0]);
 
     if (status != DXP_SUCCESS) {
-        xiaLogError("xiaAddSystemDSP", "Error adding 'system_dsp' board item",
-                    status);
+        xiaLogError("xiaAddSystemDSP", "Error adding 'system_dsp' board item", status);
         return status;
     }
 
     return XIA_SUCCESS;
 }
-
 
 /*
  * Get the FiPPI A name from the FDD file, if either exists.
@@ -974,28 +916,24 @@ HANDEL_STATIC int xia__AddSystemDSP(Module *module, char *sysDSPName,
  *
  * Future versions of this routine should also include calling parameters
  * for the length of sysFippiAName and rawFilename to prevent buffer
- * overflows from occuring.
+ * overflows from occurring.
  *
  * The Fippi A is always assumed to be defined in the firmware for
  * channel 0 in the module.
  */
-HANDEL_STATIC int xia__GetFiPPIAName(Module *module, char *detType,
-                                     char *sysFippiAName, char *rawFilename,
-                                     boolean_t *found)
-{
+HANDEL_STATIC int xia__GetFiPPIAName(Module* module, char* detType, char* sysFippiAName,
+                                     char* rawFilename, boolean_t* found) {
     int status;
 
     double fake_pt = 1.0;
 
-    FirmwareSet *fs = NULL;
-
+    FirmwareSet* fs = NULL;
 
     ASSERT(module != NULL);
     ASSERT(detType != NULL);
     ASSERT(sysFippiAName != NULL);
     ASSERT(rawFilename != NULL);
     ASSERT(found != NULL);
-
 
     *found = FALSE_;
 
@@ -1008,15 +946,15 @@ HANDEL_STATIC int xia__GetFiPPIAName(Module *module, char *detType,
         return XIA_NULL_FIRMWARE;
     }
 
-    status = xiaFddGetAndCacheFirmware(fs, "fippi_a", fake_pt,
-                                       detType, sysFippiAName, rawFilename);
+    status = xiaFddGetAndCacheFirmware(fs, "fippi_a", fake_pt, detType, sysFippiAName,
+                                       rawFilename);
 
-
-    /* This is not necessarily an error. We will still pass the error value
-    * up to the top-level but only use an informational message. For products
-    * without fippi_a defined in their FDD files this message will always
-    * appear and we don't want them to be confused by spurious ERRORs.
-    */
+    /*
+     * This is not necessarily an error. We will still pass the error value
+     * up to the top-level but only use an informational message. For products
+     * without fippi_a defined in their FDD files this message will always
+     * appear, and we don't want them to be confused by spurious ERRORs.
+     */
     if (status == XIA_FILEERR) {
         sprintf(info_string, "No fippi_a defined in %s", fs->filename);
         xiaLogInfo("xia__GetFiPPIAName", info_string);
@@ -1035,24 +973,21 @@ HANDEL_STATIC int xia__GetFiPPIAName(Module *module, char *detType,
     return XIA_SUCCESS;
 }
 
-
 /*
  * Add FiPPI A to the Xerxes configuration.
  */
-HANDEL_STATIC int xia__AddFiPPIA(Module *module, char *sysFippiAName,
-                                 char *rawFilename)
-{
+HANDEL_STATIC int xia__AddFiPPIA(Module* module, char* sysFippiAName,
+                                 char* rawFilename) {
     int status;
 
-    char *sysFippiAStr[1];
+    char* sysFippiAStr[1];
 
     UNUSED(rawFilename);
     UNUSED(module);
 
-
     ASSERT(sysFippiAName != NULL);
 
-    sysFippiAStr[0] = (char *)handel_md_alloc(strlen(sysFippiAName) + 1);
+    sysFippiAStr[0] = (char*) handel_md_alloc(strlen(sysFippiAName) + 1);
 
     if (!sysFippiAStr[0]) {
         sprintf(info_string, "Unable to allocate %zu bytes for 'sysFippiAStr[0]'",
@@ -1063,39 +998,35 @@ HANDEL_STATIC int xia__AddFiPPIA(Module *module, char *sysFippiAName,
 
     strncpy(sysFippiAStr[0], sysFippiAName, strlen(sysFippiAName) + 1);
 
-    status = dxp_add_board_item("fippi_a", (char **)sysFippiAStr);
+    status = dxp_add_board_item("fippi_a", (char**) sysFippiAStr);
 
     handel_md_free(sysFippiAStr[0]);
 
     if (status != DXP_SUCCESS) {
-        xiaLogError("xiaAddSystemFippiA", "Error adding 'fippi_a' board item",
-                    status);
+        xiaLogError("xiaAddSystemFippiA", "Error adding 'fippi_a' board item", status);
         return status;
     }
 
     return XIA_SUCCESS;
 }
 
-
 /*
- * Add all of the system items to the Xerxes configuration
+ * Add all the system items to the Xerxes configuration
  */
-HANDEL_STATIC int xia__AddXerxesSysItems(void)
-{
+HANDEL_STATIC int xia__AddXerxesSysItems(void) {
     unsigned long i;
     int status;
 
-
-    /* Xerxes requires us to add all of allowed/known board types to the
+    /*
+     * Xerxes requires us to add all of allowed/known board types to the
      * system. The list of known boards is controlled via preprocessor macros
      * passed in to the build. For more information, see the top-level Makefile.
      */
     for (i = 0; i < N_KNOWN_BOARDS; i++) {
-        status = dxp_add_system_item(BOARD_LIST[i], (char **)SYS_NULL);
+        status = dxp_add_system_item(BOARD_LIST[i], (char**) SYS_NULL);
 
         if (status != DXP_SUCCESS) {
-            sprintf(info_string, "Error adding Xerxes system item '%s'",
-                    BOARD_LIST[i]);
+            sprintf(info_string, "Error adding Xerxes system item '%s'", BOARD_LIST[i]);
             xiaLogError("xia__AddXerxesSysItems", info_string, status);
             return status;
         }
@@ -1104,30 +1035,26 @@ HANDEL_STATIC int xia__AddXerxesSysItems(void)
     return XIA_SUCCESS;
 }
 
-
 /*
  * Add the board type of the specified module to the Xerxes
  * configuration.
  */
-HANDEL_STATIC int xia__AddXerxesBoardType(Module *m)
-{
+HANDEL_STATIC int xia__AddXerxesBoardType(Module* m) {
     int status;
 
-    char **type = NULL;
-
+    char** type = NULL;
 
     ASSERT(m != NULL);
 
-
-    type = (char **)handel_md_alloc(sizeof(char *));
+    type = (char**) handel_md_alloc(sizeof(char*));
 
     if (!type) {
-        sprintf(info_string, "Error allocating %zu bytes for 'type'", sizeof(char *));
+        sprintf(info_string, "Error allocating %zu bytes for 'type'", sizeof(char*));
         xiaLogError("xia__AddXerxesBoardType", info_string, XIA_NOMEM);
         return XIA_NOMEM;
     }
 
-    type[0] = (char *)handel_md_alloc(strlen(m->type) + 1);
+    type[0] = (char*) handel_md_alloc(strlen(m->type) + 1);
 
     if (!type[0]) {
         handel_md_free(type);
@@ -1155,25 +1082,21 @@ HANDEL_STATIC int xia__AddXerxesBoardType(Module *m)
     return XIA_SUCCESS;
 }
 
-
 /*
  * Add the required interface string to the Xerxes configuration
  */
-HANDEL_STATIC int xia__AddXerxesInterface(Module *m)
-{
+HANDEL_STATIC int xia__AddXerxesInterface(Module* m) {
     int status;
 
     size_t interfLen = 0;
 
-    char *interf[2];
-
+    char* interf[2];
 
     ASSERT(m != NULL);
 
-
     interfLen = strlen(INTERF_LIST[m->interface_info->type]) + 1;
 
-    interf[0] = (char *)handel_md_alloc(interfLen);
+    interf[0] = (char*) handel_md_alloc(interfLen);
 
     if (!interf[0]) {
         sprintf(info_string, "Error allocating %zu bytes for 'interf[0]'", interfLen);
@@ -1181,7 +1104,7 @@ HANDEL_STATIC int xia__AddXerxesInterface(Module *m)
         return XIA_NOMEM;
     }
 
-    interf[1] = (char *)handel_md_alloc(MAX_INTERF_LEN);
+    interf[1] = (char*) handel_md_alloc(MAX_INTERF_LEN);
 
     if (!interf[1]) {
         handel_md_free(interf[0]);
@@ -1204,17 +1127,18 @@ HANDEL_STATIC int xia__AddXerxesInterface(Module *m)
         handel_md_free(interf[0]);
         handel_md_free(interf[1]);
 
-        sprintf(info_string, "Error getting interface string for alias '%s'",
-                m->alias);
+        sprintf(info_string, "Error getting interface string for alias '%s'", m->alias);
         xiaLogError("xia__AddXerxesInterface", info_string, status);
         return status;
     }
 
-    status = dxp_add_board_item("interface", (char **)interf);
+    status = dxp_add_board_item("interface", (char**) interf);
 
     if (status != DXP_SUCCESS) {
-        sprintf(info_string, "Error adding interface '%s, %s' to Xerxes for alias "
-                "'%s'", interf[0], interf[1], m->alias);
+        sprintf(info_string,
+                "Error adding interface '%s, %s' to Xerxes for alias "
+                "'%s'",
+                interf[0], interf[1], m->alias);
         xiaLogError("xia__AddXerxesInterface", info_string, status);
 
         handel_md_free(interf[0]);
@@ -1229,38 +1153,33 @@ HANDEL_STATIC int xia__AddXerxesInterface(Module *m)
     return XIA_SUCCESS;
 }
 
-
 /*
  * Add the module board item to the Xerxes configuration.
  */
-HANDEL_STATIC int xia__AddXerxesModule(Module *m)
-{
+HANDEL_STATIC int xia__AddXerxesModule(Module* m) {
     int status;
-
 
     unsigned int i;
     unsigned int j;
 
-    char **modStr = NULL;
+    char** modStr = NULL;
 
     char mdStr[MAX_MD_LEN];
     char chanStr[MAX_NUM_CHAN_LEN];
 
-
     ASSERT(m != NULL);
 
-
-    modStr = (char **)handel_md_alloc((m->number_of_channels + 2) *
-                                      sizeof(char *));
+    modStr = (char**) handel_md_alloc((m->number_of_channels + 2) * sizeof(char*));
 
     if (!modStr) {
         sprintf(info_string, "Error allocating %zu bytes for 'modStr'",
-                (m->number_of_channels + 2) * sizeof(char *));
+                (m->number_of_channels + 2) * sizeof(char*));
         xiaLogError("xia__AddXerxesModule", info_string, XIA_NOMEM);
         return XIA_NOMEM;
     }
 
-    /* The first two module string elements always refer to the MD string and
+    /*
+     * The first two module string elements always refer to the MD string and
      * the "number of channels" for this module string.
      */
     modStr[0] = &(mdStr[0]);
@@ -1271,8 +1190,10 @@ HANDEL_STATIC int xia__AddXerxesModule(Module *m)
     if (status != XIA_SUCCESS) {
         handel_md_free(modStr);
 
-        sprintf(info_string, "Error copying MD string to modules string for alias "
-                "'%s'", m->alias);
+        sprintf(info_string,
+                "Error copying MD string to modules string for alias "
+                "'%s'",
+                m->alias);
         xiaLogError("xia__AddXerxesModule", info_string, status);
         return status;
     }
@@ -1282,14 +1203,16 @@ HANDEL_STATIC int xia__AddXerxesModule(Module *m)
     if (status != XIA_SUCCESS) {
         handel_md_free(modStr);
 
-        sprintf(info_string, "Error copying channel string to modules string for "
-                "alias '%s'", m->alias);
+        sprintf(info_string,
+                "Error copying channel string to modules string for "
+                "alias '%s'",
+                m->alias);
         xiaLogError("xia__AddXerxesModule", info_string, status);
         return status;
     }
 
     for (i = 0; i < m->number_of_channels; i++) {
-        modStr[i + 2] = (char *)handel_md_alloc(MAX_CHAN_LEN);
+        modStr[i + 2] = (char*) handel_md_alloc(MAX_CHAN_LEN);
 
         if (!modStr[i + 2]) {
             /* Need to unwind the previous allocations */
@@ -1300,7 +1223,7 @@ HANDEL_STATIC int xia__AddXerxesModule(Module *m)
             handel_md_free(modStr);
 
             sprintf(info_string, "Error allocating %d bytes for 'modStr[%d]'",
-                    MAX_CHAN_LEN, (int)(i + 2));
+                    MAX_CHAN_LEN, (int) (i + 2));
             xiaLogError("xia__AddXerxesModule", info_string, XIA_NOMEM);
             return XIA_NOMEM;
         }
@@ -1317,8 +1240,7 @@ HANDEL_STATIC int xia__AddXerxesModule(Module *m)
     handel_md_free(modStr);
 
     if (status != DXP_SUCCESS) {
-        sprintf(info_string, "Error adding module to Xerxes for alias '%s'",
-                m->alias);
+        sprintf(info_string, "Error adding module to Xerxes for alias '%s'", m->alias);
         xiaLogError("xia__AddXerxesModule", info_string, status);
         return status;
     }
@@ -1326,47 +1248,36 @@ HANDEL_STATIC int xia__AddXerxesModule(Module *m)
     return XIA_SUCCESS;
 }
 
-
 /*
- * Copys the "number of channels" string in the format required by
- * Xerxes.
- *
+ * Copies the "number of channels" string in the format required by Xerxes.
  * Assumes that chan is already allocated.
  */
-HANDEL_STATIC int xia__CopyChanString(Module *m, char *chan)
-{
+HANDEL_STATIC int xia__CopyChanString(Module* m, char* chan) {
     ASSERT(m != NULL);
     ASSERT(chan != NULL);
-
 
     sprintf(chan, "%u", m->number_of_channels);
 
     return XIA_SUCCESS;
 }
 
-
 /*
  * Checks for the presence of the MMU firmware and configures
  * Xerxes with it -- if found.
  */
-HANDEL_STATIC int xia__DoMMUConfig(Module *m)
-{
+HANDEL_STATIC int xia__DoMMUConfig(Module* m) {
     int status;
-
 
     char name[MAXFILENAME_LEN];
     char rawName[MAXFILENAME_LEN];
 
-    char **mmu = NULL;
-
+    char** mmu = NULL;
 
     ASSERT(m != NULL);
-
 
     status = xia__GetMMUName(m, 0, name, rawName);
 
     if (status != XIA_NO_MMU) {
-
         if (status != XIA_SUCCESS) {
             sprintf(info_string, "Error trying to get MMU nume for alias '%s'",
                     m->alias);
@@ -1376,16 +1287,16 @@ HANDEL_STATIC int xia__DoMMUConfig(Module *m)
 
         strcpy(m->currentFirmware[0].currentMMU, rawName);
 
-        mmu = (char **)handel_md_alloc(sizeof(char **));
+        mmu = (char**) handel_md_alloc(sizeof(char**));
 
         if (!mmu) {
             sprintf(info_string, "Error allocating %zu bytes for 'mmu'",
-                    sizeof(char **));
+                    sizeof(char**));
             xiaLogError("xia__DoMMUConfig", info_string, XIA_NOMEM);
             return XIA_NOMEM;
         }
 
-        mmu[0] = (char *)handel_md_alloc(strlen(name) + 1);
+        mmu[0] = (char*) handel_md_alloc(strlen(name) + 1);
 
         if (!mmu[0]) {
             handel_md_free(mmu);
@@ -1404,8 +1315,7 @@ HANDEL_STATIC int xia__DoMMUConfig(Module *m)
         handel_md_free(mmu);
 
         if (status != DXP_SUCCESS) {
-            sprintf(info_string, "Error adding MMU to Xerxes for alias '%s'",
-                    m->alias);
+            sprintf(info_string, "Error adding MMU to Xerxes for alias '%s'", m->alias);
             xiaLogError("xia__DoMMUConfig", info_string, status);
             return status;
         }
@@ -1414,13 +1324,11 @@ HANDEL_STATIC int xia__DoMMUConfig(Module *m)
     return XIA_SUCCESS;
 }
 
-
 /*
  * Checks for the presence of a system FPGA and adds it to the
  * configuration.
  */
-HANDEL_STATIC int xia__DoSystemFPGA(Module *m)
-{
+HANDEL_STATIC int xia__DoSystemFPGA(Module* m) {
     int status;
     int detChan = 0;
 
@@ -1433,7 +1341,6 @@ HANDEL_STATIC int xia__DoSystemFPGA(Module *m)
     boolean_t found = FALSE_;
 
     ASSERT(m != NULL);
-
 
     /* Assume that the first enabled detChan defines the correct detector type. */
     for (i = 0; i < m->number_of_channels; i++) {
@@ -1479,62 +1386,52 @@ HANDEL_STATIC int xia__DoSystemFPGA(Module *m)
     return XIA_SUCCESS;
 }
 
-
 /*
  * Gets the appropriate detector type string for the specified detChan.
- *
  * Assumes that memory for type has already been allocated.
  */
-HANDEL_STATIC int xia__GetDetStringFromDetChan(int detChan, Module *m,
-                                               char *type)
-{
+HANDEL_STATIC int xia__GetDetStringFromDetChan(int detChan, Module* m, char* type) {
     int modChan;
 
-    char *detAlias = NULL;
+    char* detAlias = NULL;
 
-    Detector *det = NULL;
-
-
+    Detector* det = NULL;
 
     /* If a disabled channel is passed in, we just use module channel 0. */
     if (detChan != -1) {
-        modChan  = xiaGetModChan((unsigned int)detChan);
+        modChan = xiaGetModChan((unsigned int) detChan);
     } else {
-        modChan  = 0;
+        modChan = 0;
     }
 
     detAlias = m->detector[modChan];
-    det      = xiaFindDetector(detAlias);
+    det = xiaFindDetector(detAlias);
 
     ASSERT(det != NULL);
 
     switch (det->type) {
-    case XIA_DET_RESET:
-        strcpy(type, "RESET");
-        break;
-
-    case XIA_DET_RCFEED:
-        strcpy(type, "RC");
-        break;
-
-    default:
-    case XIA_DET_UNKNOWN:
-        sprintf(info_string, "No detector type specified for detChan %d", detChan);
-        xiaLogError("xia__GetDetStringFromDetChan", info_string, XIA_MISSING_TYPE);
-        return XIA_MISSING_TYPE;
-        break;
+        case XIA_DET_RESET:
+            strcpy(type, "RESET");
+            break;
+        case XIA_DET_RCFEED:
+            strcpy(type, "RC");
+            break;
+        default:
+        case XIA_DET_UNKNOWN:
+            sprintf(info_string, "No detector type specified for detChan %d", detChan);
+            xiaLogError("xia__GetDetStringFromDetChan", info_string, XIA_MISSING_TYPE);
+            return XIA_MISSING_TYPE;
+            break;
     }
 
     return XIA_SUCCESS;
 }
 
-
 /*
  * Checks for the presence of a system DSP and adds it to the
  * configuration.
  */
-HANDEL_STATIC int xia__DoSystemDSP(Module *m, boolean_t *found)
-{
+HANDEL_STATIC int xia__DoSystemDSP(Module* m, boolean_t* found) {
     int detChan = -1;
     int status;
 
@@ -1544,14 +1441,11 @@ HANDEL_STATIC int xia__DoSystemDSP(Module *m, boolean_t *found)
     char sysDSPName[MAX_PATH_LEN];
     char rawName[MAXFILENAME_LEN];
 
-
     ASSERT(m != NULL);
     ASSERT(found != NULL);
 
-
     for (i = 0; i < m->number_of_channels; i++) {
         detChan = m->channels[i];
-
         if (detChan != -1) {
             break;
         }
@@ -1578,8 +1472,7 @@ HANDEL_STATIC int xia__DoSystemDSP(Module *m, boolean_t *found)
         status = xia__AddSystemDSP(m, sysDSPName, rawName);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error adding System DSP '%s' to Xerxes",
-                    sysDSPName);
+            sprintf(info_string, "Error adding System DSP '%s' to Xerxes", sysDSPName);
             xiaLogError("xia__DoSystemDSP", info_string, status);
             return status;
         }
@@ -1588,12 +1481,10 @@ HANDEL_STATIC int xia__DoSystemDSP(Module *m, boolean_t *found)
     return XIA_SUCCESS;
 }
 
-
 /*
  * Adds the DSP info for each channel to the Xerxes configuration.
  */
-HANDEL_STATIC int xia__DoDSP(Module *m)
-{
+HANDEL_STATIC int xia__DoDSP(Module* m) {
     int status;
 
     int detChan;
@@ -1607,11 +1498,9 @@ HANDEL_STATIC int xia__DoDSP(Module *m)
     char rawName[MAXFILENAME_LEN];
     char chan[MAX_CHAN_LEN];
 
-    char *dspStr[2];
-
+    char* dspStr[2];
 
     ASSERT(m != NULL);
-
 
     /* We skip channels that are disabled (detChan = -1) */
     for (i = 0; i < m->number_of_channels; i++) {
@@ -1648,7 +1537,7 @@ HANDEL_STATIC int xia__DoDSP(Module *m)
 
         sprintf(dspStr[0], "%u", i);
 
-        status = dxp_add_board_item("dsp", (char **)dspStr);
+        status = dxp_add_board_item("dsp", (char**) dspStr);
 
         if (status != DXP_SUCCESS) {
             sprintf(info_string, "Error adding 'dsp' for alias '%s'", m->alias);
@@ -1660,12 +1549,10 @@ HANDEL_STATIC int xia__DoDSP(Module *m)
     return XIA_SUCCESS;
 }
 
-
 /*
  * Checks for the presence of FiPPI A and adds it to the configuration.
  */
-HANDEL_STATIC int xia__DoFiPPIA(Module *m, boolean_t *found)
-{
+HANDEL_STATIC int xia__DoFiPPIA(Module* m, boolean_t* found) {
     int status;
     int detChan = 0;
 
@@ -1675,10 +1562,8 @@ HANDEL_STATIC int xia__DoFiPPIA(Module *m, boolean_t *found)
     char fippiAName[MAX_PATH_LEN];
     char rawName[MAXFILENAME_LEN];
 
-
     ASSERT(m != NULL);
     ASSERT(found != NULL);
-
 
     for (i = 0; i < m->number_of_channels; i++) {
         detChan = m->channels[i];
@@ -1724,13 +1609,10 @@ HANDEL_STATIC int xia__DoFiPPIA(Module *m, boolean_t *found)
     return XIA_SUCCESS;
 }
 
-
 /*
- * Adds the FiPPI data for each enabled channel to the Xerxes
- * configuration.
+ * Adds the FiPPI data for each enabled channel to the Xerxes configuration.
  */
-HANDEL_STATIC int xia__DoFiPPI(Module *m, boolean_t *found)
-{
+HANDEL_STATIC int xia__DoFiPPI(Module* m, boolean_t* found) {
     int status;
 
     int detChan;
@@ -1744,11 +1626,9 @@ HANDEL_STATIC int xia__DoFiPPI(Module *m, boolean_t *found)
     char rawName[MAXFILENAME_LEN];
     char chan[MAX_CHAN_LEN];
 
-    char *fippiStr[2];
-
+    char* fippiStr[2];
 
     ASSERT(m != NULL);
-
 
     /* We skip channels that are disabled (detChan = -1) */
     for (i = 0; i < m->number_of_channels; i++) {
@@ -1786,7 +1666,7 @@ HANDEL_STATIC int xia__DoFiPPI(Module *m, boolean_t *found)
         sprintf(fippiStr[0], "%u", i);
 
         if (*found) {
-            status = dxp_add_board_item("fippi", (char **)fippiStr);
+            status = dxp_add_board_item("fippi", (char**) fippiStr);
 
             if (status != DXP_SUCCESS) {
                 sprintf(info_string, "Error adding 'fippi' for alias '%s'", m->alias);
@@ -1799,13 +1679,10 @@ HANDEL_STATIC int xia__DoFiPPI(Module *m, boolean_t *found)
     return XIA_SUCCESS;
 }
 
-
 /*
- * Checks for the presence of a System FiPPI and adds it to the
- * configuration.
+ * Checks for the presence of a System FiPPI and adds it to the configuration.
  */
-HANDEL_STATIC int xia__DoSystemFiPPI(Module *m, boolean_t *found)
-{
+HANDEL_STATIC int xia__DoSystemFiPPI(Module* m, boolean_t* found) {
     int detChan = -1;
     int status;
 
@@ -1815,16 +1692,13 @@ HANDEL_STATIC int xia__DoSystemFiPPI(Module *m, boolean_t *found)
     char sysFipName[MAX_PATH_LEN];
     char rawName[MAXFILENAME_LEN];
 
-
     ASSERT(m != NULL);
-
 
     *found = FALSE_;
 
     /* Find the first enabled channel and use that to get the detector type. */
     for (i = 0; i < m->number_of_channels; i++) {
         detChan = m->channels[i];
-
         if (detChan != -1) {
             break;
         }
@@ -1842,8 +1716,7 @@ HANDEL_STATIC int xia__DoSystemFiPPI(Module *m, boolean_t *found)
     status = xia__GetSystemFiPPIName(m, detType, sysFipName, rawName, found);
 
     if ((status != XIA_SUCCESS) && *found) {
-        sprintf(info_string, "Error getting System FiPPI for alias '%s'",
-                m->alias);
+        sprintf(info_string, "Error getting System FiPPI for alias '%s'", m->alias);
         xiaLogError("xia__DoSystemFiPPI", info_string, status);
         return status;
     }
@@ -1866,7 +1739,6 @@ HANDEL_STATIC int xia__DoSystemFiPPI(Module *m, boolean_t *found)
     return XIA_SUCCESS;
 }
 
-
 /*
  * Retrieves the System FiPPI name from the firmware, if it exists.
  *
@@ -1877,16 +1749,13 @@ HANDEL_STATIC int xia__DoSystemFiPPI(Module *m, boolean_t *found)
  * DSP. We use a fake peaking time since the System FiPPI will be defined over
  * the entire peaking time range of the product.
  */
-HANDEL_STATIC int xia__GetSystemFiPPIName(Module *m, char *detType,
-                                          char *sysFipName, char *rawFilename,
-                                          boolean_t *found)
-{
+HANDEL_STATIC int xia__GetSystemFiPPIName(Module* m, char* detType, char* sysFipName,
+                                          char* rawFilename, boolean_t* found) {
     int status;
 
     double fakePT = 1.0;
 
-    FirmwareSet *fs = NULL;
-
+    FirmwareSet* fs = NULL;
 
     ASSERT(m != NULL);
     ASSERT(detType != NULL);
@@ -1895,29 +1764,27 @@ HANDEL_STATIC int xia__GetSystemFiPPIName(Module *m, char *detType,
     ASSERT(found != NULL);
     ASSERT(m->firmware[0] != NULL);
 
-
     *found = FALSE_;
 
     fs = xiaFindFirmware(m->firmware[0]);
 
     if (!fs || !fs->filename) {
-        sprintf(info_string, "No firmware set defined for alias '%s'",
-                m->firmware[0]);
+        sprintf(info_string, "No firmware set defined for alias '%s'", m->firmware[0]);
         xiaLogInfo("xia__GetSystemFiPPIName", info_string);
         return XIA_NULL_FIRMWARE;
     }
 
-    status = xiaFddGetAndCacheFirmware(fs, "system_fippi", fakePT, detType,
-                                       sysFipName, rawFilename);
+    status = xiaFddGetAndCacheFirmware(fs, "system_fippi", fakePT, detType, sysFipName,
+                                       rawFilename);
 
-    /* This is not necessarily an error. We will still pass the error value
+    /*
+     * This is not necessarily an error. We will still pass the error value
      * up to the top-level but only use an informational message. For products
      * without system_fippis defined in their FDD files this message will always
-     * appear and we don't want them to be confused by spurious ERRORs.
+     * appear, and we don't want them to be confused by spurious ERRORs.
      */
     if (status == XIA_FILEERR) {
-        sprintf(info_string, "No system_fippi defined in '%s'",
-                fs->filename);
+        sprintf(info_string, "No system_fippi defined in '%s'", fs->filename);
         xiaLogInfo("xia__GetSystemFiPPIName", info_string);
         return status;
     }
@@ -1926,8 +1793,7 @@ HANDEL_STATIC int xia__GetSystemFiPPIName(Module *m, char *detType,
 
     /* These are "real" errors, not just missing file problems. */
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error finding system_fippi in '%s'",
-                fs->filename);
+        sprintf(info_string, "Error finding system_fippi in '%s'", fs->filename);
         xiaLogError("xia__GetSystemFiPPIName", info_string, status);
         return status;
     }
@@ -1935,24 +1801,19 @@ HANDEL_STATIC int xia__GetSystemFiPPIName(Module *m, char *detType,
     return XIA_SUCCESS;
 }
 
-
 /*
  * Adds a System FiPPI to the Xerxes configuration.
  */
-HANDEL_STATIC int xia__AddSystemFiPPI(Module *m, char *sysFipName,
-                                      char *rawFilename)
-{
+HANDEL_STATIC int xia__AddSystemFiPPI(Module* m, char* sysFipName, char* rawFilename) {
     int status;
 
     /* Xerxes requires items as lists of strings. */
-    char *sysFipStr[1];
+    char* sysFipStr[1];
 
     UNUSED(rawFilename);
     UNUSED(m);
 
-
     ASSERT(sysFipName != NULL);
-
 
     sysFipStr[0] = handel_md_alloc(strlen(sysFipName) + 1);
 
@@ -1965,12 +1826,13 @@ HANDEL_STATIC int xia__AddSystemFiPPI(Module *m, char *sysFipName,
 
     strcpy(sysFipStr[0], sysFipName);
 
-    status = dxp_add_board_item("system_fippi", (char **)sysFipStr);
+    status = dxp_add_board_item("system_fippi", (char**) sysFipStr);
 
     handel_md_free(sysFipStr[0]);
 
     if (status != DXP_SUCCESS) {
-        sprintf(info_string, "Error adding 'system_fippi', '%s', board item to "
+        sprintf(info_string,
+                "Error adding 'system_fippi', '%s', board item to "
                 "Xerxes configuration",
                 sysFipName);
         xiaLogError("xia__AddSystemFiPPI", info_string, status);

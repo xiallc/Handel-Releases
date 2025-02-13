@@ -78,8 +78,8 @@
 #include "plxlib.h"
 #include "plxlib_errors.h"
 
-
-/* In milliseconds. Here are the assumptions for this calculation:
+/*
+ * In milliseconds. Here are the assumptions for this calculation:
  * 1) Maximum memory read could be 1M x 32 bits, which is 4MB.
  * 2) A good transfer rate for us is 80 MB/s.
  * 3) Let's play worst case and say 50 MB/s.
@@ -87,83 +87,74 @@
  */
 #define MAX_BURST_TIMEOUT 40
 
-static void _plx_log_DEBUG(char *msg, ...);
+static void _plx_log_DEBUG(char* msg, ...);
 static void _plx_print_more(PLX_STATUS err);
 
-static int _plx_find_handle_index(HANDLE h, unsigned long *idx);
-static int _plx_add_slot_to_map(PLX_DEVICE_OBJECT *device);
+static int _plx_find_handle_index(HANDLE h, unsigned long* idx);
+static int _plx_add_slot_to_map(PLX_DEVICE_OBJECT* device);
 static int _plx_remove_slot_from_map(unsigned long idx);
 static int _plx_resize_map(void);
 
-static FILE *LOG_FILE = NULL;
+static FILE* LOG_FILE = NULL;
 
-static virtual_map_t V_MAP =
-{
-    NULL, NULL, 0
-};
-
+static virtual_map_t V_MAP = {NULL, NULL, 0};
 
 /*
  * This table maps PLX error codes to error strings.
  */
-API_ERRORS ApiErrors[] =
-{
-    { ApiSuccess,                   "ApiSuccess"                   },
-    { ApiFailed,                    "ApiFailed"                    },
-    { ApiNullParam,                 "ApiNullParam"                 },
-    { ApiUnsupportedFunction,       "ApiUnsupportedFunction"       },
-    { ApiNoActiveDriver,            "ApiNoActiveDriver"            },
-    { ApiConfigAccessFailed,        "ApiConfigAccessFailed"        },
-    { ApiInvalidDeviceInfo,         "ApiInvalidDeviceInfo"         },
-    { ApiInvalidDriverVersion,      "ApiInvalidDriverVersion"      },
-    { ApiInvalidOffset,             "ApiInvalidOffset"             },
-    { ApiInvalidData,               "ApiInvalidData"               },
-    { ApiInvalidSize,               "ApiInvalidSize"               },
-    { ApiInvalidAddress,            "ApiInvalidAddress"            },
-    { ApiInvalidAccessType,         "ApiInvalidAccessType"         },
-    { ApiInvalidIndex,              "ApiInvalidIndex"              },
-    { ApiInvalidPowerState,         "ApiInvalidPowerState"         },
-    { ApiInvalidIopSpace,           "ApiInvalidIopSpace"           },
-    { ApiInvalidHandle,             "ApiInvalidHandle"             },
-    { ApiInvalidPciSpace,           "ApiInvalidPciSpace"           },
-    { ApiInvalidBusIndex,           "ApiInvalidBusIndex"           },
-    { ApiInsufficientResources,     "ApiInsufficientResources"     },
-    { ApiWaitTimeout,               "ApiWaitTimeout"               },
-    { ApiWaitCanceled,              "ApiWaitCanceled"              },
-    { ApiDmaChannelUnavailable,     "ApiDmaChannelUnavailable"     },
-    { ApiDmaChannelInvalid,         "ApiDmaChannelInvalid"         },
-    { ApiDmaDone,                   "ApiDmaDone"                   },
-    { ApiDmaPaused,                 "ApiDmaPaused"                 },
-    { ApiDmaInProgress,             "ApiDmaInProgress"             },
-    { ApiDmaCommandInvalid,         "ApiDmaCommandInvalid"         },
-    { ApiDmaInvalidChannelPriority, "ApiDmaInvalidChannelPriority" },
-    { ApiDmaSglPagesGetError,       "ApiDmaSglPagesGetError"       },
-    { ApiDmaSglPagesLockError,      "ApiDmaSglPagesLockError"      },
-    { ApiMuFifoEmpty,               "ApiMuFifoEmpty"               },
-    { ApiMuFifoFull,                "ApiMuFifoFull"                },
-    { ApiPowerDown,                 "ApiPowerDown"                 },
-    { ApiHSNotSupported,            "ApiHSNotSupported"            },
-    { ApiVPDNotSupported,           "ApiVPDNotSupported"           },
+API_ERRORS ApiErrors[] = {
+    {ApiSuccess, "ApiSuccess"},
+    {ApiFailed, "ApiFailed"},
+    {ApiNullParam, "ApiNullParam"},
+    {ApiUnsupportedFunction, "ApiUnsupportedFunction"},
+    {ApiNoActiveDriver, "ApiNoActiveDriver"},
+    {ApiConfigAccessFailed, "ApiConfigAccessFailed"},
+    {ApiInvalidDeviceInfo, "ApiInvalidDeviceInfo"},
+    {ApiInvalidDriverVersion, "ApiInvalidDriverVersion"},
+    {ApiInvalidOffset, "ApiInvalidOffset"},
+    {ApiInvalidData, "ApiInvalidData"},
+    {ApiInvalidSize, "ApiInvalidSize"},
+    {ApiInvalidAddress, "ApiInvalidAddress"},
+    {ApiInvalidAccessType, "ApiInvalidAccessType"},
+    {ApiInvalidIndex, "ApiInvalidIndex"},
+    {ApiInvalidPowerState, "ApiInvalidPowerState"},
+    {ApiInvalidIopSpace, "ApiInvalidIopSpace"},
+    {ApiInvalidHandle, "ApiInvalidHandle"},
+    {ApiInvalidPciSpace, "ApiInvalidPciSpace"},
+    {ApiInvalidBusIndex, "ApiInvalidBusIndex"},
+    {ApiInsufficientResources, "ApiInsufficientResources"},
+    {ApiWaitTimeout, "ApiWaitTimeout"},
+    {ApiWaitCanceled, "ApiWaitCanceled"},
+    {ApiDmaChannelUnavailable, "ApiDmaChannelUnavailable"},
+    {ApiDmaChannelInvalid, "ApiDmaChannelInvalid"},
+    {ApiDmaDone, "ApiDmaDone"},
+    {ApiDmaPaused, "ApiDmaPaused"},
+    {ApiDmaInProgress, "ApiDmaInProgress"},
+    {ApiDmaCommandInvalid, "ApiDmaCommandInvalid"},
+    {ApiDmaInvalidChannelPriority, "ApiDmaInvalidChannelPriority"},
+    {ApiDmaSglPagesGetError, "ApiDmaSglPagesGetError"},
+    {ApiDmaSglPagesLockError, "ApiDmaSglPagesLockError"},
+    {ApiMuFifoEmpty, "ApiMuFifoEmpty"},
+    {ApiMuFifoFull, "ApiMuFifoFull"},
+    {ApiPowerDown, "ApiPowerDown"},
+    {ApiHSNotSupported, "ApiHSNotSupported"},
+    {ApiVPDNotSupported, "ApiVPDNotSupported"},
 };
 
-XIA_PLX_ERRORS XiaPlxErrors[] =
-{
-    { PLX_SUCCESS,                  "xia_plx success"              },
-    { PLX_MEM,                      "xia_plx memory allocation"    },
-    { PLX_UNKNOWN_HANDLE,           "xia_plx unknown handle"       },
+XIA_PLX_ERRORS XiaPlxErrors[] = {
+    {PLX_SUCCESS, "xia_plx success"},
+    {PLX_MEM, "xia_plx memory allocation"},
+    {PLX_UNKNOWN_HANDLE, "xia_plx unknown handle"},
 };
-
 
 /*
  * Close a previously opened PCI slot.
  */
-XIA_EXPORT int XIA_API plx_close_slot(HANDLE h)
-{
+XIA_EXPORT int XIA_API plx_close_slot(HANDLE h) {
     PLX_STATUS status;
     PLX_DEVICE_OBJECT device_object;
 
     unsigned long idx;
-
 
     ASSERT(h);
 
@@ -194,7 +185,6 @@ XIA_EXPORT int XIA_API plx_close_slot(HANDLE h)
     return PLX_SUCCESS;
 }
 
-
 /*
  * Opens the PCI device located using the specified parameters
  *
@@ -203,8 +193,7 @@ XIA_EXPORT int XIA_API plx_close_slot(HANDLE h)
  * search.
  */
 XIA_EXPORT int XIA_API plx_open_slot(unsigned short id, byte_t bus, byte_t slot,
-                                     HANDLE *h)
-{
+                                     HANDLE* h) {
     PLX_STATUS status;
 
     PLX_DEVICE_KEY dev;
@@ -214,10 +203,11 @@ XIA_EXPORT int XIA_API plx_open_slot(unsigned short id, byte_t bus, byte_t slot,
 
     memset(&dev, PCI_FIELD_IGNORE, sizeof(PLX_DEVICE_KEY));
 
-    dev.bus       = bus;
-    dev.slot      = slot;
+    dev.bus = bus;
+    dev.slot = slot;
 
-    /* Per the PLX SDK docs, we are not supposed to futz with the
+    /*
+     * Per the PLX SDK docs, we are not supposed to futz with the
      * members of the PLX_DEVICE_OBJECT structure, which makes sense
      * except for the assumptions they made about new instances of
      * PLX_DEVICE_OBJECT on the stack. In some build configurations, the
@@ -234,7 +224,7 @@ XIA_EXPORT int XIA_API plx_open_slot(unsigned short id, byte_t bus, byte_t slot,
         err = GetLastError();
         _plx_log_DEBUG("Error opening device (id = %hu, bus = %hu): status = %d\n"
                        "Last windows API error = %#lx\n",
-                       id, (unsigned short)bus, status, err);
+                       id, (unsigned short) bus, status, err);
 
         _plx_print_more(status);
         return status;
@@ -244,11 +234,11 @@ XIA_EXPORT int XIA_API plx_open_slot(unsigned short id, byte_t bus, byte_t slot,
 
     if (status != PLX_SUCCESS) {
         _plx_log_DEBUG("Error adding device %hu/%hu/%hu to virtual map\n",
-                       (unsigned short)dev.bus, (unsigned short)dev.slot,
+                       (unsigned short) dev.bus, (unsigned short) dev.slot,
                        dev.DeviceId);
         return status;
     }
-        
+
     *h = (HANDLE) device_object.hDevice;
 
     return PLX_SUCCESS;
@@ -257,33 +247,31 @@ XIA_EXPORT int XIA_API plx_open_slot(unsigned short id, byte_t bus, byte_t slot,
 /*
  * Translate the error code of a PlxApi error
  */
-XIA_EXPORT void XIA_API plx_print_error(int errorcode, char *errorstring)
-{
+XIA_EXPORT void XIA_API plx_print_error(int errorcode, char* errorstring) {
     int i;
 
     for (i = 0; i < N_ELEMS(ApiErrors); i++) {
-        if ((int)ApiErrors[i].code == errorcode) {
+        if ((int) ApiErrors[i].code == errorcode) {
             sprintf(errorstring, "Error caught in plxlib, %s", ApiErrors[i].text);
-            return; 
+            return;
         }
     }
-    
+
     for (i = 0; i < N_ELEMS(XiaPlxErrors); i++) {
         if (XiaPlxErrors[i].code == errorcode) {
             sprintf(errorstring, "Error caught in plxlib, %s", XiaPlxErrors[i].text);
-            return; 
+            return;
         }
     }
-        
-    sprintf(errorstring, "UNKNOWN ERROR (%d) caught in plxlib", errorcode);  
+
+    sprintf(errorstring, "UNKNOWN ERROR (%d) caught in plxlib", errorcode);
 }
 
 /*
  * Sets the file that debugging messages will be written to.
  */
 #ifdef PLXLIB_DEBUG
-XIA_EXPORT void XIA_API plx_set_file_DEBUG(char *f)
-{
+XIA_EXPORT void XIA_API plx_set_file_DEBUG(char* f) {
     if (LOG_FILE) {
         fclose(LOG_FILE);
     }
@@ -297,12 +285,10 @@ XIA_EXPORT void XIA_API plx_set_file_DEBUG(char *f)
 }
 #endif /* PLXLIB_DEBUG */
 
-
 /*
  * Writes the specified message to the debug output stream
  */
-static void _plx_log_DEBUG(char *msg, ...)
-{
+static void _plx_log_DEBUG(char* msg, ...) {
 #ifdef PLXLIB_DEBUG
 
     va_list args;
@@ -310,7 +296,6 @@ static void _plx_log_DEBUG(char *msg, ...)
     if (!LOG_FILE) {
         LOG_FILE = stderr;
     }
-
 
     va_start(args, msg);
     vfprintf(LOG_FILE, msg, args);
@@ -323,42 +308,37 @@ static void _plx_log_DEBUG(char *msg, ...)
 #endif /* PLXLIB_DEBUG */
 }
 
-
 /*
  * Prints out more error information based on the strings in the
  * API from PLX Technology.
  */
-static void _plx_print_more(PLX_STATUS errorcode)
-{
+static void _plx_print_more(PLX_STATUS errorcode) {
     int i;
 
     for (i = 0; i < N_ELEMS(ApiErrors); i++) {
-        if ((int)ApiErrors[i].code == errorcode) {
+        if ((int) ApiErrors[i].code == errorcode) {
             _plx_log_DEBUG("Error caught in plxlib, %s\n", ApiErrors[i].text);
             return;
-        }    
+        }
     }
-    
+
     _plx_log_DEBUG("UNKNOWN ERROR (%d) caught in plxlib\n", errorcode);
 }
-
 
 /*
  * Adds a slot (specified by h) to the virtual map and sets up the
  * BAR.
  */
-static int _plx_add_slot_to_map(PLX_DEVICE_OBJECT *device)
-{
+static int _plx_add_slot_to_map(PLX_DEVICE_OBJECT* device) {
     PLX_STATUS status;
 
     V_MAP.n++;
 
     if (!V_MAP.addr) {
-
         ASSERT(V_MAP.n == 1);
         ASSERT(!V_MAP.device);
 
-        V_MAP.addr = (PLX_UINT_PTR *)malloc(sizeof(PLX_UINT_PTR));
+        V_MAP.addr = (PLX_UINT_PTR*) malloc(sizeof(PLX_UINT_PTR));
 
         if (!V_MAP.addr) {
             _plx_log_DEBUG("Unable to allocate %zu bytes for V_MAP.addr array\n",
@@ -366,7 +346,7 @@ static int _plx_add_slot_to_map(PLX_DEVICE_OBJECT *device)
             return PLX_MEM;
         }
 
-        V_MAP.device = (PLX_DEVICE_OBJECT *)malloc(sizeof(PLX_DEVICE_OBJECT));
+        V_MAP.device = (PLX_DEVICE_OBJECT*) malloc(sizeof(PLX_DEVICE_OBJECT));
 
         if (!V_MAP.device) {
             _plx_log_DEBUG("Unable to allocate %zu bytes for V_MAP.device array\n",
@@ -374,7 +354,7 @@ static int _plx_add_slot_to_map(PLX_DEVICE_OBJECT *device)
             return PLX_MEM;
         }
 
-        V_MAP.events = (PLX_NOTIFY_OBJECT *)malloc(sizeof(PLX_NOTIFY_OBJECT));
+        V_MAP.events = (PLX_NOTIFY_OBJECT*) malloc(sizeof(PLX_NOTIFY_OBJECT));
 
         if (!V_MAP.events) {
             _plx_log_DEBUG("Unable to allocate %zu bytes for V_MAP.events array\n",
@@ -382,7 +362,7 @@ static int _plx_add_slot_to_map(PLX_DEVICE_OBJECT *device)
             return PLX_MEM;
         }
 
-        V_MAP.intrs = (PLX_INTERRUPT *)malloc(sizeof(PLX_INTERRUPT));
+        V_MAP.intrs = (PLX_INTERRUPT*) malloc(sizeof(PLX_INTERRUPT));
 
         if (!V_MAP.intrs) {
             _plx_log_DEBUG("Unable to allocate %zu bytes for V_MAP.intrs array\n",
@@ -390,14 +370,13 @@ static int _plx_add_slot_to_map(PLX_DEVICE_OBJECT *device)
             return PLX_MEM;
         }
 
-        V_MAP.registered = (boolean_t *)malloc(sizeof(boolean_t));
+        V_MAP.registered = (boolean_t*) malloc(sizeof(boolean_t));
 
         if (!V_MAP.registered) {
             _plx_log_DEBUG("Unable to allocate %zu bytes for V_MAP.registered array\n",
                            sizeof(boolean_t));
             return PLX_MEM;
         }
-
     } else {
         status = _plx_resize_map();
 
@@ -409,9 +388,8 @@ static int _plx_add_slot_to_map(PLX_DEVICE_OBJECT *device)
 
     memcpy(&(V_MAP.device[V_MAP.n - 1]), device, sizeof(*device));
 
-
     status = PlxPci_PciBarMap(&(V_MAP.device[V_MAP.n - 1]), PLX_PCI_SPACE_0,
-                              (VOID **)&(V_MAP.addr[V_MAP.n - 1]));
+                              (VOID**) &(V_MAP.addr[V_MAP.n - 1]));
 
     if (status != ApiSuccess) {
         /* Undo memory allocation, etc. here */
@@ -425,24 +403,22 @@ static int _plx_add_slot_to_map(PLX_DEVICE_OBJECT *device)
     return PLX_SUCCESS;
 }
 
-
 /*
  * Remove the slot (specified by h) from the system
  *
  * Includes unmapping the BAR
  */
-static int _plx_remove_slot_from_map(unsigned long idx)
-{
+static int _plx_remove_slot_from_map(unsigned long idx) {
     PLX_STATUS status;
 
     unsigned long i;
 
-    /* If the handle is registered as a notifier
+    /*
+     * If the handle is registered as a notifier
      * then we need to unregister it to free up the event handle.
      */
     if (V_MAP.registered[idx]) {
-        status = PlxPci_NotificationCancel(&(V_MAP.device[idx]),
-                                           &(V_MAP.events[idx]));
+        status = PlxPci_NotificationCancel(&(V_MAP.device[idx]), &(V_MAP.events[idx]));
 
         if (status != ApiSuccess) {
             _plx_log_DEBUG("Error unregistering notification of PCI DMA channel");
@@ -450,7 +426,7 @@ static int _plx_remove_slot_from_map(unsigned long idx)
         }
     }
 
-    status = PlxPci_PciBarUnmap(&(V_MAP.device[idx]), (VOID**)&(V_MAP.addr[idx]));
+    status = PlxPci_PciBarUnmap(&(V_MAP.device[idx]), (VOID**) &(V_MAP.addr[idx]));
 
     if (status != ApiSuccess) {
         _plx_log_DEBUG("Error unmapping HANDLE %p\n", &(V_MAP.device[idx]));
@@ -463,10 +439,10 @@ static int _plx_remove_slot_from_map(unsigned long idx)
     /* Shrink the virtual map */
     if (V_MAP.n > 0) {
         for (i = idx; i < V_MAP.n; i++) {
-            V_MAP.addr[i]  = V_MAP.addr[i + 1];
-            V_MAP.device[i]  = V_MAP.device[i + 1];
-            V_MAP.events[i]  = V_MAP.events[i + 1];
-            V_MAP.intrs[i]  = V_MAP.intrs[i + 1];
+            V_MAP.addr[i] = V_MAP.addr[i + 1];
+            V_MAP.device[i] = V_MAP.device[i + 1];
+            V_MAP.events[i] = V_MAP.events[i + 1];
+            V_MAP.intrs[i] = V_MAP.intrs[i + 1];
         }
 
         status = _plx_resize_map();
@@ -475,7 +451,6 @@ static int _plx_remove_slot_from_map(unsigned long idx)
             _plx_log_DEBUG("Error removing slot %d from V_MAP.\n", idx);
             return status;
         }
-
     } else {
         free(V_MAP.addr);
         free(V_MAP.device);
@@ -483,11 +458,11 @@ static int _plx_remove_slot_from_map(unsigned long idx)
         free(V_MAP.intrs);
         free(V_MAP.registered);
 
-        V_MAP.addr   = NULL;
+        V_MAP.addr = NULL;
         V_MAP.device = NULL;
         V_MAP.events = NULL;
-        V_MAP.intrs  = NULL;
-        V_MAP.registered  = NULL;
+        V_MAP.intrs = NULL;
+        V_MAP.registered = NULL;
     }
 
     return PLX_SUCCESS;
@@ -497,25 +472,23 @@ static int _plx_remove_slot_from_map(unsigned long idx)
  * resize the memory allocation of the global V_MAP structure
  * to the size specified by V_MAP.n
  */
-static int _plx_resize_map(void)
-{
+static int _plx_resize_map(void) {
+    PLX_UINT_PTR* new_addr = NULL;
 
-    PLX_UINT_PTR *new_addr = NULL;
+    PLX_NOTIFY_OBJECT* new_events = NULL;
 
-    PLX_NOTIFY_OBJECT *new_events = NULL;
+    PLX_INTERRUPT* new_intrs = NULL;
 
-    PLX_INTERRUPT *new_intrs = NULL;
+    PLX_DEVICE_OBJECT* new_device = NULL;
 
-    PLX_DEVICE_OBJECT *new_device = NULL;
+    boolean_t* new_registered = NULL;
 
-    boolean_t *new_registered = NULL;
-
-    /* Need to grow the handle array to accomadate another module. We want to
-    * do this as an atomic update. Either both memory allocations succeed or we
-    * don't update the virtual map.
-    */
-    new_addr = (PLX_UINT_PTR *)realloc(V_MAP.addr,
-                                       V_MAP.n * sizeof(PLX_UINT_PTR));
+    /*
+     * Need to grow the handle array to accommodate another module. We want to
+     * do this as an atomic update. Either both memory allocations succeed or we
+     * don't update the virtual map.
+     */
+    new_addr = (PLX_UINT_PTR*) realloc(V_MAP.addr, V_MAP.n * sizeof(PLX_UINT_PTR));
 
     if (!new_addr) {
         _plx_log_DEBUG("Unable to allocate %zu bytes for 'new_addr'\n",
@@ -523,8 +496,8 @@ static int _plx_resize_map(void)
         return PLX_MEM;
     }
 
-    new_device = (PLX_DEVICE_OBJECT *)realloc(V_MAP.device, V_MAP.n *
-                                              sizeof(PLX_DEVICE_OBJECT));
+    new_device =
+        (PLX_DEVICE_OBJECT*) realloc(V_MAP.device, V_MAP.n * sizeof(PLX_DEVICE_OBJECT));
 
     if (!new_device) {
         _plx_log_DEBUG("Unable to allocate %zu bytes for 'new_device'\n",
@@ -532,8 +505,8 @@ static int _plx_resize_map(void)
         return PLX_MEM;
     }
 
-    new_events = (PLX_NOTIFY_OBJECT *)realloc(V_MAP.events, V_MAP.n *
-                                              sizeof(PLX_NOTIFY_OBJECT));
+    new_events =
+        (PLX_NOTIFY_OBJECT*) realloc(V_MAP.events, V_MAP.n * sizeof(PLX_NOTIFY_OBJECT));
 
     if (!new_events) {
         _plx_log_DEBUG("Unable to allocate %zu bytes for 'new_events'\n",
@@ -541,7 +514,7 @@ static int _plx_resize_map(void)
         return PLX_MEM;
     }
 
-    new_intrs = (PLX_INTERRUPT *)realloc(V_MAP.intrs, V_MAP.n * sizeof(PLX_INTERRUPT));
+    new_intrs = (PLX_INTERRUPT*) realloc(V_MAP.intrs, V_MAP.n * sizeof(PLX_INTERRUPT));
 
     if (!new_intrs) {
         _plx_log_DEBUG("Unable to allocate %zu bytes for 'new_intrs'\n",
@@ -549,8 +522,8 @@ static int _plx_resize_map(void)
         return PLX_MEM;
     }
 
-    new_registered = (boolean_t *)realloc(V_MAP.registered, V_MAP.n *
-                                          sizeof(boolean_t));
+    new_registered =
+        (boolean_t*) realloc(V_MAP.registered, V_MAP.n * sizeof(boolean_t));
 
     if (!new_registered) {
         _plx_log_DEBUG("Unable to allocate %zu bytes for 'new_registered'\n",
@@ -558,10 +531,10 @@ static int _plx_resize_map(void)
         return PLX_MEM;
     }
 
-    V_MAP.addr       = new_addr;
-    V_MAP.device     = new_device;
-    V_MAP.events     = new_events;
-    V_MAP.intrs      = new_intrs;
+    V_MAP.addr = new_addr;
+    V_MAP.device = new_device;
+    V_MAP.events = new_events;
+    V_MAP.intrs = new_intrs;
     V_MAP.registered = new_registered;
 
     return PLX_SUCCESS;
@@ -570,10 +543,8 @@ static int _plx_resize_map(void)
 /*
  * Find the index of the specified HANDLE in the virtual map
  */
-static int _plx_find_handle_index(HANDLE h, unsigned long *idx)
-{
+static int _plx_find_handle_index(HANDLE h, unsigned long* idx) {
     unsigned long i;
-
 
     ASSERT(h);
     ASSERT(idx);
@@ -590,21 +561,18 @@ static int _plx_find_handle_index(HANDLE h, unsigned long *idx)
     return PLX_UNKNOWN_HANDLE;
 }
 
-
 /*
  * Read a long from the specified address
  */
 XIA_EXPORT int XIA_API plx_read_long(HANDLE h, unsigned long addr,
-                                     unsigned long *data)
-{
+                                     unsigned long* data) {
     PLX_STATUS status;
 
     unsigned long idx;
-    ptrdiff_t address = (ptrdiff_t)addr;
+    ptrdiff_t address = (ptrdiff_t) addr;
 
     ASSERT(h);
     ASSERT(data);
-
 
     status = _plx_find_handle_index(h, &idx);
 
@@ -613,7 +581,7 @@ XIA_EXPORT int XIA_API plx_read_long(HANDLE h, unsigned long addr,
         return status;
     }
 
-    *data = *((unsigned long *)(V_MAP.addr[idx] + address));
+    *data = *((unsigned long*) (V_MAP.addr[idx] + address));
 
 #ifdef PLX_DEBUG_IO_TRACE
     _plx_log_DEBUG("[plx_read_long] addr = %#lx, data = %p\n", addr, data);
@@ -622,20 +590,17 @@ XIA_EXPORT int XIA_API plx_read_long(HANDLE h, unsigned long addr,
     return PLX_SUCCESS;
 }
 
-
 /*
  * Write a long to the specified address
  */
 XIA_EXPORT int XIA_API plx_write_long(HANDLE h, unsigned long addr,
-                                      unsigned long data)
-{
+                                      unsigned long data) {
     PLX_STATUS status;
 
     unsigned long idx;
-    ptrdiff_t address = (ptrdiff_t)addr;
+    ptrdiff_t address = (ptrdiff_t) addr;
 
     ASSERT(h);
-
 
     status = _plx_find_handle_index(h, &idx);
 
@@ -649,22 +614,19 @@ XIA_EXPORT int XIA_API plx_write_long(HANDLE h, unsigned long addr,
 #endif /* PLX_DEBUG_IO_TRACE */
 
     ASSERT(V_MAP.addr[idx] != 0);
-    *((unsigned long *)(V_MAP.addr[idx] + address)) = data;
+    *((unsigned long*) (V_MAP.addr[idx] + address)) = data;
 
     return PLX_SUCCESS;
 }
 
-
 /*
  * 'Burst' read a block of data
  */
-XIA_EXPORT int XIA_API plx_read_block(HANDLE h, unsigned long addr,
-                                      unsigned long len, unsigned long n_dead,
-                                      unsigned long *data)
-{
+XIA_EXPORT int XIA_API plx_read_block(HANDLE h, unsigned long addr, unsigned long len,
+                                      unsigned long n_dead, unsigned long* data) {
     unsigned long idx;
 
-    unsigned long *local = NULL;
+    unsigned long* local = NULL;
 
     PLX_STATUS status;
     PLX_STATUS ignored_status;
@@ -672,7 +634,6 @@ XIA_EXPORT int XIA_API plx_read_block(HANDLE h, unsigned long addr,
     PLX_DMA_PROP dma_prop;
 
     PLX_DMA_PARAMS dma_params;
-
 
     ASSERT(len > 0);
     ASSERT(data != NULL);
@@ -686,38 +647,38 @@ XIA_EXPORT int XIA_API plx_read_block(HANDLE h, unsigned long addr,
 
     memset(&dma_prop, 0, sizeof(PLX_DMA_PROP));
 
-    dma_prop.ReadyInput       = 1;
-    dma_prop.Burst            = 1;
-    dma_prop.BurstInfinite    = 1;
-    dma_prop.ConstAddrLocal   = 1;
-    dma_prop.LocalBusWidth    = 2;  // 32-bit bus
-
+    dma_prop.ReadyInput = 1;
+    dma_prop.Burst = 1;
+    dma_prop.BurstInfinite = 1;
+    dma_prop.ConstAddrLocal = 1;
+    dma_prop.LocalBusWidth = 2;  // 32-bit bus
 
     status = PlxPci_DmaChannelOpen(&(V_MAP.device[idx]), 0, &dma_prop);
 
     if (status != ApiSuccess) {
-        _plx_log_DEBUG("Error opening PCI channel 0 for 'burst' read: HANDLE %p\n",
-                       h);
+        _plx_log_DEBUG("Error opening PCI channel 0 for 'burst' read: HANDLE %p\n", h);
         _plx_print_more(status);
         return status;
     }
 
-    /* If the handle is not registered as a notifier, then we need to do it.
-    * this only needs to be done once per handle.
-    */
+    /*
+     * If the handle is not registered as a notifier, then we need to do it.
+     * this only needs to be done once per handle.
+     */
     if (!V_MAP.registered[idx]) {
         memset(&(V_MAP.intrs[idx]), 0, sizeof(PLX_INTERRUPT));
 
         // Setup to wait for DMA channel 0
         V_MAP.intrs[idx].DmaDone = 1;
 
-        status = PlxPci_NotificationRegisterFor(&(V_MAP.device[idx]),
-                                                &(V_MAP.intrs[idx]), &(V_MAP.events[idx]));
+        status = PlxPci_NotificationRegisterFor(
+            &(V_MAP.device[idx]), &(V_MAP.intrs[idx]), &(V_MAP.events[idx]));
 
         if (status != ApiSuccess) {
             ignored_status = PlxPci_DmaChannelClose(&(V_MAP.device[idx]), 0);
             _plx_log_DEBUG("Error registering for notification of PCI DMA channel 0: "
-                           "HANDLE %p\n", h);
+                           "HANDLE %p\n",
+                           h);
             _plx_print_more(status);
             return status;
         }
@@ -738,7 +699,7 @@ XIA_EXPORT int XIA_API plx_read_block(HANDLE h, unsigned long addr,
     memset(&dma_params, 0, sizeof(PLX_DMA_PARAMS));
 
     /* We include the dead words in the transfer */
-    local = (unsigned long *)malloc((len + n_dead) * sizeof(unsigned long));
+    local = (unsigned long*) malloc((len + n_dead) * sizeof(unsigned long));
 
     if (!local) {
         _plx_log_DEBUG("Error allocating %d bytes for 'local'.\n",
@@ -746,10 +707,10 @@ XIA_EXPORT int XIA_API plx_read_block(HANDLE h, unsigned long addr,
         return PLX_MEM;
     }
 
-    dma_params.UserVa            = (U64)local;
-    dma_params.LocalAddr         = EXTERNAL_MEMORY_LOCAL_ADDR;
-    dma_params.ByteCount         = (len + n_dead) * 4;
-    dma_params.Direction 				 = PLX_DMA_LOC_TO_PCI;
+    dma_params.UserVa = (U64) local;
+    dma_params.LocalAddr = EXTERNAL_MEMORY_LOCAL_ADDR;
+    dma_params.ByteCount = (len + n_dead) * 4;
+    dma_params.Direction = PLX_DMA_LOC_TO_PCI;
 
     status = PlxPci_DmaTransferUserBuffer(&(V_MAP.device[idx]), 0, &dma_params, 0);
 
@@ -786,49 +747,40 @@ XIA_EXPORT int XIA_API plx_read_block(HANDLE h, unsigned long addr,
     return PLX_SUCCESS;
 }
 
-
 /*
  * Dump out the virtual map.
  */
 #ifdef PLXLIB_DEBUG
-XIA_EXPORT void XIA_API plx_dump_vmap_DEBUG(void)
-{
+XIA_EXPORT void XIA_API plx_dump_vmap_DEBUG(void) {
     unsigned long i = 0;
-
 
     _plx_log_DEBUG("Starting virtual map dump.\n");
 
     for (i = 0; i < V_MAP.n; i++) {
-        _plx_log_DEBUG("\t%lu: addr = %#lx, HANDLE = %p, REGISTERED = %u\n",
-                       i, V_MAP.addr[i], V_MAP.device[i].hDevice,
-                       (unsigned short)V_MAP.registered[i]);
+        _plx_log_DEBUG("\t%lu: addr = %#lx, HANDLE = %p, REGISTERED = %u\n", i,
+                       V_MAP.addr[i], V_MAP.device[i].hDevice,
+                       (unsigned short) V_MAP.registered[i]);
 
         if (V_MAP.registered[i]) {
             _plx_log_DEBUG("\t   hEvent = %p, IsValidTag = %#lx\n",
                            (U64) (V_MAP.events[i]).hEvent,
-                           (U32) (V_MAP.events[i]).IsValidTag
-                          );
+                           (U32) (V_MAP.events[i]).IsValidTag);
         }
 
         if (V_MAP.addr[i]) {
-            _plx_log_DEBUG(
-                "PCI BAR\n"
-                "0: 0x%p\n"
-                "1: 0x%p\n"
-                "2: 0x%p\n"
-                "3: 0x%p\n"
-                "5: 0x%p\n",
-                "4: 0x%p\n",
-                (intptr_t)(V_MAP.addr[i]),
-                (intptr_t)(V_MAP.addr[i] + (0x10)),
-                (intptr_t)(V_MAP.addr[i] + (0x20)),
-                (intptr_t)(V_MAP.addr[i] + (0x30)),
-                (intptr_t)(V_MAP.addr[i] + (0x50)),
-                (intptr_t)(V_MAP.addr[i] + (0x40))
-            );
+            _plx_log_DEBUG("PCI BAR\n"
+                           "0: 0x%p\n"
+                           "1: 0x%p\n"
+                           "2: 0x%p\n"
+                           "3: 0x%p\n"
+                           "5: 0x%p\n",
+                           "4: 0x%p\n", (intptr_t) (V_MAP.addr[i]),
+                           (intptr_t) (V_MAP.addr[i] + (0x10)),
+                           (intptr_t) (V_MAP.addr[i] + (0x20)),
+                           (intptr_t) (V_MAP.addr[i] + (0x30)),
+                           (intptr_t) (V_MAP.addr[i] + (0x50)),
+                           (intptr_t) (V_MAP.addr[i] + (0x40)));
         }
-
-
     }
 
     _plx_log_DEBUG("Virtual map dump complete.\n");

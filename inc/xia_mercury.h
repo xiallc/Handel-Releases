@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  */
 
-
 #ifndef __XIA_MERCURY_H__
 #define __XIA_MERCURY_H__
 
@@ -46,146 +45,124 @@
 #include "xerxesdef.h"
 #include "xerxes_structures.h"
 
-
-/* These are the routines that are required to be available since they are
+/*
+ * These are the routines that are required to be available since they are
  * called by Xerxes.
  */
-XERXES_EXPORT int dxp_init_mercury(Functions *funcs);
-XERXES_STATIC int dxp_init_driver(Interface *);
-XERXES_STATIC int dxp_init_utils(Utils *);
-XERXES_STATIC int dxp_begin_run(int *ioChan, int *modChan,
-                                unsigned short *gate,
-                                unsigned short *resume,
-                                Board *board, int *id);
-XERXES_STATIC int dxp_end_run(int *ioChan, int *modChan, Board *board);
-XERXES_STATIC int dxp_run_active(int *, int *, int*);
-XERXES_STATIC int dxp_begin_control_task(int* ioChan, int* modChan,
-                                         short *type,
-                                         unsigned int *length, int *info,
-                                         Board *board);
-XERXES_STATIC int dxp_end_control_task(int* ioChan, int* modChan, Board *board);
-XERXES_STATIC int dxp_control_task_params(int* ioChan, int* modChan,
-                                          short *type, Board *board, int *info);
-XERXES_STATIC int dxp_control_task_data(int* ioChan, int* modChan, short *type,
-                                        Board *board, void *data);
-XERXES_STATIC int dxp_loc(char *, Dsp_Info *, unsigned short *);
-XERXES_STATIC int dxp_get_dspinfo(Dsp_Info *);
-XERXES_STATIC int dxp_get_fipinfo(void *);
-XERXES_STATIC int dxp_get_fpgaconfig(void *fippi);
-XERXES_STATIC int dxp_download_fpga_done(int *modChan, char *name,
-                                         Board *board);
-XERXES_STATIC int dxp_download_fpgaconfig(int *ioChan, int *modChan,
-                                          char *name, Board *board);
-XERXES_STATIC int dxp_download_dspconfig(int *ioChan, int *modChan,
-                                         Board *board);
-XERXES_STATIC int dxp_get_dspconfig(Dsp_Info *);
-XERXES_STATIC int XERXES_API dxp_decode_error(int *, int *, Dsp_Info *,
-                unsigned short *, unsigned short *);
-XERXES_STATIC int dxp_clear_error(int *, int *, Board *);
-XERXES_STATIC int dxp_get_runstats(int *ioChan, int *modChan, Board *b,
-                                   unsigned long *evts, unsigned long *under,
-                                   unsigned long *over, unsigned long *fast,
-                                   unsigned long *base, double *live,
-                                   double *icr, double *ocr);
-XERXES_STATIC int dxp_modify_dspsymbol(int *, int *, char *,
-                                       unsigned short *, Board *);
-XERXES_STATIC int dxp_read_dspsymbol(int *, int *, char *, Board *, double *);
-XERXES_STATIC int dxp_read_dspparams(int *ioChan, int *modChan, Board *b,
-                                     unsigned short *params);
-XERXES_STATIC int dxp_write_dspparams(int *, int *, Dsp_Info *,
-                                      unsigned short *);
-XERXES_STATIC int dxp_get_spectrum_length(int *ioChan, int *modChan,
-                                          Board *board, unsigned int *len);
-XERXES_STATIC int dxp_get_baseline_length(int *modChan, Board *b,
-                                          unsigned int *len);
-XERXES_STATIC int dxp_read_spectrum(int *, int *, Board *, unsigned long *);
-XERXES_STATIC int dxp_read_baseline(int *ioChan, int *modchan, Board *board,
-                                    unsigned long *baseline);
-XERXES_STATIC int dxp_read_mem(int *ioChan, int *modChan, Board *board,
-                               char *name, unsigned long *base,
-                               unsigned long *offset, unsigned long *data);
-XERXES_STATIC int dxp_write_mem(int *ioChan, int *modChan, Board *board,
-                                char *name, unsigned long *base,
-                                unsigned long *offset, unsigned long *data);
-XERXES_STATIC int dxp_write_reg(int *ioChan, int *modChan, char *name,
-                                unsigned long *data);
-XERXES_STATIC int dxp_read_reg(int *ioChan, int *modChan, char *name,
-                               unsigned long *data);
+XERXES_EXPORT int dxp_init_mercury(Functions* funcs);
+XERXES_STATIC int dxp_init_driver(Interface*);
+XERXES_STATIC int dxp_init_utils(Utils*);
+XERXES_STATIC int dxp_begin_run(int* ioChan, int* modChan, unsigned short* gate,
+                                unsigned short* resume, Board* board, int* id);
+XERXES_STATIC int dxp_end_run(int* ioChan, int* modChan, Board* board);
+XERXES_STATIC int dxp_run_active(int*, int*, int*);
+XERXES_STATIC int dxp_begin_control_task(int* ioChan, int* modChan, short* type,
+                                         unsigned int* length, int* info, Board* board);
+XERXES_STATIC int dxp_end_control_task(int* ioChan, int* modChan, Board* board);
+XERXES_STATIC int dxp_control_task_params(int* ioChan, int* modChan, short* type,
+                                          Board* board, int* info);
+XERXES_STATIC int dxp_control_task_data(int* ioChan, int* modChan, short* type,
+                                        Board* board, void* data);
+XERXES_STATIC int dxp_loc(char*, Dsp_Info*, unsigned short*);
+XERXES_STATIC int dxp_get_dspinfo(Dsp_Info*);
+XERXES_STATIC int dxp_get_fipinfo(void*);
+XERXES_STATIC int dxp_get_fpgaconfig(void* fippi);
+XERXES_STATIC int dxp_download_fpga_done(int* modChan, char* name, Board* board);
+XERXES_STATIC int dxp_download_fpgaconfig(int* ioChan, int* modChan, char* name,
+                                          Board* board);
+XERXES_STATIC int dxp_download_dspconfig(int* ioChan, int* modChan, Board* board);
+XERXES_STATIC int dxp_get_dspconfig(Dsp_Info*);
+XERXES_STATIC int XERXES_API dxp_decode_error(int*, int*, Dsp_Info*, unsigned short*,
+                                              unsigned short*);
+XERXES_STATIC int dxp_clear_error(int*, int*, Board*);
+XERXES_STATIC int dxp_get_runstats(int* ioChan, int* modChan, Board* b,
+                                   unsigned long* evts, unsigned long* under,
+                                   unsigned long* over, unsigned long* fast,
+                                   unsigned long* base, double* live, double* icr,
+                                   double* ocr);
+XERXES_STATIC int dxp_modify_dspsymbol(int*, int*, char*, unsigned short*, Board*);
+XERXES_STATIC int dxp_read_dspsymbol(int*, int*, char*, Board*, double*);
+XERXES_STATIC int dxp_read_dspparams(int* ioChan, int* modChan, Board* b,
+                                     unsigned short* params);
+XERXES_STATIC int dxp_write_dspparams(int*, int*, Dsp_Info*, unsigned short*);
+XERXES_STATIC int dxp_get_spectrum_length(int* ioChan, int* modChan, Board* board,
+                                          unsigned int* len);
+XERXES_STATIC int dxp_get_baseline_length(int* modChan, Board* b, unsigned int* len);
+XERXES_STATIC int dxp_read_spectrum(int*, int*, Board*, unsigned long*);
+XERXES_STATIC int dxp_read_baseline(int* ioChan, int* modchan, Board* board,
+                                    unsigned long* baseline);
+XERXES_STATIC int dxp_read_mem(int* ioChan, int* modChan, Board* board, char* name,
+                               unsigned long* base, unsigned long* offset,
+                               unsigned long* data);
+XERXES_STATIC int dxp_write_mem(int* ioChan, int* modChan, Board* board, char* name,
+                                unsigned long* base, unsigned long* offset,
+                                unsigned long* data);
+XERXES_STATIC int dxp_write_reg(int* ioChan, int* modChan, char* name,
+                                unsigned long* data);
+XERXES_STATIC int dxp_read_reg(int* ioChan, int* modChan, char* name,
+                               unsigned long* data);
 
-XERXES_STATIC int dxp_unhook(Board *board);
+XERXES_STATIC int dxp_unhook(Board* board);
 XERXES_STATIC int dxp_get_symbol_by_index(int modChan, unsigned short index,
-                                          Board *board, char *name);
-XERXES_STATIC int dxp_get_num_params(int modChan, Board *b,
-                                     unsigned short *n_params);
+                                          Board* board, char* name);
+XERXES_STATIC int dxp_get_num_params(int modChan, Board* b, unsigned short* n_params);
 
 /* Logging macro wrappers */
-#define dxp_log_error(x, y, z)  \
-  mercury_md_log(MD_ERROR, (x), (y), (z), __FILE__, __LINE__)
-#define dxp_log_warning(x, y)	  \
-  mercury_md_log(MD_WARNING, (x), (y), 0, __FILE__, __LINE__)
-#define dxp_log_info(x, y)	    \
-  mercury_md_log(MD_INFO, (x), (y), 0, __FILE__, __LINE__)
-#define dxp_log_debug(x, y)     \
-	mercury_md_log(MD_DEBUG, (x), (y), 0, __FILE__, __LINE__)
+#define dxp_log_error(x, y, z)                                                         \
+    mercury_md_log(MD_ERROR, (x), (y), (z), __FILE__, __LINE__)
+#define dxp_log_warning(x, y)                                                          \
+    mercury_md_log(MD_WARNING, (x), (y), 0, __FILE__, __LINE__)
+#define dxp_log_info(x, y) mercury_md_log(MD_INFO, (x), (y), 0, __FILE__, __LINE__)
+#define dxp_log_debug(x, y) mercury_md_log(MD_DEBUG, (x), (y), 0, __FILE__, __LINE__)
 
-static DXP_MD_IO         mercury_md_io;
+static DXP_MD_IO mercury_md_io;
 static DXP_MD_SET_MAXBLK mercury_md_set_maxblk;
 static DXP_MD_GET_MAXBLK mercury_md_get_maxblk;
-static DXP_MD_LOG        mercury_md_log;
-static DXP_MD_ALLOC      mercury_md_alloc;
-static DXP_MD_FREE       mercury_md_free;
-static DXP_MD_PUTS       mercury_md_puts;
-static DXP_MD_WAIT       mercury_md_wait;
-static DXP_MD_FGETS      mercury_md_fgets;
+static DXP_MD_LOG mercury_md_log;
+static DXP_MD_ALLOC mercury_md_alloc;
+static DXP_MD_FREE mercury_md_free;
+static DXP_MD_PUTS mercury_md_puts;
+static DXP_MD_WAIT mercury_md_wait;
+static DXP_MD_FGETS mercury_md_fgets;
 
 /* Typedefs */
-typedef int (*fpga_downloader_fp_t)(int ioChan, int modChan, Board *board);
-typedef int (*do_control_task_data_fp_t)(int ioChan, int modChan,
-                                         unsigned long *data, Board *b);
-typedef int (*do_control_task_fp_t)(int, int, Board *);
-typedef int (*do_control_task_info_fp_t)(int ioChan, int modChan,
-									   unsigned int length, int *info, Board *b);
+typedef int (*fpga_downloader_fp_t)(int ioChan, int modChan, Board* board);
+typedef int (*do_control_task_data_fp_t)(int ioChan, int modChan, unsigned long* data,
+                                         Board* b);
+typedef int (*do_control_task_fp_t)(int, int, Board*);
+typedef int (*do_control_task_info_fp_t)(int ioChan, int modChan, unsigned int length,
+                                         int* info, Board* b);
 
 /* Structs */
 
-/* Element of a function dispatch table for the possible FPGA
+/*
+ * Element of a function dispatch table for the possible FPGA
  * download types.
  */
 typedef struct _fpga_downloader {
-
-  char *type;
-  fpga_downloader_fp_t f;
-
+    char* type;
+    fpga_downloader_fp_t f;
 } fpga_downloader_t;
 
-
-/* Element of a function dispatch table for control tasks that are
+/*
+ * Element of a function dispatch table for control tasks that are
  * run via. the data readout function.
  */
 typedef struct _control_task_data {
-
-  int type;
-  do_control_task_data_fp_t fn;
-
+    int type;
+    do_control_task_data_fp_t fn;
 } control_task_data_t;
 
-
 typedef struct _control_task {
-
-  int type;
-  do_control_task_info_fp_t fn_info;
-  do_control_task_fp_t fn;
-
+    int type;
+    do_control_task_info_fp_t fn_info;
+    do_control_task_fp_t fn;
 } control_task_t;
 
-
 typedef struct _register_table {
-
-  char *name;
-  unsigned long addr;
-
+    char* name;
+    unsigned long addr;
 } register_table_t;
-
 
 /* Firmware constatns */
 
@@ -194,21 +171,21 @@ typedef struct _register_table {
 #define MAXDSP_LEN 0x10000
 
 /* Communication constants */
-#define DXP_A_IO    0
-#define DXP_A_ADDR  1
+#define DXP_A_IO 0
+#define DXP_A_ADDR 1
 
 #define DXP_F_IGNORE 0
-#define DXP_F_WRITE  1
-#define DXP_F_READ   0
+#define DXP_F_WRITE 1
+#define DXP_F_READ 0
 
 /* CPLD register addresses */
-#define DXP_CPLD_CFG_CTRL   0x10000001
-#define DXP_CPLD_CFG_DATA   0x10000002
+#define DXP_CPLD_CFG_CTRL 0x10000001
+#define DXP_CPLD_CFG_DATA 0x10000002
 #define DXP_CPLD_CFG_STATUS 0x10000003
 
 /* CPLD Control Register Bit Masks */
 #define DXP_CPLD_CTRL_SYS_FPGA 0x1
-#define DXP_CPLD_CTRL_SYS_FIP  0x2
+#define DXP_CPLD_CTRL_SYS_FIP 0x2
 
 /* A map of the status values for the XDONE and INIT* lines indexed by target.
  * To access this, you would use syntax like:
@@ -219,12 +196,12 @@ typedef struct _register_table {
  */
 #define MERCURY_NUM_TARGETS 2
 
-#define MERCURY_INIT      0
-#define MERCURY_XDONE     1
+#define MERCURY_INIT 0
+#define MERCURY_XDONE 1
 
 static unsigned long MERCURY_CFG_STATUS[MERCURY_NUM_TARGETS][2] = {
-  { 0x1,  0x2  },
-  { 0x4,  0x8  },
+    {0x1, 0x2},
+    {0x4, 0x8},
 };
 
 /* CPLD Status Register Bit Masks */
@@ -237,57 +214,52 @@ static unsigned long MERCURY_CFG_STATUS[MERCURY_NUM_TARGETS][2] = {
 #define DXP_SYS_REG_CSR 0x08000002
 
 /* System FPGA CSR Bits */
-#define DXP_CSR_RUN_ENABLE      0
-#define DXP_CSR_RESET_MCA       1
-#define DXP_CSR_RESET_DSP_BIT   2
-#define DXP_CSR_BOOT_DSP_BIT    3
-#define DXP_CSR_RUN_ACT_BIT     16
-#define DXP_CSR_DSP_ACT_BIT     17
+#define DXP_CSR_RUN_ENABLE 0
+#define DXP_CSR_RESET_MCA 1
+#define DXP_CSR_RESET_DSP_BIT 2
+#define DXP_CSR_BOOT_DSP_BIT 3
+#define DXP_CSR_RUN_ACT_BIT 16
+#define DXP_CSR_DSP_ACT_BIT 17
 
 /* Base Addresses */
 #define DXP_DSP_PROG_MEM_ADDR 0x00000000
 #define DXP_DSP_DATA_MEM_ADDR 0x01000000
-#define DXP_DSP_EXT_MEM_ADDR  0x03000000
-
+#define DXP_DSP_EXT_MEM_ADDR 0x03000000
 
 /* RUNTYPE constants */
-#define MERCURY_RUNTYPE_NORMAL  0
+#define MERCURY_RUNTYPE_NORMAL 0
 #define MERCURY_RUNTYPE_SPECIAL 1
 
 /* SPECIALRUN constants */
-#define MERCURY_SPECIALRUN_APPLY            0
-#define MERCURY_SPECIALRUN_TRACE            1
-#define MERCURY_SPECIALRUN_SET_OFFADC       2 /* Mercury OEM Adjust ADC offset */
-#define MERCURY_SPECIALRUN_CALIBRATE_RC     3 /* Mercury OEM calibrate RC time */
-#define MERCURY_SPECIALRUN_DSP_SLEEP        7
+#define MERCURY_SPECIALRUN_APPLY 0
+#define MERCURY_SPECIALRUN_TRACE 1
+#define MERCURY_SPECIALRUN_SET_OFFADC 2 /* Mercury OEM Adjust ADC offset */
+#define MERCURY_SPECIALRUN_CALIBRATE_RC 3 /* Mercury OEM calibrate RC time */
+#define MERCURY_SPECIALRUN_DSP_SLEEP 7
 
 /* Memory constants */
-#define MERCURY_MEMORY_BLOCK_SIZE  256
+#define MERCURY_MEMORY_BLOCK_SIZE 256
 #define MERCURY_MEMORY_32_MAX_ADDR 0x100000
 
-
-/* These are relative offsets for each channel in the external memory
+/*
+ * These are relative offsets for each channel in the external memory
  * statistics block.
  */
-static unsigned long MERCURY_STATS_CHAN_OFFSET[] = {
-  0x000000,
-  0x000040,
-  0x000080,
-  0x0000C0
-};
+static unsigned long MERCURY_STATS_CHAN_OFFSET[] = {0x000000, 0x000040, 0x000080,
+                                                    0x0000C0};
 
-/* Statistics offset in external memroy */
-#define MERCURY_STATS_REALTIME_OFFSET   0x0
-#define MERCURY_STATS_TLIVETIME_OFFSET  0x2
-#define MERCURY_STATS_TRIGGERS_OFFSET   0x6
-#define MERCURY_STATS_MCAEVENTS_OFFSET  0x8
+/* Statistics offset in external memory */
+#define MERCURY_STATS_REALTIME_OFFSET 0x0
+#define MERCURY_STATS_TLIVETIME_OFFSET 0x2
+#define MERCURY_STATS_TRIGGERS_OFFSET 0x6
+#define MERCURY_STATS_MCAEVENTS_OFFSET 0x8
 #define MERCURY_STATS_UNDERFLOWS_OFFSET 0xA
-#define MERCURY_STATS_OVERFLOWS_OFFSET  0xC
+#define MERCURY_STATS_OVERFLOWS_OFFSET 0xC
 
 /* Run control constants */
 #define RESUME_RUN 1
 
 /* Useful structure access macros */
-#define PARAMS(x)   (x)->system_dsp->params
+#define PARAMS(x) (x)->system_dsp->params
 
 #endif /* __XIA_MERCURY_H__ */

@@ -34,14 +34,13 @@
  * SUCH DAMAGE.
  */
 
-
 #ifndef XIA_SORT_H
 #define XIA_SORT_H
 
 /* Prototypes */
-HANDEL_STATIC int HANDEL_API xiaMerge(void *data, int esize, int i, int j,
-									  int k,
-									  int (*compare)(const void *key1, const void *key2));
-HANDEL_STATIC void HANDEL_API xiaSwap(Firmware *left, Firmware *right);
+HANDEL_STATIC int HANDEL_API xiaMerge(void* data, int esize, int i, int j, int k,
+                                      int (*compare)(const void* key1,
+                                                     const void* key2));
+HANDEL_STATIC void HANDEL_API xiaSwap(Firmware* left, Firmware* right);
 
 #endif /* XIA_SORT_H */

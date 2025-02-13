@@ -1,4 +1,5 @@
-/* This code accompanies the XIA Application Note "Handel Quick Start Guide:
+/*
+ * This code accompanies the XIA Application Note "Handel Quick Start Guide:
  * xMAP". This sample code shows how to acquire MCA mapping mode data and
  * save it to a file for later processing.
  *
@@ -41,7 +42,6 @@
  * SUCH DAMAGE.
  */
 
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -55,31 +55,27 @@
 #include "handel_constants.h"
 #include "md_generic.h"
 
-
 static CRITICAL_SECTION LOCK;
 
 /* Acquires the global lock before making the Handel call. */
-#define SYNC(x) \
-    do { \
-    EnterCriticalSection(&LOCK); \
-    status = (x); \
-    LeaveCriticalSection(&LOCK); \
+#define SYNC(x)                                                                        \
+    do {                                                                               \
+        EnterCriticalSection(&LOCK);                                                   \
+        status = (x);                                                                  \
+        LeaveCriticalSection(&LOCK);                                                   \
     } while (0)
-
 
 static void print_usage(void);
 static void CHECK_ERROR(int status);
 
 static int WaitForBuffer(char buf);
-static int ReadBuffer(char buf, unsigned long *data);
-static int SwitchBuffer(char *buf);
-static int GetCurrentPixel(unsigned long *pixel);
+static int ReadBuffer(char buf, unsigned long* data);
+static int SwitchBuffer(char* buf);
+static int GetCurrentPixel(unsigned long* pixel);
 
-static unsigned _stdcall PixelAdvanceStart(LPVOID *params);
+static unsigned _stdcall PixelAdvanceStart(LPVOID* params);
 
-
-int main(int argc, char *argv[])
-{
+int main(int argc, char* argv[]) {
     int status;
     int ignored = 0;
 
@@ -94,7 +90,7 @@ int main(int argc, char *argv[])
     double mappingMode = 1.0;
     double pixControl = XIA_MAPPING_CTL_GATE;
 
-    unsigned long *buffer = NULL;
+    unsigned long* buffer = NULL;
 
     HANDLE pixAdvThreadHandle;
 
@@ -122,35 +118,34 @@ int main(int argc, char *argv[])
 
     /* Set mapping parameters. */
     printf("Setting the acquisition values.\n");
-    status = xiaSetAcquisitionValues(-1, "number_mca_channels", (void *)&nBins);
+    status = xiaSetAcquisitionValues(-1, "number_mca_channels", (void*) &nBins);
     CHECK_ERROR(status);
 
-    status = xiaSetAcquisitionValues(-1, "num_map_pixels", (void *)&nMapPixels);
+    status = xiaSetAcquisitionValues(-1, "num_map_pixels", (void*) &nMapPixels);
     CHECK_ERROR(status);
 
     status = xiaSetAcquisitionValues(-1, "num_map_pixels_per_buffer",
-                                     (void *)&nMapPixelsPerBuffer);
+                                     (void*) &nMapPixelsPerBuffer);
     CHECK_ERROR(status);
 
-    status = xiaSetAcquisitionValues(-1, "pixel_advance_mode",
-                                     (void *)&pixControl);
+    status = xiaSetAcquisitionValues(-1, "pixel_advance_mode", (void*) &pixControl);
     CHECK_ERROR(status);
 
-    status = xiaSetAcquisitionValues(-1, "mapping_mode", (void *)&mappingMode);
+    status = xiaSetAcquisitionValues(-1, "mapping_mode", (void*) &mappingMode);
     CHECK_ERROR(status);
 
     /* Apply the mapping parameters. */
     printf("Applying the acquisition values.\n");
-    status = xiaBoardOperation(0, "apply", (void *)&ignored);
+    status = xiaBoardOperation(0, "apply", (void*) &ignored);
     CHECK_ERROR(status);
 
     /* Prepare the buffer we will use to read back the data from the board. */
-    status = xiaGetRunData(0, "buffer_len", (void *)&bufferLen);
+    status = xiaGetRunData(0, "buffer_len", (void*) &bufferLen);
     CHECK_ERROR(status);
 
     printf("Mapping buffer length = %lu.\n", bufferLen);
     printf("Allocating memory for mapping buffer.\n");
-    buffer = (unsigned long *)malloc(bufferLen * sizeof(unsigned long));
+    buffer = (unsigned long*) malloc(bufferLen * sizeof(unsigned long));
 
     if (!buffer) {
         /* Error allocating memory */
@@ -164,8 +159,8 @@ int main(int argc, char *argv[])
     status = xiaStartRun(-1, 0);
     CHECK_ERROR(status);
 
-    pixAdvThreadHandle = (HANDLE)_beginthreadex(NULL, 0, PixelAdvanceStart,
-                                                NULL, 0, &pixAdvThreadId);
+    pixAdvThreadHandle =
+        (HANDLE) _beginthreadex(NULL, 0, PixelAdvanceStart, NULL, 0, &pixAdvThreadId);
 
     if (!pixAdvThreadHandle) {
         printf("Error creating and starting pixel advance thread.\n");
@@ -185,7 +180,8 @@ int main(int argc, char *argv[])
         status = ReadBuffer(curBuffer, buffer);
         CHECK_ERROR(status);
 
-        /* This is where you would ordinarily do something with the data:
+        /*
+         * This is where you would ordinarily do something with the data:
          * write it to a file, post-process it, etc.
          */
 
@@ -195,8 +191,7 @@ int main(int argc, char *argv[])
 
         status = GetCurrentPixel(&curPixel);
         CHECK_ERROR(status);
-
-    } while (curPixel < (unsigned long)nMapPixels);
+    } while (curPixel < (unsigned long) nMapPixels);
 
     /* Cleanup related to the pixel advance thread. */
     TerminateThread(pixAdvThreadHandle, 0);
@@ -218,14 +213,12 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-
 /**********
  * This is just an example of how to handle error values.
  * A program of any reasonable size should
  * implement a more robust error handling mechanism.
  **********/
-static void CHECK_ERROR(int status)
-{
+static void CHECK_ERROR(int status) {
     /* XIA_SUCCESS is defined in handel_errors.h */
     if (status != XIA_SUCCESS) {
         printf("Error encountered! Status = %d\n", status);
@@ -234,71 +227,55 @@ static void CHECK_ERROR(int status)
     }
 }
 
-
 /**********
  * Waits for the specified buffer to fill.
  **********/
-static int WaitForBuffer(char buf)
-{
+static int WaitForBuffer(char buf) {
     int status;
 
     char bufString[15];
 
     unsigned short isFull = FALSE_;
 
-
     printf("\tWaiting for buffer '%c'.\n", buf);
 
     sprintf(bufString, "buffer_full_%c", buf);
 
     while (!isFull) {
-        SYNC(xiaGetRunData(0, bufString, (void *)&isFull));
-
+        SYNC(xiaGetRunData(0, bufString, (void*) &isFull));
         if (status != XIA_SUCCESS) {
             return status;
         }
-
         Sleep(1);
     }
 
     return XIA_SUCCESS;
 }
 
-
 /**********
  * Reads the requested buffer.
  **********/
-static int ReadBuffer(char buf, unsigned long *data)
-{
+static int ReadBuffer(char buf, unsigned long* data) {
     int status;
-
     char bufString[9];
-
-
     printf("\tReading buffer '%c'.\n", buf);
-
     sprintf(bufString, "buffer_%c", buf);
-
-    SYNC(xiaGetRunData(0, bufString, (void *)data));
-
+    SYNC(xiaGetRunData(0, bufString, (void*) data));
     return status;
 }
-
 
 /**********
  * Clears the current buffer and switches to the next buffer.
  **********/
-static int SwitchBuffer(char *buf)
-{
+static int SwitchBuffer(char* buf) {
     int status;
-
 
     printf("\tSwitching from buffer '%c'...", *buf);
 
-    SYNC(xiaBoardOperation(0, "buffer_done", (void *)buf));
+    SYNC(xiaBoardOperation(0, "buffer_done", (void*) buf));
 
     if (status == XIA_SUCCESS) {
-        *buf = (char)((*buf == 'a') ? 'b' : 'a');
+        *buf = (char) ((*buf == 'a') ? 'b' : 'a');
     }
 
     printf("...to buffer '%c'.\n", *buf);
@@ -306,46 +283,34 @@ static int SwitchBuffer(char *buf)
     return status;
 }
 
-
 /**********
  * Get the current mapping pixel.
  **********/
-static int GetCurrentPixel(unsigned long *pixel)
-{
+static int GetCurrentPixel(unsigned long* pixel) {
     int status;
-
-
-    SYNC(xiaGetRunData(0, "current_pixel", (void *)pixel));
-
+    SYNC(xiaGetRunData(0, "current_pixel", (void*) pixel));
     printf("Current pixel = %lu.\n", *pixel);
-
     return status;
 }
-
 
 /* Manually advances the mapping pixel every 10 ms. In real
  * applications, use a GATE or SYNC signal to advance the pixel.
  */
-static unsigned _stdcall PixelAdvanceStart(LPVOID *params)
-{
+static unsigned _stdcall PixelAdvanceStart(LPVOID* params) {
     int ignored;
     int status;
 
     UNUSED(params);
-
 
     while (TRUE_) {
         Sleep(10);
         SYNC(xiaBoardOperation(0, "mapping_pixel_next", &ignored));
         CHECK_ERROR(status);
     }
-
     return 0;
 }
 
-
-static void print_usage(void)
-{
+static void print_usage(void) {
     fprintf(stdout, "Arguments: [.ini file]]\n");
     return;
 }

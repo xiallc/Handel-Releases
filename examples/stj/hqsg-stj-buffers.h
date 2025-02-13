@@ -56,13 +56,11 @@
  *     unsigned long event_id = MAKE_WORD32(h->event_id);
  */
 
-#define MAKE_WORD32(x) (unsigned long)((x)[0] | \
-                                       ((unsigned long)(x)[1] << 16))
-#define MAKE_WORD64(x) (unsigned long long)((x)[0] | \
-                                       ((unsigned long long)(x)[1] << 16) |  \
-                                       ((unsigned long long)(x)[2] << 32) |  \
-                                       ((unsigned long long)(x)[3] << 48))
-
+#define MAKE_WORD32(x) (unsigned long) ((x)[0] | ((unsigned long) (x)[1] << 16))
+#define MAKE_WORD64(x)                                                                 \
+    (unsigned long long) ((x)[0] | ((unsigned long long) (x)[1] << 16) |               \
+                          ((unsigned long long) (x)[2] << 32) |                        \
+                          ((unsigned long long) (x)[3] << 48))
 
 /* 256-word buffer header. */
 struct header {
@@ -119,13 +117,9 @@ union event_record {
 
 struct pmt_buffer {
     struct header header;
-    union event_record *events; /* get the count from header */
+    union event_record* events; /* get the count from header */
 };
 
-enum {
-    AnodeVariant = 0xA,
-    DynodeVariant = 0xB,
-    PMTAllVariant = 0xF
-};
+enum { AnodeVariant = 0xA, DynodeVariant = 0xB, PMTAllVariant = 0xF };
 
 #endif /* STJ_BUFFERS_H */

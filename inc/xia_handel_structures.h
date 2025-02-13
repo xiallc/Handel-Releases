@@ -34,7 +34,6 @@
  * SUCH DAMAGE.
  */
 
-
 #ifndef XIA_HANDEL_STRUCTURES_H
 #define XIA_HANDEL_STRUCTURES_H
 
@@ -46,25 +45,23 @@
  */
 
 /* These are for the DetChanElements */
-#define SINGLE		0
-#define SET			1
-
+#define SINGLE 0
+#define SET 1
 
 /*
  * Structs
  */
 
-/* Represents an individual channel in a module.
+/*
+ * Represents an individual channel in a module.
  * Eventually, most of the module items will
  * be moved to this structure.
  */
 typedef struct _Channel {
-  unsigned short n_sca;
-  unsigned short *sca_lo;
-  unsigned short *sca_hi;
-
+    unsigned short n_sca;
+    unsigned short* sca_lo;
+    unsigned short* sca_hi;
 } Channel_t;
-
 
 /*
  * Linked-list that defines either a single detChan or
@@ -73,7 +70,8 @@ typedef struct _Channel {
  * to other points, etc...
  */
 struct DetChanElement {
-    /* Type (either SINGLE or SET) used to determine which
+    /*
+     * Type (either SINGLE or SET) used to determine which
      * element of the union to access.
      */
     int type;
@@ -83,61 +81,54 @@ struct DetChanElement {
      */
     int detChan;
 
-    /* A union that contains either the alias of the
+    /*
+     * A union that contains either the alias of the
      * module this element "refers" to (in the case
      * of a SINGLE) or a pointer to a list of
      * other detChan elements.
      */
     union {
-
-	char *modAlias;
-	struct DetChanSetElem *detChanSet;
-
+        char* modAlias;
+        struct DetChanSetElem* detChanSet;
     } data;
-    /* A flag to tell, when iterating, if we have a
-     * cycle in the LL
+    /*
+     * A flag to tell, when iterating, if we have a cycle in the LL
      */
     boolean_t isTagged;
 
-    struct DetChanElement *next;
+    struct DetChanElement* next;
 };
 typedef struct DetChanElement DetChanElement;
-
 
 /*
  * Linked-list for the individual elements of a DetChanSet list
  */
 struct DetChanSetElem {
-
     unsigned int channel;
-
-    struct DetChanSetElem *next;
+    struct DetChanSetElem* next;
 };
 typedef struct DetChanSetElem DetChanSetElem;
-
 
 /*
  * Linked list containing the default DAQ entries.
  * name-value pairs only.
  */
 typedef struct _XiaDaqEntry {
-  /* String containing the DAQ entry settting name */
-  char *name;
+    /* String containing the DAQ entry settting name */
+    char* name;
 
-  /* DAQ entry value */
-  double data;
+    /* DAQ entry value */
+    double data;
 
-  /* For products using the 'apply' model, this is new value */
-  double pending;
+    /* For products using the 'apply' model, this is new value */
+    double pending;
 
-  /* Value state information. Not used by all products. */
-  flag_t state;
+    /* Value state information. Not used by all products. */
+    flag_t state;
 
-  /* Pointer to the next entry */
-  struct _XiaDaqEntry *next;
-
+    /* Pointer to the next entry */
+    struct _XiaDaqEntry* next;
 } XiaDaqEntry;
-
 
 /*
  * Linked list containing the default DAQ settings
@@ -145,14 +136,13 @@ typedef struct _XiaDaqEntry {
  */
 struct XiaDefaults {
     /* Filename identifying this entry */
-    char *alias;
+    char* alias;
     /* Linked list of DAQ entries */
-    struct _XiaDaqEntry *entry;
+    struct _XiaDaqEntry* entry;
     /* Pointer to the next entry */
-    struct XiaDefaults *next;
+    struct XiaDefaults* next;
 };
 typedef struct XiaDefaults XiaDefaults;
-
 
 /*
  * Define the linked list used to track peaking time ranges for firmware
@@ -166,25 +156,24 @@ struct Firmware {
     /* Max Peaking time */
     double max_ptime;
     /* Point to the system_fpga for this definition */
-    char *system_fpga;
+    char* system_fpga;
     /* Point to the fippi for this definition */
-    char *fippi;
+    char* fippi;
     /* Point to the user_fippi for this definition */
-    char *user_fippi;
+    char* user_fippi;
     /* Point to the Dsp_Info for this definition */
-    char *dsp;
+    char* dsp;
     /* Point to the Dsp_Info for this definition */
-    char *user_dsp;
+    char* user_dsp;
     /* Number of filter parameters */
     unsigned short numFilter;
     /* Array of filter parameters */
-    parameter_t *filterInfo;
+    parameter_t* filterInfo;
 
-    struct Firmware *next;
-    struct Firmware *prev;
+    struct Firmware* next;
+    struct Firmware* prev;
 };
 typedef struct Firmware Firmware;
-
 
 /*
  * Define a linked list of firmware sets.  These are 'sets' of peaking
@@ -194,193 +183,199 @@ typedef struct Firmware Firmware;
  */
 struct FirmwareSet {
     /* Give this set a name as a reference */
-    char *alias;
+    char* alias;
 
     /* This is the filename of the FDD file provided by XIA */
-    char *filename;
+    char* filename;
 
     /* This is the string array of keywords associated with the FDD file */
-    char **keywords;
+    char** keywords;
 
-    /* This is the number of keywords. Mainly used as an aid in freeing the
+    /*
+     * This is the number of keywords. Mainly used as an aid in freeing the
      * structure
      */
     unsigned int numKeywords;
 
-	/* Temporary directory where the expanded firmware files are stored.
-	* Can be NULL.
-	*/
-	char *tmpPath;
+    /*
+     * Temporary directory where the expanded firmware files are stored.
+	 * Can be NULL.
+	 */
+    char* tmpPath;
 
     /* Point to the single MMU possible for each processor */
-    char *mmu;
+    char* mmu;
 
     /* Point to an array of Firmware structures */
-    struct Firmware *firmware;
+    struct Firmware* firmware;
 
     /* Point to the next element of the linked list */
-    struct FirmwareSet *next;
+    struct FirmwareSet* next;
 };
 typedef struct FirmwareSet FirmwareSet;
-
 
 /*
  * Define a linked list of Detectors.
  */
 struct Detector {
     /* Give this set a name as a reference */
-    char *alias;
+    char* alias;
 
     /* Number of channels for this detector */
     unsigned short nchan;
 
-    /* Array of polarities for all channels
+    /*
+     * Array of polarities for all channels
      * 1 = positive
      * 0 = negative
      */
-    unsigned short *polarity;
+    unsigned short* polarity;
 
-    /* Array of preamp gains for the channels in
-     * mv/KeV.
+    /*
+     * Array of preamp gains for the channels in mv/KeV.
      */
-    double *gain;
+    double* gain;
 
     /* The type (Reset, RC Feedback, etc...) */
     unsigned short type;
 
-    /* The type specific value such as RESETINT
-     * associated with the type.
+    /*
+     * The type specific value such as RESETINT associated with the type.
      */
-    double *typeValue;
+    double* typeValue;
 
-    struct Detector *next;
+    struct Detector* next;
 };
 typedef struct Detector Detector;
 
+struct CurrentFirmware {
+    /*
+     * The current fippi that is being used. This exists so that
+     * we can check to see if we are running with the same fippi
+     * or not before downloading it again when the user does things
+     * like change peaking time.
+     */
+    char currentFiPPI[MAXFILENAME_LEN];
 
-struct CurrentFirmware
-{
-  /* The current fippi that is being used. This exists so that
-   * we can check to see if we are running with the same fippi
-   * or not before downloading it again when the user does things
-   * like change peaking time.
-   */
-  char currentFiPPI[MAXFILENAME_LEN];
+    /* The current "user fippi" that is being used. */
+    char currentUserFiPPI[MAXFILENAME_LEN];
 
-  /* The current "user fippi" that is being used. */
-  char currentUserFiPPI[MAXFILENAME_LEN];
+    /* The current dsp that is being used. */
+    char currentDSP[MAXFILENAME_LEN];
 
-  /* The current dsp that is being used. */
-  char currentDSP[MAXFILENAME_LEN];
+    /* The current "user dsp" that is being used. */
+    char currentUserDSP[MAXFILENAME_LEN];
 
-  /* The current "user dsp" that is being used. */
-  char currentUserDSP[MAXFILENAME_LEN];
+    /* The current "mmu" that is being used. */
+    char currentMMU[MAXFILENAME_LEN];
 
-  /* The current "mmu" that is being used. */
-  char currentMMU[MAXFILENAME_LEN];
+    /* Not all products support a system FPGA */
+    char currentSysFPGA[MAXFILENAME_LEN];
 
-  /* Not all products support a system FPGA */
-  char currentSysFPGA[MAXFILENAME_LEN];
-
-  /* Not all products support a system FiPPI */
-  char currentSysFiPPI[MAXFILENAME_LEN];
+    /* Not all products support a system FiPPI */
+    char currentSysFiPPI[MAXFILENAME_LEN];
 };
 typedef struct CurrentFirmware CurrentFirmware;
 
-
-/* This structure holds information about the status
+/*
+ * This structure holds information about the status
  * of multichannel operations.
  */
 typedef struct _MultiChannelState {
-    boolean_t *runActive;
-
+    boolean_t* runActive;
     /* Add more here as necessary */
-
 } MultiChannelState;
-
 
 /*
  * Define a struct of linked-lists for the module information
  */
 struct Module {
-    /* Logical, human-readable, name for this module. Referenced/Set in
+    /*
+     * Logical, human-readable, name for this module. Referenced/Set in
      * the .ini file.
      */
-    char *alias;
+    char* alias;
 
     /* Hardware type for this module. */
-    char *type;
+    char* type;
 
     /* The communication interface */
-    struct HDLInterface *interface_info;
+    struct HDLInterface* interface_info;
 
-    /* Number of channels for this module, determined by the hardware
+    /*
+     * Number of channels for this module, determined by the hardware
      * type. Also used to distinguish between hardware types that only
      * differ by the number of channels they have.
      */
     unsigned int number_of_channels;
 
-    /* Eventually, these "channels" will hold most of the information
+    /*
+     * Eventually, these "channels" will hold most of the information
      * that is currently in the structure.
      */
-    Channel_t *ch;
+    Channel_t* ch;
 
-    /* Array of detChan values for this module. The indices of this
+    /*
+     * Array of detChan values for this module. The indices of this
      * array map the logical module channel to its detChan. Set an
      * element to -1 to disable the channel.
      */
-    int *channels;
+    int* channels;
 
-    /* An array of strings mapping logical module channels to detector
+    /*
+     * An array of strings mapping logical module channels to detector
      * alias + physical detector channel. The format is defined as
      * {detector alias}:{detector channel}.
      */
-    char **detector;
+    char** detector;
 
-    /* Mapping of physical detector channel to logical module channel.
+    /*
+     * Mapping of physical detector channel to logical module channel.
      */
-    int *detector_chan;
+    int* detector_chan;
 
-    /* Array of strings mapping logical module channels to firmware
-     * alias.
+    /*
+     * Array of strings mapping logical module channels to firmware alias.
      */
-    char **firmware;
+    char** firmware;
 
-    /* Array of strings mapping logical module channels to default
+    /*
+     * Array of strings mapping logical module channels to default
      * (acquisition value) alias.
      */
-    char **defaults;
+    char** defaults;
 
-    /* An array of CurrentFirmware elements mapping logical module
+    /*
+     * An array of CurrentFirmware elements mapping logical module
      * channels to their running firmware.
      */
-    CurrentFirmware *currentFirmware;
+    CurrentFirmware* currentFirmware;
 
-    /* Multi-channel modules could be validated more then once, which
+    /*
+     * Multi-channel modules could be validated more then once, which
      * is a waste of resources. This flag is set once the module is
      * validated and unset when xiaStartSystem() is called.
      */
     boolean_t isValidated;
 
-    /* Used to differentiate between single- and non-single-channel
+    /*
+     * Used to differentiate between single- and non-single-channel
      * modules in Handel, which does not know enough about the
      * different products to make the decision based on the number of
      * channels.
      */
     boolean_t isMultiChannel;
 
-    MultiChannelState *state;
+    MultiChannelState* state;
 
-    /* Indicates if the user setup operations have been applied to this
-     * module or not.
+    /*
+     * Indicates if the user setup operations have been applied to this module or not.
      */
     boolean_t isSetup;
 
-    struct Module *next;
+    struct Module* next;
 };
 typedef struct Module Module;
-
-
 
 /*
  * If this were an object-program, then Interface would be the base
@@ -389,40 +384,38 @@ typedef struct Module Module;
  * track of which pointer to use via the "type".
  */
 struct HDLInterface {
-  /* Type of interface being defined here...usb2, plx, etc... */
-  unsigned int type;
+    /* Type of interface being defined here...usb2, plx, etc... */
+    unsigned int type;
 
-  /* Pointers to the various interface structures. Only ONE pointer should
-   * be valid per Interface structure. For instance, don't try and allocate
-   * memory for both the PLX and USB2 pointers! Use type (declared above)
-   * to determine which pointer to play with.
-   */
-  union {
-	  struct Interface_Epp    *epp;
-	  struct Interface_Serial *serial;
-	  struct Interface_Usb    *usb;
-	  struct Interface_Usb2   *usb2;
-	  struct Interface_Plx    *plx;
-
-	  /* Add other specific interfaces here */
-  } info;
+    /*
+     * Pointers to the various interface structures. Only ONE pointer should
+     * be valid per Interface structure. For instance, don't try and allocate
+     * memory for both the PLX and USB2 pointers! Use type (declared above)
+     * to determine which pointer to play with.
+     */
+    union {
+        struct Interface_Epp* epp;
+        struct Interface_Serial* serial;
+        struct Interface_Usb* usb;
+        struct Interface_Usb2* usb2;
+        struct Interface_Plx* plx;
+        /* Add other specific interfaces here */
+    } info;
 };
 typedef struct HDLInterface HDLInterface;
-
 
 /*
  * Specific interfaces
  */
 
 struct Interface_Epp {
-    /* The address of the EPP port. Typically 0x378 or 0x278. */
+    /* The address of the EPP port. Typically, 0x378 or 0x278. */
     unsigned int epp_address;
 
     /* The daisy chain id of the module, IF applicable */
     unsigned int daisy_chain_id;
 };
 typedef struct Interface_Epp Interface_Epp;
-
 
 struct Interface_Usb {
     /* The device name of the USB port. */
@@ -437,12 +430,11 @@ struct Interface_Usb2 {
 typedef struct Interface_Usb2 Interface_Usb2;
 
 struct Interface_Serial {
-
     /* The COM port number */
     unsigned int com_port;
 
     /* On Linux a device file may be given instead of a COM port. */
-    char *device_file;
+    char* device_file;
 
     /* The Baud rate of the port */
     unsigned int baud_rate;
@@ -450,12 +442,11 @@ struct Interface_Serial {
 typedef struct Interface_Serial Interface_Serial;
 
 typedef struct Interface_Plx {
-  /* The PCI bus that the slot is on */
-  byte_t bus;
+    /* The PCI bus that the slot is on */
+    byte_t bus;
 
-  /* The PCI slot that the module is plugged into */
-  byte_t slot;
-
+    /* The PCI slot that the module is plugged into */
+    byte_t slot;
 } Interface_Plx;
 
 #endif /* XIA_HANDEL_STRUCTURES_H */

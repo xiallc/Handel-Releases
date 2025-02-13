@@ -34,7 +34,6 @@
  * SUCH DAMAGE.
  */
 
-
 #ifndef _UDXP_H_
 #define _UDXP_H_
 

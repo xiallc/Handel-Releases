@@ -34,25 +34,23 @@
  * SUCH DAMAGE.
  */
 
-
 #ifndef __MD_GENERIC_H__
 #define __MD_GENERIC_H__
 
 #include <limits.h>
 
-
-#define MD_ERROR		1
-#define MD_WARNING		2
-#define MD_INFO			3
-#define	MD_DEBUG		4
+#define MD_ERROR 1
+#define MD_WARNING 2
+#define MD_INFO 3
+#define MD_DEBUG 4
 
 /* IO Flags for serial port communications
    These are used by udxp(s) drivers exclusively */
-#define IO_NORMAL    0x01
-#define IO_OPEN      0x02
-#define IO_CRITICAL  0x04
-#define IO_CLOSE     0x08
-#define IO_SNIFF_ON  0x10
+#define IO_NORMAL 0x01
+#define IO_OPEN 0x02
+#define IO_CRITICAL 0x04
+#define IO_CLOSE 0x08
+#define IO_SNIFF_ON 0x10
 #define IO_SNIFF_OFF 0x20
 
 /* An invalid address for the USB address cache. Due to the way we structure
@@ -61,10 +59,7 @@
 #define MD_INVALID_ADDR ULONG_MAX
 
 /* I/O Priority flags */
-enum {
-  MD_IO_PRI_NORMAL = 0,
-  MD_IO_PRI_HIGH
-};
+enum { MD_IO_PRI_NORMAL = 0, MD_IO_PRI_HIGH };
 
 /* The maximum # of modules of any one type allowed in Handel. This constant
  * is created from thin air and allows us to make constant arrays. Hopefully

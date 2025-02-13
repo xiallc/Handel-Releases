@@ -37,13 +37,13 @@
 #ifndef __PLXLIB_ERRORS_H__
 #define __PLXLIB_ERRORS_H__
 
-/* These PLX status codes are used in addition to the PLX_STATUS_CODE returned
+/*
+ * These PLX status codes are used in addition to the PLX_STATUS_CODE returned
  * from PlxApi functions
  */
- 
-#define PLX_SUCCESS        0
-#define PLX_MEM            1
+#define PLX_SUCCESS 0
+#define PLX_MEM 1
 #define PLX_UNKNOWN_HANDLE 2
-#define PLX_LAST_ERROR     3
+#define PLX_LAST_ERROR 3
 
 #endif /* __PLXLIB_ERRORS_H__ */

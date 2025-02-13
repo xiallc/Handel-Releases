@@ -45,8 +45,8 @@
 #define XIA_IMPORT
 #define XIA_EXPORT
 #else /* XIA_STATIC_BUILD */
-#define XIA_IMPORT __declspec( dllimport)
-#define XIA_EXPORT  __declspec( dllexport)
+#define XIA_IMPORT __declspec(dllimport)
+#define XIA_EXPORT __declspec(dllexport)
 #endif /* XIA_STATIC_BUILD */
 #else /* _WIN32 */
 #define XIA_IMPORT
@@ -78,7 +78,5 @@
 #endif /* WIN32_SERIAL_VBA */
 
 #endif /* WIN32_EPPLIB_VBA */
-
-
 
 #endif

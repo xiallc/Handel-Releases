@@ -34,7 +34,6 @@
  * SUCH DAMAGE.
  */
 
-
 #ifndef __XIA_PSL_H__
 #define __XIA_PSL_H__
 
@@ -43,63 +42,52 @@
 #include "psldef.h"
 #include "xia_common.h"
 
-
-/* All PSL drivers (xmap_psl.c, mercury_psl.c, etc.) need to implement
- * these routines.
+/*
+ * All PSL drivers (xmap_psl.c, mercury_psl.c, etc.) need to implement these routines.
  */
-PSL_STATIC int PSL_API pslValidateModule(Module *module);
-PSL_STATIC int PSL_API pslValidateDefaults(XiaDefaults *defaults);
-PSL_STATIC int PSL_API pslDownloadFirmware(int detChan, char *type, char *file,
-                                           Module *m, char *rawFilename,
-                                           XiaDefaults *defs);
-PSL_STATIC int PSL_API pslSetAcquisitionValues(int detChan, char *name,
-                                               void *value,
-                                               XiaDefaults *defaults,
-                                               FirmwareSet *firmwareSet,
-                                               CurrentFirmware *currentFirmware,
-                                               char *detectorType,
-                                               Detector *detector,
-                                               int detector_chan, Module *m,
-											   int modChan);
-PSL_STATIC int PSL_API pslGetAcquisitionValues(int detChan, char *name,
-											   void *value,
-											   XiaDefaults *defaults);
-PSL_STATIC int PSL_API pslGainOperation(int detChan, char *name, void *value,
-										Detector *det, int modChan, Module *m,
-										XiaDefaults *defs);
-PSL_STATIC int PSL_API pslGainCalibrate(int detChan, Detector *det, int modChan,
-										Module *m, XiaDefaults *defs,
-										double deltaGain);
-PSL_STATIC int pslStartRun(int detChan, unsigned short resume,
-                           XiaDefaults *defs, Module *m);
-PSL_STATIC int pslStopRun(int detChan, Module *m);
-PSL_STATIC int PSL_API pslGetRunData(int detChan, char *name, void *value,
-									 XiaDefaults *defaults, Module *m);
-PSL_STATIC int PSL_API pslGetDefaultAlias(char *alias, char **names,
-                                          double *values);
+PSL_STATIC int PSL_API pslValidateModule(Module* module);
+PSL_STATIC int PSL_API pslValidateDefaults(XiaDefaults* defaults);
+PSL_STATIC int PSL_API pslDownloadFirmware(int detChan, char* type, char* file,
+                                           Module* m, char* rawFilename,
+                                           XiaDefaults* defs);
+PSL_STATIC int PSL_API pslSetAcquisitionValues(
+    int detChan, char* name, void* value, XiaDefaults* defaults,
+    FirmwareSet* firmwareSet, CurrentFirmware* currentFirmware, char* detectorType,
+    Detector* detector, int detector_chan, Module* m, int modChan);
+PSL_STATIC int PSL_API pslGetAcquisitionValues(int detChan, char* name, void* value,
+                                               XiaDefaults* defaults);
+PSL_STATIC int PSL_API pslGainOperation(int detChan, char* name, void* value,
+                                        Detector* det, int modChan, Module* m,
+                                        XiaDefaults* defs);
+PSL_STATIC int PSL_API pslGainCalibrate(int detChan, Detector* det, int modChan,
+                                        Module* m, XiaDefaults* defs, double deltaGain);
+PSL_STATIC int pslStartRun(int detChan, unsigned short resume, XiaDefaults* defs,
+                           Module* m);
+PSL_STATIC int pslStopRun(int detChan, Module* m);
+PSL_STATIC int PSL_API pslGetRunData(int detChan, char* name, void* value,
+                                     XiaDefaults* defaults, Module* m);
+PSL_STATIC int PSL_API pslGetDefaultAlias(char* alias, char** names, double* values);
 PSL_STATIC unsigned int PSL_API pslGetNumDefaults(void);
-PSL_STATIC int PSL_API pslGetParameter(int detChan, const char *name,
-                                       unsigned short *value);
-PSL_STATIC int PSL_API pslSetParameter(int detChan, const char *name,
+PSL_STATIC int PSL_API pslGetParameter(int detChan, const char* name,
+                                       unsigned short* value);
+PSL_STATIC int PSL_API pslSetParameter(int detChan, const char* name,
                                        unsigned short value);
-PSL_STATIC int PSL_API pslUserSetup(int detChan, XiaDefaults *defaults,
-                                    FirmwareSet *firmwareSet,
-									CurrentFirmware *currentFirmware,
-                                    char *detectorType, Detector *detector,
-                                    int detector_chan, Module *m, int modChan);
-PSL_STATIC int PSL_API pslModuleSetup(int detChan, XiaDefaults *defaults,
-                              Module *m);
-PSL_STATIC int PSL_API pslDoSpecialRun(int detChan, char *name, void *info,
-                                       XiaDefaults *defaults,
-                                       Detector *detector, int detector_chan);
-PSL_STATIC int PSL_API pslGetSpecialRunData(int detChan, char *name,
-                                            void *value, XiaDefaults *defaults);
-PSL_STATIC int PSL_API pslGetNumParams(int detChan, unsigned short *numParams);
-PSL_STATIC int PSL_API pslGetParamData(int detChan, char *name, void *value);
-PSL_STATIC int PSL_API pslGetParamName(int detChan, unsigned short index,
-                                       char *name);
-PSL_STATIC int pslBoardOperation(int detChan, char *name, void *value,
-								 XiaDefaults *defs);
+PSL_STATIC int PSL_API pslUserSetup(int detChan, XiaDefaults* defaults,
+                                    FirmwareSet* firmwareSet,
+                                    CurrentFirmware* currentFirmware,
+                                    char* detectorType, Detector* detector,
+                                    int detector_chan, Module* m, int modChan);
+PSL_STATIC int PSL_API pslModuleSetup(int detChan, XiaDefaults* defaults, Module* m);
+PSL_STATIC int PSL_API pslDoSpecialRun(int detChan, char* name, void* info,
+                                       XiaDefaults* defaults, Detector* detector,
+                                       int detector_chan);
+PSL_STATIC int PSL_API pslGetSpecialRunData(int detChan, char* name, void* value,
+                                            XiaDefaults* defaults);
+PSL_STATIC int PSL_API pslGetNumParams(int detChan, unsigned short* numParams);
+PSL_STATIC int PSL_API pslGetParamData(int detChan, char* name, void* value);
+PSL_STATIC int PSL_API pslGetParamName(int detChan, unsigned short index, char* name);
+PSL_STATIC int pslBoardOperation(int detChan, char* name, void* value,
+                                 XiaDefaults* defs);
 PSL_STATIC int PSL_API pslUnHook(int detChan);
 
 #endif /* __XIA_PSL_H__ */

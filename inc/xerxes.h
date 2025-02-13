@@ -34,7 +34,6 @@
  * SUCH DAMAGE.
  */
 
-
 #ifndef XERXES_H
 #define XERXES_H
 
@@ -53,8 +52,8 @@ extern "C" {
 /*
  * Need the initialization routines from the XIA_MD_* library
  */
-XERXES_IMPORT int XERXES_API dxp_md_init_util(Xia_Util_Functions *funcs, char *type);
-XERXES_IMPORT int XERXES_API dxp_md_init_io(Xia_Io_Functions *funcs, char *type);
+XERXES_IMPORT int XERXES_API dxp_md_init_util(Xia_Util_Functions* funcs, char* type);
+XERXES_IMPORT int XERXES_API dxp_md_init_io(Xia_Io_Functions* funcs, char* type);
 /*
  * following are prototypes for xerxes.c routines
  */
@@ -62,65 +61,70 @@ XERXES_IMPORT int XERXES_API dxp_initialize(void);
 XERXES_IMPORT int XERXES_API dxp_init_ds(void);
 XERXES_IMPORT int XERXES_API dxp_init_boards_ds(void);
 XERXES_IMPORT int XERXES_API dxp_init_library(void);
-XERXES_IMPORT int XERXES_API dxp_install_utils(const char *utilname);
-XERXES_IMPORT int XERXES_API dxp_add_system_item(char *ltoken, char **values);
-XERXES_IMPORT int XERXES_API dxp_add_board_item(char *ltoken, char **values);
+XERXES_IMPORT int XERXES_API dxp_install_utils(const char* utilname);
+XERXES_IMPORT int XERXES_API dxp_add_system_item(char* ltoken, char** values);
+XERXES_IMPORT int XERXES_API dxp_add_board_item(char* ltoken, char** values);
 XERXES_IMPORT int XERXES_API dxp_user_setup(void);
-XERXES_IMPORT int XERXES_API dxp_add_btype(char *name, char *pointer, char *dllname);
-XERXES_IMPORT int XERXES_API dxp_get_board_type(int *detChan, char *name);
+XERXES_IMPORT int XERXES_API dxp_add_btype(char* name, char* pointer, char* dllname);
+XERXES_IMPORT int XERXES_API dxp_get_board_type(int* detChan, char* name);
 
-XERXES_IMPORT int XERXES_API dxp_start_run(unsigned short *gate, unsigned short *resume);
+XERXES_IMPORT int XERXES_API dxp_start_run(unsigned short* gate,
+                                           unsigned short* resume);
 XERXES_IMPORT int XERXES_API dxp_resume_run(void);
-XERXES_IMPORT int XERXES_API dxp_start_one_run(int *detChan, unsigned short *gate,
-					       unsigned short *resume);
-XERXES_IMPORT int XERXES_API dxp_resume_one_run(int *detChan);
-XERXES_IMPORT int XERXES_API dxp_stop_one_run(int *detChan);
-XERXES_IMPORT int XERXES_API dxp_isrunning(int *detChan, int *active);
-XERXES_IMPORT int XERXES_API dxp_isrunning_any(int *detChan, int *active);
+XERXES_IMPORT int XERXES_API dxp_start_one_run(int* detChan, unsigned short* gate,
+                                               unsigned short* resume);
+XERXES_IMPORT int XERXES_API dxp_resume_one_run(int* detChan);
+XERXES_IMPORT int XERXES_API dxp_stop_one_run(int* detChan);
+XERXES_IMPORT int XERXES_API dxp_isrunning(int* detChan, int* active);
+XERXES_IMPORT int XERXES_API dxp_isrunning_any(int* detChan, int* active);
 
-XERXES_IMPORT int XERXES_API dxp_start_control_task(int *detChan, short *type,
-						    unsigned int *length, int *info);
-XERXES_IMPORT int XERXES_API dxp_stop_control_task(int *detChan);
-XERXES_IMPORT int XERXES_API dxp_control_task_info(int *detChan, short *type, int *info);
-XERXES_IMPORT int XERXES_API dxp_get_control_task_data(int *detChan, short *type, void *data);
-XERXES_IMPORT int XERXES_API dxp_readout_detector_run(int *detChan,
-													  unsigned short params[],
-													  unsigned long baseline[],
-													  unsigned long spectrum[]);
-													  
+XERXES_IMPORT int XERXES_API dxp_start_control_task(int* detChan, short* type,
+                                                    unsigned int* length, int* info);
+XERXES_IMPORT int XERXES_API dxp_stop_control_task(int* detChan);
+XERXES_IMPORT int XERXES_API dxp_control_task_info(int* detChan, short* type,
+                                                   int* info);
+XERXES_IMPORT int XERXES_API dxp_get_control_task_data(int* detChan, short* type,
+                                                       void* data);
+XERXES_IMPORT int XERXES_API dxp_readout_detector_run(int* detChan,
+                                                      unsigned short params[],
+                                                      unsigned long baseline[],
+                                                      unsigned long spectrum[]);
+
 XERXES_IMPORT int XERXES_API dxp_dspconfig(void);
-XERXES_IMPORT int XERXES_API dxp_replace_fpgaconfig(int *detChan, char *name, char *filename);
-XERXES_IMPORT int XERXES_API dxp_replace_dspconfig(int *, char *);
-XERXES_IMPORT int XERXES_API dxp_upload_dspparams(int *);
-XERXES_IMPORT int XERXES_API dxp_get_symbol_index(int* detChan, char* name, unsigned short* symindex);
-XERXES_IMPORT int XERXES_API dxp_set_one_dspsymbol(int *,char *, unsigned short *);
-XERXES_IMPORT int XERXES_API dxp_get_one_dspsymbol(int *,char *, unsigned short *);
-XERXES_IMPORT int XERXES_API dxp_nspec(int *, unsigned int *);
-XERXES_IMPORT int XERXES_API dxp_nbase(int *, unsigned int *);
-XERXES_IMPORT int XERXES_API dxp_max_symbols(int *, unsigned short *);
-XERXES_IMPORT int XERXES_API dxp_symbolname_list(int *, char **);
-XERXES_IMPORT int XERXES_API dxp_symbolname_by_index(int *, unsigned short *, char *);
-XERXES_IMPORT int XERXES_API dxp_symbolname_limits(int *, unsigned short *, unsigned short *,
-						   unsigned short *);
+XERXES_IMPORT int XERXES_API dxp_replace_fpgaconfig(int* detChan, char* name,
+                                                    char* filename);
+XERXES_IMPORT int XERXES_API dxp_replace_dspconfig(int*, char*);
+XERXES_IMPORT int XERXES_API dxp_upload_dspparams(int*);
+XERXES_IMPORT int XERXES_API dxp_get_symbol_index(int* detChan, char* name,
+                                                  unsigned short* symindex);
+XERXES_IMPORT int XERXES_API dxp_set_one_dspsymbol(int*, char*, unsigned short*);
+XERXES_IMPORT int XERXES_API dxp_get_one_dspsymbol(int*, char*, unsigned short*);
+XERXES_IMPORT int XERXES_API dxp_nspec(int*, unsigned int*);
+XERXES_IMPORT int XERXES_API dxp_nbase(int*, unsigned int*);
+XERXES_IMPORT int XERXES_API dxp_max_symbols(int*, unsigned short*);
+XERXES_IMPORT int XERXES_API dxp_symbolname_list(int*, char**);
+XERXES_IMPORT int XERXES_API dxp_symbolname_by_index(int*, unsigned short*, char*);
+XERXES_IMPORT int XERXES_API dxp_symbolname_limits(int*, unsigned short*,
+                                                   unsigned short*, unsigned short*);
 
-XERXES_IMPORT int XERXES_API dxp_read_memory(int *detChan, char *name, unsigned long *data);
-XERXES_IMPORT int XERXES_API dxp_write_memory(int *detChan, char *name, unsigned long *data);
+XERXES_IMPORT int XERXES_API dxp_read_memory(int* detChan, char* name,
+                                             unsigned long* data);
+XERXES_IMPORT int XERXES_API dxp_write_memory(int* detChan, char* name,
+                                              unsigned long* data);
 
-XERXES_IMPORT int XERXES_API dxp_write_register(int *detChan, char *name,
-												unsigned long *data);
-XERXES_IMPORT int XERXES_API dxp_read_register(int *detChan, char *name,
-											   unsigned long *data);
+XERXES_IMPORT int XERXES_API dxp_write_register(int* detChan, char* name,
+                                                unsigned long* data);
+XERXES_IMPORT int XERXES_API dxp_read_register(int* detChan, char* name,
+                                               unsigned long* data);
 
-XERXES_IMPORT int XERXES_API dxp_cmd(int *detChan, byte_t *cmd, unsigned int *lenS, byte_t *send,
-				     unsigned int *lenR, byte_t *receive);
+XERXES_IMPORT int XERXES_API dxp_cmd(int* detChan, byte_t* cmd, unsigned int* lenS,
+                                     byte_t* send, unsigned int* lenR, byte_t* receive);
 
-XERXES_IMPORT int XERXES_API dxp_exit(int *detChan);
+XERXES_IMPORT int XERXES_API dxp_exit(int* detChan);
 
+XERXES_IMPORT int XERXES_API dxp_set_io_priority(int* priority);
 
-XERXES_IMPORT int XERXES_API dxp_set_io_priority(int *priority);
-
-
-#else									/* Begin old style C prototypes */
+#else /* Begin old style C prototypes */
 /*
  * Need the initialization routines from the XIA_MD_* library
  */
@@ -165,7 +169,6 @@ XERXES_IMPORT int XERXES_API dxp_symbolname_list();
 XERXES_IMPORT int XERXES_API dxp_symbolname_by_index();
 XERXES_IMPORT int XERXES_API dxp_symbolname_limits();
 
-
 XERXES_IMPORT int XERXES_API dxp_read_memory();
 XERXES_IMPORT int XERXES_API dxp_write_memory();
 
@@ -176,15 +179,13 @@ XERXES_IMPORT int XERXES_API dxp_cmd();
 
 XERXES_IMPORT int XERXES_API dxp_exit();
 
-
-#endif                                  /*   end if _XERXES_PROTO_ */
+#endif /*   end if _XERXES_PROTO_ */
 
 /* If this is compiled by a C++ compiler, make it clear that these are C routines */
 #ifdef __cplusplus
 }
 #endif
 
-XERXES_IMPORT Utils *utils;
+XERXES_IMPORT Utils* utils;
 
-
-#endif						/* Endif for XERXES_H */
+#endif /* Endif for XERXES_H */

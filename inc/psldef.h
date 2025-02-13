@@ -34,84 +34,81 @@
  * SUCH DAMAGE.
  */
 
-
 #ifndef PSLDEF_H
 #define PSLDEF_H
 
-
-#define PSL_STATIC	static
+#define PSL_STATIC static
 
 #define PSL_SHARED
 
-#ifdef PSL_USE_DLL		/* Linking to a DLL libraries */
+#ifdef PSL_USE_DLL /* Linking to a DLL libraries */
 
 #ifdef _WIN32
 
-#ifdef  PSL_MAKE_DLL
+#ifdef PSL_MAKE_DLL
 #define PSL_EXPORT __declspec(dllexport)
 #define PSL_IMPORT __declspec(dllimport)
 
-#ifndef WIN32_PSL_VBA		/* Libraries for Visual Basic require STDCALL */
+#ifndef WIN32_PSL_VBA /* Libraries for Visual Basic require STDCALL */
 #define PSL_API
 #else
-#define PSL_API    _stdcall
-#endif					/* Endif for WIN32_VBA */
+#define PSL_API _stdcall
+#endif /* Endif for WIN32_VBA */
 
-#else					/* Then we are making a static link library */
+#else /* Then we are making a static link library */
 #define PSL_EXPORT
 #define PSL_IMPORT __declspec(dllimport)
 
-#ifndef WIN32_PSL_VBA		/* Libraries for Visual Basic require STDCALL */
+#ifndef WIN32_PSL_VBA /* Libraries for Visual Basic require STDCALL */
 #define PSL_API
 #else
-#define PSL_API    _stdcall
-#endif					/* Endif for WIN32_VBA */
+#define PSL_API _stdcall
+#endif /* Endif for WIN32_VBA */
 
-#endif					/* Endif for PSL_MAKE_DLL */
+#endif /* Endif for PSL_MAKE_DLL */
 
 #else
 
-#ifdef  PSL_MAKE_DLL
+#ifdef PSL_MAKE_DLL
 #define PSL_EXPORT
 #define PSL_IMPORT extern
 #define PSL_API
-#else					/* Then we are making a static link library */
+#else /* Then we are making a static link library */
 #define PSL_EXPORT
 #define PSL_IMPORT extern
 #define PSL_API
-#endif					/* Endif for PSL_MAKE_DLL */
+#endif /* Endif for PSL_MAKE_DLL */
 
-#endif					/* Endif for _WIN32 */
+#endif /* Endif for _WIN32 */
 
-#else					/* We are using static libraries */
+#else /* We are using static libraries */
 
 #ifdef _WIN32
 
-#ifdef  PSL_MAKE_DLL
+#ifdef PSL_MAKE_DLL
 #define PSL_EXPORT __declspec(dllexport)
 #define PSL_IMPORT extern
 #define PSL_API
-#else					/* Then we are making a static link library */
+#else /* Then we are making a static link library */
 #define PSL_EXPORT
 #define PSL_IMPORT extern
 #define PSL_API
-#endif					/* Endif for PSL_MAKE_DLL */
+#endif /* Endif for PSL_MAKE_DLL */
 
 #else
 
-#ifdef  PSL_MAKE_DLL
+#ifdef PSL_MAKE_DLL
 #define PSL_EXPORT
 #define PSL_IMPORT extern
 #define PSL_API
-#else					/* Then we are making a static link library */
+#else /* Then we are making a static link library */
 #define PSL_EXPORT
 #define PSL_IMPORT extern
 #define PSL_API
-#endif					/* Endif for PSL_MAKE_DLL */
+#endif /* Endif for PSL_MAKE_DLL */
 
-#endif					/* Endif for _WIN32 */
+#endif /* Endif for _WIN32 */
 
-#endif					/* Endif for PSL_USE_DLL */
-
+#endif /* Endif for PSL_USE_DLL */
 
 #endif /* PSLDEF_H */

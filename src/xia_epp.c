@@ -36,7 +36,7 @@
 
 #include <windows.h>
 
-#define CSR  0x8000
+#define CSR 0x8000
 
 #include <math.h>
 #include <stdlib.h>
@@ -53,14 +53,14 @@
 #include "epplib.h"
 
 #ifdef DLPORTIO
-static unsigned long PORT=0;
-static unsigned long APORT,SPORT,DPORT;
+static unsigned long PORT = 0;
+static unsigned long APORT, SPORT, DPORT;
 #else
-static unsigned short PORT=0;
-static unsigned short APORT,SPORT,DPORT;
+static unsigned short PORT = 0;
+static unsigned short APORT, SPORT, DPORT;
 #endif /* DLPORTIO */
 
-static int rstat=0;
+static int rstat = 0;
 static int status;
 
 /* Keep track of the last ID set, this is used during init() calls to
@@ -72,7 +72,6 @@ static int lastID = -1;
 
 #define _inp DlPortReadPortUchar
 #define _outp DlPortWritePortUchar
-
 
 /*
  * This sets the PORT address only.  Used to allow bypassing of the InitEPP()
@@ -87,10 +86,10 @@ XIA_EXPORT int XIA_API DxpInitPortAddress(int port) {
      */
 #ifdef DLPORTIO
     /*unsigned char data;*/
-    unsigned long EPORT,CPORT;
+    unsigned long EPORT, CPORT;
 #else
     /*int data;*/
-    unsigned short EPORT,CPORT;
+    unsigned short EPORT, CPORT;
 #endif
     PORT = port;
     EPORT = PORT + 0x402;
@@ -102,7 +101,6 @@ XIA_EXPORT int XIA_API DxpInitPortAddress(int port) {
     return 0;
 }
 
-
 XIA_EXPORT int XIA_API DxpInitEPP(int port) {
     /*
      *
@@ -113,10 +111,10 @@ XIA_EXPORT int XIA_API DxpInitEPP(int port) {
      */
 #ifdef DLPORTIO
     unsigned char data;
-    unsigned long EPORT,CPORT;
+    unsigned long EPORT, CPORT;
 #else
     int data;
-    unsigned short EPORT,CPORT;
+    unsigned short EPORT, CPORT;
 #endif
     PORT = port;
     EPORT = PORT + 0x402;
@@ -126,39 +124,39 @@ XIA_EXPORT int XIA_API DxpInitEPP(int port) {
     SPORT = PORT + 1;
 
     /*initial return status */
-    rstat=0;
-    data=_inp(EPORT);
-    data = (char)((data&0x1F) + 0x80);
-    _outp(EPORT,data);
+    rstat = 0;
+    data = _inp(EPORT);
+    data = (char) ((data & 0x1F) + 0x80);
+    _outp(EPORT, data);
     /* write 4 to control port */
     /* check the last ID, only execute if the ID is -1 */
-    if (lastID == -1)
-    {
-        data=0x0;
-        _outp(CPORT,data);
-        data=0x4;
-        _outp(CPORT,data);
-        data=0x0;
-        _outp(CPORT,data);
+    if (lastID == -1) {
+        data = 0x0;
+        _outp(CPORT, data);
+        data = 0x4;
+        _outp(CPORT, data);
+        data = 0x0;
+        _outp(CPORT, data);
     }
     /* write 1 to status port */
-    data=1;
-    _outp(SPORT,data);
+    data = 1;
+    _outp(SPORT, data);
     /* write 0 to status port */
-    data=0;
-    _outp(SPORT,data);
+    data = 0;
+    _outp(SPORT, data);
     /* check status (not time out, nByte=1) */
-    status=_inp(SPORT);
-    if((status&0x01)==1) rstat+=1;
-    if(((status>>5)&0x01)==1) {
+    status = _inp(SPORT);
+    if ((status & 0x01) == 1)
+        rstat += 1;
+    if (((status >> 5) & 0x01) == 1) {
         /* interface is off by one byte, attempt to fix */
-        _outp(APORT,data);
-        status=_inp(SPORT);
-        if(((status>>5)&0x01)==1) rstat+=2;
+        _outp(APORT, data);
+        status = _inp(SPORT);
+        if (((status >> 5) & 0x01) == 1)
+            rstat += 2;
     }
     return rstat;
 }
-
 
 XIA_EXPORT int XIA_API set_addr(unsigned short Input_Data) {
     /*
@@ -175,26 +173,29 @@ XIA_EXPORT int XIA_API set_addr(unsigned short Input_Data) {
     int data;
 #endif
     /*initial return status */
-    rstat=0;
+    rstat = 0;
     /* output byte 0 */
-    data = (UCHAR)(Input_Data & 0xff);
-    _outp(APORT,data);
+    data = (UCHAR) (Input_Data & 0xff);
+    _outp(APORT, data);
     /*check status (not time out, nByte=1) */
-    status=_inp(SPORT);
-    if((status&0x01)==1) rstat+=1;
-    if(((status>>5)&0x01)!=1) rstat+=2;
+    status = _inp(SPORT);
+    if ((status & 0x01) == 1)
+        rstat += 1;
+    if (((status >> 5) & 0x01) != 1)
+        rstat += 2;
     /* output byte 1 */
-    data = (UCHAR)((Input_Data>>8) & 0xff);
-    _outp(APORT,data);
+    data = (UCHAR) ((Input_Data >> 8) & 0xff);
+    _outp(APORT, data);
     /* check status (not time out, nbyte=0) */
-    status=_inp(SPORT);
-    if((status&0x01)==1) rstat+=4;
-    if(((status>>5)&0x01)==1) rstat+=8;
+    status = _inp(SPORT);
+    if ((status & 0x01) == 1)
+        rstat += 4;
+    if (((status >> 5) & 0x01) == 1)
+        rstat += 8;
     return rstat;
 }
 
-
-XIA_EXPORT int XIA_API DxpWriteWord(unsigned short addr,unsigned short data)   {
+XIA_EXPORT int XIA_API DxpWriteWord(unsigned short addr, unsigned short data) {
     /*
      *  Write a single data word to DATA memory (address>0x4000)
      *  return code:
@@ -210,64 +211,67 @@ XIA_EXPORT int XIA_API DxpWriteWord(unsigned short addr,unsigned short data)   {
     int cdata;
 #endif
     rstat = 0;
-    if(addr<0x4000) {
-
+    if (addr < 0x4000) {
         return -1;
     }
-    if((status=set_addr(addr))!=0) {
-
+    if ((status = set_addr(addr)) != 0) {
         return -2;
     }
-    cdata = (UCHAR)(data & 0x00FF);
-    _outp(DPORT,cdata);
+    cdata = (UCHAR) (data & 0x00FF);
+    _outp(DPORT, cdata);
     /*check status (not time out, nByte=1) */
-    status=_inp(SPORT);
-    if((status&0x01)==1) rstat+=1;
-    if(((status>>5)&0x01)!=1) rstat+=2;
-    cdata = (UCHAR)((data >> 8) & 0x00FF);
-    _outp(DPORT,cdata);
+    status = _inp(SPORT);
+    if ((status & 0x01) == 1)
+        rstat += 1;
+    if (((status >> 5) & 0x01) != 1)
+        rstat += 2;
+    cdata = (UCHAR) ((data >> 8) & 0x00FF);
+    _outp(DPORT, cdata);
     /*check status (not time out, nByte=1) */
-    status=_inp(SPORT);
-    if((status&0x01)==1) rstat+=4;
-    if(((status>>5)&0x01)==1) rstat+=8;
+    status = _inp(SPORT);
+    if ((status & 0x01) == 1)
+        rstat += 4;
+    if (((status >> 5) & 0x01) == 1)
+        rstat += 8;
 
     return rstat;
 }
 
-
-XIA_EXPORT int XIA_API DxpReadWord(unsigned short addr, unsigned short *data)   {
+XIA_EXPORT int XIA_API DxpReadWord(unsigned short addr, unsigned short* data) {
     /*
      *    return code
      *   0   OK
      *  -1   address<0x4000
      *  -2   error writing address
      */
-    unsigned int cdata,tdata;
-    if(addr<0x4000) {
-
+    unsigned int cdata, tdata;
+    if (addr < 0x4000) {
         return -1;
     }
-    if((status=set_addr(addr))!=0) {
-
+    if ((status = set_addr(addr)) != 0) {
         return -2;
     }
     rstat = 0;
-    cdata=_inp(DPORT);
+    cdata = _inp(DPORT);
     /*check status (not time out, nByte=1) */
-    status=_inp(SPORT);
-    if((status&0x01)==1) rstat+=1;
-    if(((status>>5)&0x01)!=1) rstat+=2;
-    tdata=_inp(DPORT);
+    status = _inp(SPORT);
+    if ((status & 0x01) == 1)
+        rstat += 1;
+    if (((status >> 5) & 0x01) != 1)
+        rstat += 2;
+    tdata = _inp(DPORT);
     /*check status (not time out, nByte=1) */
-    status=_inp(SPORT);
-    if((status&0x01)==1) rstat+=4;
-    if(((status>>5)&0x01)==1) rstat+=8;
-    *data = (unsigned short)(cdata | (tdata << 8));
+    status = _inp(SPORT);
+    if ((status & 0x01) == 1)
+        rstat += 4;
+    if (((status >> 5) & 0x01) == 1)
+        rstat += 8;
+    *data = (unsigned short) (cdata | (tdata << 8));
     return rstat;
 }
 
-
-XIA_EXPORT int XIA_API DxpWriteBlock(unsigned short addr,unsigned short *data,int len)   {
+XIA_EXPORT int XIA_API DxpWriteBlock(unsigned short addr, unsigned short* data,
+                                     int len) {
     /*
      *  return code:
      *   0 ok
@@ -276,12 +280,10 @@ XIA_EXPORT int XIA_API DxpWriteBlock(unsigned short addr,unsigned short *data,in
      *   n error writing word n
      */
     rstat = 0;
-    if(addr<0x4000) {
-
+    if (addr < 0x4000) {
         return -1;
     }
-    if((status=set_addr(addr))!=0) {
-
+    if ((status = set_addr(addr)) != 0) {
         return -2;
     }
 #ifdef SLOW
@@ -291,32 +293,35 @@ XIA_EXPORT int XIA_API DxpWriteBlock(unsigned short addr,unsigned short *data,in
     int cdata;
 #endif
     int i;
-    for (i=0; i<len; i++) {
-        cdata=data[i]&0x00FF;
-        _outp(DPORT,cdata);
+    for (i = 0; i < len; i++) {
+        cdata = data[i] & 0x00FF;
+        _outp(DPORT, cdata);
         /*check status (not time out, nByte=1) */
-        status=_inp(SPORT);
-        if((status&0x01)==1) rstat+=1;
-        if(((status>>5)&0x01)!=1) rstat+=2;
-        cdata=(data[i]>>8)&0x00FF;
-        _outp(DPORT,cdata);
+        status = _inp(SPORT);
+        if ((status & 0x01) == 1)
+            rstat += 1;
+        if (((status >> 5) & 0x01) != 1)
+            rstat += 2;
+        cdata = (data[i] >> 8) & 0x00FF;
+        _outp(DPORT, cdata);
         /*check status (not time out, nByte=1) */
-        status=_inp(SPORT);
-        if((status&0x01)==1) rstat+=4;
-        if(((status>>5)&0x01)==1) rstat+=8;
-        if (rstat!=0) {
-
-            return i+1;
+        status = _inp(SPORT);
+        if ((status & 0x01) == 1)
+            rstat += 4;
+        if (((status >> 5) & 0x01) == 1)
+            rstat += 8;
+        if (rstat != 0) {
+            return i + 1;
         }
     }
 #else
-    DlPortWritePortBufferUshort(DPORT,data,len);
+    DlPortWritePortBufferUshort(DPORT, data, len);
 #endif
     return 0;
 }
 
-
-XIA_EXPORT int XIA_API DxpWriteBlocklong(unsigned short addr,unsigned long *data,int len)   {
+XIA_EXPORT int XIA_API DxpWriteBlocklong(unsigned short addr, unsigned long* data,
+                                         int len) {
     /*
      *    return code
      *   0   OK
@@ -328,12 +333,10 @@ XIA_EXPORT int XIA_API DxpWriteBlocklong(unsigned short addr,unsigned long *data
 
     PUSHORT pData = NULL;
 
-    if(addr>=0x4000) {
-
+    if (addr >= 0x4000) {
         return -1;
     }
-    if((status=set_addr(addr))!=0) {
-
+    if ((status = set_addr(addr)) != 0) {
         return -2;
     }
 #ifdef SLOW
@@ -348,60 +351,66 @@ XIA_EXPORT int XIA_API DxpWriteBlocklong(unsigned short addr,unsigned long *data
 
 #endif /* DLPORTIO */
 
-    for(i=0; i<len; i++)   {
-        cdata=(data[i]>>16)&0x000000FF;
-        _outp(DPORT,cdata);
+    for (i = 0; i < len; i++) {
+        cdata = (data[i] >> 16) & 0x000000FF;
+        _outp(DPORT, cdata);
         /*check status (not time out, nByte=1) */
-        status=_inp(SPORT);
-        if((status&0x01)==1) rstat+=1;
-        if(((status>>5)&0x01)!=1) rstat+=2;
+        status = _inp(SPORT);
+        if ((status & 0x01) == 1)
+            rstat += 1;
+        if (((status >> 5) & 0x01) != 1)
+            rstat += 2;
 
-        cdata=(data[i]>>24)&0x000000FF;
-        _outp(DPORT,cdata);
+        cdata = (data[i] >> 24) & 0x000000FF;
+        _outp(DPORT, cdata);
         /*check status (not time out, nByte=1) */
-        status=_inp(SPORT);
-        if((status&0x01)==1) rstat+=4;
-        if(((status>>5)&0x01)==1) rstat+=8;
+        status = _inp(SPORT);
+        if ((status & 0x01) == 1)
+            rstat += 4;
+        if (((status >> 5) & 0x01) == 1)
+            rstat += 8;
 
-        cdata=(data[i]    )&0x000000FF;
-        _outp(DPORT,cdata);
+        cdata = (data[i]) & 0x000000FF;
+        _outp(DPORT, cdata);
         /*check status (not time out, nByte=1) */
-        status=_inp(SPORT);
-        if((status&0x01)==1) rstat+=16;
-        if(((status>>5)&0x01)!=1) rstat+=32;
+        status = _inp(SPORT);
+        if ((status & 0x01) == 1)
+            rstat += 16;
+        if (((status >> 5) & 0x01) != 1)
+            rstat += 32;
 
-        cdata=(data[i]>> 8)&0x000000FF;
-        _outp(DPORT,cdata);
+        cdata = (data[i] >> 8) & 0x000000FF;
+        _outp(DPORT, cdata);
         /*check status (not time out, nByte=1) */
-        status=_inp(SPORT);
-        if((status&0x01)==1) rstat+=64;
-        if(((status>>5)&0x01)==1) rstat+=128;
-        if (rstat!=0) {
-
-            return i+1;
+        status = _inp(SPORT);
+        if ((status & 0x01) == 1)
+            rstat += 64;
+        if (((status >> 5) & 0x01) == 1)
+            rstat += 128;
+        if (rstat != 0) {
+            return i + 1;
         }
     }
 #else
 
-    pData = (PUSHORT)malloc((2*len) * sizeof(USHORT));
+    pData = (PUSHORT) malloc((2 * len) * sizeof(USHORT));
 
-    for (i=0; i<len; i++) {
-
-        pData[2*i]=(USHORT)((data[i]>>16)&0x0000ffff);
-        pData[2*i+1]=(USHORT)(data[i]&0x0000ffff);
+    for (i = 0; i < len; i++) {
+        pData[2 * i] = (USHORT) ((data[i] >> 16) & 0x0000ffff);
+        pData[2 * i + 1] = (USHORT) (data[i] & 0x0000ffff);
     }
 
-    DlPortWritePortBufferUshort(DPORT,pData,2*len);
+    DlPortWritePortBufferUshort(DPORT, pData, 2 * len);
 
-    free((void *)pData);
+    free((void*) pData);
     pData = NULL;
 
 #endif
     return 0;
 }
 
-
-XIA_EXPORT int XIA_API DxpReadBlock(unsigned short addr,unsigned short *data,int len)   {
+XIA_EXPORT int XIA_API DxpReadBlock(unsigned short addr, unsigned short* data,
+                                    int len) {
     /*
      *    return code
      *   0   OK
@@ -409,42 +418,43 @@ XIA_EXPORT int XIA_API DxpReadBlock(unsigned short addr,unsigned short *data,int
      *  -2   error writing address
      *   n   error transferring nth longword
      */
-    if(addr<0x4000) {
-
+    if (addr < 0x4000) {
         return -1;
     }
-    if((status=set_addr(addr))!=0) {
-
+    if ((status = set_addr(addr)) != 0) {
         return -2;
     }
 #ifdef SLOW
     int i;
-    unsigned int cdata,tdata;
-    for(i=0; i<len; i++)   {
-        cdata=_inp(DPORT);
+    unsigned int cdata, tdata;
+    for (i = 0; i < len; i++) {
+        cdata = _inp(DPORT);
         /*check status (not time out, nByte=1) */
-        status=_inp(SPORT);
-        if((status&0x01)==1) rstat+=1;
-        if(((status>>5)&0x01)!=1) rstat+=2;
-        tdata=_inp(DPORT);
+        status = _inp(SPORT);
+        if ((status & 0x01) == 1)
+            rstat += 1;
+        if (((status >> 5) & 0x01) != 1)
+            rstat += 2;
+        tdata = _inp(DPORT);
         /*check status (not time out, nByte=1) */
-        status=_inp(SPORT);
-        if((status&0x01)==1) rstat+=4;
-        if(((status>>5)&0x01)==1) rstat+=8;
-        data[i]=cdata|(tdata<<8);
-        if(rstat!=0) {
-
-            return i+1;
+        status = _inp(SPORT);
+        if ((status & 0x01) == 1)
+            rstat += 4;
+        if (((status >> 5) & 0x01) == 1)
+            rstat += 8;
+        data[i] = cdata | (tdata << 8);
+        if (rstat != 0) {
+            return i + 1;
         }
     }
 #else
-    DlPortReadPortBufferUshort(DPORT,data,len);
+    DlPortReadPortBufferUshort(DPORT, data, len);
 #endif
     return 0;
 }
 
-
-XIA_EXPORT int XIA_API DxpReadBlocklong(unsigned short addr,unsigned long *data,int len) {
+XIA_EXPORT int XIA_API DxpReadBlocklong(unsigned short addr, unsigned long* data,
+                                        int len) {
     /*
      *    return code
      *   0   OK
@@ -452,55 +462,58 @@ XIA_EXPORT int XIA_API DxpReadBlocklong(unsigned short addr,unsigned long *data,
      *  -2   error writing address
      *   n   error transferring nth word
      */
-    if(addr>=0x4000) {
-
+    if (addr >= 0x4000) {
         return -1;
     }
-    if((status=set_addr(addr))!=0) {
-
+    if ((status = set_addr(addr)) != 0) {
         return -2;
     }
 #ifdef SLOW
     int i;
     unsigned char junk;
-    unsigned long cdata0,cdata1,cdata2;
-    for(i=0; i<len; i++) {
-        cdata0 = (unsigned char)_inp(DPORT);
+    unsigned long cdata0, cdata1, cdata2;
+    for (i = 0; i < len; i++) {
+        cdata0 = (unsigned char) _inp(DPORT);
         /*check status (not time out, nByte=1) */
-        status=_inp(SPORT);
-        if((status&0x01)==1) rstat+=1;
-        if(((status>>5)&0x01)!=1) rstat+=2;
-        cdata1 = (unsigned char)_inp(DPORT);
+        status = _inp(SPORT);
+        if ((status & 0x01) == 1)
+            rstat += 1;
+        if (((status >> 5) & 0x01) != 1)
+            rstat += 2;
+        cdata1 = (unsigned char) _inp(DPORT);
         /*check status (not time out, nByte=1) */
-        status=_inp(SPORT);
-        if((status&0x01)==1) rstat+=4;
-        if(((status>>5)&0x01)==1) rstat+=8;
-        cdata2 = (unsigned char)_inp(DPORT);
+        status = _inp(SPORT);
+        if ((status & 0x01) == 1)
+            rstat += 4;
+        if (((status >> 5) & 0x01) == 1)
+            rstat += 8;
+        cdata2 = (unsigned char) _inp(DPORT);
         /*check status (not time out, nByte=1) */
-        status=_inp(SPORT);
-        if((status&0x01)==1) rstat+=16;
-        if(((status>>5)&0x01)!=1) rstat+=32;
-        junk   = _inp(DPORT);
+        status = _inp(SPORT);
+        if ((status & 0x01) == 1)
+            rstat += 16;
+        if (((status >> 5) & 0x01) != 1)
+            rstat += 32;
+        junk = _inp(DPORT);
         /*check status (not time out, nByte=1) */
-        status=_inp(SPORT);
-        if((status&0x01)==1) rstat+=64;
-        if(((status>>5)&0x01)==1) rstat+=128;
-        data[i] =   (0x000000FF &  cdata0    )
-                    |   (0x0000FF00 & (cdata1<< 8))
-                    |   (0x00FF0000 & (cdata2<<16));
-        if (rstat!=0) {
-
-            return i+1;
+        status = _inp(SPORT);
+        if ((status & 0x01) == 1)
+            rstat += 64;
+        if (((status >> 5) & 0x01) == 1)
+            rstat += 128;
+        data[i] = (0x000000FF & cdata0) | (0x0000FF00 & (cdata1 << 8)) |
+                  (0x00FF0000 & (cdata2 << 16));
+        if (rstat != 0) {
+            return i + 1;
         }
     }
 #else
-    DlPortReadPortBufferUlong(DPORT,data,len);
+    DlPortReadPortBufferUlong(DPORT, data, len);
 #endif
     return 0;
 }
 
-
-XIA_EXPORT int XIA_API DxpReadBlockd(unsigned short addr,double *data,int len)   {
+XIA_EXPORT int XIA_API DxpReadBlockd(unsigned short addr, double* data, int len) {
     /*
      *    return code
      *   0   OK
@@ -511,38 +524,45 @@ XIA_EXPORT int XIA_API DxpReadBlockd(unsigned short addr,double *data,int len)  
     PUSHORT pData = NULL;
 
     int i;
-    if(addr<0x4000) return -1;
-    if(set_addr(addr)!=0) return -2;
+    if (addr < 0x4000)
+        return -1;
+    if (set_addr(addr) != 0)
+        return -2;
 #ifdef SLOW
-    unsigned int cdata,tdata;
-    for(i=0; i<len; i++)   {
-        cdata=_inp(DPORT);
+    unsigned int cdata, tdata;
+    for (i = 0; i < len; i++) {
+        cdata = _inp(DPORT);
         /*check status (not time out, nByte=1) */
-        status=_inp(SPORT);
-        if((status&0x01)==1) rstat+=1;
-        if(((status>>5)&0x01)!=1) rstat+=2;
-        tdata=_inp(DPORT);
+        status = _inp(SPORT);
+        if ((status & 0x01) == 1)
+            rstat += 1;
+        if (((status >> 5) & 0x01) != 1)
+            rstat += 2;
+        tdata = _inp(DPORT);
         /*check status (not time out, nByte=1) */
-        status=_inp(SPORT);
-        if((status&0x01)==1) rstat+=4;
-        if(((status>>5)&0x01)==1) rstat+=8;
-        data[i]=(double)(cdata|(tdata<<8));
-        if(rstat!=0) return i+1;
+        status = _inp(SPORT);
+        if ((status & 0x01) == 1)
+            rstat += 4;
+        if (((status >> 5) & 0x01) == 1)
+            rstat += 8;
+        data[i] = (double) (cdata | (tdata << 8));
+        if (rstat != 0)
+            return i + 1;
     }
 #else
-    pData = (PUSHORT)malloc(len * sizeof(USHORT));
+    pData = (PUSHORT) malloc(len * sizeof(USHORT));
 
-    DlPortReadPortBufferUshort(DPORT,pData,len);
+    DlPortReadPortBufferUshort(DPORT, pData, len);
 
-    for (i=0; i<len; i++) data[i]=(double)pData[i];
+    for (i = 0; i < len; i++)
+        data[i] = (double) pData[i];
 
-    free((void *)pData);
+    free((void*) pData);
 #endif
     return 0;
 }
 
-
-XIA_EXPORT int XIA_API DxpReadBlocklongd(unsigned short addr,double *data,int len) {
+XIA_EXPORT int XIA_API DxpReadBlocklongd(unsigned short addr, double* data, int len) {
     /*
      *    return code
      *   0   OK
@@ -556,53 +576,61 @@ XIA_EXPORT int XIA_API DxpReadBlocklongd(unsigned short addr,double *data,int le
 
     /*   unsigned long cdata0,cdata1,cdata2;
        unsigned char junk;*/
-    if(addr>=0x4000) return -1;
-    if(set_addr(addr)!=0) return -2;
+    if (addr >= 0x4000)
+        return -1;
+    if (set_addr(addr) != 0)
+        return -2;
 #ifdef SLOW
-    for(i=0; i<len; i++) {
-        cdata0 = (unsigned char)_inp(DPORT);
+    for (i = 0; i < len; i++) {
+        cdata0 = (unsigned char) _inp(DPORT);
         /*check status (not time out, nByte=1) */
-        status=_inp(SPORT);
-        if((status&0x01)==1) rstat+=1;
-        if(((status>>5)&0x01)!=1) rstat+=2;
-        cdata1 = (unsigned char)_inp(DPORT);
+        status = _inp(SPORT);
+        if ((status & 0x01) == 1)
+            rstat += 1;
+        if (((status >> 5) & 0x01) != 1)
+            rstat += 2;
+        cdata1 = (unsigned char) _inp(DPORT);
         /*check status (not time out, nByte=1) */
-        status=_inp(SPORT);
-        if((status&0x01)==1) rstat+=4;
-        if(((status>>5)&0x01)==1) rstat+=8;
-        cdata2 = (unsigned char)_inp(DPORT);
+        status = _inp(SPORT);
+        if ((status & 0x01) == 1)
+            rstat += 4;
+        if (((status >> 5) & 0x01) == 1)
+            rstat += 8;
+        cdata2 = (unsigned char) _inp(DPORT);
         /*check status (not time out, nByte=1) */
-        status=_inp(SPORT);
-        if((status&0x01)==1) rstat+=16;
-        if(((status>>5)&0x01)!=1) rstat+=32;
-        junk   = _inp(DPORT);
+        status = _inp(SPORT);
+        if ((status & 0x01) == 1)
+            rstat += 16;
+        if (((status >> 5) & 0x01) != 1)
+            rstat += 32;
+        junk = _inp(DPORT);
         /*check status (not time out, nByte=1) */
-        status=_inp(SPORT);
-        if((status&0x01)==1) rstat+=64;
-        if(((status>>5)&0x01)==1) rstat+=128;
-        data[i] = (double)(
-                      (0x000000FF &  cdata0     )
-                      |   (0x0000FF00 & (cdata1<< 8))
-                      |   (0x00FF0000 & (cdata2<<16)));
-        if(rstat!=0) return i+1;
+        status = _inp(SPORT);
+        if ((status & 0x01) == 1)
+            rstat += 64;
+        if (((status >> 5) & 0x01) == 1)
+            rstat += 128;
+        data[i] = (double) ((0x000000FF & cdata0) | (0x0000FF00 & (cdata1 << 8)) |
+                            (0x00FF0000 & (cdata2 << 16)));
+        if (rstat != 0)
+            return i + 1;
     }
 #else
 
-    pData = (PULONG)malloc(len * sizeof(ULONG));
+    pData = (PULONG) malloc(len * sizeof(ULONG));
 
-    DlPortReadPortBufferUlong(DPORT,pData,len);
+    DlPortReadPortBufferUlong(DPORT, pData, len);
 
-    for (i=0; i<len; i++) data[i]=(double)pData[i];
+    for (i = 0; i < len; i++)
+        data[i] = (double) pData[i];
 
-    free((void *)pData);
+    free((void*) pData);
 
 #endif
     return 0;
 }
 
-
-XIA_EXPORT void XIA_API DxpSetID(unsigned short id)
-{
+XIA_EXPORT void XIA_API DxpSetID(unsigned short id) {
     /*  int i;*/
     /*  double garbage;*/
 
@@ -620,7 +648,7 @@ XIA_EXPORT void XIA_API DxpSetID(unsigned short id)
     CPORT = PORT + 2;
 
     /* 1) Write ID to SPP Data */
-    _outp(PORT, (unsigned char)(id & 0xFF));
+    _outp(PORT, (unsigned char) (id & 0xFF));
 
     /* 2) Toggle C2 twice */
     data = _inp(CPORT);
@@ -633,15 +661,12 @@ XIA_EXPORT void XIA_API DxpSetID(unsigned short id)
     _outp(PORT, 0x00);
 
     /* Set the static variable so that control port toggling is skipped in Initialization */
-    lastID = (int)id;
+    lastID = (int) id;
 }
 
-
-XIA_EXPORT int XIA_API DxpWritePort(unsigned short port, unsigned short data)
-{
-
+XIA_EXPORT int XIA_API DxpWritePort(unsigned short port, unsigned short data) {
 #ifdef DLPORTIO
-    unsigned char DATA = (unsigned char)data;
+    unsigned char DATA = (unsigned char) data;
 #else
     unsigned short DATA = data;
 #endif
@@ -650,9 +675,7 @@ XIA_EXPORT int XIA_API DxpWritePort(unsigned short port, unsigned short data)
     return 0;
 }
 
-
-XIA_EXPORT int XIA_API DxpReadPort(unsigned short port, unsigned short *data) {
-
+XIA_EXPORT int XIA_API DxpReadPort(unsigned short port, unsigned short* data) {
     (*data) = _inp(port);
     return 0;
 }

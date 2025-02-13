@@ -34,7 +34,6 @@
  * SUCH DAMAGE.
  */
 
-
 #ifndef __XIA_MODULE_H__
 #define __XIA_MODULE_H__
 
@@ -42,62 +41,52 @@
 #include "xia_handel.h"
 #include "xia_common.h"
 
-
 /*
  * Typedefs
  */
-
 typedef unsigned short Token;
-typedef int (*ModItemFunc_t)(Module *, void *, char *);
-typedef int (*ModInitFunc_t)(Module *);
-typedef int (*AddChanTypeFunc_t)(Module *, int, void *);
-
+typedef int (*ModItemFunc_t)(Module*, void*, char*);
+typedef int (*ModInitFunc_t)(Module*);
+typedef int (*AddChanTypeFunc_t)(Module*, int, void*);
 
 /*
  * Structs
  */
-
 typedef struct _ModItemFunc {
-  char *name;
-  ModItemFunc_t f;
-  boolean_t needsBT;
-
+    char* name;
+    ModItemFunc_t f;
+    boolean_t needsBT;
 } ModItem_t;
 
-
 typedef struct _AddChanType {
-  char *name;
-  AddChanTypeFunc_t f;
-
+    char* name;
+    AddChanTypeFunc_t f;
 } AddChanType_t;
-
 
 /* Interface */
 enum {
-  XIA_INTERFACE_NONE = 0,
-  XIA_EPP,
-  XIA_GENERIC_EPP,
-  XIA_SERIAL,
-  XIA_USB,
-  XIA_USB2,
-  XIA_PLX
+    XIA_INTERFACE_NONE = 0,
+    XIA_EPP,
+    XIA_GENERIC_EPP,
+    XIA_SERIAL,
+    XIA_USB,
+    XIA_USB2,
+    XIA_PLX
 };
-
 
 /* Module-Name Tokens */
 enum {
-  BAD_TOK = 0,
-  MODTYP_TOK,
-  INTERFACE_TOK,
-  LIBRARY_TOK,
-  NUMCHAN_TOK,
-  CHANNEL_TOK,
-  FIRMWARE_TOK,
-  DEFAULT_TOK
+    BAD_TOK = 0,
+    MODTYP_TOK,
+    INTERFACE_TOK,
+    LIBRARY_TOK,
+    NUMCHAN_TOK,
+    CHANNEL_TOK,
+    FIRMWARE_TOK,
+    DEFAULT_TOK
 };
 
 /* Channel index offset in strings like channel{n}_alias, etc */
-#define CHANNEL_IDX_OFFSET  7
-
+#define CHANNEL_IDX_OFFSET 7
 
 #endif /* __XIA_MODULE_H__ */

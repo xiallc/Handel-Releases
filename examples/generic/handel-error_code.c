@@ -1,13 +1,12 @@
 /*
-* Example code to demonstrate translating error codes returned by Handel to text
-*
-* Supported devices are xMap, Saturn, STJ, Mercury / Mercury4, microDXP
-*
-* Copyright (c) 2008-2020, XIA LLC
-* All rights reserved
-*
-*
-*/
+ * Example code to demonstrate translating error codes returned by Handel to text
+ *
+ * Supported devices are xMap, Saturn, STJ, Mercury / Mercury4, microDXP
+ *
+ * Copyright (c) 2008-2020, XIA LLC
+ * All rights reserved
+ *
+ */
 
 #include <stdio.h>
 
@@ -22,9 +21,7 @@
 #include "handel_errors.h"
 #include "xerxes_errors.h"
 
-int main()
-{
-
+int main() {
     printf("--- Checking Handel error code translationg.\n");
 
     printf("DXP_MEMORY_LENGTH       -- %s\n", xiaGetErrorText(DXP_MEMORY_LENGTH));

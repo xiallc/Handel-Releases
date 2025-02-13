@@ -33,21 +33,20 @@
  * SUCH DAMAGE.
  */
 
-
 #ifndef __MERCURY_H__
 #define __MERCURY_H__
 
 /* Control Tasks */
 enum {
-  MERCURY_CT_APPLY,
-  /* Generic trace run */
-  MERCURY_CT_TRACE,
-  /* Wake the DSP up */
-  MERCURY_CT_WAKE_DSP,
-  /* Calibrate RC time */
-  MERCURY_CT_CALIBRATE_RC,
-  /* Set ADC Offset */
-  MERCURY_CT_SET_OFFADC
+    MERCURY_CT_APPLY,
+    /* Generic trace run */
+    MERCURY_CT_TRACE,
+    /* Wake the DSP up */
+    MERCURY_CT_WAKE_DSP,
+    /* Calibrate RC time */
+    MERCURY_CT_CALIBRATE_RC,
+    /* Set ADC Offset */
+    MERCURY_CT_SET_OFFADC
 };
 
 #endif /* __MERCURY_H__ */

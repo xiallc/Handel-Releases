@@ -30,8 +30,8 @@
 /* generic helper functions */
 static void CHECK_ERROR(int status);
 static void print_usage(void);
-static void start_system(char *ini_file);
-static void setup_logging(char *log_name);
+static void start_system(char* ini_file);
+static void setup_logging(char* log_name);
 static void INThandler(int sig);
 static void clean_up();
 
@@ -44,8 +44,7 @@ static void test_rc_decay_and_calibration();
 
 boolean_t stop = FALSE_;
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char* argv[]) {
     if (argc < 2) {
         print_usage();
         exit(1);
@@ -69,8 +68,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-static void start_system(char *ini_file)
-{
+static void start_system(char* ini_file) {
     int status;
 
     printf("Loading the .ini file\n");
@@ -83,8 +81,7 @@ static void start_system(char *ini_file)
     CHECK_ERROR(status);
 }
 
-static void setup_logging(char *log_name)
-{
+static void setup_logging(char* log_name) {
     printf("Configuring the log file in %s\n", log_name);
 
     /* log level defined in md_generic.h */
@@ -95,19 +92,16 @@ static void setup_logging(char *log_name)
 /*
  * Check return code for error, stop execution in case of error
  */
-static void CHECK_ERROR(int status)
-{
+static void CHECK_ERROR(int status) {
     /* error codes defined in handel_errors.h */
     if (status != XIA_SUCCESS) {
-        printf("Error encountered! Status = %d, %s\n", status,
-            xiaGetErrorText(status));
+        printf("Error encountered! Status = %d, %s\n", status, xiaGetErrorText(status));
         clean_up();
         exit(status);
     }
 }
 
-static void INThandler(int sig)
-{
+static void INThandler(int sig) {
     UNUSED(sig);
     stop = TRUE_;
 
@@ -117,10 +111,8 @@ static void INThandler(int sig)
 
 /*
  * Clean up and release resources
- *
  */
-static void clean_up()
-{
+static void clean_up() {
     printf("\nCleaning up Handel.\n");
     xiaExit();
 
@@ -128,50 +120,45 @@ static void clean_up()
     xiaCloseLog();
 }
 
-
-static void print_usage(void)
-{
+static void print_usage(void) {
     fprintf(stdout, "\n");
     fprintf(stdout, "* argument: [.ini file]\n");
     fprintf(stdout, "\n");
     return;
 }
 
-
 /*
  * Check to see if connected Mercury supports Mercury-OEM features
  * print a warning if not -- but continue with the operations with
  * possible error results.
  */
-static void check_mercury_oem_features()
-{
+static void check_mercury_oem_features() {
     int status;
     unsigned long features;
 
     char moduleType[200];
 
-    status = xiaGetModuleItem("module1", "module_type", (void *)moduleType);
+    status = xiaGetModuleItem("module1", "module_type", (void*) moduleType);
     CHECK_ERROR(status);
 
     printf("Checking %s features\n", moduleType);
 
     /* Only applicable to Mercury */
-    if (strcmp(moduleType, "mercury") != 0) return;
+    if (strcmp(moduleType, "mercury") != 0)
+        return;
 
     status = xiaBoardOperation(0, "get_board_features", &features);
     CHECK_ERROR(status);
 
     /* Feature list constants in handel_constants.h */
     printf(" : Support for mercury oem features - [%s]\n",
-            (features & 1 << BOARD_SUPPORTS_MERCURYOEM_FEATURES) ? "YES" : "NO");
-
+           (features & 1 << BOARD_SUPPORTS_MERCURYOEM_FEATURES) ? "YES" : "NO");
 }
 
 /*
  * preamp_gain tests
  */
-static void test_preamp_gain()
-{
+static void test_preamp_gain() {
     int status;
     int ignored = 0;
     int i;
@@ -192,7 +179,8 @@ static void test_preamp_gain()
            "mca_bin_width, "
            "\n");
 
-    /* Cycle through all possible input_attenuation values, check gain settings
+    /*
+     * Cycle through all possible input_attenuation values, check gain settings
      * Note that gain settings changes are internal, and the acquisition value
      * "preamp_gain" is still used in the same way to set and get gain.
      */
@@ -212,19 +200,17 @@ static void test_preamp_gain()
         status = xiaBoardOperation(0, "apply", &ignored);
         CHECK_ERROR(status);
 
-        printf("%17.0f, %11.3f, %13.3f, %13.3f,",
-            input_attenuation[i], preamp_gain[i], dynamic_range[i], mca_bin_width[i]);
+        printf("%17.0f, %11.3f, %13.3f, %13.3f,", input_attenuation[i], preamp_gain[i],
+               dynamic_range[i], mca_bin_width[i]);
 
         printf("\r\n");
     }
-
 }
 
 /*
  * rc_time settings and calibration
  */
-static void test_rc_decay_and_calibration()
-{
+static void test_rc_decay_and_calibration() {
     int status;
     int ignored = 0;
     int i;
@@ -237,14 +223,13 @@ static void test_rc_decay_and_calibration()
     double peaking_time = 0.0;
 
     printf("\nRC decay setting\n");
-    printf(
-           "rc_time_constant, "
+    printf("rc_time_constant, "
            "rc_time, "
            "\n");
 
     /* Cycle through all possible rc_time_constant values */
     for (i = 0; i < nbr_rc_time_constant; i++) {
-        rc_time_constant  = (double)i;
+        rc_time_constant = (double) i;
 
         /* Setting rc_time_constant should set rc_time to a nominal value */
         status = xiaSetAcquisitionValues(0, "rc_time_constant", &rc_time_constant);
@@ -255,23 +240,22 @@ static void test_rc_decay_and_calibration()
 
         status = xiaGetAcquisitionValues(0, "rc_time", &rc_time);
         CHECK_ERROR(status);
-        printf("%16.0f, %7.3f,",
-                rc_time_constant, rc_time);
+        printf("%16.0f, %7.3f,", rc_time_constant, rc_time);
 
         printf("\n");
     }
 
     status = xiaGetAcquisitionValues(0, "peaking_time", &peaking_time);
 
-    printf("\nCheck rc_time after calibrate_rc_time, peaking_time = %.2f\n", peaking_time);
-    printf(
-           "rc_time_constant, "
+    printf("\nCheck rc_time after calibrate_rc_time, peaking_time = %.2f\n",
+           peaking_time);
+    printf("rc_time_constant, "
            "rc_time, "
            "\n");
 
     /* Cycle through all possible rc_time_constant values, check calibration */
     for (i = 0; i < nbr_rc_time_constant; i++) {
-        rc_time_constant  = (double)i;
+        rc_time_constant = (double) i;
 
         /* Setting rc_time_constant should set rc_time to a nominal value */
         status = xiaSetAcquisitionValues(0, "rc_time_constant", &rc_time_constant);
@@ -293,6 +277,4 @@ static void test_rc_decay_and_calibration()
         printf("%7.3f, ", rc_time);
         printf("\n");
     }
-
 }
-

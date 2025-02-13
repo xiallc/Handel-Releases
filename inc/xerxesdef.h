@@ -34,25 +34,20 @@
  * SUCH DAMAGE.
  */
 
-
 #ifndef XERXESDEF_H
 #define XERXESDEF_H
-
 
 /* Have we defined the EXPORT and IMPORT macros? */
 #ifndef XERXES_PORTING_DEFINED
 #define XERXES_PORTING_DEFINED
 
-
-
 #define XERXES_STATIC static
 #define XERXES_SHARED
-
 
 #define DXP_API
 #define MD_API
 
-#ifdef XERXES_USE_DLL		/* Linking to a DLL libraries */
+#ifdef XERXES_USE_DLL /* Linking to a DLL libraries */
 
 #ifdef _WIN32
 
@@ -60,23 +55,23 @@
 #define XERXES_EXPORT __declspec(dllexport)
 #define XERXES_IMPORT __declspec(dllimport)
 
-#ifndef WIN32_XERXES_VBA		/* Libraries for Visual Basic require STDCALL */
+#ifndef WIN32_XERXES_VBA /* Libraries for Visual Basic require STDCALL */
 #define XERXES_API
 #else
-#define XERXES_API    _stdcall
-#endif					/* Endif for WIN32_VBA */
+#define XERXES_API _stdcall
+#endif /* Endif for WIN32_VBA */
 
-#else					/* Then we are making a static link library */
+#else /* Then we are making a static link library */
 #define XERXES_EXPORT
 #define XERXES_IMPORT __declspec(dllimport)
 
-#ifndef WIN32_XERXES_VBA		/* Libraries for Visual Basic require STDCALL */
+#ifndef WIN32_XERXES_VBA /* Libraries for Visual Basic require STDCALL */
 #define XERXES_API
 #else
-#define XERXES_API    _stdcall
-#endif					/* Endif for WIN32_VBA */
+#define XERXES_API _stdcall
+#endif /* Endif for WIN32_VBA */
 
-#endif					/* Endif for XERXES_MAKE_DLL */
+#endif /* Endif for XERXES_MAKE_DLL */
 
 #else
 
@@ -84,15 +79,15 @@
 #define XERXES_EXPORT
 #define XERXES_IMPORT extern
 #define XERXES_API
-#else					/* Then we are making a static link library */
+#else /* Then we are making a static link library */
 #define XERXES_EXPORT
 #define XERXES_IMPORT extern
 #define XERXES_API
-#endif					/* Endif for XERXES_MAKE_DLL */
+#endif /* Endif for XERXES_MAKE_DLL */
 
-#endif					/* Endif for _WIN32 */
+#endif /* Endif for _WIN32 */
 
-#else					/* We are using static libraries */
+#else /* We are using static libraries */
 
 #ifdef _WIN32
 
@@ -100,11 +95,11 @@
 #define XERXES_EXPORT __declspec(dllexport)
 #define XERXES_IMPORT extern
 #define XERXES_API
-#else					/* Then we are making a static link library */
+#else /* Then we are making a static link library */
 #define XERXES_EXPORT
 #define XERXES_IMPORT extern
 #define XERXES_API
-#endif					/* Endif for XERXES_MAKE_DLL */
+#endif /* Endif for XERXES_MAKE_DLL */
 
 #else
 
@@ -112,31 +107,31 @@
 #define XERXES_EXPORT
 #define XERXES_IMPORT extern
 #define XERXES_API
-#else					/* Then we are making a static link library */
+#else /* Then we are making a static link library */
 #define XERXES_EXPORT
 #define XERXES_IMPORT extern
 #define XERXES_API
-#endif					/* Endif for XERXES_MAKE_DLL */
+#endif /* Endif for XERXES_MAKE_DLL */
 
-#endif					/* Endif for _WIN32 */
+#endif /* Endif for _WIN32 */
 
-#endif					/* Endif for XERXES_USE_DLL */
+#endif /* Endif for XERXES_USE_DLL */
 
-#endif					/* Endif for XERXES_DXP_DLL_DEFINED */
+#endif /* Endif for XERXES_DXP_DLL_DEFINED */
 
 #ifndef _XERXES_SWITCH_
 #define _XERXES_SWITCH_ 1
 
 #ifdef __STDC__
-#define _XERXES_PROTO_  1
-#endif                /* end of __STDC__    */
+#define _XERXES_PROTO_ 1
+#endif /* end of __STDC__    */
 
 #ifdef _MSC_VER
 #ifndef _XERXES_PROTO_
-#define _XERXES_PROTO_  1
+#define _XERXES_PROTO_ 1
 #endif
-#endif                /* end of _MSC_VER    */
+#endif /* end of _MSC_VER    */
 
-#endif               /* end of _XERXES_SWITCH_*/
+#endif /* end of _XERXES_SWITCH_*/
 
-#endif				 /* Endif for XERXESDEF_H */
+#endif /* Endif for XERXESDEF_H */

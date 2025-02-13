@@ -34,7 +34,6 @@
  * SUCH DAMAGE.
  */
 
-
 #include <stdio.h>
 #include <ctype.h>
 
@@ -46,7 +45,6 @@
 #include "handel_errors.h"
 #include "handel_generic.h"
 
-
 /*
  * This routine doesn't make any assumptions about
  * the presence of an acq. value when searching
@@ -54,20 +52,14 @@
  * found. If acq. value is found then the value is stored
  * in "value".
  */
-PSL_SHARED int PSL_API pslGetDefault(char *name, void *value,
-                                     XiaDefaults *defaults)
-{
-
-    XiaDaqEntry *entry = NULL;
-
+PSL_SHARED int PSL_API pslGetDefault(char* name, void* value, XiaDefaults* defaults) {
+    XiaDaqEntry* entry = NULL;
 
     entry = defaults->entry;
 
     while (entry != NULL) {
-
         if (STREQ(name, entry->name)) {
-
-            *((double *)value) = entry->data;
+            *((double*) value) = entry->data;
             return XIA_SUCCESS;
         }
 
@@ -76,27 +68,20 @@ PSL_SHARED int PSL_API pslGetDefault(char *name, void *value,
 
     return XIA_NOT_FOUND;
 }
-
 
 /*
  * Sets the named acquisition value to the new value
  * specified in "value". If the value doesn't
  * exist in the list then an error is returned.
  */
-PSL_SHARED int PSL_API pslSetDefault(char *name, void *value,
-                                     XiaDefaults *defaults)
-{
-
-    XiaDaqEntry *entry = NULL;
-
+PSL_SHARED int PSL_API pslSetDefault(char* name, void* value, XiaDefaults* defaults) {
+    XiaDaqEntry* entry = NULL;
 
     entry = defaults->entry;
 
     while (entry != NULL) {
-
         if (STREQ(name, entry->name)) {
-
-            entry->data = *((double *)value);
+            entry->data = *((double*) value);
             return XIA_SUCCESS;
         }
 
@@ -105,7 +90,6 @@ PSL_SHARED int PSL_API pslSetDefault(char *name, void *value,
 
     return XIA_NOT_FOUND;
 }
-
 
 /*
  * Removes the named default.
@@ -117,23 +101,17 @@ PSL_SHARED int PSL_API pslSetDefault(char *name, void *value,
  * Returns a pointer to the pointer of the removed block. The calling function is
  * responsible for freeing the removed default.
  */
-PSL_SHARED int pslRemoveDefault(char *name, XiaDefaults *defs,
-                                XiaDaqEntry **removed)
-{
-    XiaDaqEntry *e    = NULL;
-    XiaDaqEntry *prev = NULL;
-
+PSL_SHARED int pslRemoveDefault(char* name, XiaDefaults* defs, XiaDaqEntry** removed) {
+    XiaDaqEntry* e = NULL;
+    XiaDaqEntry* prev = NULL;
 
     ASSERT(name != NULL);
     ASSERT(defs != NULL);
 
-
     for (e = defs->entry; e != NULL; prev = e, e = e->next) {
-
         if (STREQ(name, e->name)) {
             if (!prev) {
                 defs->entry = e->next;
-
             } else {
                 prev->next = e->next;
             }
@@ -147,12 +125,10 @@ PSL_SHARED int pslRemoveDefault(char *name, XiaDefaults *defs,
         }
     }
 
-    sprintf(info_string, "Unable to find acquisition value '%s' in defaults",
-            name);
+    sprintf(info_string, "Unable to find acquisition value '%s' in defaults", name);
     pslLogError("pslRemoveDefault", info_string, XIA_NOT_FOUND);
     return XIA_NOT_FOUND;
 }
-
 
 /*
  * Converts a detChan to a modChan.
@@ -160,15 +136,11 @@ PSL_SHARED int pslRemoveDefault(char *name, XiaDefaults *defs,
  * Returns an error if the detChan isn't assigned to a channel in that
  * module.
  */
-PSL_SHARED int pslGetModChan(int detChan, Module *m,
-                             unsigned int *modChan)
-{
+PSL_SHARED int pslGetModChan(int detChan, Module* m, unsigned int* modChan) {
     unsigned int i;
-
 
     ASSERT(m != NULL);
     ASSERT(modChan != NULL);
-
 
     for (i = 0; i < m->number_of_channels; i++) {
         if (m->channels[i] == detChan) {
@@ -177,20 +149,17 @@ PSL_SHARED int pslGetModChan(int detChan, Module *m,
         }
     }
 
-    sprintf(info_string, "detChan '%d' is not assigned to module '%s'",
-            detChan, m->alias);
+    sprintf(info_string, "detChan '%d' is not assigned to module '%s'", detChan,
+            m->alias);
     pslLogError("pslGetModChan", info_string, XIA_INVALID_DETCHAN);
     return XIA_INVALID_DETCHAN;
 }
 
-
 /*
  * Frees memory associated with the module channel's SCAs.
  */
-PSL_SHARED int PSL_API pslDestroySCAs(Module *m, unsigned int modChan)
-{
+PSL_SHARED int PSL_API pslDestroySCAs(Module* m, unsigned int modChan) {
     ASSERT(m != NULL);
-
 
     FREE(m->ch[modChan].sca_lo);
     m->ch[modChan].sca_lo = NULL;
@@ -202,14 +171,11 @@ PSL_SHARED int PSL_API pslDestroySCAs(Module *m, unsigned int modChan)
     return XIA_SUCCESS;
 }
 
-
 /*
  * Find the entry structure matching the supplied name
  */
-PSL_SHARED XiaDaqEntry *pslFindEntry(char *name, XiaDefaults *defs)
-{
-    XiaDaqEntry *e = NULL;
-
+PSL_SHARED XiaDaqEntry* pslFindEntry(char* name, XiaDefaults* defs) {
+    XiaDaqEntry* e = NULL;
 
     e = defs->entry;
 
@@ -224,17 +190,13 @@ PSL_SHARED XiaDaqEntry *pslFindEntry(char *name, XiaDefaults *defs)
     return NULL;
 }
 
-
 /*
  * Invalidates the specified acquisition value
  */
-PSL_SHARED int pslInvalidate(char *name, XiaDefaults *defs)
-{
-    XiaDaqEntry *e = NULL;
-
+PSL_SHARED int pslInvalidate(char* name, XiaDefaults* defs) {
+    XiaDaqEntry* e = NULL;
 
     ASSERT(defs != NULL);
-
 
     e = pslFindEntry(name, defs);
 
@@ -254,17 +216,13 @@ PSL_SHARED int pslInvalidate(char *name, XiaDefaults *defs)
     return XIA_SUCCESS;
 }
 
-
 /*
  * Dump the entire defaults structure to the log file
  */
-PSL_SHARED void pslDumpDefaults(XiaDefaults *defs)
-{
-    XiaDaqEntry *e = NULL;
-
+PSL_SHARED void pslDumpDefaults(XiaDefaults* defs) {
+    XiaDaqEntry* e = NULL;
 
     ASSERT(defs != NULL);
-
 
     sprintf(info_string, "Starting dump of '%s'...", defs->alias);
     pslLogDebug("pslDumpDefaults", info_string);
@@ -272,8 +230,8 @@ PSL_SHARED void pslDumpDefaults(XiaDefaults *defs)
     e = defs->entry;
 
     while (e != NULL) {
-        sprintf(info_string, "%p: %s, %.3f, %.3f, %#x", e, e->name, e->data,
-                e->pending, e->state);
+        sprintf(info_string, "%p: %s, %.3f, %.3f, %#x", e, e->name, e->data, e->pending,
+                e->state);
         pslLogDebug("pslDumpDefaults", info_string);
 
         e = e->next;
@@ -283,38 +241,30 @@ PSL_SHARED void pslDumpDefaults(XiaDefaults *defs)
     pslLogDebug("pslDumpDefaults", info_string);
 }
 
-
 /*
  * Converts an array of 2 32-bit unsigned longs to a double.
  *
  * It is an unchecked exception to a pass a NULL array into this routine.
  */
-PSL_SHARED double pslU64ToDouble(unsigned long *u64)
-{
+PSL_SHARED double pslU64ToDouble(unsigned long* u64) {
     double d = 0.0;
-
 
     ASSERT(u64 != NULL);
 
-
-    d = (double)u64[0] + ((double)u64[1] * pow(2.0, 32.0));
+    d = (double) u64[0] + ((double) u64[1] * pow(2.0, 32.0));
 
     return d;
 }
-
 
 /*
  * Checks if the string in s contains all upper-case characters
  * (and digits).
  */
-PSL_SHARED boolean_t pslIsUpperCase(char *s)
-{
+PSL_SHARED boolean_t pslIsUpperCase(char* s) {
     size_t i;
     size_t len;
 
-
     ASSERT(s);
-
 
     len = strlen(s);
 

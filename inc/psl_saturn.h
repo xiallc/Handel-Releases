@@ -33,22 +33,19 @@
  * SUCH DAMAGE.
  */
 
-
 #ifndef __PSL_SATURN_H__
 #define __PSL_SATURN_H__
-
 
 /*
  * Function pointers
  */
-
-typedef int (*Saturn_SetAcqValue_FP)(int detChan, void *value, FirmwareSet *fs,
-                              char *detType, XiaDefaults *defs, double preampGain,
-                              Module *m, Detector *det,
-                              int detector_chan);
-typedef int (*Saturn_SynchAcqValue_FP)(int detChan, int det_chan, Module *m,
-								Detector *det, XiaDefaults *defs);
-typedef int (*Saturn_DoRunData_FP)(int detChan, void *value, XiaDefaults *defs);
+typedef int (*Saturn_SetAcqValue_FP)(int detChan, void* value, FirmwareSet* fs,
+                                     char* detType, XiaDefaults* defs,
+                                     double preampGain, Module* m, Detector* det,
+                                     int detector_chan);
+typedef int (*Saturn_SynchAcqValue_FP)(int detChan, int det_chan, Module* m,
+                                       Detector* det, XiaDefaults* defs);
+typedef int (*Saturn_DoRunData_FP)(int detChan, void* value, XiaDefaults* defs);
 
 /*
  * Structures
@@ -56,49 +53,39 @@ typedef int (*Saturn_DoRunData_FP)(int detChan, void *value, XiaDefaults *defs);
 
 /* A Saturn specific acquisition value */
 typedef struct _Saturn_AcquisitionValue {
-
-  char *           		name;
-  boolean_t        		isDefault;
-  boolean_t        		isSynch;
-  double           		def;
-  Saturn_SetAcqValue_FP setFN;
-  Saturn_SynchAcqValue_FP synchFN;
-
+    char* name;
+    boolean_t isDefault;
+    boolean_t isSynch;
+    double def;
+    Saturn_SetAcqValue_FP setFN;
+    Saturn_SynchAcqValue_FP synchFN;
 } Saturn_AcquisitionValue_t;
 
-
 typedef struct _Saturn_RunData {
-
-  char         		*name;
-  Saturn_DoRunData_FP fn;
-
+    char* name;
+    Saturn_DoRunData_FP fn;
 } Saturn_RunData;
-
 
 /*
  * Macros
  */
 
 /* This saves us a lot of typing. */
-#define ACQUISITION_VALUE(x) \
-  PSL_STATIC int pslDo ## x (int detChan, void *value, FirmwareSet *fs, \
-        char *detectorType, XiaDefaults *defs, \
-        double preampGain, \
-        Module *m, Detector *det, int detector_chan)
-
+#define ACQUISITION_VALUE(x)                                                           \
+    PSL_STATIC int pslDo##x(int detChan, void* value, FirmwareSet* fs,                 \
+                            char* detectorType, XiaDefaults* defs, double preampGain,  \
+                            Module* m, Detector* det, int detector_chan)
 
 /*
  * Constants
  */
-
-#define MIN_MAXWIDTH         1
-#define MAX_MAXWIDTH         255
+#define MIN_MAXWIDTH 1
+#define MAX_MAXWIDTH 255
 #define MAX_NUM_INTERNAL_SCA 16
-#define DSP_PARAM_MEM_LEN    256
+#define DSP_PARAM_MEM_LEN 256
 
 /* Memory Management */
 DXP_MD_ALLOC saturn_psl_md_alloc;
-DXP_MD_FREE  saturn_psl_md_free;
-
+DXP_MD_FREE saturn_psl_md_free;
 
 #endif /* __PSL_SATURN_H__ */

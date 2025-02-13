@@ -40,23 +40,20 @@
 
 #include "Dlldefs.h"
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
-  XIA_SHARED FILE *xia_fopen(const char *name, const char *mode, char *file,
-                             int line);
-  XIA_SHARED int   xia_fclose(FILE *fp);
-  XIA_SHARED int   xia_num_open_handles(void);
-  XIA_SHARED void  xia_print_open_handles(FILE *stream);
-  XIA_SHARED void  xia_print_open_handles_stdout(void);
-  XIA_SHARED FILE *xia_find_file(const char *name, const char *mode);
-  
+XIA_SHARED FILE* xia_fopen(const char* name, const char* mode, char* file, int line);
+XIA_SHARED int xia_fclose(FILE* fp);
+XIA_SHARED int xia_num_open_handles(void);
+XIA_SHARED void xia_print_open_handles(FILE* stream);
+XIA_SHARED void xia_print_open_handles_stdout(void);
+XIA_SHARED FILE* xia_find_file(const char* name, const char* mode);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
-
 
 /* Common macros */
 #define xia_file_open(name, mode) xia_fopen(name, mode, __FILE__, __LINE__)

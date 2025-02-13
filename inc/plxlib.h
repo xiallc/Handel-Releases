@@ -59,24 +59,21 @@
 extern "C" {
 #endif
 
-  /*
-   * Public API
-   */
-  XIA_EXPORT void XIA_API plx_print_error(int err, char *errorstring);
-  XIA_EXPORT int XIA_API plx_open_slot(unsigned short id, byte_t bus,
-									   byte_t slot, HANDLE *h);
-  XIA_EXPORT int XIA_API plx_close_slot(HANDLE h);
-  XIA_EXPORT int XIA_API plx_read_long(HANDLE h, unsigned long addr,
-									   unsigned long *data);
-  XIA_EXPORT int XIA_API plx_write_long(HANDLE h, unsigned long addr,
-										unsigned long data);
-  XIA_EXPORT int XIA_API plx_read_block(HANDLE h, unsigned long addr,
-										unsigned long len, unsigned long n_dead,
-										unsigned long *data);
+/*
+ * Public API
+ */
+XIA_EXPORT void XIA_API plx_print_error(int err, char* errorstring);
+XIA_EXPORT int XIA_API plx_open_slot(unsigned short id, byte_t bus, byte_t slot,
+                                     HANDLE* h);
+XIA_EXPORT int XIA_API plx_close_slot(HANDLE h);
+XIA_EXPORT int XIA_API plx_read_long(HANDLE h, unsigned long addr, unsigned long* data);
+XIA_EXPORT int XIA_API plx_write_long(HANDLE h, unsigned long addr, unsigned long data);
+XIA_EXPORT int XIA_API plx_read_block(HANDLE h, unsigned long addr, unsigned long len,
+                                      unsigned long n_dead, unsigned long* data);
 
 #ifdef PLXLIB_DEBUG
-  XIA_EXPORT void XIA_API plx_set_file_DEBUG(char *f);
-  XIA_EXPORT void XIA_API plx_dump_vmap_DEBUG(void);
+XIA_EXPORT void XIA_API plx_set_file_DEBUG(char* f);
+XIA_EXPORT void XIA_API plx_dump_vmap_DEBUG(void);
 #endif
 
 #ifdef __cplusplus
@@ -86,37 +83,30 @@ extern "C" {
 /*
  * Structs
  */
-
 typedef struct _virtual_map {
-
-  PLX_UINT_PTR      *addr;
-  PLX_DEVICE_OBJECT *device;
-  PLX_NOTIFY_OBJECT *events;
-  PLX_INTERRUPT     *intrs;
-  boolean_t         *registered;
-
-  unsigned long n;
-
+    PLX_UINT_PTR* addr;
+    PLX_DEVICE_OBJECT* device;
+    PLX_NOTIFY_OBJECT* events;
+    PLX_INTERRUPT* intrs;
+    boolean_t* registered;
+    unsigned long n;
 } virtual_map_t;
 
-typedef struct _API_ERRORS
-{
-    PLX_STATUS  code;
-    char       *text;
+typedef struct _API_ERRORS {
+    PLX_STATUS code;
+    char* text;
 } API_ERRORS;
 
-typedef struct _XIA_PLX_ERRORS
-{
-    int  	   code;
-    char       *text;
+typedef struct _XIA_PLX_ERRORS {
+    int code;
+    char* text;
 } XIA_PLX_ERRORS;
 
 /*
  * Constants
  */
 
-#define PLX_PCI_SPACE_0  2
-#define EXTERNAL_MEMORY_LOCAL_ADDR  0x100000
-
+#define PLX_PCI_SPACE_0 2
+#define EXTERNAL_MEMORY_LOCAL_ADDR 0x100000
 
 #endif /* __PLXLIB_H__ */

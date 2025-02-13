@@ -39,43 +39,34 @@
 #include "Dlldefs.h"
 #include "xia_common.h"
 
-
 /*
  * Constants
  */
-
 #define MAX_FILE_SIZE 256
-
 
 /*
  * Structures
  */
 
 typedef struct _xia_file_handle {
-
-  FILE *fp;
-
-  char file[MAX_FILE_SIZE];
-  int  line;
-
-  struct _xia_file_handle *next;
-
+    FILE* fp;
+    char file[MAX_FILE_SIZE];
+    int line;
+    struct _xia_file_handle* next;
 } xia_file_handle_t;
-
 
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
-  /*
-   * Public API
-   */
+/*
+ * Public API
+ */
 
-  XIA_EXPORT FILE *xia_fopen(const char *name, const char *mode, char *file,
-                             int line);
-  XIA_EXPORT int   xia_fclose(FILE *fp);
-  XIA_EXPORT int   xia_num_open_handles(void);
-  XIA_EXPORT void  xia_print_open_handles(FILE *stream);
+XIA_EXPORT FILE* xia_fopen(const char* name, const char* mode, char* file, int line);
+XIA_EXPORT int xia_fclose(FILE* fp);
+XIA_EXPORT int xia_num_open_handles(void);
+XIA_EXPORT void xia_print_open_handles(FILE* stream);
 
 #ifdef __cplusplus
 }

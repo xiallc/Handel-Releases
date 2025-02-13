@@ -33,57 +33,54 @@
  * SUCH DAMAGE.
  */
 
-
 #ifndef __PSL_MERCURY_H__
 #define __PSL_MERCURY_H__
 
-#define MIN_MCA_CHANNELS    256.0
-#define MAX_MCA_CHANNELS    16384.0
-#define MIN_SLOWLEN         5
-#define MAX_SLOWLEN         128
-#define MIN_SLOWGAP         0
-#define MAX_SLOWGAP         128
-#define MAX_SLOWFILTER      128
-#define MIN_FASTLEN         2
-#define MAX_FASTLEN         64
-#define MIN_FASTGAP         0.0
-#define MAX_FASTFILTER      64
-#define MIN_MAXWIDTH        1
-#define MAX_MAXWIDTH        255
+#define MIN_MCA_CHANNELS 256.0
+#define MAX_MCA_CHANNELS 16384.0
+#define MIN_SLOWLEN 5
+#define MAX_SLOWLEN 128
+#define MIN_SLOWGAP 0
+#define MAX_SLOWGAP 128
+#define MAX_SLOWFILTER 128
+#define MIN_FASTLEN 2
+#define MAX_FASTLEN 64
+#define MIN_FASTGAP 0.0
+#define MAX_FASTFILTER 64
+#define MIN_MAXWIDTH 1
+#define MAX_MAXWIDTH 255
 #define MAX_NUM_INTERNAL_SCA 64
 
-/* These are relative offsets for each channel in the external memory
+/*
+ * These are relative offsets for each channel in the external memory
  * statistics block.
  */
-static unsigned long MERCURY_STATS_CHAN_OFFSET[] = {
-  0x000000,
-  0x000040,
-  0x000080,
-  0x0000C0
-};
+static unsigned long MERCURY_STATS_CHAN_OFFSET[] = {0x000000, 0x000040, 0x000080,
+                                                    0x0000C0};
 
 /* relative offset for each channel in the external memory SCA block */
-#define MERCURY_SCA_CHAN_OFFSET     0x40
+#define MERCURY_SCA_CHAN_OFFSET 0x40
 
-/* These values are really low-level but required for the runtime readout
+/*
+ * These values are really low-level but required for the runtime readout
  * since Handel doesn't support it directly in dxp_get_statisitics().
  */
-#define MERCURY_MEMORY_BLOCK_SIZE  256
+#define MERCURY_MEMORY_BLOCK_SIZE 256
 
-#define MERCURY_STATS_REALTIME_OFFSET   0x0
-#define MERCURY_STATS_TLIVETIME_OFFSET  0x2
-#define MERCURY_STATS_ELIVETIME_OFFSET  0x4
-#define MERCURY_STATS_TRIGGERS_OFFSET   0x6
-#define MERCURY_STATS_MCAEVENTS_OFFSET  0x8
+#define MERCURY_STATS_REALTIME_OFFSET 0x0
+#define MERCURY_STATS_TLIVETIME_OFFSET 0x2
+#define MERCURY_STATS_ELIVETIME_OFFSET 0x4
+#define MERCURY_STATS_TRIGGERS_OFFSET 0x6
+#define MERCURY_STATS_MCAEVENTS_OFFSET 0x8
 #define MERCURY_STATS_UNDERFLOWS_OFFSET 0xA
-#define MERCURY_STATS_OVERFLOWS_OFFSET  0xC
+#define MERCURY_STATS_OVERFLOWS_OFFSET 0xC
 
 /* Mapping flag register bit offsets */
-#define MERCURY_MFR_BUFFER_A_FULL  1
-#define MERCURY_MFR_BUFFER_A_DONE  2
+#define MERCURY_MFR_BUFFER_A_FULL 1
+#define MERCURY_MFR_BUFFER_A_DONE 2
 #define MERCURY_MFR_BUFFER_A_EMPTY 3
-#define MERCURY_MFR_BUFFER_B_FULL  5
-#define MERCURY_MFR_BUFFER_B_DONE  6
+#define MERCURY_MFR_BUFFER_B_FULL 5
+#define MERCURY_MFR_BUFFER_B_DONE 6
 #define MERCURY_MFR_BUFFER_B_EMPTY 7
 #define MERCURY_MFR_BUFFER_OVERRUN 15
 
@@ -91,100 +88,93 @@ static unsigned long MERCURY_STATS_CHAN_OFFSET[] = {
 #define MERCURY_MCR_PIXEL_ADVANCE 4
 
 /* Mapping buffer block offsets */
-#define MERCURY_BUFFER_BLOCK_SIZE  256
+#define MERCURY_BUFFER_BLOCK_SIZE 256
 
 /* System FPGA variant register bit offset */
 #define MERCURY_VAR_DAQ_MODE 0
 
 /* Acquisition value update flags */
-#define MERCURY_UPDATE_NEVER   0x1
+#define MERCURY_UPDATE_NEVER 0x1
 #define MERCURY_UPDATE_MAPPING 0x2
-#define MERCURY_UPDATE_MCA     0x4
+#define MERCURY_UPDATE_MCA 0x4
 
 /* Masks for psl__IsMapping(). */
-#define MAPPING_MCA  0x1
-#define MAPPING_SCA  0x2
+#define MAPPING_MCA 0x1
+#define MAPPING_SCA 0x2
 #define MAPPING_LIST 0x4
-#define MAPPING_ANY  (MAPPING_MCA | MAPPING_SCA | MAPPING_LIST)
+#define MAPPING_ANY (MAPPING_MCA | MAPPING_SCA | MAPPING_LIST)
 
 /* Actual MAPPINGMODE constants. */
-#define MAPPINGMODE_NIL  0
-#define MAPPINGMODE_MCA  1
-#define MAPPINGMODE_SCA  2
+#define MAPPINGMODE_NIL 0
+#define MAPPINGMODE_MCA 1
+#define MAPPINGMODE_SCA 2
 #define MAPPINGMODE_LIST 3
 
 /* Clock speed */
 #define MERCURY_CLOCK_SPEED 50.0e6
 
 /* Gain */
-#define MERCURY_INPUT_RANGE_MV   2200.0
-#define MERCURY_ADC_RANGE        16384.0
-#define MERCURY_SYSTEM_GAIN      1.27
-#define MERCURY_GAINDAC_BITS     16
+#define MERCURY_INPUT_RANGE_MV 2200.0
+#define MERCURY_ADC_RANGE 16384.0
+#define MERCURY_SYSTEM_GAIN 1.27
+#define MERCURY_GAINDAC_BITS 16
 #define MERCURY_GAINDAC_DB_RANGE 40.0
 
 /* Control */
 #define MERCURY_MAX_BINFACT_ITERS 2
 
 /* For reading and setting the serial number */
-#define SERIAL_NUM_LEN  16
-#define BOARD_SER_NUM   0x10009300
+#define SERIAL_NUM_LEN 16
+#define BOARD_SER_NUM 0x10009300
 
 /* Temperature calibration setting */
-#define MERCURY_TEMP_NO_CORRECTION  0
+#define MERCURY_TEMP_NO_CORRECTION 0
 
 /* Address to read out USB version */
-#define USB_VERSION_ADDRESS     0x14000000
+#define USB_VERSION_ADDRESS 0x14000000
 
 /* Mercury OEM  */
-#define MERCURY_MAX_INPUTATTEN  2
-#define MERCURY_MAX_INPUTTERM   1
-#define MERCURY_MAX_TAUCTRL     7
+#define MERCURY_MAX_INPUTATTEN 2
+#define MERCURY_MAX_INPUTTERM 1
+#define MERCURY_MAX_TAUCTRL 7
 
 /* Switch Gain SWGAIN to Variable Gain (V/V) steps */
 static const double SWITCHED_DB_LOWEST = 1.7;
 static const double SWITCHED_DB_SPACING = 1.7;
 
-
 /* Memory Management */
-DXP_MD_ALLOC  mercury_psl_md_alloc;
-DXP_MD_FREE   mercury_psl_md_free;
-
+DXP_MD_ALLOC mercury_psl_md_alloc;
+DXP_MD_FREE mercury_psl_md_free;
 
 /* Struct for matching tracetype names to TRACETYPE parameter */
-typedef struct _MercuryTraceType{
-  char  *name;
-  short TRACETYPE;
+typedef struct _MercuryTraceType {
+    char* name;
+    short TRACETYPE;
 } MercuryTraceType;
-
 
 /* These are the allowed trace types */
 static MercuryTraceType traceTypesMercuryOem[] = {
-    {"adc_trace",                      0x0},
-    {"adc_average",                    0x1},
-    {"fast_filter",                    0x2},
-    {"raw_intermediate_filter",        0x3},
-    {"baseline_samples",               0x4},
-    {"baseline_average",               0x5},
-    {"scaled_intermediate_filter",     0x6},
-    {"raw_slow_filter",                0x7},
-    {"scaled_slow_filter",             0x8},
-    /* NOTE that the last tracetype (DEBUG_TRACE_TYPE) is used for debugging
-     * pslDoTrace does not set the TRACETYPE DSP paramter if this is passed in.
+    {"adc_trace", 0x0},
+    {"adc_average", 0x1},
+    {"fast_filter", 0x2},
+    {"raw_intermediate_filter", 0x3},
+    {"baseline_samples", 0x4},
+    {"baseline_average", 0x5},
+    {"scaled_intermediate_filter", 0x6},
+    {"raw_slow_filter", 0x7},
+    {"scaled_slow_filter", 0x8},
+    /*
+     * NOTE that the last tracetype (DEBUG_TRACE_TYPE) is used for debugging
+     * pslDoTrace does not set the TRACETYPE DSP parameter if this is passed in.
      */
-    {"debug",                          0xF},
+    {"debug", 0xF},
 };
 
 static MercuryTraceType traceTypesMercury[] = {
-    {"adc_trace",                      0x0},
-    {"baseline_history",               0x7},
-    {"trigger_filter",                 0x4},
-    {"baseline_filter",                0x8},
-    {"energy_filter",                  0xA},
-    {"baseline_samples",               0x6},
-    {"energy_samples",                 0xB},
-    {"debug",                          0xF},
+    {"adc_trace", 0x0},      {"baseline_history", 0x7},
+    {"trigger_filter", 0x4}, {"baseline_filter", 0x8},
+    {"energy_filter", 0xA},  {"baseline_samples", 0x6},
+    {"energy_samples", 0xB}, {"debug", 0xF},
 };
-
 
 #endif /* __PSL_MERCURY_H__ */

@@ -1,4 +1,5 @@
-/* This code accompanies the XIA Application Note "Handel Quick Start
+/*
+ * This code accompanies the XIA Application Note "Handel Quick Start
  * Guide: xMAP". This sample code acquires data for 5 seconds using a
  * preset realtime run that terminates automatically.
  */
@@ -37,7 +38,6 @@
  * SUCH DAMAGE.
  */
 
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -51,16 +51,12 @@
 #include "handel_errors.h"
 #include "md_generic.h"
 
-
 static int RUN_ACTIVE_BIT = 0x1;
 
 static void print_usage(void);
 static void CHECK_ERROR(int status);
 
-
-
-int main(int argc, char *argv[])
-{
+int main(int argc, char* argv[]) {
     int status;
     int ignored = 0;
     int i;
@@ -142,7 +138,6 @@ int main(int argc, char *argv[])
                 nChannelsDone++;
             }
         }
-
         Sleep(1);
     } while (nChannelsDone != 4);
 
@@ -167,14 +162,12 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-
 /*
  * This is just an example of how to handle error values.  A program
  * of any reasonable size should implement a more robust error
  * handling mechanism.
  */
-static void CHECK_ERROR(int status)
-{
+static void CHECK_ERROR(int status) {
     /* XIA_SUCCESS is defined in handel_errors.h */
     if (status != XIA_SUCCESS) {
         printf("Error encountered! Status = %d\n", status);
@@ -183,9 +176,7 @@ static void CHECK_ERROR(int status)
     }
 }
 
-
-static void print_usage(void)
-{
+static void print_usage(void) {
     fprintf(stdout, "Arguments: [.ini file]]\n");
     return;
 }

@@ -34,60 +34,53 @@
  * SUCH DAMAGE.
  */
 
-
 #ifndef HANDEL_XERXES_H
 #define HANDEL_XERXES_H
 
 #include "handeldef.h"
 #include "xia_handel_structures.h"
 
+static char* SYS_NULL[1] = {"NULL"};
 
-static char *SYS_NULL[1]  = { "NULL" };
-
-static char *BOARD_LIST[] = {
+static char* BOARD_LIST[] = {
 #ifndef EXCLUDE_SATURN
-  "dxpx10p",
+    "dxpx10p",
 #endif /* EXCLUDE_SATURN */
 #ifndef EXCLUDE_UDXPS
-  "udxps",
+    "udxps",
 #endif /* EXCLUDE_UDXPS */
 #ifndef EXCLUDE_UDXP
-  "udxp",
+    "udxp",
 #endif /* EXCLUDE_UDXP */
 #ifndef EXCLUDE_XMAP
-  "xmap",
+    "xmap",
 #endif /* EXCLUDE_XMAP */
 #ifndef EXCLUDE_STJ
-  "stj",
+    "stj",
 #endif /* EXCLUDE_STJ */
 #ifndef EXCLUDE_MERCURY
-  "mercury",
+    "mercury",
 #endif /* EXCLUDE_MERCURY */
-  "none" /* End of list */
-  };
-
-
-/* These names must be kept in sync with the interface enum in
- * xia_module.h
- */
-static char *INTERF_LIST[] = {
-  "bad",
-  "EPP",
-  "EPP", /* Placeholder to match the GENERIC_EPP entry in xia_module */
-  "SERIAL",
-  "USB",
-  "USB2",
-  "PXI",
+    "none" /* End of list */
 };
 
-#define N_KNOWN_BOARDS  (sizeof(BOARD_LIST) / sizeof(BOARD_LIST[0]) - 1)
+/*
+ * These names must be kept in sync with the interface enum in
+ * xia_module.h
+ */
+static char* INTERF_LIST[] = {
+    "bad",    "EPP", "EPP", /* Placeholder to match the GENERIC_EPP entry in xia_module */
+    "SERIAL", "USB", "USB2", "PXI",
+};
 
-#define MAX_INTERF_LEN   24
-#define MAX_MD_LEN       12
-#define MAX_NUM_CHAN_LEN  4
+#define N_KNOWN_BOARDS (sizeof(BOARD_LIST) / sizeof(BOARD_LIST[0]) - 1)
+
+#define MAX_INTERF_LEN 24
+#define MAX_MD_LEN 12
+#define MAX_NUM_CHAN_LEN 4
 /* As far as the Xerxes configuration goes, this allows a detChan range of
  * 0 - 9999, which should be enough for anybody.
  */
-#define MAX_CHAN_LEN      4
+#define MAX_CHAN_LEN 4
 
 #endif /* HANDEL_XERXES_H */

@@ -25,20 +25,19 @@ static void CHECK_ERROR(int status);
 static int SLEEP(double seconds);
 static void INThandler(int sig);
 static void print_usage(void);
-static void start_system(char *ini_file);
-static void setup_logging(char *log_name);
+static void start_system(char* ini_file);
+static void setup_logging(char* log_name);
 static void clean_up();
 static int get_number_channels();
 
-unsigned long *mca = NULL;
-unsigned short *params = NULL;
+unsigned long* mca = NULL;
+unsigned short* params = NULL;
 
 boolean_t stop = FALSE_;
 boolean_t disable_safe_exit = FALSE_;
 
-int main(int argc, char *argv[])
-{
-    char *ini;
+int main(int argc, char* argv[]) {
+    char* ini;
     int status;
     double runtime = 0.02f;
 
@@ -58,7 +57,7 @@ int main(int argc, char *argv[])
     ini = argv[1];
 
     if (argc > 2) {
-        runtime = (float)atof(argv[2]);
+        runtime = (float) atof(argv[2]);
     }
 
     if (runtime < 0) {
@@ -85,7 +84,8 @@ int main(int argc, char *argv[])
         exit(2);
     }
 
-    printf("-- Sample code to run the MCA and statistics acquisition in an infinite loop\n");
+    printf(
+        "-- Sample code to run the MCA and statistics acquisition in an infinite loop\n");
     printf("-- Starting run loop wait time %.4fs\n", runtime);
     printf("-- Press CTRL+C to stop\n");
 
@@ -94,8 +94,7 @@ int main(int argc, char *argv[])
     status = xiaStartRun(-1, 0);
     CHECK_ERROR(status);
 
-    while(!stop)
-    {
+    while (!stop) {
         for (channel = 0; channel < number_channels; channel++) {
             status = xiaGetRunData(channel, "mca", mca);
             CHECK_ERROR(status);
@@ -119,14 +118,12 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-static void INThandler(int sig)
-{
+static void INThandler(int sig) {
     UNUSED(sig);
     stop = TRUE_;
 }
 
-static void start_system(char *ini_file)
-{
+static void start_system(char* ini_file) {
     int status;
 
     printf("Loading ini file %s\n", ini_file);
@@ -138,15 +135,13 @@ static void start_system(char *ini_file)
     CHECK_ERROR(status);
 }
 
-static void setup_logging(char *log_name)
-{
+static void setup_logging(char* log_name) {
     printf("Configuring Handel log file %s\n", log_name);
     xiaSetLogLevel(MD_DEBUG);
     xiaSetLogOutput(log_name);
 }
 
-static void clean_up()
-{
+static void clean_up() {
     printf("\nCleaning up Handel\n");
     xiaExit();
 
@@ -157,45 +152,37 @@ static void clean_up()
         free(mca);
 }
 
-
 /*
  * This is just an example of how to handle error values.  A program
  * of any reasonable size should implement a more robust error
  * handling mechanism.
  */
-static void CHECK_ERROR(int status)
-{
+static void CHECK_ERROR(int status) {
     /* XIA_SUCCESS is defined in handel_errors.h */
     if (status != XIA_SUCCESS) {
-        printf("\nError encountered! Status = %d %s\n", status, xiaGetErrorText(status));
+        printf("\nError encountered! Status = %d %s\n", status,
+               xiaGetErrorText(status));
         clean_up();
         exit(status);
     }
 }
 
-static void print_usage(void)
-{
+static void print_usage(void) {
     fprintf(stdout, "\n");
     fprintf(stdout, "Usage: infinite_read_loops INI_FILE [LOOP_WAIT_SECOND]\n");
     fprintf(stdout, "\n");
     return;
 }
 
-static int SLEEP(double seconds)
-{
+static int SLEEP(double seconds) {
 #if _WIN32
-    DWORD wait = (DWORD)(1000.0 * seconds);
+    DWORD wait = (DWORD) (1000.0 * seconds);
     Sleep(wait);
 #else
     unsigned long secs = (unsigned long) seconds;
-    struct timespec req = {
-        .tv_sec = secs,
-        .tv_nsec = ((seconds - secs) * 1000000000.0)
-    };
-    struct timespec rem = {
-        .tv_sec = 0,
-        .tv_nsec = 0
-    };
+    struct timespec req = {.tv_sec = secs,
+                           .tv_nsec = ((seconds - secs) * 1000000000.0)};
+    struct timespec rem = {.tv_sec = 0, .tv_nsec = 0};
     while (TRUE_) {
         if (nanosleep(&req, &rem) == 0)
             break;
@@ -205,16 +192,15 @@ static int SLEEP(double seconds)
     return XIA_SUCCESS;
 }
 
-static int get_number_channels()
-{
+static int get_number_channels() {
     int status;
     unsigned int m;
 
     char module[MAXALIAS_LEN];
     int channel_per_module = 0;
 
-    unsigned int number_modules =  0;
-    unsigned int number_channels  = 0;
+    unsigned int number_modules = 0;
+    unsigned int number_channels = 0;
 
     status = xiaGetNumModules(&number_modules);
     CHECK_ERROR(status);
@@ -231,4 +217,3 @@ static int get_number_channels()
 
     return number_channels;
 }
-

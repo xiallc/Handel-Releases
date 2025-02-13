@@ -34,7 +34,6 @@
  * SUCH DAMAGE.
  */
 
-
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -56,10 +55,10 @@
 #include "xia_common.h"
 #include "handel_errors.h"
 
-XIA_MD_STATIC void dxp_md_local_time(struct tm **local, int *milli);
+XIA_MD_STATIC void dxp_md_local_time(struct tm** local, int* milli);
 
 /* Current output for the logging routines. By default, this is set to stdout */
-static FILE *out_stream;
+static FILE* out_stream;
 
 static boolean_t isSuppressed = FALSE_;
 
@@ -68,51 +67,42 @@ static int logLevel = MD_ERROR;
 /**
  * This routine enables the logging output
  */
-XIA_MD_SHARED int dxp_md_enable_log(void)
-{
+XIA_MD_SHARED int dxp_md_enable_log(void) {
     isSuppressed = FALSE_;
     return DXP_SUCCESS;
 }
 
-
 /**
  * This routine disables the logging output
  */
-XIA_MD_SHARED int dxp_md_suppress_log(void)
-{
+XIA_MD_SHARED int dxp_md_suppress_log(void) {
     isSuppressed = TRUE_;
     return DXP_SUCCESS;
 }
-
 
 /**
  * This routine sets the maximum level at which log messages will be
  * displayed.
  */
-XIA_MD_SHARED int dxp_md_set_log_level(int level)
-{
-
+XIA_MD_SHARED int dxp_md_set_log_level(int level) {
     /* Validate level */
     if ((level > MD_DEBUG) || (level < MD_ERROR)) {
         /* Leave level at previous setting and return an error code */
         return DXP_LOG_LEVEL;
     }
-
     logLevel = level;
-
     return DXP_SUCCESS;
 }
-
 
 /**
  * This routine is the main logging routine. It shouldn't be called directly.
  * Use the macros provided in xerxes_generic.h.
  */
-XIA_MD_SHARED void dxp_md_log(int level, const char *routine, const char *message,
-                           int error, const char *file, int line)
-{
-    /* If logging is disabled or we aren't set
-     * to log this message level then return gracefully, NOW!
+XIA_MD_SHARED void dxp_md_log(int level, const char* routine, const char* message,
+                              int error, const char* file, int line) {
+    /*
+     * If logging is disabled, or we aren't set
+     * to log this message level, then return gracefully, NOW!
      */
     if (isSuppressed || (level > logLevel)) {
         return;
@@ -124,7 +114,8 @@ XIA_MD_SHARED void dxp_md_log(int level, const char *routine, const char *messag
         return;
     }
 
-    /* Ordinarily, we'd set this in the globals section, but on Linux 'stdout'
+    /*
+     * Ordinarily, we'd set this in the globals section, but on Linux 'stdout'
      * isn't a constant, so it can't be used as an initializer.
      */
     if (out_stream == NULL) {
@@ -148,16 +139,14 @@ XIA_MD_SHARED void dxp_md_log(int level, const char *routine, const char *messag
             FAIL();
             break;
     }
-
 }
 
 /**
  * Write a standard log format header.
  */
-static void dxp_md_log_header(const char* type, const char* routine,
-                                     int* error_code, const char *file, int line)
-{
-    struct tm *localTime;
+static void dxp_md_log_header(const char* type, const char* routine, int* error_code,
+                              const char* file, int line) {
+    struct tm* localTime;
     int milli;
     char logTimeFormat[80];
 
@@ -179,8 +168,8 @@ static void dxp_md_log_header(const char* type, const char* routine,
             basename = file;
     }
 
-    out = fprintf(out_stream, "%s %s,%03d %s (%s:%d)",
-                  type, logTimeFormat, milli, routine, basename, line);
+    out = fprintf(out_stream, "%s %s,%03d %s (%s:%d)", type, logTimeFormat, milli,
+                  routine, basename, line);
 
     fprintf(out_stream, "%*c ", 90 - out, ':');
 
@@ -193,61 +182,53 @@ static void dxp_md_log_header(const char* type, const char* routine,
  * files or report the information in whatever fashion is desired.
  */
 XIA_MD_SHARED void dxp_md_error(const char* routine, const char* message,
-                                int* error_code, const char *file, int line)
-{
+                                int* error_code, const char* file, int line) {
     dxp_md_log_header("[ERROR]", routine, error_code, file, line);
     fprintf(out_stream, "%s\n", message);
     fflush(out_stream);
 }
 
-
 /**
  * Routine to handle reporting warnings. Messages are written to the output
  * defined in out_stream.
  */
-XIA_MD_SHARED void dxp_md_warning(const char *routine, const char *message,
-                                  const char *file, int line)
-{
+XIA_MD_SHARED void dxp_md_warning(const char* routine, const char* message,
+                                  const char* file, int line) {
     dxp_md_log_header("[WARN ]", routine, NULL, file, line);
     fprintf(out_stream, "%s\n", message);
     fflush(out_stream);
 }
 
-
 /**
  * Routine to handle reporting info messages. Messages are written to the
  * output defined in out_stream.
  */
-XIA_MD_SHARED void dxp_md_info(const char *routine, const char *message,
-                               const char *file, int line)
-{
+XIA_MD_SHARED void dxp_md_info(const char* routine, const char* message,
+                               const char* file, int line) {
     dxp_md_log_header("[INFO ]", routine, NULL, file, line);
     fprintf(out_stream, "%s\n", message);
     fflush(out_stream);
 }
 
-
 /**
  * Routine to handle reporting debug messages. Messages are written to the
  * output defined in out_stream.
  */
-XIA_MD_SHARED void dxp_md_debug(const char *routine, const char *message,
-                                const char *file, int line)
-{
+XIA_MD_SHARED void dxp_md_debug(const char* routine, const char* message,
+                                const char* file, int line) {
     dxp_md_log_header("[DEBUG]", routine, NULL, file, line);
     fprintf(out_stream, "%s\n", message);
     fflush(out_stream);
 }
 
-
-/** Redirects the log output to either a file or a special descriptor
+/**
+ * Redirects the log output to either a file or a special descriptor
  * such as stdout or stderr. Allowed values for @a filename are: a
  * path to a file, "stdout", "stderr", "" (redirects to stdout) or
  * NULL (also redirects to stdout).
  */
-XIA_MD_SHARED void dxp_md_output(const char *filename)
-{
-    char *strtmp = NULL;
+XIA_MD_SHARED void dxp_md_output(const char* filename) {
+    char* strtmp = NULL;
 
     unsigned int i;
 
@@ -267,29 +248,29 @@ XIA_MD_SHARED void dxp_md_output(const char *filename)
         abort();
 
     for (i = 0; i < strlen(filename); i++) {
-        strtmp[i] = (char)tolower((int)filename[i]);
+        strtmp[i] = (char) tolower((int) filename[i]);
     }
     strtmp[strlen(filename)] = '\0';
 
-
     if (STREQ(strtmp, "stdout")) {
         out_stream = stdout;
-
     } else if (STREQ(strtmp, "stderr")) {
         out_stream = stderr;
-
     } else {
         out_stream = fopen(filename, "w");
 
         if (!out_stream) {
             int status = XIA_OPEN_FILE;
 
-            /* Reset to stdout with the hope that it is redirected
+            /*
+             * Reset to stdout with the hope that it is redirected
              * somewhere meaningful.
              */
             out_stream = stdout;
-            sprintf(info_string, "Unable to open filename '%s' for logging. "
-                    "Output redirected to stdout.", filename);
+            sprintf(info_string,
+                    "Unable to open filename '%s' for logging. "
+                    "Output redirected to stdout.",
+                    filename);
             dxp_md_error("dxp_md_output", info_string, &status, __FILE__, __LINE__);
         }
     }
@@ -303,25 +284,23 @@ XIA_MD_SHARED void dxp_md_output(const char *filename)
  * tm to work with strftime. From
  * https://blogs.msdn.microsoft.com/joshpoley/2007/12/19/datetime-formats-and-conversions/
  */
-XIA_MD_STATIC void dxp_md_SystemTimeToTime_t(SYSTEMTIME *systemTime, time_t *dosTime)
-{
+XIA_MD_STATIC void dxp_md_SystemTimeToTime_t(SYSTEMTIME* systemTime, time_t* dosTime) {
     LARGE_INTEGER jan1970FT = {0};
     LARGE_INTEGER utcFT = {0};
     unsigned __int64 utcDosTime;
 
-    jan1970FT.QuadPart = 116444736000000000I64; // january 1st 1970
-    SystemTimeToFileTime(systemTime, (FILETIME*)&utcFT);
+    jan1970FT.QuadPart = 116444736000000000I64;  // january 1st 1970
+    SystemTimeToFileTime(systemTime, (FILETIME*) &utcFT);
 
-    utcDosTime = (utcFT.QuadPart - jan1970FT.QuadPart)/10000000;
-    *dosTime = (time_t)utcDosTime;
+    utcDosTime = (utcFT.QuadPart - jan1970FT.QuadPart) / 10000000;
+    *dosTime = (time_t) utcDosTime;
 }
 
 /**
  * Returns the current local time as a struct tm for string formatting
  * and the milliseconds on the side for extra precision.
  */
-XIA_MD_STATIC void dxp_md_local_time(struct tm **local, int *milli)
-{
+XIA_MD_STATIC void dxp_md_local_time(struct tm** local, int* milli) {
     SYSTEMTIME tod;
     time_t current;
 
@@ -338,8 +317,7 @@ XIA_MD_STATIC void dxp_md_local_time(struct tm **local, int *milli)
  * Returns the current local time as a struct tm for string formatting
  * and the milliseconds on the side for extra precision.
  */
-XIA_MD_STATIC void dxp_md_local_time(struct tm **local, int *milli)
-{
+XIA_MD_STATIC void dxp_md_local_time(struct tm** local, int* milli) {
     struct timeval tod;
     time_t current;
 

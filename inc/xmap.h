@@ -34,45 +34,45 @@
  * SUCH DAMAGE.
  */
 
-
 #ifndef __XMAP_H__
 #define __XMAP_H__
 
-/* This value is in words. The maximum length of the DSP in 24-bit program
+/*
+ * This value is in words. The maximum length of the DSP in 24-bit program
  * memory values is 0x8000.
  */
-#define MAXDSP_LEN      0x10000
-#define MAXFIP_LEN   0x00100000
-#define MAX_FIPPI			  5
+#define MAXDSP_LEN 0x10000
+#define MAXFIP_LEN 0x00100000
+#define MAX_FIPPI 5
 
 /* Control Tasks */
 enum {
-  XMAP_CT_ADC = 0,
-  XMAP_CT_APPLY,
-  XMAP_CT_MEMFILL1,
-  XMAP_CT_BASE_HIST,
-  /* Fast filter raw output scaled by 2^(-FSCALE) */
-  XMAP_CT_FAST_FILTER,
-  /* Fast baseline instantaneous samples scaled by 2^(-FSCALE) */
-  XMAP_CT_FAST_BASE,
-  /* Fast filter baseline running average scaled by 2^(-FSCALE) */
-  XMAP_CT_FAST_BASE_AVG,
-  /* Fast filter baseline-subtracted output scaled by 2^(-FSCALE) */
-  XMAP_CT_FAST_BASE_SUB,
-  /* Baseline instantaneous scamples scaled by 2^(-ESCALE) */
-  XMAP_CT_BASE_INST,
-  /* Baseline running average scaled by 2^(-ESCALE) */
-  XMAP_CT_BASE_AVG,
-  /* Baseline filter baseline-subtracted ouput scaled by 2^(-ESCALE) */
-  XMAP_CT_BASE_SUB,
-  /* Slow filter raw output scaled by 2^(-ESCALE) */
-  XMAP_CT_SLOW_FILTER,
-  /* Slow filter baseline-subtracted ouput scaled by 2^(-ESCALE) */
-  XMAP_CT_SLOW_BASE_SUB,
-  /* Event samples scaled by 2^(-ESCALE) */
-  XMAP_CT_EVENTS,
-  /* Wake the DSP up */
-  XMAP_CT_WAKE_DSP
+    XMAP_CT_ADC = 0,
+    XMAP_CT_APPLY,
+    XMAP_CT_MEMFILL1,
+    XMAP_CT_BASE_HIST,
+    /* Fast filter raw output scaled by 2^(-FSCALE) */
+    XMAP_CT_FAST_FILTER,
+    /* Fast baseline instantaneous samples scaled by 2^(-FSCALE) */
+    XMAP_CT_FAST_BASE,
+    /* Fast filter baseline running average scaled by 2^(-FSCALE) */
+    XMAP_CT_FAST_BASE_AVG,
+    /* Fast filter baseline-subtracted output scaled by 2^(-FSCALE) */
+    XMAP_CT_FAST_BASE_SUB,
+    /* Baseline instantaneous scamples scaled by 2^(-ESCALE) */
+    XMAP_CT_BASE_INST,
+    /* Baseline running average scaled by 2^(-ESCALE) */
+    XMAP_CT_BASE_AVG,
+    /* Baseline filter baseline-subtracted ouput scaled by 2^(-ESCALE) */
+    XMAP_CT_BASE_SUB,
+    /* Slow filter raw output scaled by 2^(-ESCALE) */
+    XMAP_CT_SLOW_FILTER,
+    /* Slow filter baseline-subtracted ouput scaled by 2^(-ESCALE) */
+    XMAP_CT_SLOW_BASE_SUB,
+    /* Event samples scaled by 2^(-ESCALE) */
+    XMAP_CT_EVENTS,
+    /* Wake the DSP up */
+    XMAP_CT_WAKE_DSP
 };
 
 #endif /* __XMAP_H__ */

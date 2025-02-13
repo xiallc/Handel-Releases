@@ -54,9 +54,7 @@
 static void print_usage(void);
 static void CHECK_ERROR(int status);
 
-
-int main(int argc, char *argv[])
-{
+int main(int argc, char* argv[]) {
     int status;
     int i;
     int ignored = 0;
@@ -70,12 +68,12 @@ int main(int argc, char *argv[])
     double numberChannels = 2048;
 
     unsigned long mcaLen = 0;
-    unsigned long *mca = NULL;
+    unsigned long* mca = NULL;
 
     double nSCAs = 2.0;
     char scaStr[80];
 
-    double scaLowLimits[]  = {0.0, 1024.0};
+    double scaLowLimits[] = {0.0, 1024.0};
     double scaHighLimits[] = {1023.0, 2047.0};
 
     double SCAs[2];
@@ -119,23 +117,21 @@ int main(int argc, char *argv[])
     status = xiaSetAcquisitionValues(-1, "mapping_mode", &mappingMode);
     CHECK_ERROR(status);
 
-
     /* Set the number of SCAs */
     printf("-- Set SCAs\n");
-    status = xiaSetAcquisitionValues(-1, "number_of_scas", (void *)&nSCAs);
+    status = xiaSetAcquisitionValues(-1, "number_of_scas", (void*) &nSCAs);
     CHECK_ERROR(status);
 
     /* Set the individual SCA limits */
-    for (i = 0; i < (int)nSCAs; i++) {
-      sprintf(scaStr, "sca%d_lo", i);
-      status = xiaSetAcquisitionValues(-1, scaStr, (void *)&(scaLowLimits[i]));
-      CHECK_ERROR(status);
+    for (i = 0; i < (int) nSCAs; i++) {
+        sprintf(scaStr, "sca%d_lo", i);
+        status = xiaSetAcquisitionValues(-1, scaStr, (void*) &(scaLowLimits[i]));
+        CHECK_ERROR(status);
 
-      sprintf(scaStr, "sca%d_hi", i);
-      status = xiaSetAcquisitionValues(-1, scaStr, (void *)&(scaHighLimits[i]));
-      CHECK_ERROR(status);
+        sprintf(scaStr, "sca%d_hi", i);
+        status = xiaSetAcquisitionValues(-1, scaStr, (void*) &(scaHighLimits[i]));
+        CHECK_ERROR(status);
     }
-
 
     /* Apply new acquisition values */
     printf("Applying the acquisition values.\n");
@@ -148,7 +144,7 @@ int main(int argc, char *argv[])
     CHECK_ERROR(status);
 
     printf("Waiting 5 seconds to collect data.\n");
-    Sleep((DWORD)5000);
+    Sleep((DWORD) 5000);
 
     printf("Stopping the run.\n");
     status = xiaStopRun(-1);
@@ -159,7 +155,8 @@ int main(int argc, char *argv[])
     status = xiaGetRunData(0, "mca_length", &mcaLen);
     CHECK_ERROR(status);
 
-    /* If you don't want to dynamically allocate memory here,
+    /*
+     * If you don't want to dynamically allocate memory here,
      * then be sure to declare mca as an array of length 8192,
      * since that is the maximum length of the spectrum.
      */
@@ -181,11 +178,11 @@ int main(int argc, char *argv[])
     free(mca);
 
     /* Read out the SCAs from the data buffer */
-    status = xiaGetRunData(0, "sca", (void *)SCAs);
+    status = xiaGetRunData(0, "sca", (void*) SCAs);
     CHECK_ERROR(status);
 
-    for (i = 0; i < (int)nSCAs; i++) {
-      printf("-- SCA%d = %0f\n", i, SCAs[i]);
+    for (i = 0; i < (int) nSCAs; i++) {
+        printf("-- SCA%d = %0f\n", i, SCAs[i]);
     }
 
     printf("Cleaning up Handel.\n");
@@ -195,14 +192,12 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-
 /*
  * This is just an example of how to handle error values.  A program
  * of any reasonable size should implement a more robust error
  * handling mechanism.
  */
-static void CHECK_ERROR(int status)
-{
+static void CHECK_ERROR(int status) {
     /* XIA_SUCCESS is defined in handel_errors.h */
     if (status != XIA_SUCCESS) {
         printf("Error encountered! Status = %d\n", status);
@@ -211,9 +206,7 @@ static void CHECK_ERROR(int status)
     }
 }
 
-
-static void print_usage(void)
-{
+static void print_usage(void) {
     fprintf(stdout, "Arguments: [.ini file]]\n");
     return;
 }

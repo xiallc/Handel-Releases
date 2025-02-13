@@ -34,40 +34,34 @@
  * SUCH DAMAGE.
  */
 
-
 #include <stdlib.h>
 
 #include "xia_handel.h"
 #include "xia_sort.h"
 
-
 /*
  * Since the Firmware LLs tend to be rather small, we can use insertion sort
  * to quickly sort it.
  */
-HANDEL_SHARED int HANDEL_API xiaInsertSort(Firmware **head, int (*compare)(const void *key1, const void *key2))
-{
-    Firmware *iterator = NULL;
-    Firmware *toInsert = NULL;
+HANDEL_SHARED int HANDEL_API xiaInsertSort(Firmware** head,
+                                           int (*compare)(const void* key1,
+                                                          const void* key2)) {
+    Firmware* iterator = NULL;
+    Firmware* toInsert = NULL;
 
     iterator = getListNext(*head);
 
-    while (iterator != NULL)
-    {
-        if (compare(getListPrev(iterator), iterator) == 1)
-        {
+    while (iterator != NULL) {
+        if (compare(getListPrev(iterator), iterator) == 1) {
             toInsert = iterator;
-            while (compare(getListPrev(toInsert), toInsert) == 1)
-            {
+            while (compare(getListPrev(toInsert), toInsert) == 1) {
                 xiaSwap(getListPrev(toInsert), toInsert);
 
-                if (getListPrev(toInsert) == NULL)
-                {
+                if (getListPrev(toInsert) == NULL) {
                     break;
                 }
             }
         }
-
         iterator = getListNext(iterator);
     }
 
@@ -76,41 +70,35 @@ HANDEL_SHARED int HANDEL_API xiaInsertSort(Firmware **head, int (*compare)(const
      * Just walk head backwards until head->prev == NULL. Could use a
      * pointer-to-a-pointer here.
      */
-    while (getListPrev(*head) != NULL)
-    {
+    while (getListPrev(*head) != NULL) {
         *head = getListPrev(*head);
     }
 
-
     return 0;
 }
-
 
 /*
  * This routine merge sorts an array of elements data. This code is
  * shamelessly torn from "Mastering Algorithms with C" by Kyle Loudon
  * (O'Reilly Associates) p 318.
  */
-HANDEL_SHARED int HANDEL_API xiaMergeSort(void *data, int size, int esize, int i, int k, int (*compare)(const void *key1, const void *key2))
-{
+HANDEL_SHARED int HANDEL_API xiaMergeSort(void* data, int size, int esize, int i, int k,
+                                          int (*compare)(const void* key1,
+                                                         const void* key2)) {
     int j;
 
-    if (i < k)
-    {
-        j = (int)(((i + k - 1)) / 2);
+    if (i < k) {
+        j = (int) (((i + k - 1)) / 2);
 
-        if (xiaMergeSort(data, size, esize, i, j, compare) < 0)
-        {
+        if (xiaMergeSort(data, size, esize, i, j, compare) < 0) {
             return -1;
         }
 
-        if (xiaMergeSort(data, size, esize, j + 1, k, compare) < 0)
-        {
+        if (xiaMergeSort(data, size, esize, j + 1, k, compare) < 0) {
             return -1;
         }
 
-        if (xiaMerge(data, esize, i, j, k, compare) < 0)
-        {
+        if (xiaMerge(data, esize, i, j, k, compare) < 0) {
             return -1;
         }
     }
@@ -122,60 +110,46 @@ HANDEL_SHARED int HANDEL_API xiaMergeSort(void *data, int size, int esize, int i
  * This routine is used by xiaMergeSort to merge together elements. Taken from
  * the same reference as xiaMergeSort.
  */
-HANDEL_STATIC int HANDEL_API xiaMerge(void *data, int esize, int i, int j, int k, int (*compare)(const void *key1, const void *key2))
-{
-
-    char *a = data;
-    char *m;
+HANDEL_STATIC int HANDEL_API xiaMerge(void* data, int esize, int i, int j, int k,
+                                      int (*compare)(const void* key1,
+                                                     const void* key2)) {
+    char* a = data;
+    char* m;
 
     int ipos;
     int jpos;
     int mpos;
 
-
     ipos = i;
     jpos = j + 1;
     mpos = 0;
 
-
-    if ((m = (char *)handel_md_alloc(esize * ((k - i) + 1))) == NULL)
-    {
+    if ((m = (char*) handel_md_alloc(esize * ((k - i) + 1))) == NULL) {
         return -1;
     }
 
-    while (ipos <= j || jpos <= k)
-    {
-        if (ipos > j)
-        {
-            while (jpos <= k)
-            {
+    while (ipos <= j || jpos <= k) {
+        if (ipos > j) {
+            while (jpos <= k) {
                 memcpy(&m[mpos * esize], &a[jpos * esize], esize);
                 jpos++;
                 mpos++;
             }
-
             continue;
-
         } else if (jpos > k) {
-
-            while (ipos <= j)
-            {
+            while (ipos <= j) {
                 memcpy(&m[mpos * esize], &a[ipos * esize], esize);
                 ipos++;
                 mpos++;
             }
-
             continue;
         }
 
-        if (compare(&a[ipos * esize], &a[jpos * esize]) < 0)
-        {
+        if (compare(&a[ipos * esize], &a[jpos * esize]) < 0) {
             memcpy(&m[mpos * esize], &a[ipos * esize], esize);
             ipos++;
             mpos++;
-
         } else {
-
             memcpy(&m[mpos * esize], &a[jpos * esize], esize);
             jpos++;
             mpos++;
@@ -188,28 +162,23 @@ HANDEL_STATIC int HANDEL_API xiaMerge(void *data, int esize, int i, int j, int k
     return 0;
 }
 
-
 /*
  * This routine swaps two elements in a Firmware LL. Ultimately, this should
- * be done as a macro and then it would be LL-type independent.
+ * be done as a macro, and then it would be LL-type independent.
  */
-HANDEL_STATIC void HANDEL_API xiaSwap(Firmware *left, Firmware *right)
-{
+HANDEL_STATIC void HANDEL_API xiaSwap(Firmware* left, Firmware* right) {
     left->next = right->next;
     right->prev = left->prev;
 
-    if (left->prev != NULL)
-    {
+    if (left->prev != NULL) {
         left->prev->next = right;
     }
 
     left->prev = right;
 
-    if (right->next != NULL)
-    {
+    if (right->next != NULL) {
         right->next->prev = left;
     }
 
     right->next = left;
-
 }

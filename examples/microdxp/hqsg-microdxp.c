@@ -58,7 +58,8 @@ static void SLEEP(double time_seconds) {
     Sleep(wait);
 #else
     unsigned long secs = (unsigned long) time_seconds;
-    struct timespec req = {.tv_sec = secs, .tv_nsec = ((time_seconds - secs) * 1000000000.0)};
+    struct timespec req = {.tv_sec = secs,
+                           .tv_nsec = ((time_seconds - secs) * 1000000000.0)};
     struct timespec rem = {.tv_sec = 0, .tv_nsec = 0};
     while (TRUE_) {
         if (nanosleep(&req, &rem) == 0)

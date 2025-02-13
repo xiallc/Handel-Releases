@@ -27,24 +27,22 @@
 #include "handel_constants.h"
 #include "md_generic.h"
 
-
 static void CHECK_ERROR(int status);
 static void SLEEP(double time_seconds);
 static void print_usage(void);
-static void start_system(char *ini_file);
-static void setup_logging(char *log_name);
+static void start_system(char* ini_file);
+static void setup_logging(char* log_name);
 static void clean_up();
 static void INThandler(int sig);
 static double get_time();
 static void check_microdxp_vega_features();
 
-unsigned long *mca = NULL;
-unsigned long *mca_gated = NULL;
+unsigned long* mca = NULL;
+unsigned long* mca_gated = NULL;
 
 boolean_t stop = FALSE_;
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char* argv[]) {
     int status;
     unsigned int i, j;
     unsigned long mca_total, mca_gated_total;
@@ -90,21 +88,25 @@ int main(int argc, char *argv[])
            "     test time,"
            " total realtime");
 
-    for (i = 0; i < 3; i++)
-    {
+    for (i = 0; i < 3; i++) {
         mca_length = mca_lengths[i];
         status = xiaSetAcquisitionValues(-1, "number_mca_channels", &mca_length);
         CHECK_ERROR(status);
 
-        if (stop) break;
+        if (stop)
+            break;
 
-        if (mca) free(mca);
+        if (mca)
+            free(mca);
         mca = malloc(mca_lengths[i] * sizeof(unsigned long));
-        if (!mca) clean_up();
+        if (!mca)
+            clean_up();
 
-        if (mca_gated) free(mca_gated);
+        if (mca_gated)
+            free(mca_gated);
         mca_gated = malloc(mca_lengths[i] * sizeof(unsigned long));
-        if (!mca_gated) clean_up();
+        if (!mca_gated)
+            clean_up();
 
         status = xiaStartRun(-1, 0);
         CHECK_ERROR(status);
@@ -144,21 +146,20 @@ int main(int argc, char *argv[])
         printf("%14.0f%%", mca_gated_total * 100.0 / (mca_total + mca_gated_total));
 
         /* test time, total realtime */
-        printf("%14.3f %14.3f", test_time, statistics[Realtime] + statistics_gated[Realtime]);
+        printf("%14.3f %14.3f", test_time,
+               statistics[Realtime] + statistics_gated[Realtime]);
     }
 
     clean_up();
     return 0;
 }
 
-static void INThandler(int sig)
-{
+static void INThandler(int sig) {
     UNUSED(sig);
     stop = TRUE_;
 }
 
-static void start_system(char *ini_file)
-{
+static void start_system(char* ini_file) {
     int status;
 
     printf("Loading the .ini file\n");
@@ -171,23 +172,23 @@ static void start_system(char *ini_file)
     CHECK_ERROR(status);
 }
 
-static void setup_logging(char *log_name)
-{
+static void setup_logging(char* log_name) {
     printf("Configuring the log file in %s\n", log_name);
     xiaSetLogLevel(MD_DEBUG);
     xiaSetLogOutput(log_name);
 }
 
-static void clean_up()
-{
+static void clean_up() {
     printf("\nCleaning up Handel.\n");
     xiaExit();
 
     printf("Closing the Handel log file.\n");
     xiaCloseLog();
 
-    if (mca) free(mca);
-    if (mca_gated) free(mca_gated);
+    if (mca)
+        free(mca);
+    if (mca_gated)
+        free(mca_gated);
 }
 
 /*
@@ -195,63 +196,52 @@ static void clean_up()
  * of any reasonable size should implement a more robust error
  * handling mechanism.
  */
-static void CHECK_ERROR(int status)
-{
+static void CHECK_ERROR(int status) {
     /* error codes defined in handel_errors.h */
     if (status != XIA_SUCCESS) {
-        printf("Error encountered! Status = %d, %s\n", status,
-            xiaGetErrorText(status));
+        printf("Error encountered! Status = %d, %s\n", status, xiaGetErrorText(status));
         clean_up();
         exit(status);
     }
 }
 
-static void print_usage(void)
-{
+static void print_usage(void) {
     fprintf(stdout, "\n");
     fprintf(stdout, "* argument: [.ini file]\n");
     fprintf(stdout, "\n");
     return;
 }
 
-static void SLEEP(double time_seconds)
-{
+static void SLEEP(double time_seconds) {
 #if _WIN32
-    DWORD wait = (DWORD)(1000.0 * time_seconds);
+    DWORD wait = (DWORD) (1000.0 * time_seconds);
     Sleep(wait);
 #else
-    unsigned long secs = (unsigned long)time_seconds;
-    struct timespec req = {
-        .tv_sec = secs,
-        .tv_nsec = ((time_seconds - secs) * 1000000000.0)
-    };
-    struct timespec rem = {
-        .tv_sec = 0,
-        .tv_nsec = 0
-    };
+    unsigned long secs = (unsigned long) time_seconds;
+    struct timespec req = {.tv_sec = secs,
+                           .tv_nsec = ((time_seconds - secs) * 1000000000.0)};
+    struct timespec rem = {.tv_sec = 0, .tv_nsec = 0};
     while (TRUE_) {
         if (nanosleep(&req, &rem) == 0)
-        break;
+            break;
         req = rem;
     }
 #endif
 }
 
-double get_time()
-{
+double get_time() {
 #if _WIN32
     LARGE_INTEGER t, f;
     QueryPerformanceCounter(&t);
     QueryPerformanceFrequency(&f);
-    return (double)t.QuadPart/(double)f.QuadPart;
+    return (double) t.QuadPart / (double) f.QuadPart;
 #else
     struct timeval t;
     struct timezone tzp;
     gettimeofday(&t, &tzp);
-    return t.tv_sec + t.tv_usec*1e-6;
+    return t.tv_sec + t.tv_usec * 1e-6;
 #endif
 }
-
 
 /*
  * microDxp specific operation:
@@ -260,26 +250,25 @@ double get_time()
  * print a warning if not -- but continue with the operations with
  * possible error results.
  */
-static void check_microdxp_vega_features()
-{
+static void check_microdxp_vega_features() {
     int status;
     unsigned long features;
 
     char moduleType[200];
 
-    status = xiaGetModuleItem("module1", "module_type", (void *)moduleType);
+    status = xiaGetModuleItem("module1", "module_type", (void*) moduleType);
     CHECK_ERROR(status);
 
     printf("Checking %s features\n", moduleType);
 
     /* Only applicable to microDxp */
-    if (strcmp(moduleType, "udxp") != 0) return;
+    if (strcmp(moduleType, "udxp") != 0)
+        return;
 
     status = xiaBoardOperation(0, "get_board_features", &features);
     CHECK_ERROR(status);
 
     /* Feature list constants in handel_constants.h */
     printf(" : Support for vega features - [%s]\n",
-            (features & 1 << BOARD_SUPPORTS_VEGA_FEATURES) ? "YES" : "NO");
-
+           (features & 1 << BOARD_SUPPORTS_VEGA_FEATURES) ? "YES" : "NO");
 }

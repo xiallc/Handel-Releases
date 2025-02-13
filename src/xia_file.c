@@ -42,12 +42,10 @@
 #include "xia_common.h"
 #include "xia_assert.h"
 
-
 /* Private functions */
-static void xia__add_handle(FILE *fp, char *file, int line);
-static void xia__remove_handle(FILE *fp);
-static FILE *xia__open_home(const char* filename, const char* mode, const char* env);
-
+static void xia__add_handle(FILE* fp, char* file, int line);
+static void xia__remove_handle(FILE* fp);
+static FILE* xia__open_home(const char* filename, const char* mode, const char* env);
 
 /* Global variables */
 
@@ -55,8 +53,7 @@ static FILE *xia__open_home(const char* filename, const char* mode, const char* 
  * needs to be handled carefully. (Currently, it is not handled carefully
  * at all.)
  */
-static xia_file_handle_t *FILE_HANDLES = NULL;
-
+static xia_file_handle_t* FILE_HANDLES = NULL;
 
 /*
  * Opens a file stream.
@@ -74,11 +71,8 @@ static xia_file_handle_t *FILE_HANDLES = NULL;
  * This routine returns NULL if fopen() fails or if any of the passed
  * in arguments are invalid.
  */
-XIA_SHARED FILE *xia_fopen(const char *name, const char *mode, char *file,
-                           int line)
-{
-    FILE *fp = NULL;
-
+XIA_SHARED FILE* xia_fopen(const char* name, const char* mode, char* file, int line) {
+    FILE* fp = NULL;
 
     if (name == NULL || mode == NULL || file == NULL) {
         return NULL;
@@ -93,16 +87,13 @@ XIA_SHARED FILE *xia_fopen(const char *name, const char *mode, char *file,
     return fp;
 }
 
-
 /*
  * Returns the number of open file handles
  */
-XIA_SHARED int xia_num_open_handles(void)
-{
-    xia_file_handle_t *fh = NULL;
+XIA_SHARED int xia_num_open_handles(void) {
+    xia_file_handle_t* fh = NULL;
 
     int n_handles = 0;
-
 
     for (fh = FILE_HANDLES; fh != NULL; fh = fh->next, n_handles++) {
         /* Do nothing. */
@@ -111,35 +102,28 @@ XIA_SHARED int xia_num_open_handles(void)
     return n_handles;
 }
 
-
 /*
  * Prints a list of the open file handles to the
  * specified stream.
  *
  * It is an unchecked exception to pass a NULL stream to this function.
  */
-XIA_SHARED void xia_print_open_handles(FILE *stream)
-{
-    xia_file_handle_t *fh = NULL;
-
+XIA_SHARED void xia_print_open_handles(FILE* stream) {
+    xia_file_handle_t* fh = NULL;
 
     ASSERT(stream != NULL);
-
 
     for (fh = FILE_HANDLES; fh != NULL; fh = fh->next) {
         fprintf(stream, "<%p> %s, line %d\n", fh->fp, fh->file, fh->line);
     }
 }
 
-
 /*
  * Prints a list of the open file handles to stdout
  */
-XIA_SHARED void xia_print_open_handles_stdout(void)
-{
+XIA_SHARED void xia_print_open_handles_stdout(void) {
     xia_print_open_handles(stdout);
 }
-
 
 /*
  * Close an open file handle.
@@ -147,14 +131,12 @@ XIA_SHARED void xia_print_open_handles_stdout(void)
  * Removes the specified fp from the handles list. It is an unchecked
  * exception to pass a NULL file pointer into this routine.
  */
-XIA_SHARED int xia_fclose(FILE *fp)
-{
+XIA_SHARED int xia_fclose(FILE* fp) {
     ASSERT(fp != NULL);
 
     xia__remove_handle(fp);
     return fclose(fp);
 }
-
 
 /*
  * Adds a FILE pointer to the global list.
@@ -162,19 +144,16 @@ XIA_SHARED int xia_fclose(FILE *fp)
  * Any memory allocation failures that occur during this process are treated
  * as unchecked exceptions.
  */
-static void xia__add_handle(FILE *fp, char *file, int line)
-{
-    xia_file_handle_t *new_handle = NULL;
-
+static void xia__add_handle(FILE* fp, char* file, int line) {
+    xia_file_handle_t* new_handle = NULL;
 
     ASSERT(fp != NULL);
     ASSERT(file != NULL);
 
-
     new_handle = malloc(sizeof(xia_file_handle_t));
     ASSERT(new_handle != NULL);
 
-    new_handle->fp   = fp;
+    new_handle->fp = fp;
     new_handle->line = line;
     strncpy(new_handle->file, file, MAX_FILE_SIZE);
 
@@ -182,27 +161,21 @@ static void xia__add_handle(FILE *fp, char *file, int line)
     FILE_HANDLES = new_handle;
 }
 
-
 /*
  * Remove the handle reference containing fp from the list.
  */
-static void xia__remove_handle(FILE *fp)
-{
-    xia_file_handle_t *fh   = NULL;
-    xia_file_handle_t *prev = NULL;
-
+static void xia__remove_handle(FILE* fp) {
+    xia_file_handle_t* fh = NULL;
+    xia_file_handle_t* prev = NULL;
 
     if (!fp) {
         return;
     }
 
     for (fh = FILE_HANDLES, prev = NULL; fh != NULL; fh = fh->next) {
-
         if (fh->fp == fp) {
-
             if (prev == NULL) {
                 FILE_HANDLES = fh->next;
-
             } else {
                 prev->next = fh->next;
             }
@@ -219,7 +192,6 @@ static void xia__remove_handle(FILE *fp)
     FAIL();
 }
 
-
 /*
  * Find and open given file, returns a FILE handle
  * Try to open the file directly first.
@@ -229,45 +201,44 @@ static void xia__remove_handle(FILE *fp)
  * const char *mode;        Input: Mode to use when opening 
  *
  */
-XIA_SHARED FILE *xia_find_file(const char* filename, const char* mode)
-{
-    FILE *fp = NULL;
+XIA_SHARED FILE* xia_find_file(const char* filename, const char* mode) {
+    FILE* fp = NULL;
     ASSERT(filename != NULL);
 
     /* Try to open file directly */
-    if((fp = xia_file_open(filename, mode)) != NULL) {
+    if ((fp = xia_file_open(filename, mode)) != NULL) {
         return fp;
     }
 
     /* Try to open the file with the path XIAHOME */
-    if((fp = xia__open_home(filename, mode, "XIAHOME")) != NULL) {
+    if ((fp = xia__open_home(filename, mode, "XIAHOME")) != NULL) {
         return fp;
     }
 
     /* Try to open the file with the path DXPHOME */
-    if((fp = xia__open_home(filename, mode, "DXPHOME")) != NULL) {
+    if ((fp = xia__open_home(filename, mode, "DXPHOME")) != NULL) {
         return fp;
     }
-   
+
     return NULL;
 }
 
 /*
  * Try to open the file with the path specified in env
  */
-static FILE *xia__open_home(const char* filename, const char* mode, const char* env)
-{
-    FILE *fp = NULL;
+static FILE* xia__open_home(const char* filename, const char* mode, const char* env) {
+    FILE* fp = NULL;
     size_t filenameLen = 0;
 
-    char *home = getenv(env);
-    char *name = NULL;
-    
+    char* home = getenv(env);
+    char* name = NULL;
+
     if (home != NULL) {
         filenameLen = strlen(home) + strlen(filename) + 2;
-        name = (char *) malloc(sizeof(char) * filenameLen);                                       
+        name = (char*) malloc(sizeof(char) * filenameLen);
 
-        if (!name) return NULL;
+        if (!name)
+            return NULL;
 
         sprintf(name, "%s/%s", home, filename);
         fp = xia_file_open(name, mode);
@@ -275,6 +246,6 @@ static FILE *xia__open_home(const char* filename, const char* mode, const char* 
         free(name);
         return fp;
     }
-    
+
     return NULL;
 }

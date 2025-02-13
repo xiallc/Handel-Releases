@@ -48,19 +48,16 @@
 extern "C" {
 #endif
 
-  XIA_IMPORT int XIA_API xia_usb2_open(int dev, HANDLE *h);
-  XIA_IMPORT int XIA_API xia_usb2_close(HANDLE h);
-  XIA_IMPORT int XIA_API xia_usb2_read(HANDLE h, unsigned long addr,
-                                       unsigned long n_bytes,
-                                       byte_t *buf);
-  XIA_IMPORT int XIA_API xia_usb2_readn(HANDLE h, unsigned long addr,
-                                        unsigned long n_bytes,
-                                        byte_t *buf, unsigned long *n_bytes_read);
-  XIA_IMPORT int XIA_API xia_usb2_write(HANDLE h, unsigned long addr,
-                                        unsigned long n_bytes,
-                                        byte_t *buf);
-  XIA_IMPORT char* xia_usb2_get_last_error();
-
+XIA_IMPORT int XIA_API xia_usb2_open(int dev, HANDLE* h);
+XIA_IMPORT int XIA_API xia_usb2_close(HANDLE h);
+XIA_IMPORT int XIA_API xia_usb2_read(HANDLE h, unsigned long addr,
+                                     unsigned long n_bytes, byte_t* buf);
+XIA_IMPORT int XIA_API xia_usb2_readn(HANDLE h, unsigned long addr,
+                                      unsigned long n_bytes, byte_t* buf,
+                                      unsigned long* n_bytes_read);
+XIA_IMPORT int XIA_API xia_usb2_write(HANDLE h, unsigned long addr,
+                                      unsigned long n_bytes, byte_t* buf);
+XIA_IMPORT char* xia_usb2_get_last_error();
 
 #ifdef __cplusplus
 }

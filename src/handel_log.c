@@ -34,7 +34,6 @@
  * SUCH DAMAGE.
  */
 
-
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -52,12 +51,10 @@ static char formatBuffer[2048];
 /**
  * This routine enables the logging output
  */
-HANDEL_EXPORT int HANDEL_API xiaEnableLogOutput(void)
-{
+HANDEL_EXPORT int HANDEL_API xiaEnableLogOutput(void) {
     int status;
 
-    if (handel_md_enable_log == NULL)
-    {
+    if (handel_md_enable_log == NULL) {
         status = xiaInitHandel();
 
         if (status != XIA_SUCCESS)
@@ -71,12 +68,10 @@ HANDEL_EXPORT int HANDEL_API xiaEnableLogOutput(void)
 /**
  * This routine disables the logging output
  */
-HANDEL_EXPORT int HANDEL_API xiaSuppressLogOutput(void)
-{
+HANDEL_EXPORT int HANDEL_API xiaSuppressLogOutput(void) {
     int status;
 
-    if (handel_md_suppress_log == NULL)
-    {
+    if (handel_md_suppress_log == NULL) {
         status = xiaInitHandel();
 
         if (status != XIA_SUCCESS)
@@ -90,14 +85,13 @@ HANDEL_EXPORT int HANDEL_API xiaSuppressLogOutput(void)
 /**
  * This routine sets the maximum level at which log messages will be
  * displayed.
+ *
+ * int level;                            Input: Level to set the logging to
  */
-HANDEL_EXPORT int HANDEL_API xiaSetLogLevel(int level)
-/* int level;                            Input: Level to set the logging to   */
-{
+HANDEL_EXPORT int HANDEL_API xiaSetLogLevel(int level) {
     int status;
 
-    if (handel_md_set_log_level == NULL)
-    {
+    if (handel_md_set_log_level == NULL) {
         status = xiaInitHandel();
 
         if (status != XIA_SUCCESS)
@@ -111,13 +105,12 @@ HANDEL_EXPORT int HANDEL_API xiaSetLogLevel(int level)
 /**
  * This routine sets the output stream for the logging routines. By default,
  * the output is sent to stdout.
+ *
+ * char *filename;                    Input: name of file to redirect reporting
  */
-HANDEL_EXPORT int HANDEL_API xiaSetLogOutput(char *filename)
-/* char *filename;                    Input: name of file to redirect reporting */
-{
+HANDEL_EXPORT int HANDEL_API xiaSetLogOutput(char* filename) {
     int status;
-    if (handel_md_output == NULL)
-    {
+    if (handel_md_output == NULL) {
         status = xiaInitHandel();
 
         if (status != XIA_SUCCESS)
@@ -128,14 +121,12 @@ HANDEL_EXPORT int HANDEL_API xiaSetLogOutput(char *filename)
     return XIA_SUCCESS;
 }
 
-
 /**
  * This routine outputs the log.
- * If it's called before Handel is propely initialized do nothing
+ * If it's called before Handel is properly initialized do nothing
  */
-HANDEL_SHARED void HANDEL_API xiaLog(int level, const char* file, int line,
-                                     int status, const char* func, const char* fmt, ...)
-{
+HANDEL_SHARED void HANDEL_API xiaLog(int level, const char* file, int line, int status,
+                                     const char* func, const char* fmt, ...) {
     va_list args;
 
     va_start(args, fmt);
@@ -149,20 +140,17 @@ HANDEL_SHARED void HANDEL_API xiaLog(int level, const char* file, int line,
     formatBuffer[sizeof(formatBuffer) - 1] = '\0';
 
     if (handel_md_log != NULL)
-        handel_md_log(level, (char*)func, formatBuffer, status, (char*)file, line);
+        handel_md_log(level, (char*) func, formatBuffer, status, (char*) file, line);
 
     va_end(args);
 }
 
-
 /**
  * This routine closes the logging stream
  */
-HANDEL_EXPORT int HANDEL_API xiaCloseLog(void)
-{
+HANDEL_EXPORT int HANDEL_API xiaCloseLog(void) {
     int status;
-    if (handel_md_output == NULL)
-    {
+    if (handel_md_output == NULL) {
         status = xiaInitHandel();
 
         if (status != XIA_SUCCESS)
@@ -172,4 +160,3 @@ HANDEL_EXPORT int HANDEL_API xiaCloseLog(void)
     handel_md_output(NULL);
     return XIA_SUCCESS;
 }
-

@@ -33,24 +33,20 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *
  * This contains a modified implementation of the ASSERT() macro
- * discusssed in "Writing Solid Code", by Steve Maguire, pp 17-18
+ * discussed in "Writing Solid Code", by Steve Maguire, pp 17-18
  */
-
 
 #ifndef XIA_ASSERT_H
 #define XIA_ASSERT_H
 
-
 #ifdef _DEBUG
-void _Assert(char *f, unsigned line);
+void _Assert(char* f, unsigned line);
 
-#define ASSERT(x)            \
-if (x)                       \
-{ /* Nothing */ }            \
-else                         \
-_Assert(__FILE__, __LINE__)
+#define ASSERT(x)                                                                      \
+    if (x) { /* Nothing */                                                             \
+    } else                                                                             \
+        _Assert(__FILE__, __LINE__)
 
 #define FAIL() _Assert(__FILE__, __LINE__)
 

@@ -36,17 +36,15 @@
 #ifndef __XERXES_IO_H__
 #define __XERXES_IO_H__
 
-
 #include "xerxesdef.h"
 #include "xia_xerxes_structures.h"
-
 
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
-XERXES_SHARED int dxp_md_io(Board *board, unsigned int function,
-                            unsigned long addr, void *data, unsigned int len);
+XERXES_SHARED int dxp_md_io(Board* board, unsigned int function, unsigned long addr,
+                            void* data, unsigned int len);
 
 #ifdef __cplusplus
 }

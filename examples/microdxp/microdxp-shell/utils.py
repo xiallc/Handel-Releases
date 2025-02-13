@@ -1,5 +1,7 @@
 """ SPDX-License-Identifier: Apache-2.0 """
 import configparser
+import datetime
+import time
 
 """
 Copyright 2024 XIA LLC, All rights reserved.
@@ -39,7 +41,28 @@ def read_ini(file):
     for section in parser.sections():
         if section in ('udxp.hv', 'udxp.led.width', 'udxp.led.period'):
             if (parser.getfloat(section, 'low') >
-                parser.getfloat(section, 'high')):
+                    parser.getfloat(section, 'high')):
                 raise ValueError(f'{section}: low > high')
 
     return parser
+
+def countdown(t):
+    """
+    Counts down the given number of seconds. Will stop the countdown if we have a
+    keyboard interrupt.
+    :param t: the number of seconds to count down from
+    """
+    try:
+        while t > 0:
+            print(f"remaining time: {round(t, 3)}")
+            time.sleep(1)
+            t -= 1
+    except KeyboardInterrupt:
+        print("stopping countdown")
+
+def get_timestamp():
+    """
+    Returns the current time in ISO 8601 format.
+    """
+    return datetime.datetime.now(datetime.timezone.utc).isoformat().replace('+00:00',
+                                                                            'Z')

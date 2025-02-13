@@ -34,45 +34,40 @@
  * SUCH DAMAGE.
  */
 
-
 #ifndef HANDEL_FILE_H
 #define HANDEL_FILE_H
 
 #include <stdio.h>
 
-
-/* This structure exists so that we can re-use the
- * section of the code that parses in the sections
- * of the ini files
+/*
+ * This structure exists so that we can re-use the section of the code that parses
+ * in the sections of the ini files
  */
-typedef struct
-{
+typedef struct {
     /* Pointer to the proper xiaLoadRoutine */
-    int (*function_ptr)(FILE *, fpos_t *, fpos_t *);
-
+    int (*function_ptr)(FILE*, fpos_t*, fpos_t*);
     /* Section heading name: the part in brackets */
-    char *section;
-
+    char* section;
 } SectionInfo;
 
+HANDEL_STATIC int HANDEL_API xiaWriteIniFile(char* filename);
 
-HANDEL_STATIC int HANDEL_API xiaWriteIniFile(char *filename);
+HANDEL_STATIC int HANDEL_API xiaFindEntryLimits(FILE* fp, const char* section,
+                                                fpos_t* start, fpos_t* end);
+HANDEL_STATIC int HANDEL_API xiaGetLine(FILE* fp, char* line);
+HANDEL_STATIC int HANDEL_API xiaGetLineData(char* line, char* name, char* value);
+HANDEL_STATIC int HANDEL_API xiaFileRA(FILE* fp, fpos_t* start, fpos_t* end, char* name,
+                                       char* value);
+HANDEL_STATIC int HANDEL_API xiaSetPosOnNext(FILE* fp, fpos_t* start, fpos_t* end,
+                                             char* name, fpos_t* newPos,
+                                             boolean_t after);
 
-HANDEL_STATIC int HANDEL_API xiaFindEntryLimits(FILE *fp, const char *section,
-						fpos_t *start, fpos_t *end);
-HANDEL_STATIC int HANDEL_API xiaGetLine(FILE *fp, char *line);
-HANDEL_STATIC int HANDEL_API xiaGetLineData(char *line, char *name, char *value);
-HANDEL_STATIC int HANDEL_API xiaFileRA(FILE *fp, fpos_t *start, fpos_t *end, char *name,
-				       char *value);
-HANDEL_STATIC int HANDEL_API xiaSetPosOnNext(FILE *fp, fpos_t *start, fpos_t *end,
-					     char *name, fpos_t *newPos, boolean_t after);
+HANDEL_STATIC int xiaLoadDetector(FILE* fp, fpos_t* start, fpos_t* end);
+HANDEL_STATIC int xiaLoadModule(FILE* fp, fpos_t* start, fpos_t* end);
+HANDEL_STATIC int xiaLoadFirmware(FILE* fp, fpos_t* start, fpos_t* end);
+HANDEL_STATIC int xiaLoadDefaults(FILE* fp, fpos_t* start, fpos_t* end);
 
-HANDEL_STATIC int xiaLoadDetector(FILE *fp, fpos_t *start, fpos_t *end);
-HANDEL_STATIC int xiaLoadModule(FILE *fp, fpos_t *start, fpos_t *end);
-HANDEL_STATIC int xiaLoadFirmware(FILE *fp, fpos_t *start, fpos_t *end);
-HANDEL_STATIC int xiaLoadDefaults(FILE *fp, fpos_t *start, fpos_t *end);
-
-HANDEL_STATIC int HANDEL_API xiaReadPTRRs(FILE *fp, fpos_t *start, fpos_t *end, char *alias);
-
+HANDEL_STATIC int HANDEL_API xiaReadPTRRs(FILE* fp, fpos_t* start, fpos_t* end,
+                                          char* alias);
 
 #endif /* HANDEL_FILE_H */
