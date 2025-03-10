@@ -41,12 +41,6 @@
 #ifndef FDD_PORTING_DEFINED
 #define FDD_PORTING_DEFINED
 
-#define FDD_STATIC static
-#define FDD_SHARED
-
-#define DXP_API
-#define MD_API
-
 #ifndef WIN32_FDD_VBA /* Libraries for Visual Basic require STDCALL */
 #define FDD_API
 #else

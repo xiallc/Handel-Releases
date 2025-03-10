@@ -39,9 +39,9 @@
 
 /* Define some generic constants for use by XerXes */
 #include "xerxes_generic.h"
-#include "xia_xerxes_structures.h"
 #include "xerxes_structures.h"
 #include "xerxesdef.h"
+#include "xia_xerxes_structures.h"
 
 /* If this is compiled by a C++ compiler, make it clear that these are C routines */
 #ifdef __cplusplus

@@ -1,0 +1,23 @@
+COMM-DRV/LIB Licensing Terms
+============================
+
+No part of this document may be reproduced mechanically, electronically, or 
+in any form without first receiving written authorization from Willies 
+Computer Software Co.
+
+Copyright 1989-2006  by Egberto Willies
+
+1. The COMM-DRV/LIB object files can be linked directly into any MS-DOS or 
+Windows application and sold as desired. No royalties or further licensing is 
+required as long as the COMM-DRV/LIB objects are bound to the application. 
+
+2. Source code, object code, or static libraries distributed with this 
+package may not be re-distributed or resold. 
+
+3. The DLLs CDRVDLL.DLL, CDRVXF.DLL, COMMSCRW.DLL, CDRVHF.DLL, CDRVDL32.DLL, 
+CDRVXF32.DLL, CDRVHF32.DLL, CDRVLDLGS.DLL, COMMSC32.DLL, and *.BIN may be 
+re-distributed with the user application without the requirements of 
+licensing or royalties.
+
+4. COMM-DRV/LIB is sold one copy per computer. Each software 
+developer/engineer working using the product must have his/her own copy.

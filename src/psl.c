@@ -34,13 +34,13 @@
  * SUCH DAMAGE.
  */
 
-#include <stdio.h>
 #include <ctype.h>
+#include <stdio.h>
 
 #include "psl_common.h"
 
-#include "xia_handel.h"
 #include "xia_assert.h"
+#include "xia_handel.h"
 
 #include "handel_errors.h"
 #include "handel_generic.h"

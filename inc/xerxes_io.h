@@ -43,8 +43,8 @@
 extern "C" {
 #endif /* __cplusplus */
 
-XERXES_SHARED int dxp_md_io(Board* board, unsigned int function, unsigned long addr,
-                            void* data, unsigned int len);
+int dxp_md_io(Board* board, unsigned int function, unsigned long addr, void* data,
+              unsigned int len);
 
 #ifdef __cplusplus
 }

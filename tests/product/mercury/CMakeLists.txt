@@ -1,0 +1,2 @@
+add_executable(test_mercury_oem src/test_mercury_oem.c)
+target_link_libraries(test_mercury_oem handel)

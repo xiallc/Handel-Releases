@@ -39,8 +39,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#include "xia_mddef.h"
 #include "md_generic.h"
+#include "xia_mddef.h"
 
 XIA_MD_SHARED int dxp_md_enable_log(void);
 XIA_MD_SHARED int dxp_md_suppress_log(void);

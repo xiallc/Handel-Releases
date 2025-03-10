@@ -1,0 +1,114 @@
+; Installation INF for the XIA Mercury USB2 Driver for Windows 98ME/2000/XP
+;
+[Version]
+Signature="$WINDOWS NT$"
+Class=USB
+ClassGUID={36FC9E60-C465-11CF-8056-444553540000}
+provider=%CYUSB3_Provider%
+CatalogFile=xia_usb2.cat
+DriverVer=11/08/2017,1.2.3.20
+
+[SourceDisksNames]
+1=%CYUSB3_Install%,,,
+
+[SourceDisksFiles]
+xia_usb2.sys = 1
+
+[DestinationDirs]
+CYUSB3.Files.Ext = 10,System32\Drivers
+CoInstaller_CopyFiles = 11
+
+[ControlFlags]
+ExcludeFromSelect = *
+
+[Manufacturer]
+%CYUSB3_Provider%=Device,NTx86,NTamd64
+
+;for x86 platforms
+[Device.NTx86]
+; Cypress FX2LP default ID
+%VID_10E9&PID_0780.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0780
+%VID_10E9&PID_0781.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0781
+
+;for x64 platforms
+[Device.NTamd64]
+; Cypress FX2LP default ID
+%VID_10E9&PID_0780.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0780
+%VID_10E9&PID_0781.DeviceDesc%=CyUsb3, USB\VID_10E9&PID_0781
+
+[CYUSB3.NTx86]
+CopyFiles=CYUSB3.Files.Ext
+AddReg=CyUsb3.AddReg
+
+[CYUSB3.NTx86.HW]
+AddReg=CYUSB3.AddReg.Guid
+
+[CYUSB3.NTx86.Services]
+Addservice = CYUSB3,2,CYUSB3.AddService
+
+[CYUSB3.NTamd64]
+CopyFiles=CYUSB3.Files.Ext
+AddReg=CyUsb3.AddReg
+
+[CYUSB3.NTamd64.HW]
+AddReg=CYUSB3.AddReg.Guid
+
+[CYUSB3.NTamd64.Services]
+Addservice = CYUSB3,2,CYUSB3.AddService
+
+[CYUSB3.AddReg]
+; Deprecating - do not use in new apps to identify a CYUSB3 driver
+HKR,,DevLoader,,*ntkern
+HKR,,NTMPDriver,,xia_usb2.sys
+; You may optionally include a check for DriverBase in your application to check for a xia_usb2 driver
+HKR,,DriverBase,,xia_usb2.sys
+HKR,"Parameters","MaximumTransferSize",0x10001,4096
+HKR,"Parameters","DebugLevel",0x10001,2
+HKR,,FriendlyName,,%CYUSB3_Description%
+
+[CYUSB3.AddService]
+DisplayName    = %CYUSB3_Description%
+ServiceType    = 1                  ; SERVICE_KERNEL_DRIVER
+StartType      = 3                  ; SERVICE_DEMAND_START
+ErrorControl   = 1                  ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %10%\System32\Drivers\xia_usb2.sys
+AddReg         = CYUSB3.AddReg
+LoadOrderGroup = Base
+
+[CYUSB3.Files.Ext]
+xia_usb2.sys
+
+[CYUSB3.AddReg.Guid]
+HKR,,DriverGUID,,%CYUSB3.GUID%
+;HKR,,DriverPowerPolicySetup,,%ENABLE_DRIVER_POWER_POLICY%
+
+;-------------- WDF Coinstaller installation
+[CYUSB3.NTamd64.CoInstallers]
+AddReg=CoInstaller_AddReg
+CopyFiles=CoInstaller_CopyFiles
+
+[CYUSB3.NTx86.CoInstallers]
+AddReg=CoInstaller_AddReg
+CopyFiles=CoInstaller_CopyFiles
+
+[CoInstaller_CopyFiles]
+;
+
+
+[CoInstaller_AddReg]
+;
+
+;---------------------------------------------------------------;
+
+[Strings]
+CYUSB3_Provider    = "e2v"
+CYUSB3_Company     = "e2v"
+CYUSB3_Description = "e2v USB2 Driver (Cypress v1.2.3.20)"
+CYUSB3_DisplayName = "Cypress USB3.0 Generic"
+CYUSB3_Install     = "Cypress CYUSB3.0 Driver Installation Disk"
+
+VID_10E9&PID_0780.DeviceDesc="e2v x-ray spectrometer"
+VID_10E9&PID_0781.DeviceDesc="e2v 4 channel x-ray spectrometer"
+
+CYUSB3.GUID="{AE18AA60-7F6A-11d4-97DD-00010229B959}"
+CYUSB3     = "."

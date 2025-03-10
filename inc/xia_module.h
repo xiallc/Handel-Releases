@@ -38,8 +38,8 @@
 #define __XIA_MODULE_H__
 
 #include "handeldef.h"
-#include "xia_handel.h"
 #include "xia_common.h"
+#include "xia_handel.h"
 
 /*
  * Typedefs

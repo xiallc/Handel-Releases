@@ -1,0 +1,2 @@
+add_executable(xmap_mapping_benchmark main.c $<TARGET_OBJECTS:AssertObjLib>)
+target_link_libraries(xmap_mapping_benchmark handel)

@@ -39,9 +39,9 @@
 
 #include "xerxes_structures.h"
 
-#include "xia_mddef.h"
-#include "xia_common.h"
 #include "md_log.h"
+#include "xia_common.h"
+#include "xia_mddef.h"
 
 #ifdef __cplusplus
 extern "C" {

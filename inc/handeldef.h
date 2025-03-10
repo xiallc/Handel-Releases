@@ -37,118 +37,37 @@
 #ifndef HANDELDEF_H
 #define HANDELDEF_H
 
-/* Have we defined the EXPORT and IMPORT macros? */
-#ifndef HANDEL_PORTING_DEFINED
-#define HANDEL_PORTING_DEFINED
+#if defined(_WIN64) || defined(_WIN32)
+#define _USE_MATH_DEFINES
+#define XIA_HANDEL_WINDOWS
 
-#define HANDEL_STATIC static
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 
-/* Since we are using multiple source files now, we need to have a new class
- * of functions that aren't exported or static, just shared across different
- * files.
- */
-#define HANDEL_SHARED
-
-#define DXP_API
-#define MD_API
-
-#ifdef HANDEL_USE_DLL /* Linking to a DLL libraries */
-
-#ifdef _WIN32 /* If we are on a Windoze platform */
-
-#ifdef HANDEL_MAKE_DLL
 #define HANDEL_EXPORT __declspec(dllexport)
 #define HANDEL_IMPORT __declspec(dllimport)
-
-#ifndef WIN32_HANDEL_VBA /* Libraries for Visual Basic require STDCALL */
-#define HANDEL_API
-#else
 #define HANDEL_API _stdcall
-#endif /* Endif for WIN32_VBA */
 
-#else /* Then we are making a static link library */
-#define HANDEL_EXPORT
-#define HANDEL_IMPORT __declspec(dllimport)
+#define HANDLE_PATHNAME_SEP '\\'
 
-#ifndef WIN32_HANDEL_VBA /* Libraries for Visual Basic require STDCALL */
-#define HANDEL_API
 #else
-#define HANDEL_API _stdcall
-#endif /* Endif for WIN32_VBA */
-
-#endif /* Endif for HANDEL_MAKE_DLL */
-
-#else /* Not on a Windoze platform */
-
-#ifdef HANDEL_MAKE_DLL
 #define HANDEL_EXPORT
 #define HANDEL_IMPORT extern
 #define HANDEL_API
-#else /* Then we are making a static link library */
-#define HANDEL_EXPORT
-#define HANDEL_IMPORT extern
-#define HANDEL_API
-#endif /* Endif for HANDEL_MAKE_DLL */
 
-#endif /* Endif for _WIN32 */
+#define HANDLE_PATHNAME_SEP '/'
+#endif
 
-#else /* We are using static libraries */
-
-#ifdef _WIN32 /* If we are on a Windoze platform */
-
-#ifdef HANDEL_MAKE_DLL
-#define HANDEL_EXPORT __declspec(dllexport)
-#define HANDEL_IMPORT extern
-#define HANDEL_API
-#else /* Then we are making a static link library */
-#define HANDEL_EXPORT
-#define HANDEL_IMPORT extern
-#define HANDEL_API
-#endif /* Endif for HANDEL_MAKE_DLL */
-
-#else /* Not on a Windoze platform */
-
-#ifdef HANDEL_MAKE_DLL
-#define HANDEL_EXPORT
-#define HANDEL_IMPORT extern
-#define HANDEL_API
-#else /* Then we are making a static link library */
-#define HANDEL_EXPORT
-#define HANDEL_IMPORT extern
-#define HANDEL_API
-#endif /* Endif for HANDEL_MAKE_DLL */
-
-#endif /* Endif for _WIN32 */
-
-#endif /* Endif for HANDEL_USE_DLL */
-
-#endif /* Endif for HANDEL_DXP_DLL_DEFINED */
-
-#ifndef _HANDEL_SWITCH_
-#define _HANDEL_SWITCH_ 1
-
-#ifdef __STDC__
-#define _HANDEL_PROTO_ 1
-#endif /* end of __STDC__    */
-
-#ifdef _MSC_VER
-#ifndef _HANDEL_PROTO_
+#if defined(__STDC__) || defined(_MSC_VER)
 #define _HANDEL_PROTO_ 1
 #endif
-#endif /* end of _MSC_VER    */
 
-#endif /* end of _HANDEL_SWITCH_*/
 
 #if __GNUC__
 #define HANDEL_PRINTF(_s, _f) __attribute__((format(printf, _s, _f)))
 #else
 #define HANDEL_PRINTF(_s, _f)
 #endif
-
-#ifdef _WIN32 /* If we are on a Windows platform */
-#define HANDLE_PATHNAME_SEP '\\'
-#else /* Not on a Windows platform */
-#define HANDLE_PATHNAME_SEP '/'
-#endif /* Endif for _WIN32 */
 
 #endif /* Endif for HANDELDEF_H */

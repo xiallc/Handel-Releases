@@ -104,7 +104,7 @@ class UsbSerialCommand:
     def __init__(self, lib, cmd):
         """
         Initializes the variables we need
-        :param lib: the USB library that we use for the connection.
+        :param lib: The handel library that handles communication with the device.
         :param cmd: The command that we'll be executing.
         """
         self.lib = lib

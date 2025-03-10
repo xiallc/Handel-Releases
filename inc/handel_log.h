@@ -36,8 +36,8 @@
 #ifndef __HANDEL_LOG_H__
 #define __HANDEL_LOG_H__
 
-#include "xia_common.h"
 #include "xerxes_structures.h"
+#include "xia_common.h"
 
 DXP_MD_LOG handel_md_log;
 

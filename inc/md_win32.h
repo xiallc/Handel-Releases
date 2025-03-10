@@ -37,8 +37,8 @@
 #ifndef __MD_WIN32_H__
 #define __MD_WIN32_H__
 
-#include "xia_mddef.h"
 #include "xia_common.h"
+#include "xia_mddef.h"
 
 /* Some constants */
 #define MD_IO_READ 0

@@ -46,8 +46,8 @@
 /* Include structure typedefs for exporting of global variables */
 #include "xerxes_structures.h"
 
-#include "xia_handel_structures.h"
 #include "xia_common.h"
+#include "xia_handel_structures.h"
 
 #include "fdddef.h"
 
@@ -74,11 +74,11 @@ FDD_EXPORT int FDD_API xiaFddGetAndCacheFirmware(FirmwareSet* fs, const char* ft
                                                  char* rawFile);
 
 /* Routines contained in xia_common.c.  Routines that are used across libraries but not exported */
-FDD_STATIC boolean_t xiaFddFindFirmware(const char* filename, const char* ftype,
-                                        double ptmin, double ptmax, unsigned int nother,
-                                        char** others, const char* mode, FILE** fp,
-                                        boolean_t* exact,
-                                        char rawFilename[MAXFILENAME_LEN]);
+static boolean_t xiaFddFindFirmware(const char* filename, const char* ftype,
+                                    double ptmin, double ptmax, unsigned int nother,
+                                    char** others, const char* mode, FILE** fp,
+                                    boolean_t* exact,
+                                    char rawFilename[MAXFILENAME_LEN]);
 
 FDD_IMPORT int dxp_md_init_util(Xia_Util_Functions* funcs, char* type);
 

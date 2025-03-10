@@ -41,8 +41,8 @@
 #include "xerxes_generic.h"
 
 /* Include structure typedefs for exporting of global variables */
-#include "xia_xerxes_structures.h"
 #include "xerxes_structures.h"
+#include "xia_xerxes_structures.h"
 
 #include "xerxesdef.h"
 
@@ -126,26 +126,26 @@ XERXES_EXPORT int XERXES_API dxp_exit(int* detChan);
 XERXES_EXPORT int XERXES_API dxp_set_io_priority(int* priority);
 
 #ifndef EXCLUDE_SATURN
-XERXES_IMPORT int DXP_API dxp_init_saturn(Functions* funcs);
+XERXES_IMPORT int dxp_init_saturn(Functions* funcs);
 #endif /* EXCLUDE_SATURN */
 #ifndef EXCLUDE_UDXPS
-XERXES_IMPORT int DXP_API dxp_init_udxps(Functions* funcs);
+XERXES_IMPORT int dxp_init_udxps(Functions* funcs);
 #endif /* EXCLUDE_UDXPS */
 #ifndef EXCLUDE_UDXP
-XERXES_IMPORT int DXP_API dxp_init_udxp(Functions* funcs);
+XERXES_IMPORT int dxp_init_udxp(Functions* funcs);
 #endif /* EXCLUDE_UDXP */
 #ifndef EXCLUDE_XMAP
-XERXES_IMPORT int DXP_API dxp_init_xmap(Functions* funcs);
+XERXES_IMPORT int dxp_init_xmap(Functions* funcs);
 #endif /* EXCLUDE_XMAP */
 #ifndef EXCLUDE_STJ
-XERXES_IMPORT int DXP_API dxp_init_stj(Functions* funcs);
+XERXES_IMPORT int dxp_init_stj(Functions* funcs);
 #endif /* EXCLUDE_STJ */
 #ifndef EXCLUDE_MERCURY
-XERXES_IMPORT int DXP_API dxp_init_mercury(Functions* funcs);
+XERXES_IMPORT int dxp_init_mercury(Functions* funcs);
 #endif /* EXCLUDE_MERCURY */
 
-XERXES_IMPORT int MD_API dxp_md_init_util(Xia_Util_Functions* funcs, char* type);
-XERXES_IMPORT int MD_API dxp_md_init_io(Xia_Io_Functions* funcs, char* type);
+XERXES_IMPORT int dxp_md_init_util(Xia_Util_Functions* funcs, char* type);
+XERXES_IMPORT int dxp_md_init_io(Xia_Io_Functions* funcs, char* type);
 
 #else /* Begin old style C prototypes */
 /*
@@ -204,26 +204,26 @@ XERXES_EXPORT int XERXES_API dxp_exit();
 XERXES_EXPORT int XERXES_API dxp_set_io_priority();
 
 #ifndef EXCLUDE_SATURN
-XERXES_IMPORT int DXP_API dxp_init_saturn();
+XERXES_IMPORT int dxp_init_saturn();
 #endif /* EXCLUDE_SATURN */
 #ifndef EXCLUDE_UDXPS
-XERXES_IMPORT int DXP_API dxp_init_udxps();
+XERXES_IMPORT int dxp_init_udxps();
 #endif /* EXCLUDE_UDXPS */
 #ifndef EXCLUDE_UDXP
-XERXES_IMPORT int DXP_API dxp_init_udxp();
+XERXES_IMPORT int dxp_init_udxp();
 #endif /* EXCLUDE_UDXP */
 #ifndef EXCLUDE_XMAP
-XERXES_IMPORT int DXP_API dxp_init_xmap();
+XERXES_IMPORT int dxp_init_xmap();
 #endif /* EXCLUDE_XMAP */
 #ifndef EXCLUDE_STJ
-XERXES_IMPORT int DXP_API dxp_init_stj();
+XERXES_IMPORT int dxp_init_stj();
 #endif /* EXCLUDE_STJ */
 #ifndef EXCLUDE_MERCURY
-XERXES_IMPORT int DXP_API dxp_init_mercury();
+XERXES_IMPORT int dxp_init_mercury();
 #endif /* EXCLUDE_MERCURY */
 
-XERXES_IMPORT int MD_API dxp_md_init_util();
-XERXES_IMPORT int MD_API dxp_md_init_io();
+XERXES_IMPORT int dxp_md_init_util();
+XERXES_IMPORT int dxp_md_init_io();
 
 #endif /*   end if _XERXES_PROTO_ */
 

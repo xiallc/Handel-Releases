@@ -34,21 +34,21 @@
  * SUCH DAMAGE.
  */
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <limits.h>
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "handel_errors.h"
 #include "xia_fdd.h"
 
-#include "xia_common.h"
 #include "xia_assert.h"
+#include "xia_common.h"
 #include "xia_file.h"
 
-FDD_STATIC void fdd__StringChomp(char* str);
+static void fdd__StringChomp(char* str);
 
 static char info_string[INFO_LEN], line[XIA_LINE_LEN], *token, *delim = " ,=\t\r\n";
 
@@ -342,11 +342,11 @@ FDD_EXPORT int FDD_API xiaFddGetFirmware(const char* filename, char* path,
  * FILE **fp;         Output: pointer to the file, if found
  * boolean_t *exact;       Output: was this an exact match to the types?
  */
-FDD_STATIC boolean_t xiaFddFindFirmware(const char* filename, const char* ftype,
-                                        double ptmin, double ptmax, unsigned int nother,
-                                        char** others, const char* mode, FILE** fp,
-                                        boolean_t* exact,
-                                        char rawFilename[MAXFILENAME_LEN]) {
+static boolean_t xiaFddFindFirmware(const char* filename, const char* ftype,
+                                    double ptmin, double ptmax, unsigned int nother,
+                                    char** others, const char* mode, FILE** fp,
+                                    boolean_t* exact,
+                                    char rawFilename[MAXFILENAME_LEN]) {
     char* cstatus = NULL;
 
     boolean_t found = FALSE_;
@@ -808,7 +808,7 @@ FDD_EXPORT int FDD_API xiaFddGetFilterInfo(const char* filename, double peakingT
  * Modifies str in place since the chomped length is guaranteed to be
  * less than or equal to the original length.
  */
-FDD_STATIC void fdd__StringChomp(char* str) {
+static void fdd__StringChomp(char* str) {
     size_t len = 0;
 
     char* chomped = NULL;

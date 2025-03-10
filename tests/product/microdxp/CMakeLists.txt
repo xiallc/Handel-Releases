@@ -1,0 +1,2 @@
+add_executable(test_microdxp_usb src/test_microdxp_usb.c)
+target_link_libraries(test_microdxp_usb handel)

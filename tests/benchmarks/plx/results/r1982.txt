@@ -1,0 +1,7 @@
+Block size = 1, avg. time = 0.000156s (@ 100000 iterations)
+Block size = 2, avg. time = 0.000156s (@ 100000 iterations)
+Block size = 10, avg. time = 0.000158s (@ 100000 iterations)
+Block size = 512, avg. time = 0.000179s (@ 10000 iterations)
+Block size = 1024, avg. time = 0.000197s (@ 10000 iterations)
+Block size = 8192, avg. time = 0.000487s (@ 10000 iterations)
+Block size = 32768, avg. time = 0.001578s (@ 1000 iterations)

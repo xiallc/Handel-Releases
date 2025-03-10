@@ -41,12 +41,6 @@
 #ifndef XERXES_PORTING_DEFINED
 #define XERXES_PORTING_DEFINED
 
-#define XERXES_STATIC static
-#define XERXES_SHARED
-
-#define DXP_API
-#define MD_API
-
 #ifdef XERXES_USE_DLL /* Linking to a DLL libraries */
 
 #ifdef _WIN32

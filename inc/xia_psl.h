@@ -37,10 +37,10 @@
 #ifndef __XIA_PSL_H__
 #define __XIA_PSL_H__
 
-#include "xia_system.h"
-#include "xia_handel_structures.h"
 #include "psldef.h"
 #include "xia_common.h"
+#include "xia_handel_structures.h"
+#include "xia_system.h"
 
 /*
  * All PSL drivers (xmap_psl.c, mercury_psl.c, etc.) need to implement these routines.

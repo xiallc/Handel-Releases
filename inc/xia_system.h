@@ -37,10 +37,10 @@
 #ifndef XIA_SYSTEM_H
 #define XIA_SYSTEM_H
 
-#include "handeldef.h"
 #include "handel_generic.h"
-#include "xia_handel_structures.h"
+#include "handeldef.h"
 #include "xia_common.h"
+#include "xia_handel_structures.h"
 
 /* Function pointers used for interaction with the PSL layer */
 typedef int (*validateDefaults_FP)(XiaDefaults*);

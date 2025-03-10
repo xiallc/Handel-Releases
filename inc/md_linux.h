@@ -40,8 +40,8 @@
 #ifndef __MD_LINUX_H__
 #define __MD_LINUX_H__
 
-#include "xia_mddef.h"
 #include "xia_common.h"
+#include "xia_mddef.h"
 
 #define MD_IO_READ 0
 #define MD_IO_WRITE 1

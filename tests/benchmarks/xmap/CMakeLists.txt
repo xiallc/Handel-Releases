@@ -1,0 +1,3 @@
+add_subdirectory(mapping)
+add_subdirectory(mca_read)
+add_subdirectory(start_system)

@@ -37,8 +37,8 @@
 #ifndef __XIA_COMMON_H__
 #define __XIA_COMMON_H__
 
-#include <string.h>
 #include <math.h>
+#include <string.h>
 
 /* Define the length of the error reporting string info_string */
 #define INFO_LEN 4096

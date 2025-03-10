@@ -39,15 +39,15 @@
 #ifndef XIA_HANDEL_H
 #define XIA_HANDEL_H
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-#include "xia_xerxes_structures.h"
-#include "xia_handel_structures.h"
 #include "handel_generic.h"
+#include "xia_common.h"
+#include "xia_handel_structures.h"
 #include "xia_module.h"
 #include "xia_system.h"
-#include "xia_common.h"
+#include "xia_xerxes_structures.h"
 
 #include "md_generic.h"
 
@@ -243,64 +243,59 @@ HANDEL_EXPORT void HANDEL_API xiaUnitTests();
 }
 #endif
 
-HANDEL_SHARED int HANDEL_API xiaNewDefault(char* alias);
-HANDEL_SHARED int HANDEL_API xiaAddDefaultItem(char* alias, char* name, void* value);
-HANDEL_SHARED int HANDEL_API xiaModifyDefaultItem(char* alias, char* name, void* value);
-HANDEL_SHARED int HANDEL_API xiaGetDefaultItem(char* alias, char* name, void* value);
-HANDEL_SHARED int HANDEL_API xiaRemoveDefault(char* alias);
-HANDEL_SHARED int HANDEL_API xiaReadIniFile(char* inifile);
-HANDEL_SHARED int HANDEL_API xiaFreeDetector(Detector* detector);
-HANDEL_SHARED int HANDEL_API xiaFreeFirmwareSet(FirmwareSet* firmwareSet);
-HANDEL_SHARED int HANDEL_API xiaFreeFirmware(Firmware* firmware);
-HANDEL_SHARED int HANDEL_API xiaFreeXiaDefaults(XiaDefaults* xiaDefaults);
-HANDEL_SHARED int HANDEL_API xiaFreeXiaDaqEntry(XiaDaqEntry* entry);
-HANDEL_SHARED int HANDEL_API xiaFreeModule(Module* module);
-HANDEL_SHARED void HANDEL_API xiaLog(int level, const char* file, int line, int status,
-                                     const char* func, const char* fmt, ...)
-    HANDEL_PRINTF(6, 7);
-HANDEL_SHARED Detector* HANDEL_API xiaFindDetector(char* alias);
-HANDEL_SHARED FirmwareSet* HANDEL_API xiaFindFirmware(char* alias);
-HANDEL_SHARED XiaDefaults* HANDEL_API xiaFindDefault(char* alias);
-HANDEL_SHARED Module* HANDEL_API xiaFindModule(char* alias);
-HANDEL_SHARED boolean_t HANDEL_API xiaIsDetChanFree(int detChan);
-HANDEL_SHARED int HANDEL_API xiaCleanDetChanList(void);
-HANDEL_SHARED int HANDEL_API xiaAddDetChan(int type, unsigned int detChan, void* data);
-HANDEL_SHARED int HANDEL_API xiaRemoveDetChan(unsigned int detChan);
-HANDEL_SHARED void HANDEL_API xiaFreeDetSet(DetChanSetElem* head);
-HANDEL_SHARED int HANDEL_API xiaGetBoardType(int detChan, char* boardType);
-HANDEL_SHARED DetChanElement* HANDEL_API xiaGetDetChanHead(void);
-HANDEL_SHARED FirmwareSet* HANDEL_API xiaGetFirmwareSetHead(void);
-HANDEL_SHARED int HANDEL_API xiaMergeSort(void* data, int size, int esize, int i, int k,
-                                          int (*compare)(const void* key1,
-                                                         const void* key2));
-HANDEL_SHARED int HANDEL_API xiaGetNumFirmware(Firmware* firmware);
-HANDEL_SHARED int xiaFirmComp(const void* key1, const void* key2);
-HANDEL_SHARED int HANDEL_API xiaInsertSort(Firmware** head,
-                                           int (*compare)(const void* key1,
-                                                          const void* key2));
-HANDEL_SHARED Detector* HANDEL_API xiaGetDetectorHead(void);
-HANDEL_SHARED int HANDEL_API xiaGetElemType(int detChan);
-HANDEL_SHARED void HANDEL_API xiaClearTags(void);
-HANDEL_SHARED DetChanElement* HANDEL_API xiaGetDetChanPtr(int detChan);
-HANDEL_SHARED char* HANDEL_API xiaGetAliasFromDetChan(int detChan);
-HANDEL_SHARED unsigned int HANDEL_API xiaGetModChan(unsigned int detChan);
-HANDEL_SHARED XiaDefaults* HANDEL_API xiaGetDefaultFromDetChan(unsigned int detChan);
-HANDEL_SHARED int HANDEL_API xiaBuildXerxesConfig(void);
-HANDEL_SHARED Module* HANDEL_API xiaGetModuleHead(void);
-HANDEL_SHARED double HANDEL_API xiaGetValueFromDefaults(char* name, char* alias);
-HANDEL_SHARED int HANDEL_API xiaGetDSPNameFromFirmware(char* alias, double peakingTime,
-                                                       char* dspName);
-HANDEL_SHARED int HANDEL_API xiaUserSetup(void);
-HANDEL_SHARED int HANDEL_API xiaGetFippiNameFromFirmware(char* alias,
-                                                         double peakingTime,
-                                                         char* fippiName);
-HANDEL_SHARED int HANDEL_API xiaGetValueFromFirmware(char* alias, double peakingTime,
-                                                     char* name, char* value);
-HANDEL_SHARED int HANDEL_API xiaLoadPSL(char* boardType, PSLFuncs* funcs);
-HANDEL_SHARED XiaDefaults* HANDEL_API xiaGetDefaultsHead(void);
-HANDEL_SHARED int HANDEL_API xiaGetAbsoluteChannel(int detChan, Module* module,
-                                                   unsigned int* chan);
-HANDEL_SHARED int HANDEL_API xiaTagAllRunActive(Module* module, boolean_t state);
+int HANDEL_API xiaNewDefault(char* alias);
+int HANDEL_API xiaAddDefaultItem(char* alias, char* name, void* value);
+int HANDEL_API xiaModifyDefaultItem(char* alias, char* name, void* value);
+int HANDEL_API xiaGetDefaultItem(char* alias, char* name, void* value);
+int HANDEL_API xiaRemoveDefault(char* alias);
+int HANDEL_API xiaReadIniFile(char* inifile);
+int HANDEL_API xiaFreeDetector(Detector* detector);
+int HANDEL_API xiaFreeFirmwareSet(FirmwareSet* firmwareSet);
+int HANDEL_API xiaFreeFirmware(Firmware* firmware);
+int HANDEL_API xiaFreeXiaDefaults(XiaDefaults* xiaDefaults);
+int HANDEL_API xiaFreeXiaDaqEntry(XiaDaqEntry* entry);
+int HANDEL_API xiaFreeModule(Module* module);
+void HANDEL_API xiaLog(int level, const char* file, int line, int status,
+                       const char* func, const char* fmt, ...) HANDEL_PRINTF(6, 7);
+Detector* HANDEL_API xiaFindDetector(char* alias);
+FirmwareSet* HANDEL_API xiaFindFirmware(char* alias);
+XiaDefaults* HANDEL_API xiaFindDefault(char* alias);
+Module* HANDEL_API xiaFindModule(char* alias);
+boolean_t HANDEL_API xiaIsDetChanFree(int detChan);
+int HANDEL_API xiaCleanDetChanList(void);
+int HANDEL_API xiaAddDetChan(int type, unsigned int detChan, void* data);
+int HANDEL_API xiaRemoveDetChan(unsigned int detChan);
+void HANDEL_API xiaFreeDetSet(DetChanSetElem* head);
+int HANDEL_API xiaGetBoardType(int detChan, char* boardType);
+DetChanElement* HANDEL_API xiaGetDetChanHead(void);
+FirmwareSet* HANDEL_API xiaGetFirmwareSetHead(void);
+int HANDEL_API xiaMergeSort(void* data, int size, int esize, int i, int k,
+                            int (*compare)(const void* key1, const void* key2));
+int HANDEL_API xiaGetNumFirmware(Firmware* firmware);
+int xiaFirmComp(const void* key1, const void* key2);
+int HANDEL_API xiaInsertSort(Firmware** head,
+                             int (*compare)(const void* key1, const void* key2));
+Detector* HANDEL_API xiaGetDetectorHead(void);
+int HANDEL_API xiaGetElemType(int detChan);
+void HANDEL_API xiaClearTags(void);
+DetChanElement* HANDEL_API xiaGetDetChanPtr(int detChan);
+char* HANDEL_API xiaGetAliasFromDetChan(int detChan);
+unsigned int HANDEL_API xiaGetModChan(unsigned int detChan);
+XiaDefaults* HANDEL_API xiaGetDefaultFromDetChan(unsigned int detChan);
+int HANDEL_API xiaBuildXerxesConfig(void);
+Module* HANDEL_API xiaGetModuleHead(void);
+double HANDEL_API xiaGetValueFromDefaults(char* name, char* alias);
+int HANDEL_API xiaGetDSPNameFromFirmware(char* alias, double peakingTime,
+                                         char* dspName);
+int HANDEL_API xiaUserSetup(void);
+int HANDEL_API xiaGetFippiNameFromFirmware(char* alias, double peakingTime,
+                                           char* fippiName);
+int HANDEL_API xiaGetValueFromFirmware(char* alias, double peakingTime, char* name,
+                                       char* value);
+int HANDEL_API xiaLoadPSL(char* boardType, PSLFuncs* funcs);
+XiaDefaults* HANDEL_API xiaGetDefaultsHead(void);
+int HANDEL_API xiaGetAbsoluteChannel(int detChan, Module* module, unsigned int* chan);
+int HANDEL_API xiaTagAllRunActive(Module* module, boolean_t state);
 
 #include "xerxes_structures.h"
 

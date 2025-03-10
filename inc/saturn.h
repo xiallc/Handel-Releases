@@ -37,8 +37,8 @@
 #ifndef __SATURN_H__
 #define __SATURN_H__
 
-#include "xerxesdef.h"
 #include "xerxes_generic.h"
+#include "xerxesdef.h"
 
 #define LATEST_BOARD_TYPE "Saturn"
 #define LATEST_BOARD_VERSION "D"

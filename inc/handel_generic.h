@@ -37,8 +37,8 @@
 #ifndef HANDEL_GENERIC_H
 #define HANDEL_GENERIC_H
 
-#include <string.h>
 #include <math.h>
+#include <string.h>
 
 #include "xia_common.h"
 
