@@ -120,4 +120,5 @@ target_link_libraries(handel PUBLIC
         $<$<C_COMPILER_ID:GNU>:"m">
 )
 
+sign_code(handel)
 install(TARGETS handel LIBRARY DESTINATION lib)

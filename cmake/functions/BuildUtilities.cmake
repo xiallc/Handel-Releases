@@ -138,9 +138,10 @@ function(define_options)
     option(XUP "Build the XW library" ON)
 
     # Define Miscellaneous Build Options
-    set(MISC_OPTIONS ANALYSIS BUILD_EXAMPLES BUILD_TESTS VBA VLD X64 PARENT_SCOPE)
+    set(MISC_OPTIONS ANALYSIS BUILD_EXAMPLES BUILD_TESTS SIGN VBA VLD X64 PARENT_SCOPE)
     option(ANALYSIS "Build with code analysis" OFF)
     option(EXAMPLES "Build example programs" OFF)
+    option(SIGN "Sign the exe and dll in Windows" OFF)
     option(TESTS "Build test programs" OFF)
     option(VLD "Adds VLD header support" OFF)
     option(X64 "Build for x64 platform" ON)
@@ -242,3 +243,19 @@ function(configure_handel_options)
     set(PROTOCOL_EXCLUSIONS "${PROTOCOL_EXCLUSIONS}" PARENT_SCOPE)
     set(LIBRARY_EXCLUSIONS "${LIBRARY_EXCLUSIONS}" PARENT_SCOPE)
 endfunction()
+
+# from https://stackoverflow.com/a/72504367
+macro(sign_code target)
+    if ((CMAKE_BUILD_TYPE MATCHES "Release")
+            AND (${CMAKE_HOST_SYSTEM_NAME} MATCHES "Windows")
+            AND SIGN)
+        find_package(signtool REQUIRED)
+        if (signtool_EXECUTABLE)
+            add_custom_command(TARGET ${target}
+                    POST_BUILD
+                    COMMAND ${signtool_EXECUTABLE} sign /fd SHA256 /td SHA256 /a /tr "http://timestamp.entrust.net/rfc3161ts2" $<TARGET_FILE:${target}>
+                    VERBATIM
+            )
+        endif ()
+    endif ()
+endmacro(sign_code)
