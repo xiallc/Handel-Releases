@@ -55,6 +55,8 @@
 #include "xia_assert.h"
 #include "xia_common.h"
 
+#include <util/xia_str_manip.h>
+
 XIA_MD_STATIC void dxp_md_local_time(struct tm** local, int* milli);
 
 /* Current output for the logging routines. By default, this is set to stdout */
@@ -247,10 +249,7 @@ XIA_MD_SHARED void dxp_md_output(const char* filename) {
     if (!strtmp)
         abort();
 
-    for (i = 0; i < strlen(filename); i++) {
-        strtmp[i] = (char) tolower((int) filename[i]);
-    }
-    strtmp[strlen(filename)] = '\0';
+    strtmp = xia_lower(filename);
 
     if (STREQ(strtmp, "stdout")) {
         out_stream = stdout;

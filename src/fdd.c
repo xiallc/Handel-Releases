@@ -50,7 +50,7 @@
 
 static void fdd__StringChomp(char* str);
 
-static char info_string[INFO_LEN], line[XIA_LINE_LEN], *token, *delim = " ,=\t\r\n";
+static char line[XIA_LINE_LEN], *token, *delim = " ,=\t\r\n";
 
 static char* section = "$$$NEW SECTION$$$\n";
 
@@ -71,8 +71,7 @@ FDD_EXPORT int FDD_API xiaFddInitialize(void) {
 
     /* Initialize the data structures and pointers of the library */
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Unable to initialize FDD");
-        printf("%s\n", info_string);
+        xiaLog(XIA_LOG_INFO, "xiaFddInitialize", "Unable to initialize FDD");
         return status;
     }
 
@@ -98,7 +97,6 @@ FDD_EXPORT int FDD_API xiaFddInitLibrary(void) {
     fdd_md_info = util_funcs.dxp_md_info;
     fdd_md_debug = util_funcs.dxp_md_debug;
     fdd_md_output = util_funcs.dxp_md_output;
-    fdd_md_log = util_funcs.dxp_md_log;
     fdd_md_wait = util_funcs.dxp_md_wait;
     fdd_md_puts = util_funcs.dxp_md_puts;
     fdd_md_fgets = util_funcs.dxp_md_fgets;
@@ -155,8 +153,8 @@ FDD_EXPORT int FDD_API xiaFddGetFirmware(const char* filename, char* path,
     char** keywords = NULL;
 
     if (path == NULL) {
-        sprintf(info_string, "Temporary path may not be NULL for '%s'", filename);
-        xiaFddLogError("xiaFddGetFirmware", info_string, XIA_NULL_PATH);
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_PATH, "xiaFddGetFirmware",
+               "Temporary path may not be NULL for '%s'", filename);
         return XIA_NULL_PATH;
     }
 
@@ -164,11 +162,9 @@ FDD_EXPORT int FDD_API xiaFddGetFirmware(const char* filename, char* path,
     keywords = (char**) fdd_md_alloc((nother + 1) * sizeof(char*));
 
     if (!keywords) {
-        sprintf(info_string,
-                "Unable to allocate %zu bytes for the keywords "
-                "array.",
-                (nother + 1) * sizeof(char*));
-        xiaFddLogError("xiaFddGetFirmware", info_string, XIA_NOMEM);
+        xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "xiaFddGetFirmware",
+               "Unable to allocate %zu bytes for the keywords array.",
+               (nother + 1) * sizeof(char*));
         return XIA_NOMEM;
     }
 
@@ -183,11 +179,9 @@ FDD_EXPORT int FDD_API xiaFddGetFirmware(const char* filename, char* path,
 
             fdd_md_free(keywords);
 
-            sprintf(info_string,
-                    "Unable to allocate %zu bytes for the keywords[%u] "
-                    "array.",
-                    len + 1, i);
-            xiaFddLogError("xiaFddGetFirmware", info_string, XIA_NOMEM);
+            xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "xiaFddGetFirmware",
+                   "Unable to allocate %zu bytes for the keywords[%u] array.", len + 1,
+                   i);
             return XIA_NOMEM;
         }
 
@@ -204,11 +198,8 @@ FDD_EXPORT int FDD_API xiaFddGetFirmware(const char* filename, char* path,
 
         fdd_md_free(keywords);
 
-        sprintf(info_string,
-                "Unable to allocate %zu bytes for keywords[%u] "
-                "array.",
-                len + 1, nother);
-        xiaFddLogError("xiaFddGetFirmware", info_string, XIA_NOMEM);
+        xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "xiaFddGetFirmware",
+               "Unable to allocate %zu bytes for keywords[%u] array.", len + 1, nother);
         return XIA_NOMEM;
     }
 
@@ -226,9 +217,9 @@ FDD_EXPORT int FDD_API xiaFddGetFirmware(const char* filename, char* path,
     fdd_md_free(keywords);
 
     if (!isFound) {
-        sprintf(info_string, "Cannot find '%s' in '%s': pt = %f, det = '%s'", ftype,
-                filename, pt, detectorType);
-        xiaFddLogDebug("xiaFddGetFirmware", info_string);
+        xiaLog(XIA_LOG_DEBUG, "xiaFddGetFirmware",
+               "Cannot find '%s' in '%s': pt = %f, det = '%s'", ftype, filename, pt,
+               detectorType);
 
         if (fp != NULL) {
             xia_file_close(fp);
@@ -248,8 +239,7 @@ FDD_EXPORT int FDD_API xiaFddGetFirmware(const char* filename, char* path,
     start = strtok(postTok, " \n");
     strcpy(relativeName, start);
 
-    sprintf(info_string, "relativeName = %s", relativeName);
-    xiaFddLogDebug("xiaFddGetFirmware", info_string);
+    xiaLog(XIA_LOG_DEBUG, "xiaFddGetFirmware", "relativeName = %s", relativeName);
 
     /*
      * Located the location in the FDD file, now write out the temporary file
@@ -257,8 +247,7 @@ FDD_EXPORT int FDD_API xiaFddGetFirmware(const char* filename, char* path,
      */
     sprintf(newfilename, "xia%s", relativeName);
 
-    sprintf(info_string, "newfilename = %s", newfilename);
-    xiaFddLogDebug("xiaFddGetFirmware", info_string);
+    xiaLog(XIA_LOG_DEBUG, "xiaFddGetFirmware", "newfilename = %s", newfilename);
 
     /* Build a path to the temporary file and directory */
     completePathLen = strlen(path) + strlen(newfilename) + 1;
@@ -276,9 +265,8 @@ FDD_EXPORT int FDD_API xiaFddGetFirmware(const char* filename, char* path,
     completePath = fdd_md_alloc(completePathLen);
 
     if (!completePath) {
-        sprintf(info_string, "Error allocating %zu bytes for 'completePath'",
-                completePathLen);
-        xiaFddLogError("xiaFddGetFirmware", info_string, XIA_NOMEM);
+        xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "xiaFddGetFirmware",
+               "Error allocating %zu bytes for 'completePath'", completePathLen);
         xia_file_close(fp);
         return XIA_NOMEM;
     }
@@ -296,8 +284,8 @@ FDD_EXPORT int FDD_API xiaFddGetFirmware(const char* filename, char* path,
     ofp = xia_file_open(completePath, "w");
 
     if (ofp == NULL) {
-        sprintf(info_string, "Error opening the temporary file: %s", completePath);
-        xiaFddLogError("xiaFddGetFirmware", info_string, XIA_OPEN_FILE);
+        xiaLog(XIA_LOG_ERROR, XIA_OPEN_FILE, "xiaFddGetFirmware",
+               "Error opening the temporary file: %s", completePath);
         xia_file_close(fp);
         fdd_md_free(completePath);
         return XIA_OPEN_FILE;
@@ -309,8 +297,7 @@ FDD_EXPORT int FDD_API xiaFddGetFirmware(const char* filename, char* path,
     cstatus = fdd_md_fgets(line, XIA_LINE_LEN, fp);
     numFilter = (unsigned short) strtol(line, NULL, 10);
 
-    sprintf(info_string, "numFilter = %u", numFilter);
-    xiaFddLogDebug("xiaFddGetFirmware", info_string);
+    xiaLog(XIA_LOG_DEBUG, "xiaFddGetFirmware", "numFilter = %u", numFilter);
 
     for (j = 0; j < numFilter; j++) {
         cstatus = fdd_md_fgets(line, XIA_LINE_LEN, fp);
@@ -351,8 +338,6 @@ static boolean_t xiaFddFindFirmware(const char* filename, const char* ftype,
 
     boolean_t found = FALSE_;
 
-    int status;
-
     unsigned int i;
     unsigned int j;
     unsigned int nmatch;
@@ -369,8 +354,8 @@ static boolean_t xiaFddFindFirmware(const char* filename, const char* ftype,
     *fp = xia_find_file(filename, mode);
 
     if (!*fp) {
-        sprintf(info_string, "Error finding the FDD file: %s", filename);
-        xiaFddLogError("xiaFddFindFirmware", info_string, XIA_OPEN_FILE);
+        xiaLog(XIA_LOG_ERROR, XIA_OPEN_FILE, "xiaFddFindFirmware",
+               "Error finding the FDD file: %s", filename);
         return FALSE_;
     }
 
@@ -386,8 +371,7 @@ static boolean_t xiaFddFindFirmware(const char* filename, const char* ftype,
 
     fdd__StringChomp(rawFilename);
 
-    sprintf(info_string, "rawFilename = %s", rawFilename);
-    xiaFddLogDebug("xiaFddFindFirmware", info_string);
+    xiaLog(XIA_LOG_DEBUG, "xiaFddFindFirmware", "rawFilename = %s", rawFilename);
 
     /* Located the FDD file, now start the search */
     cstatus = fdd_md_fgets(line, XIA_LINE_LEN, *fp);
@@ -397,8 +381,7 @@ static boolean_t xiaFddFindFirmware(const char* filename, const char* ftype,
         token = strtok(line, delim);
 
         if (STREQ(token, ftype)) {
-            sprintf(info_string, "Matched token: '%s'", token);
-            xiaFddLogDebug("xiaFddFindFirmware", info_string);
+            xiaLog(XIA_LOG_DEBUG, "xiaFddFindFirmware", "Matched token: '%s'", token);
 
             /* Read in the number of keywords */
             cstatus = fdd_md_fgets(line, XIA_LINE_LEN, *fp);
@@ -457,10 +440,8 @@ static boolean_t xiaFddFindFirmware(const char* filename, const char* ftype,
                 if (!((ptmin >= fddmax) || (ptmax <= fddmin))) {
                     /* Overlap with the current entry */
                     found = TRUE_;
-                    status = XIA_UNKNOWN;
-                    sprintf(info_string,
-                            "Peaking time and keyword overlap with member of FDD");
-                    xiaFddLogError("xiaFddFindFirmware", info_string, status);
+                    xiaLog(XIA_LOG_ERROR, XIA_UNKNOWN, "xiaFddFindFirmware",
+                           "Peaking time and keyword overlap with member of FDD");
                     xia_file_close(*fp);
                     return found;
                 }
@@ -474,8 +455,8 @@ static boolean_t xiaFddFindFirmware(const char* filename, const char* ftype,
 
                 fdd__StringChomp(rawFilename);
 
-                sprintf(info_string, "rawFilename = %s", rawFilename);
-                xiaFddLogDebug("xiaFddFindFirmware", info_string);
+                xiaLog(XIA_LOG_DEBUG, "xiaFddFindFirmware", "rawFilename = %s",
+                       rawFilename);
 
                 cstatus = fdd_md_fgets(line, XIA_LINE_LEN, *fp);
                 break;
@@ -493,8 +474,6 @@ static boolean_t xiaFddFindFirmware(const char* filename, const char* ftype,
 FDD_EXPORT int FDD_API xiaFddGetNumFilter(const char* filename, double peakingTime,
                                           unsigned int nKey, const char** keywords,
                                           unsigned short* numFilter) {
-    int status;
-
     unsigned int numToMatch;
 
     unsigned short numKeys;
@@ -511,19 +490,17 @@ FDD_EXPORT int FDD_API xiaFddGetNumFilter(const char* filename, double peakingTi
     FILE* fp = NULL;
 
     if (filename == NULL) {
-        status = XIA_FILEERR;
-        xiaFddLogError("xiaFddGetNumFilter", "Must specify a non-NULL FDD filename",
-                       status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_FILEERR, "xiaFddGetNumFilter",
+               "Must specify a non-NULL FDD filename");
+        return XIA_FILEERR;
     }
 
     /* Open the file */
     fp = xia_find_file(filename, "r");
     if (fp == NULL) {
-        status = XIA_OPEN_FILE;
-        sprintf(info_string, "Error finding the FDD file: %s", filename);
-        xiaFddLogError("xiaFddGetNumFilter", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_OPEN_FILE, "xiaFddGetNumFilter",
+               "Error finding the FDD file: %s", filename);
+        return XIA_OPEN_FILE;
     }
 
     /*
@@ -550,15 +527,13 @@ FDD_EXPORT int FDD_API xiaFddGetNumFilter(const char* filename, double peakingTi
         token = strtok(line, delim);
 
         if (STREQ(token, "fippi") || STREQ(token, "fippi_a")) {
-            sprintf(info_string, "token = %s", token);
-            xiaFddLogDebug("xiaFddGetNumFilter", info_string);
+            xiaLog(XIA_LOG_DEBUG, "xiaFddGetNumFilter", "token = %s", token);
 
             cstatus = fdd_md_fgets(line, XIA_LINE_LEN, fp);
 
             numKeys = (unsigned short) strtol(line, NULL, 10);
 
-            sprintf(info_string, "numKeys = %u", numKeys);
-            xiaFddLogDebug("xiaFddGetNumFilter", info_string);
+            xiaLog(XIA_LOG_DEBUG, "xiaFddGetNumFilter", "numKeys = %u", numKeys);
 
             numToMatch = nKey;
             for (i = 0; i < numKeys; i++) {
@@ -567,7 +542,8 @@ FDD_EXPORT int FDD_API xiaFddGetNumFilter(const char* filename, double peakingTi
                 token = strtok(line, delim);
                 for (j = 0; j < nKey; j++) {
                     if (STREQ(token, keywords[j])) {
-                        xiaFddLogDebug("xiaFddGetNumFilter", "Matched a keyword");
+                        xiaLog(XIA_LOG_DEBUG, "xiaFddGetNumFilter",
+                               "Matched a keyword");
 
                         numToMatch--;
                         break;
@@ -575,7 +551,7 @@ FDD_EXPORT int FDD_API xiaFddGetNumFilter(const char* filename, double peakingTi
                 }
 
                 if (numToMatch == 0) {
-                    xiaFddLogDebug("xiaFddGetNumFilter", "Matched all keywords");
+                    xiaLog(XIA_LOG_DEBUG, "xiaFddGetNumFilter", "Matched all keywords");
 
                     isFound = TRUE_;
                     break;
@@ -608,8 +584,8 @@ FDD_EXPORT int FDD_API xiaFddGetNumFilter(const char* filename, double peakingTi
             cstatus = fdd_md_fgets(line, XIA_LINE_LEN, fp);
             ptMax = strtod(line, NULL);
 
-            sprintf(info_string, "ptMin = %.3f, ptMax = %.3f", ptMin, ptMax);
-            xiaFddLogDebug("xiaFddGetNumFilter", info_string);
+            xiaLog(XIA_LOG_DEBUG, "xiaFddGetNumFilter", "ptMin = %.3f, ptMax = %.3f",
+                   ptMin, ptMax);
 
             if ((peakingTime > ptMin) && (peakingTime <= ptMax)) {
                 isFound = TRUE_;
@@ -617,8 +593,8 @@ FDD_EXPORT int FDD_API xiaFddGetNumFilter(const char* filename, double peakingTi
                 cstatus = fdd_md_fgets(line, XIA_LINE_LEN, fp);
                 *numFilter = (unsigned short) strtol(line, NULL, 10);
 
-                sprintf(info_string, "numFilter = %u\n", *numFilter);
-                xiaFddLogDebug("xiaFddGetNumFilter", info_string);
+                xiaLog(XIA_LOG_DEBUG, "xiaFddGetNumFilter", "numFilter = %u\n",
+                       *numFilter);
             }
         }
 
@@ -650,8 +626,6 @@ FDD_EXPORT int FDD_API xiaFddGetFilterInfo(const char* filename, double peakingT
                                            unsigned int nKey, const char** keywords,
                                            double* ptMin, double* ptMax,
                                            parameter_t* filterInfo) {
-    int status;
-
     unsigned int numToMatch;
 
     unsigned short numKeys;
@@ -667,19 +641,17 @@ FDD_EXPORT int FDD_API xiaFddGetFilterInfo(const char* filename, double peakingT
     FILE* fp = NULL;
 
     if (filename == NULL) {
-        status = XIA_FILEERR;
-        xiaFddLogError("xiaFddGetFilterInfo", "Must specify a non-NULL FDD filename",
-                       status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_FILEERR, "xiaFddGetFilterInfo",
+               "Must specify a non-NULL FDD filename");
+        return XIA_FILEERR;
     }
 
     fp = xia_find_file(filename, "r");
 
     if (fp == NULL) {
-        status = XIA_OPEN_FILE;
-        sprintf(info_string, "Error finding the FDD file: %s", filename);
-        xiaFddLogError("xiaFddGetFilterInfo", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_OPEN_FILE, "xiaFddGetFilterInfo",
+               "Error finding the FDD file: %s", filename);
+        return XIA_OPEN_FILE;
     }
 
     /*
@@ -705,15 +677,13 @@ FDD_EXPORT int FDD_API xiaFddGetFilterInfo(const char* filename, double peakingT
         token = strtok(line, delim);
 
         if (STREQ(token, "fippi") || STREQ(token, "fippi_a")) {
-            sprintf(info_string, "token = %s", token);
-            xiaFddLogDebug("xiaFddGetFilterInfo", info_string);
+            xiaLog(XIA_LOG_DEBUG, "xiaFddGetFilterInfo", "token = %s", token);
 
             cstatus = fdd_md_fgets(line, XIA_LINE_LEN, fp);
 
             numKeys = (unsigned short) strtol(line, NULL, 10);
 
-            sprintf(info_string, "numKeys = %u", numKeys);
-            xiaFddLogDebug("xiaFddGetFilterInfo", info_string);
+            xiaLog(XIA_LOG_DEBUG, "xiaFddGetFilterInfo", "numKeys = %u", numKeys);
 
             numToMatch = nKey;
             for (i = 0; i < numKeys; i++) {
@@ -722,7 +692,8 @@ FDD_EXPORT int FDD_API xiaFddGetFilterInfo(const char* filename, double peakingT
                 token = strtok(line, delim);
                 for (j = 0; j < nKey; j++) {
                     if (STREQ(token, keywords[j])) {
-                        xiaFddLogDebug("xiaFddGetFilterInfo", "Matched a keyword");
+                        xiaLog(XIA_LOG_DEBUG, "xiaFddGetFilterInfo",
+                               "Matched a keyword");
 
                         numToMatch--;
                         break;
@@ -730,7 +701,8 @@ FDD_EXPORT int FDD_API xiaFddGetFilterInfo(const char* filename, double peakingT
                 }
 
                 if (numToMatch == 0) {
-                    xiaFddLogDebug("xiaFddGetFilterInfo", "Matched all keywords");
+                    xiaLog(XIA_LOG_DEBUG, "xiaFddGetFilterInfo",
+                           "Matched all keywords");
 
                     isFound = TRUE_;
                     break;
@@ -762,8 +734,8 @@ FDD_EXPORT int FDD_API xiaFddGetFilterInfo(const char* filename, double peakingT
             cstatus = fdd_md_fgets(line, XIA_LINE_LEN, fp);
             *ptMax = strtod(line, NULL);
 
-            sprintf(info_string, "ptMin = %.3f, ptMax = %.3f", *ptMin, *ptMax);
-            xiaFddLogDebug("xiaFddGetFilterInfo", info_string);
+            xiaLog(XIA_LOG_DEBUG, "xiaFddGetFilterInfo", "ptMin = %.3f, ptMax = %.3f",
+                   *ptMin, *ptMax);
 
             if ((peakingTime > *ptMin) && (peakingTime <= *ptMax)) {
                 isFound = TRUE_;
@@ -771,8 +743,8 @@ FDD_EXPORT int FDD_API xiaFddGetFilterInfo(const char* filename, double peakingT
                 cstatus = fdd_md_fgets(line, XIA_LINE_LEN, fp);
                 numFilter = (unsigned short) strtol(line, NULL, 10);
 
-                sprintf(info_string, "numFilter = %u\n", numFilter);
-                xiaFddLogDebug("xiaFddGetFilterInfo", info_string);
+                xiaLog(XIA_LOG_DEBUG, "xiaFddGetFilterInfo", "numFilter = %u\n",
+                       numFilter);
 
                 for (k = 0; k < numFilter; k++) {
                     cstatus = fdd_md_fgets(line, XIA_LINE_LEN, fp);
@@ -861,13 +833,13 @@ FDD_EXPORT int FDD_API xiaFddGetAndCacheFirmware(FirmwareSet* fs, const char* ft
     ASSERT(ftype != NULL);
 
     if (fs->filename == NULL) {
-        xiaFddLogInfo("xiaFddGetAndCacheFirmware",
-                      "No FDD defined in the firmware set.");
+        xiaLog(XIA_LOG_ERROR, XIA_NO_FDD, "xiaFddGetAndCacheFirmware",
+               "No FDD defined in the firmware set.");
         return XIA_NO_FDD;
     }
 
-    sprintf(info_string, "Getting firmware type %s from '%s'", ftype, fs->filename);
-    xiaFddLogDebug("xiaFddGetAndCacheFirmware", info_string);
+    xiaLog(XIA_LOG_DEBUG, "xiaFddGetAndCacheFirmware",
+           "Getting firmware type %s from '%s'", ftype, fs->filename);
 
     if (fs->tmpPath) {
         tmpPath = fs->tmpPath;
@@ -886,11 +858,9 @@ FDD_EXPORT int FDD_API xiaFddGetAndCacheFirmware(FirmwareSet* fs, const char* ft
 
     if (current != NULL) {
         memset(file, '\0', sizeof(*file));
-        sprintf(info_string,
-                "Found firmware with ptMin = %0.2f "
-                "ptMax = %0.2f for peaking time %0.2f",
-                current->min_ptime, current->max_ptime, pt);
-        xiaFddLogDebug("xiaFddGetAndCacheFirmware", info_string);
+        xiaLog(XIA_LOG_DEBUG, "xiaFddGetAndCacheFirmware",
+               "Found firmware with ptMin = %0.2f ptMax = %0.2f for peaking time %0.2f",
+               current->min_ptime, current->max_ptime, pt);
         if (STREQ(ftype, "system_fippi") && current->fippi != NULL) {
             strncpy(file, current->fippi, strlen(current->fippi) + 1);
         } else if (STREQ(ftype, "system_fpga") && current->system_fpga != NULL) {
@@ -908,15 +878,14 @@ FDD_EXPORT int FDD_API xiaFddGetAndCacheFirmware(FirmwareSet* fs, const char* ft
         if (strlen(file) > 0) {
             strcpy(rawFile, file + strlen(tmpPath) + 2);
             rawFile[0] = '\\';
-            sprintf(info_string, "Current %s is: %s, rawFile: %s", ftype, file,
-                    rawFile);
-            xiaFddLogDebug("xiaFddGetAndCacheFirmware", info_string);
+            xiaLog(XIA_LOG_DEBUG, "xiaFddGetAndCacheFirmware",
+                   "Current %s is: %s, rawFile: %s", ftype, file, rawFile);
             return XIA_SUCCESS;
         }
 
         /* Firmware information hasn't been filled yet */
-        sprintf(info_string, "Firmware type %s not defined for found firmware.", ftype);
-        xiaFddLogDebug("xiaFddGetAndCacheFirmware", info_string);
+        xiaLog(XIA_LOG_DEBUG, "xiaFddGetAndCacheFirmware",
+               "Firmware type %s not defined for found firmware.", ftype);
     }
 
     status = xiaFddGetFirmware(fs->filename, tmpPath, ftype, pt,
@@ -925,21 +894,19 @@ FDD_EXPORT int FDD_API xiaFddGetAndCacheFirmware(FirmwareSet* fs, const char* ft
 
     /* Do not log an error if firmware file is not found */
     if (status == XIA_FILEERR) {
-        sprintf(info_string, "Unable to locate firmware type %s from '%s'", ftype,
-                fs->filename);
-        xiaFddLogInfo("xiaFddGetAndCacheFirmware", info_string);
+        xiaLog(XIA_LOG_INFO, "xiaFddGetAndCacheFirmware",
+               "Unable to locate firmware type %s from '%s'", ftype, fs->filename);
         return status;
     } else if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error getting firmware type %s from '%s'", ftype,
-                fs->filename);
-        xiaFddLogError("xiaFddGetAndCacheFirmware", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaFddGetAndCacheFirmware",
+               "Error getting firmware type %s from '%s'", ftype, fs->filename);
         return status;
     }
 
     /* Add this firmware to FirmwareSet if no match */
     if (current == NULL) {
-        xiaFddLogDebug("xiaFddGetAndCacheFirmware",
-                       "Adding current firmware to FirmwareSet.");
+        xiaLog(XIA_LOG_DEBUG, "xiaFddGetAndCacheFirmware",
+               "Adding current firmware to FirmwareSet.");
         current = (Firmware*) fdd_md_alloc(sizeof(Firmware));
 
         current->user_dsp = NULL;
@@ -965,8 +932,8 @@ FDD_EXPORT int FDD_API xiaFddGetAndCacheFirmware(FirmwareSet* fs, const char* ft
                                     (const char**) fs->keywords, &numFilter);
 
         if (status != XIA_SUCCESS) {
-            xiaFddLogError("xiaFddGetAndCacheFirmware",
-                           "Error getting number of filter params", status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaFddGetAndCacheFirmware",
+                   "Error getting number of filter params");
             return status;
         }
 
@@ -979,8 +946,8 @@ FDD_EXPORT int FDD_API xiaFddGetAndCacheFirmware(FirmwareSet* fs, const char* ft
 
         if (status != XIA_SUCCESS) {
             fdd_md_free(filterInfo);
-            xiaFddLogError("xiaFddGetAndCacheFirmware",
-                           "Error getting filter information from FDD", status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaFddGetAndCacheFirmware",
+                   "Error getting filter information from FDD");
             return status;
         }
 
@@ -990,8 +957,8 @@ FDD_EXPORT int FDD_API xiaFddGetAndCacheFirmware(FirmwareSet* fs, const char* ft
         current->filterInfo = filterInfo;
     }
 
-    sprintf(info_string, "Setting file name %s for firmware type %s", file, ftype);
-    xiaFddLogDebug("xiaFddGetAndCacheFirmware", info_string);
+    xiaLog(XIA_LOG_DEBUG, "xiaFddGetAndCacheFirmware",
+           "Setting file name %s for firmware type %s", file, ftype);
 
     len = strlen(file) + 1;
 
@@ -1011,8 +978,8 @@ FDD_EXPORT int FDD_API xiaFddGetAndCacheFirmware(FirmwareSet* fs, const char* ft
         current->dsp = (char*) fdd_md_alloc(len * sizeof(char));
         strncpy(current->dsp, file, len);
     } else {
-        xiaFddLogError("xiaFddGetAndCacheFirmware",
-                       "The required firmware type is not supported.", XIA_BAD_VALUE);
+        xiaLog(XIA_LOG_ERROR, XIA_BAD_VALUE, "xiaFddGetAndCacheFirmware",
+               "The required firmware type is not supported.");
         return XIA_BAD_VALUE;
     }
 

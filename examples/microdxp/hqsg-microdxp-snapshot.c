@@ -158,6 +158,20 @@ int main(int argc, char* argv[]) {
 
         printf("events = %.0f mca_total = %lu\r\n", statistics[4], mca_total);
 
+        /*
+         * Writes a JSON object, so make sure first and last have the open/close brace!
+         */
+        printf("Run Statistics:\n");
+        printf("{\"run_time\": %.4f,", statistics[0]);
+        printf("\"trigger_livetime\": %.4f,", statistics[1]);
+        printf("\"energy_livetime\": %.4f,", statistics[2]);
+        printf("\"triggers\": %.4f,", statistics[3]);
+        printf("\"events\": %.4f,", statistics[4]);
+        printf("\"icr\": %.4f,", statistics[5]);
+        printf("\"ocr\": %.4f,", statistics[6]);
+        printf("\"underflows\": %.4f,", statistics[7]);
+        printf("\"overflows\": %.4f}\n", statistics[8]);
+
         status = xiaStopRun(-1);
         CHECK_ERROR(status);
     }

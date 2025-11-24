@@ -57,6 +57,8 @@
 #include "handel_log.h"
 #include "handeldef.h"
 
+#include <util/xia_str_manip.h>
+
 static char* MODULE_NULL_STRING = "null";
 #define MODULE_NULL_STRING_LEN (strlen(MODULE_NULL_STRING) + 1)
 
@@ -185,7 +187,6 @@ static ModInitFunc_t inits[] = {
 static AddChanType_t chanTypes[] = {
     {"alias", _addAlias},
     {"detector", _addDetector},
-
 };
 
 #define NUM_CHAN_TYPES (sizeof(chanTypes) / sizeof(chanTypes[0]))
@@ -195,7 +196,11 @@ HANDEL_EXPORT int HANDEL_API xiaNewModule(char* alias) {
 
     Module* current = NULL;
 
-    /* If HanDeL isn't initialized, go ahead and call it... */
+    if (alias == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_ALIAS, "xiaNewModule", "alias cannot be NULL");
+        return XIA_NULL_ALIAS;
+    }
+
     if (!isHandelInit) {
         status = xiaInitHandel();
         if (status != XIA_SUCCESS) {
@@ -203,26 +208,24 @@ HANDEL_EXPORT int HANDEL_API xiaNewModule(char* alias) {
             exit(XIA_INITIALIZE);
         }
 
-        xiaLogWarning("xiaNewModule", "HanDeL initialized silently");
+        xiaLog(XIA_LOG_WARNING, "xiaNewModule", "Handel initialized silently");
     }
 
     if ((strlen(alias) + 1) > MAXALIAS_LEN) {
         status = XIA_ALIAS_SIZE;
-        sprintf(info_string, "Alias contains too many characters");
-        xiaLogError("xiaNewModule", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaNewModule", "alias too long");
         return status;
     }
 
-    /* Does the module alias already exist? */
     current = xiaFindModule(alias);
     if (current != NULL) {
-        status = XIA_ALIAS_EXISTS;
-        sprintf(info_string, "Alias %s already in use", alias);
-        xiaLogError("xiaNewModule", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_ALIAS_EXISTS, "xiaNewModule",
+               "Alias %s already in use", alias);
+        return XIA_ALIAS_EXISTS;
     }
 
-    /* Initialize linked-list or add to it */
+    xiaLog(XIA_LOG_DEBUG, "xiaNewModule", "create new module w/ alias = %s", alias);
+
     current = xiaGetModuleHead();
     if (current == NULL) {
         xiaModuleHead = (Module*) handel_md_alloc(sizeof(Module));
@@ -236,19 +239,17 @@ HANDEL_EXPORT int HANDEL_API xiaNewModule(char* alias) {
         current = current->next;
     }
 
-    /* Did we actually allocate the memory? */
     if (current == NULL) {
-        status = XIA_NOMEM;
-        sprintf(info_string, "Unable to allocate memory for Module alias %s", alias);
-        xiaLogError("xiaNewModule", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "xiaNewModule",
+               "Unable to allocate memory for Module alias %s", alias);
+        return XIA_NOMEM;
     }
 
     status = _initModule(current, alias);
 
     if (status != XIA_SUCCESS) {
         /* XXX: Need to do some cleanup here! */
-        xiaLogError("xiaNewModule", "Error initializing new module", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaNewModule", "Error initializing new module");
         return status;
     }
 
@@ -263,51 +264,46 @@ HANDEL_EXPORT int HANDEL_API xiaAddModuleItem(char* alias, char* name, void* val
 
     Module* m = NULL;
 
-    /* Verify the arguments */
     if (alias == NULL) {
-        status = XIA_NULL_ALIAS;
-        xiaLogError("xiaAddModuleItem", "NULL 'alias' passed into function", status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_ALIAS, "xiaAddModuleItem",
+               "NULL 'alias' passed into function");
+        return XIA_NULL_ALIAS;
     }
 
     if (name == NULL) {
-        status = XIA_NULL_NAME;
-        xiaLogError("xiaAddModuleItem", "NULL 'name' passed into function", status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_NAME, "xiaAddModuleItem",
+               "NULL 'name' passed into function");
+        return XIA_NULL_NAME;
     }
 
     if (value == NULL) {
-        status = XIA_NULL_VALUE;
-        xiaLogError("xiaAddModuleItem", "NULL 'value' passed into function", status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_VALUE, "xiaAddModuleItem",
+               "NULL 'value' passed into function");
+        return XIA_NULL_VALUE;
     }
 
     m = xiaFindModule(alias);
 
     if (m == NULL) {
-        status = XIA_NO_ALIAS;
-        sprintf(info_string, "Alias '%s' does not exist in Handel", alias);
-        xiaLogError("xiaAddModuleItem", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NO_ALIAS, "xiaAddModuleItem",
+               "Alias '%s' does not exist in Handel", alias);
+        return XIA_NO_ALIAS;
     }
 
     for (i = 0; i < nItems; i++) {
         if (STRNEQ(name, items[i].name)) {
             status = _doAddModuleItem(m, value, i, name);
-
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Error adding item '%s' to module '%s'", name,
-                        m->alias);
-                xiaLogError("xiaAddModuleItem", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaAddModuleItem",
+                       "Error adding item '%s' to module '%s'", name, m->alias);
                 return status;
             }
-
             return XIA_SUCCESS;
         }
     }
 
-    sprintf(info_string, "Unknown item '%s' for module '%s'", name, m->alias);
-    xiaLogError("xiaAddModuleItem", info_string, XIA_UNKNOWN_ITEM);
+    xiaLog(XIA_LOG_ERROR, XIA_UNKNOWN_ITEM, "xiaAddModuleItem",
+           "Unknown item '%s' for module '%s'", name, m->alias);
     return XIA_UNKNOWN_ITEM;
 }
 
@@ -316,19 +312,13 @@ HANDEL_EXPORT int HANDEL_API xiaAddModuleItem(char* alias, char* name, void* val
  * a valid entry is not found).
  */
 Module* HANDEL_API xiaFindModule(char* alias) {
-    unsigned int i;
-
-    char strtemp[MAXALIAS_LEN];
+    char* strtemp = NULL;
 
     Module* current = NULL;
 
     ASSERT(alias != NULL);
 
-    /* Convert the name to lowercase */
-    for (i = 0; i < (unsigned int) strlen(alias); i++) {
-        strtemp[i] = (char) tolower((int) alias[i]);
-    }
-    strtemp[strlen(alias)] = '\0';
+    strtemp = xia_lower(alias);
 
     /* Walk through the linked-list until we find it or we run out of elements */
     current = xiaGetModuleHead();
@@ -354,8 +344,6 @@ Module* HANDEL_API xiaFindModule(char* alias) {
  * error check the name. It just ignores it if invalid.
  */
 static int HANDEL_API xiaProcessInterface(Module* chosen, char* name, void* value) {
-    int status;
-
     char* interface = NULL;
 
     ASSERT(chosen != NULL);
@@ -379,11 +367,9 @@ static int HANDEL_API xiaProcessInterface(Module* chosen, char* name, void* valu
         if ((chosen->interface_info->type != XIA_EPP) &&
             (chosen->interface_info->type != XIA_GENERIC_EPP) &&
             (chosen->interface_info->type != XIA_INTERFACE_NONE)) {
-            status = XIA_WRONG_INTERFACE;
-            sprintf(info_string,
-                    "Item %s is not a valid element of the current interface", name);
-            xiaLogError("xiaProcessInterface", info_string, status);
-            return status;
+            xiaLog(XIA_LOG_ERROR, XIA_WRONG_INTERFACE, "xiaProcessInterface",
+                   "Item %s is not a valid element of the current interface", name);
+            return XIA_WRONG_INTERFACE;
         }
 
         /* See if we need to create a new interface */
@@ -392,12 +378,10 @@ static int HANDEL_API xiaProcessInterface(Module* chosen, char* name, void* valu
             chosen->interface_info->info.epp =
                 (Interface_Epp*) handel_md_alloc(sizeof(Interface_Epp));
             if (chosen->interface_info->info.epp == NULL) {
-                status = XIA_NOMEM;
-                xiaLogError(
-                    "xiaProcessInterface",
-                    "Unable to allocate memory for chosen->interface_info->info.epp",
-                    status);
-                return status;
+                xiaLog(
+                    XIA_LOG_ERROR, XIA_NOMEM, "xiaProcessInterface",
+                    "Unable to allocate memory for chosen->interface_info->info.epp");
+                return XIA_NOMEM;
             }
 
             chosen->interface_info->info.epp->daisy_chain_id = UINT_MAX;
@@ -419,11 +403,9 @@ static int HANDEL_API xiaProcessInterface(Module* chosen, char* name, void* valu
          */
         if ((chosen->interface_info->type != XIA_USB) &&
             (chosen->interface_info->type != XIA_INTERFACE_NONE)) {
-            status = XIA_WRONG_INTERFACE;
-            sprintf(info_string,
-                    "Item %s is not a valid element of the current interface", name);
-            xiaLogError("xiaProcessInterface", info_string, status);
-            return status;
+            xiaLog(XIA_LOG_ERROR, XIA_WRONG_INTERFACE, "xiaProcessInterface",
+                   "Item %s is not a valid element of the current interface", name);
+            return XIA_WRONG_INTERFACE;
         }
 
         /* See if we need to create a new interface */
@@ -432,12 +414,10 @@ static int HANDEL_API xiaProcessInterface(Module* chosen, char* name, void* valu
             chosen->interface_info->info.usb =
                 (Interface_Usb*) handel_md_alloc(sizeof(Interface_Usb));
             if (chosen->interface_info->info.usb == NULL) {
-                status = XIA_NOMEM;
-                xiaLogError(
-                    "xiaProcessInterface",
-                    "Unable to allocate memory for chosen->interface_info->info.usb",
-                    status);
-                return status;
+                xiaLog(
+                    XIA_LOG_ERROR, XIA_NOMEM, "xiaProcessInterface",
+                    "Unable to allocate memory for chosen->interface_info->info.usb");
+                return XIA_NOMEM;
             }
             chosen->interface_info->info.usb->device_number = 0;
         }
@@ -449,11 +429,8 @@ static int HANDEL_API xiaProcessInterface(Module* chosen, char* name, void* valu
         /* Check that the module type is correct */
         if (chosen->interface_info->type != XIA_USB2 &&
             chosen->interface_info->type != XIA_INTERFACE_NONE) {
-            sprintf(info_string,
-                    "Item %s is not a valid element of the "
-                    "current interface",
-                    name);
-            xiaLogError("xiaProcessInterface", info_string, XIA_WRONG_INTERFACE);
+            xiaLog(XIA_LOG_ERROR, XIA_WRONG_INTERFACE, "xiaProcessInterface",
+                   "Item %s is not a valid element of the current interface", name);
             return XIA_WRONG_INTERFACE;
         }
 
@@ -464,10 +441,9 @@ static int HANDEL_API xiaProcessInterface(Module* chosen, char* name, void* valu
                 (Interface_Usb2*) handel_md_alloc(sizeof(Interface_Usb2));
 
             if (chosen->interface_info->info.usb2 == NULL) {
-                xiaLogError("xiaProcessInterface",
-                            "Unable to allocate memory for "
-                            "chosen->interface_info->info.usb2",
-                            XIA_NOMEM);
+                xiaLog(
+                    XIA_LOG_ERROR, XIA_NOMEM, "xiaProcessInterface",
+                    "Unable to allocate memory for chosen->interface_info->info.usb2");
                 return XIA_NOMEM;
             }
             chosen->interface_info->info.usb2->device_number = 0;
@@ -480,11 +456,9 @@ static int HANDEL_API xiaProcessInterface(Module* chosen, char* name, void* valu
                STREQ(name, "device_file") || STREQ(interface, "serial")) {
         if ((chosen->interface_info->type != XIA_SERIAL) &&
             (chosen->interface_info->type != XIA_INTERFACE_NONE)) {
-            status = XIA_WRONG_INTERFACE;
-            sprintf(info_string,
-                    "Item %s is not a valid element of the current interface", name);
-            xiaLogError("xiaProcessInterface", info_string, status);
-            return status;
+            xiaLog(XIA_LOG_ERROR, XIA_WRONG_INTERFACE, "xiaProcessInterface",
+                   "Item %s is not a valid element of the current interface", name);
+            return XIA_WRONG_INTERFACE;
         }
 
         if (chosen->interface_info->type == XIA_INTERFACE_NONE) {
@@ -493,12 +467,10 @@ static int HANDEL_API xiaProcessInterface(Module* chosen, char* name, void* valu
                 (Interface_Serial*) handel_md_alloc(sizeof(Interface_Serial));
 
             if (chosen->interface_info->info.serial == NULL) {
-                status = XIA_NOMEM;
-                xiaLogError(
-                    "xiaProcessInterface",
-                    "Unable to allocate memory for chosen->interface_info->info.serial",
-                    status);
-                return status;
+                xiaLog(
+                    XIA_LOG_ERROR, XIA_NOMEM, "xiaProcessInterface",
+                    "Unable to allocate memory for chosen->interface_info->info.serial");
+                return XIA_NOMEM;
             }
             chosen->interface_info->info.serial->com_port = 0;
             chosen->interface_info->info.serial->device_file = NULL;
@@ -512,10 +484,9 @@ static int HANDEL_API xiaProcessInterface(Module* chosen, char* name, void* valu
             chosen->interface_info->info.serial->device_file =
                 handel_md_alloc(strlen(value) + 1);
             if (chosen->interface_info->info.serial->device_file == NULL) {
-                xiaLogError("xiaProcessInterface",
-                            "Unable to allocate memory for "
-                            "chosen->interface_info->info.serial->device_file",
-                            XIA_NOMEM);
+                xiaLog(
+                    XIA_LOG_ERROR, XIA_NOMEM, "xiaProcessInterface",
+                    "Unable to allocate memory for chosen->interface_info->info.serial->device_file");
                 return XIA_NOMEM;
             }
             strcpy(chosen->interface_info->info.serial->device_file, f);
@@ -526,11 +497,9 @@ static int HANDEL_API xiaProcessInterface(Module* chosen, char* name, void* valu
                STREQ(interface, "pxi")) {
         if ((chosen->interface_info->type != XIA_PLX) &&
             (chosen->interface_info->type != XIA_INTERFACE_NONE)) {
-            sprintf(info_string,
-                    "'%s' is not a valid element of the "
-                    "currently selected interface",
-                    name);
-            xiaLogError("xiaProcessInterface", info_string, XIA_WRONG_INTERFACE);
+            xiaLog(XIA_LOG_ERROR, XIA_WRONG_INTERFACE, "xiaProcessInterface",
+                   "'%s' is not a valid element of the currently selected interface",
+                   name);
             return XIA_WRONG_INTERFACE;
         }
 
@@ -540,11 +509,10 @@ static int HANDEL_API xiaProcessInterface(Module* chosen, char* name, void* valu
                 (Interface_Plx*) handel_md_alloc(sizeof(Interface_Plx));
 
             if (!chosen->interface_info->info.plx) {
-                sprintf(info_string,
-                        "Error allocating %ld bytes for "
-                        "'chosen->interface_info->info.plx'",
-                        (long) sizeof(Interface_Plx));
-                xiaLogError("xiaProcessInterface", info_string, XIA_NOMEM);
+                xiaLog(
+                    XIA_LOG_ERROR, XIA_NOMEM, "xiaProcessInterface",
+                    "Error allocating %ld bytes for 'chosen->interface_info->info.plx'",
+                    (long) sizeof(Interface_Plx));
                 return XIA_NOMEM;
             }
 
@@ -558,10 +526,9 @@ static int HANDEL_API xiaProcessInterface(Module* chosen, char* name, void* valu
             chosen->interface_info->info.plx->bus = *((byte_t*) value);
         }
     } else {
-        status = XIA_MISSING_INTERFACE;
-        sprintf(info_string, "'%s' is a member of an unknown interface", name);
-        xiaLogError("xiaProcessInterface", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_MISSING_INTERFACE, "xiaProcessInterface",
+               "'%s' is a member of an unknown interface", name);
+        return XIA_MISSING_INTERFACE;
     }
 
     return XIA_SUCCESS;
@@ -585,10 +552,9 @@ static int _addAlias(Module* chosen, int idx, void* value) {
         chosen->channels =
             (int*) handel_md_alloc(chosen->number_of_channels * sizeof(int));
         if (chosen->channels == NULL) {
-            status = XIA_NOMEM;
-            xiaLogError("_addAlias", "Unable to allocate memory for chosen->channels",
-                        status);
-            return status;
+            xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "_addAlias",
+                   "Unable to allocate memory for chosen->channels");
+            return XIA_NOMEM;
         }
 
         memset(chosen->channels, -1, chosen->number_of_channels);
@@ -618,17 +584,16 @@ static int _addAlias(Module* chosen, int idx, void* value) {
         }
 
         if (!xiaIsDetChanFree(detChan)) {
-            status = XIA_INVALID_DETCHAN;
-            sprintf(info_string, "detChan %d is invalid", *((int*) value));
-            xiaLogError("_addAlias", info_string, status);
-            return status;
+            xiaLog(XIA_LOG_ERROR, XIA_INVALID_DETCHAN, "_addAlias",
+                   "detChan %d is invalid", *((int*) value));
+            return XIA_INVALID_DETCHAN;
         }
 
         status = xiaAddDetChan(SINGLE, (unsigned int) detChan, (void*) chosen->alias);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error adding detChan %d", detChan);
-            xiaLogError("_addAlias", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "_addAlias", "Error adding detChan %d",
+                   detChan);
             return status;
         }
     }
@@ -656,8 +621,8 @@ static int _addDetector(Module* chosen, int idx, void* value) {
     status = _parseDetectorIdx((char*) value, &didx, alias);
 
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error parsing '%s'", (char*) value);
-        xiaLogError("_addDetector", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "_addDetector", "Error parsing '%s'",
+               (char*) value);
         return status;
     }
 
@@ -666,29 +631,26 @@ static int _addDetector(Module* chosen, int idx, void* value) {
     detector = xiaFindDetector(alias);
 
     if (detector == NULL) {
-        status = XIA_NO_ALIAS;
-        sprintf(info_string, "Detector alias: '%s' does not exist", alias);
-        xiaLogError("_addDetector", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NO_ALIAS, "_addDetector",
+               "Detector alias: '%s' does not exist", alias);
+        return XIA_NO_ALIAS;
     }
 
     if (chosen->detector == NULL) {
         chosen->detector =
             (char**) handel_md_alloc(chosen->number_of_channels * sizeof(char*));
         if (chosen->detector == NULL) {
-            status = XIA_NOMEM;
-            xiaLogError("_addDetector",
-                        "Unable to allocate memory for chosen->detector", status);
-            return status;
+            xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "_addDetector",
+                   "Unable to allocate memory for chosen->detector");
+            return XIA_NOMEM;
         }
 
         for (i = 0; i < (int) chosen->number_of_channels; i++) {
             chosen->detector[i] = (char*) handel_md_alloc(MAXALIAS_LEN * sizeof(char));
             if (chosen->detector[i] == NULL) {
                 status = XIA_NOMEM;
-                xiaLogError("_addDetector",
-                            "Unable to allocate memory for chosen->detector[i]",
-                            status);
+                xiaLog(XIA_LOG_ERROR, status, "_addDetector",
+                       "Unable to allocate memory for chosen->detector[i]");
                 return status;
             }
         }
@@ -705,10 +667,9 @@ static int _addDetector(Module* chosen, int idx, void* value) {
 
     /* Check that didx is valid... */
     if (didx >= (int) detector->nchan) {
-        status = XIA_BAD_CHANNEL;
-        sprintf(info_string, "Specified physical detector channel is invalid");
-        xiaLogError("_addDetector", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_BAD_CHANNEL, "_addDetector",
+               "Specified physical detector channel is invalid");
+        return XIA_BAD_CHANNEL;
     }
 
     if (chosen->detector_chan == NULL) {
@@ -716,8 +677,8 @@ static int _addDetector(Module* chosen, int idx, void* value) {
             (int*) handel_md_alloc(chosen->number_of_channels * sizeof(int));
         if (chosen->detector_chan == NULL) {
             status = XIA_NOMEM;
-            xiaLogError("_addDetector",
-                        "Unable to allocate memory for chosen->detector_chan", status);
+            xiaLog(XIA_LOG_ERROR, status, "_addDetector",
+                   "Unable to allocate memory for chosen->detector_chan");
             return status;
         }
     }
@@ -734,7 +695,6 @@ static int _addDetector(Module* chosen, int idx, void* value) {
  * first 8 characters and the routine operates on that assumption.
  */
 static int HANDEL_API xiaProcessFirmware(Module* chosen, char* name, void* value) {
-    int status;
     int i;
     int j;
     int idx;
@@ -746,10 +706,9 @@ static int HANDEL_API xiaProcessFirmware(Module* chosen, char* name, void* value
 
     firmware = xiaFindFirmware((char*) value);
     if (firmware == NULL) {
-        status = XIA_BAD_VALUE;
-        sprintf(info_string, "Firmware alias %s is invalid", (char*) value);
-        xiaLogError("xiaProcessFirmware", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_BAD_VALUE, "xiaProcessFirmware",
+               "Firmware alias %s is invalid", (char*) value);
+        return XIA_BAD_VALUE;
     }
 
     /*
@@ -761,20 +720,17 @@ static int HANDEL_API xiaProcessFirmware(Module* chosen, char* name, void* value
         chosen->firmware =
             (char**) handel_md_alloc(chosen->number_of_channels * sizeof(char*));
         if (chosen->firmware == NULL) {
-            status = XIA_NOMEM;
-            xiaLogError("xiaProcessFirmware",
-                        "Unable to allocate memory for chosen->firmware", status);
-            return status;
+            xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "xiaProcessFirmware",
+                   "Unable to allocate memory for chosen->firmware");
+            return XIA_NOMEM;
         }
 
         for (i = 0; i < (int) chosen->number_of_channels; i++) {
             chosen->firmware[i] = (char*) handel_md_alloc(MAXALIAS_LEN * sizeof(char));
             if (chosen->firmware[i] == NULL) {
-                status = XIA_NOMEM;
-                xiaLogError("xiaProcessFirmware",
-                            "Unable to allocate memory for chosen->firmware[i]",
-                            status);
-                return status;
+                xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "xiaProcessFirmware",
+                       "Unable to allocate memory for chosen->firmware[i]");
+                return XIA_NOMEM;
             }
         }
     }
@@ -801,18 +757,16 @@ static int HANDEL_API xiaProcessFirmware(Module* chosen, char* name, void* value
         idx = atoi(sidx + 5);
 
         if ((idx >= (int) chosen->number_of_channels) || (idx < 0)) {
-            status = XIA_BAD_CHANNEL;
-            sprintf(info_string, "Specified channel is invalid");
-            xiaLogError("xiaProcessFirmware", info_string, status);
-            return status;
+            xiaLog(XIA_LOG_ERROR, XIA_BAD_CHANNEL, "xiaProcessFirmware",
+                   "Specified channel is invalid");
+            return XIA_BAD_CHANNEL;
         }
 
         strcpy(chosen->firmware[idx], (char*) value);
     } else {
-        status = XIA_BAD_NAME;
-        sprintf(info_string, "Invalid name: %s", name);
-        xiaLogError("xiaProcessFirmware", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_BAD_NAME, "xiaProcessFirmware", "Invalid name: %s",
+               name);
+        return XIA_BAD_NAME;
     }
 
     return XIA_SUCCESS;
@@ -834,19 +788,17 @@ static int HANDEL_API xiaProcessDefault(Module* chosen, char* name, void* value)
 
     XiaDefaults* defaults = NULL;
 
-    sprintf(info_string, "Preparing to find default %s", (char*) value);
-    xiaLogDebug("xiaProcessDefault", info_string);
+    xiaLog(XIA_LOG_DEBUG, "xiaProcessDefault", "Preparing to find default %s",
+           (char*) value);
 
     defaults = xiaFindDefault((char*) value);
     if (defaults == NULL) {
-        status = XIA_NO_ALIAS;
-        sprintf(info_string, "Defaults alias %s is invalid", (char*) value);
-        xiaLogError("xiaProcessDefault", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NO_ALIAS, "xiaProcessDefault",
+               "Defaults alias %s is invalid", (char*) value);
+        return XIA_NO_ALIAS;
     }
 
-    sprintf(info_string, "name = %s", name);
-    xiaLogDebug("xiaProcessDefault", info_string);
+    xiaLog(XIA_LOG_DEBUG, "xiaProcessDefault", "name = %s", name);
 
     /* Determine if the name string is "defaults_all" or "defaults_chan{n}" */
     sidx = strrchr(name, '_');
@@ -857,9 +809,9 @@ static int HANDEL_API xiaProcessDefault(Module* chosen, char* name, void* value)
                                       (char*) value);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Error merging default %s into default %s",
-                        (char*) value, chosen->defaults[j]);
-                xiaLogError("xiaProcessDefault", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaProcessDefault",
+                       "Error merging default %s into default %s", (char*) value,
+                       chosen->defaults[j]);
                 return status;
             }
         }
@@ -877,33 +829,30 @@ static int HANDEL_API xiaProcessDefault(Module* chosen, char* name, void* value)
     if (STREQ(strtemp, "chan")) {
         idx = atoi(sidx + 5);
 
-        sprintf(info_string, "idx = %d", idx);
-        xiaLogDebug("xiaProcessDefault", info_string);
+        xiaLog(XIA_LOG_DEBUG, "xiaProcessDefault", "idx = %d", idx);
 
         if ((idx >= (int) chosen->number_of_channels) || (idx < 0)) {
-            status = XIA_BAD_CHANNEL;
-            sprintf(info_string, "Specified channel is invalid");
-            xiaLogError("xiaProcessDefault", info_string, status);
-            return status;
+            xiaLog(XIA_LOG_ERROR, XIA_BAD_CHANNEL, "xiaProcessDefault",
+                   "Specified channel is invalid");
+            return XIA_BAD_CHANNEL;
         }
 
-        sprintf(info_string, "name = %s, new value = %s, old value = %s", name,
-                (char*) value, chosen->defaults[idx]);
-        xiaLogDebug("xiaProcessDefault", info_string);
+        xiaLog(XIA_LOG_DEBUG, "xiaProcessDefault",
+               "name = %s, new value = %s, old value = %s", name, (char*) value,
+               chosen->defaults[idx]);
 
         status = xiaMergeDefaults(chosen->defaults[idx], chosen->defaults[idx],
                                   (char*) value);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error merging default %s into default %s",
-                    (char*) value, chosen->defaults[idx]);
-            xiaLogError("xiaProcessDefault", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaProcessDefault",
+                   "Error merging default %s into default %s", (char*) value,
+                   chosen->defaults[idx]);
             return status;
         }
     } else {
         status = XIA_BAD_NAME;
-        sprintf(info_string, "Invalid name: %s", name);
-        xiaLogError("xiaProcessDefault", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaProcessDefault", "Invalid name: %s", name);
         return status;
     }
 
@@ -934,10 +883,9 @@ static int HANDEL_API xiaMergeDefaults(char* output, char* input1, char* input2)
             status = xiaAddDefaultItem(output, current->name, (void*) &(current->data));
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string,
-                        "Error adding default %s (value = %.3f) to alias %s",
-                        current->name, current->data, output);
-                xiaLogError("xiaMergeDefaults", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaMergeDefaults",
+                       "Error adding default %s (value = %.3f) to alias %s",
+                       current->name, current->data, output);
                 return status;
             }
 
@@ -951,9 +899,9 @@ static int HANDEL_API xiaMergeDefaults(char* output, char* input1, char* input2)
         status = xiaAddDefaultItem(output, current->name, (void*) &(current->data));
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error adding default %s (value = %.3f) to alias %s",
-                    current->name, current->data, output);
-            xiaLogError("xiaMergeDefaults", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaMergeDefaults",
+                   "Error adding default %s (value = %.3f) to alias %s", current->name,
+                   current->data, output);
             return status;
         }
 
@@ -966,22 +914,35 @@ static int HANDEL_API xiaMergeDefaults(char* output, char* input1, char* input2)
 HANDEL_EXPORT int HANDEL_API xiaModifyModuleItem(char* alias, char* name, void* value) {
     int status;
 
-    /*
-     * Basically a wrapper that filters out module items that we would rather
-     * the user not modify once the module has been defined.
-     */
+    if (alias == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_ALIAS, "xiaModifyDetectorItem",
+               "alias cannot be NULL");
+        return XIA_NULL_ALIAS;
+    }
+
+    if (name == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_NAME, "xiaModifyDetectorItem",
+               "name cannot be NULL");
+        return XIA_NULL_NAME;
+    }
+
+    if (value == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_VALUE, "xiaModifyDetectorItem",
+               "value can not be NULL");
+        return XIA_NULL_VALUE;
+    }
+
     if (STREQ(name, "module_type") || STREQ(name, "number_of_channels")) {
-        status = XIA_NO_MODIFY;
-        sprintf(info_string, "Name: %s can not be modified", name);
-        xiaLogError("xiaModifyModuleItem", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NO_MODIFY, "xiaModifyModuleItem",
+               "%s can not be modified", name);
+        return XIA_NO_MODIFY;
     }
 
     status = xiaAddModuleItem(alias, name, value);
 
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error modifying module item: %s", name);
-        xiaLogError("xiaModifyModuleItem", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaModifyModuleItem", "error modifying %s",
+               name);
         return status;
     }
 
@@ -995,12 +956,28 @@ HANDEL_EXPORT int HANDEL_API xiaGetModuleItem(char* alias, char* name, void* val
 
     Module* chosen = NULL;
 
+    if (alias == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_ALIAS, "xiaGetModuleItem",
+               "alias cannot be NULL");
+        return XIA_NULL_ALIAS;
+    }
+
+    if (name == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_NAME, "xiaGetModuleItem", "name cannot be NULL");
+        return XIA_NULL_NAME;
+    }
+
+    if (value == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_VALUE, "xiaGetModuleItem",
+               "value cannot be null");
+        return XIA_NULL_VALUE;
+    }
+
     chosen = xiaFindModule(alias);
     if (chosen == NULL) {
-        status = XIA_NO_ALIAS;
-        sprintf(info_string, "Alias %s has not been created", alias);
-        xiaLogError("xiaGetModuleItem", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NO_ALIAS, "xiaGetModuleItem",
+               "Alias %s has not been created", alias);
+        return XIA_NO_ALIAS;
     }
 
     nameTok = xiaGetNameToken(name);
@@ -1034,8 +1011,8 @@ HANDEL_EXPORT int HANDEL_API xiaGetModuleItem(char* alias, char* name, void* val
     }
 
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Unable to get value of %s", name);
-        xiaLogError("xiaGetModuleItem", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaGetModuleItem", "Unable to get value of %s",
+               name);
         return status;
     }
 
@@ -1045,6 +1022,13 @@ HANDEL_EXPORT int HANDEL_API xiaGetModuleItem(char* alias, char* name, void* val
 HANDEL_EXPORT int HANDEL_API xiaGetNumModules(unsigned int* numModules) {
     unsigned int count = 0;
     Module* current = xiaGetModuleHead();
+
+    if (numModules == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_VALUE, "xiaGetNumModules",
+               "numModules cannot be NULL");
+        return XIA_NULL_VALUE;
+    }
+
     while (current != NULL) {
         count++;
         current = getListNext(current);
@@ -1056,7 +1040,19 @@ HANDEL_EXPORT int HANDEL_API xiaGetNumModules(unsigned int* numModules) {
 HANDEL_EXPORT int HANDEL_API xiaGetModules(char* modules[]) {
     int i;
     Module* current = xiaGetModuleHead();
+
+    if (modules == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_VALUE, "xiaGetModules", "modules array is NULL");
+        return XIA_NULL_VALUE;
+    }
+
     for (i = 0; current != NULL; current = getListNext(current), i++) {
+        if (modules[i] == NULL) {
+            xiaLog(XIA_LOG_ERROR, XIA_NULL_VALUE, "xiaGetModules",
+                   "modules[%i] is NULL", i);
+            return XIA_NULL_VALUE;
+        }
+
         strcpy(modules[i], current->alias);
     }
     return XIA_SUCCESS;
@@ -1077,8 +1073,8 @@ HANDEL_EXPORT int HANDEL_API xiaGetModules_VB(unsigned int index, char* alias) {
     }
 
     status = XIA_BAD_INDEX;
-    sprintf(info_string, "Index = %u is out of range for the modules list", index);
-    xiaLogError("xiaGetModules_VB", info_string, status);
+    xiaLog(XIA_LOG_ERROR, status, "xiaGetModules_VB",
+           "Index = %u is out of range for the modules list", index);
     return status;
 }
 
@@ -1155,8 +1151,6 @@ static boolean_t HANDEL_API xiaIsSubInterface(char* name) {
  * interface.
  */
 static int HANDEL_API xiaGetIFaceInfo(Module* chosen, char* name, void* value) {
-    int status;
-
     if (STREQ(name, "interface")) {
         strcpy((char*) value, interfaceStr[chosen->interface_info->type]);
     } else if (chosen->interface_info->type == XIA_GENERIC_EPP ||
@@ -1189,11 +1183,9 @@ static int HANDEL_API xiaGetIFaceInfo(Module* chosen, char* name, void* value) {
             *((byte_t*) value) = chosen->interface_info->info.plx->bus;
         }
     } else {
-        status = XIA_WRONG_INTERFACE;
-        sprintf(info_string,
-                "Specified name: %s does not apply to the current interface", name);
-        xiaLogError("xiaGetIFaceInfo", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_WRONG_INTERFACE, "xiaGetIFaceInfo",
+               "Specified name: %s does not apply to the current interface", name);
+        return XIA_WRONG_INTERFACE;
     }
 
     return XIA_SUCCESS;
@@ -1253,8 +1245,8 @@ static int HANDEL_API xiaGetChannel(Module* chosen, char* name, void* value) {
     handel_md_free((void*) tmpName);
 
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error getting module information");
-        xiaLogError("xiaGetChannel", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaGetChannel",
+               "Error getting module information");
         return status;
     }
 
@@ -1267,18 +1259,14 @@ static int HANDEL_API xiaGetChannel(Module* chosen, char* name, void* value) {
  * proper range.
  */
 static int HANDEL_API xiaGetAlias(Module* chosen, int chan, void* value) {
-    int status;
-
     if ((unsigned int) chan >= chosen->number_of_channels) {
-        status = XIA_BAD_CHANNEL;
-        sprintf(info_string, "Specified channel is out-of-range");
-        xiaLogError("xiaGetAlias", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_BAD_CHANNEL, "xiaGetAlias",
+               "channel is out-of-range");
+        return XIA_BAD_CHANNEL;
     }
 
-    sprintf(info_string, "chosen = %p, chan = %d, alias = %d", chosen, chan,
-            chosen->channels[chan]);
-    xiaLogDebug("xiaGetAlias", info_string);
+    xiaLog(XIA_LOG_DEBUG, "xiaGetAlias", "chosen = %p, chan = %d, alias = %d", chosen,
+           chan, chosen->channels[chan]);
 
     *((int*) value) = chosen->channels[chan];
 
@@ -1290,8 +1278,6 @@ static int HANDEL_API xiaGetAlias(Module* chosen, int chan, void* value) {
  * This routine verfies that chan is within the proper range.
  */
 static int HANDEL_API xiaGetDetector(Module* chosen, int chan, void* value) {
-    int status;
-
     /*
      * It's MAXALIAS_LEN + 5 since I want to build a string that has the
      * detector alias name (which can be up to MAXALIAS_LEN chars) concatenated
@@ -1300,10 +1286,9 @@ static int HANDEL_API xiaGetDetector(Module* chosen, int chan, void* value) {
     char strTemp[MAXALIAS_LEN + 5];
 
     if ((unsigned int) chan >= chosen->number_of_channels) {
-        status = XIA_BAD_CHANNEL;
-        sprintf(info_string, "Specified channel is out-of-range.");
-        xiaLogError("xiaGetDetector", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_BAD_CHANNEL, "xiaGetDetector",
+               "channel is out-of-range.");
+        return XIA_BAD_CHANNEL;
     }
 
     sprintf(strTemp, "%s:%d%c", chosen->detector[chan], chosen->detector_chan[chan],
@@ -1321,7 +1306,6 @@ static int HANDEL_API xiaGetDetector(Module* chosen, int chan, void* value) {
  * valid choice. Example name "firmware_set_chan0"
  */
 static int HANDEL_API xiaGetFirmwareInfo(Module* chosen, char* name, void* value) {
-    int status;
     int len;
     int chan;
 
@@ -1329,10 +1313,9 @@ static int HANDEL_API xiaGetFirmwareInfo(Module* chosen, char* name, void* value
     char* sidx;
 
     if (STREQ(name, "firmware_set_all")) {
-        status = XIA_BAD_NAME;
-        sprintf(info_string, "Must specify channel to retrieve firmware info. from");
-        xiaLogError("xiaGetFirmwareInfo", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_BAD_NAME, "xiaGetFirmwareInfo",
+               "Must specify channel to retrieve firmware info. from");
+        return XIA_BAD_NAME;
     }
 
     len = (int) strlen(name);
@@ -1343,21 +1326,18 @@ static int HANDEL_API xiaGetFirmwareInfo(Module* chosen, char* name, void* value
     sidx = strrchr(tmpName, '_');
 
     if (strncmp(sidx + 1, "chan", 4) != 0) {
-        status = XIA_BAD_NAME;
-        sprintf(info_string, "Invalid name");
-        xiaLogError("xiaGetFirmwareInfo", info_string, status);
+        xiaLog(XIA_LOG_ERROR, XIA_BAD_NAME, "xiaGetFirmwareInfo", "Invalid name");
         handel_md_free((void*) tmpName);
-        return status;
+        return XIA_BAD_NAME;
     }
 
     chan = atoi(sidx + 1 + 4);
     handel_md_free((void*) tmpName);
 
     if ((unsigned int) chan >= chosen->number_of_channels) {
-        status = XIA_BAD_CHANNEL;
-        sprintf(info_string, "Specified channel is out-of-range");
-        xiaLogError("xiaGetFirmwareInfo", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_BAD_CHANNEL, "xiaGetFirmwareInfo",
+               "Specified channel is out-of-range");
+        return XIA_BAD_CHANNEL;
     }
 
     strcpy((char*) value, chosen->firmware[chan]);
@@ -1372,7 +1352,6 @@ static int HANDEL_API xiaGetFirmwareInfo(Module* chosen, char* name, void* value
  * valid choice.
  */
 static int HANDEL_API xiaGetDefault(Module* chosen, char* name, void* value) {
-    int status;
     int len;
     int chan;
 
@@ -1380,10 +1359,9 @@ static int HANDEL_API xiaGetDefault(Module* chosen, char* name, void* value) {
     char* sidx;
 
     if (STREQ(name, "default_all")) {
-        status = XIA_BAD_NAME;
-        sprintf(info_string, "Must specify channel to retrieve default info. from");
-        xiaLogError("xiaGetDefault", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_BAD_NAME, "xiaGetDefault",
+               "Must specify channel to retrieve default info. from");
+        return XIA_BAD_NAME;
     }
 
     len = (int) strlen(name);
@@ -1393,25 +1371,18 @@ static int HANDEL_API xiaGetDefault(Module* chosen, char* name, void* value) {
     sidx = strrchr(tmpName, '_');
 
     if (strncmp(sidx + 1, "chan", 4) != 0) {
-        status = XIA_BAD_NAME;
-        sprintf(info_string, "Invalid name");
-        xiaLogError("xiaGetDefault", info_string, status);
-
+        xiaLog(XIA_LOG_ERROR, XIA_BAD_NAME, "xiaGetDefault", "Invalid name");
         handel_md_free((void*) tmpName);
-
-        return status;
+        return XIA_BAD_NAME;
     }
 
     sscanf(sidx + 5, "%d", &chan);
 
     if ((unsigned int) chan >= chosen->number_of_channels) {
-        status = XIA_BAD_CHANNEL;
-        sprintf(info_string, "Specified channel is out-of-range");
-        xiaLogError("xiaGetDefault", info_string, status);
-
+        xiaLog(XIA_LOG_ERROR, XIA_BAD_CHANNEL, "xiaGetDefault",
+               "Specified channel is out-of-range");
         handel_md_free((void*) tmpName);
-
-        return status;
+        return XIA_BAD_CHANNEL;
     }
 
     strcpy((char*) value, chosen->defaults[chan]);
@@ -1441,44 +1412,49 @@ static int HANDEL_API xiaGetNumChans(Module* chosen, void* value) {
 }
 
 HANDEL_EXPORT int HANDEL_API xiaRemoveModule(char* alias) {
-    int status;
-
     unsigned int size;
     unsigned int i;
 
+    char* strtemp = NULL;
+
+    Module* found = NULL;
     Module* prev = NULL;
     Module* next = NULL;
     Module* current = NULL;
 
-    current = xiaGetModuleHead();
-
-    if (isListEmpty(current)) {
-        status = XIA_NO_ALIAS;
-        sprintf(info_string, "Alias %s does not exist", alias);
-        xiaLogError("xiaRemoveModule", info_string, status);
-        return status;
+    if (alias == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_ALIAS, "xiaRemoveModule",
+               "alias cannot be NULL");
+        return XIA_NULL_ALIAS;
     }
 
-    next = current->next;
+    found = xiaFindModule(alias);
+    if (isListEmpty(xiaGetModuleHead()) || found == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NO_ALIAS, "xiaRemoveModule",
+               "Alias %s does not exist", alias);
+        return XIA_NO_ALIAS;
+    }
 
-    /* Iterate until we do (or don't) find the Module we are looking for */
-    while (!STREQ(alias, current->alias)) {
+    strtemp = xia_lower(alias);
+
+    current = xiaGetModuleHead();
+    next = current->next;
+    while (!STREQ(strtemp, current->alias)) {
         prev = current;
         current = next;
         next = current->next;
     }
 
-    if (current == NULL && next == NULL) {
-        status = XIA_NO_ALIAS;
-        sprintf(info_string, "Alias %s does not exist", alias);
-        xiaLogError("xiaRemoveModule", info_string, status);
-        return status;
-    }
-
     if (current == xiaGetModuleHead()) {
         xiaModuleHead = current->next;
     } else {
-        prev->next = current->next;
+        if (prev != NULL) {
+            prev->next = current->next;
+        } else {
+            xiaLog(XIA_LOG_ERROR, XIA_BAD_INDEX, "xiaRemoveFirmware",
+                   "no previous element in fw list");
+            return XIA_BAD_INDEX;
+        }
     }
 
     size = current->number_of_channels;
@@ -1564,7 +1540,7 @@ static int HANDEL_API xiaSetDefaults(Module* module) {
     status = xiaLoadPSL(module->type, &localFuncs);
 
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaSetDefaults", "Error loading PSL Functions", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaSetDefaults", "Error loading PSL Functions");
         return status;
     }
 
@@ -1575,25 +1551,20 @@ static int HANDEL_API xiaSetDefaults(Module* module) {
         handel_md_alloc(module->number_of_channels * sizeof(*(module->defaults)));
 
     if (module->defaults == NULL) {
-        status = XIA_NOMEM;
-        sprintf(info_string, "Unable to allocate %u bytes for module->defaults.",
-                module->number_of_channels *
-                    (unsigned int) sizeof(*(module->defaults)));
-        xiaLogError("xiaSetDefaults", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "xiaSetDefaults",
+               "Unable to allocate %u bytes for module->defaults.",
+               module->number_of_channels * (unsigned int) sizeof(*(module->defaults)));
+        return XIA_NOMEM;
     }
 
     for (n = 0; n < module->number_of_channels; n++) {
         module->defaults[n] = handel_md_alloc(MAXALIAS_LEN);
 
         if (module->defaults[n] == NULL) {
-            status = XIA_NOMEM;
-            sprintf(info_string,
-                    "Unable to allocate %d bytes for "
-                    "module->defaults[%u].",
-                    MAXALIAS_LEN, n);
-            xiaLogError("xiaSetDefaults", info_string, status);
-            return status;
+            xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "xiaSetDefaults",
+                   "Unable to allocate %d bytes for module->defaults[%u].",
+                   MAXALIAS_LEN, n);
+            return XIA_NOMEM;
         }
 
         memset(module->defaults[n], 0, MAXALIAS_LEN);
@@ -1606,18 +1577,18 @@ static int HANDEL_API xiaSetDefaults(Module* module) {
          * Don't tear down memory allocated for a Module struct. That
          * cleanup should happen elsewhere.
          */
-        sprintf(info_string, "Unable to allocate %u bytes for defNames.",
-                numDefaults * (unsigned int) MAXITEM_LEN);
-        xiaLogError("xiaSetDefaults", info_string, XIA_NOMEM);
+        xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "xiaSetDefaults",
+               "Unable to allocate %u bytes for defNames.",
+               numDefaults * (unsigned int) MAXITEM_LEN);
         return XIA_NOMEM;
     }
 
     nameBlk = handel_md_alloc(numDefaults * MAXITEM_LEN);
 
     if (!nameBlk) {
-        sprintf(info_string, "Unable to allocate %u bytes for nameBlk.",
-                numDefaults * (unsigned int) MAXITEM_LEN);
-        xiaLogError("xiaSetDefaults", info_string, XIA_NOMEM);
+        xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "xiaSetDefaults",
+               "Unable to allocate %u bytes for nameBlk.",
+               numDefaults * (unsigned int) MAXITEM_LEN);
         return XIA_NOMEM;
     }
 
@@ -1633,9 +1604,9 @@ static int HANDEL_API xiaSetDefaults(Module* module) {
         handel_md_free(defNames);
         handel_md_free(nameBlk);
 
-        sprintf(info_string, "Unable to allocate %u bytes for defValues.",
-                numDefaults * (unsigned int) sizeof(*defValues));
-        xiaLogError("xiaSetDefaults", info_string, XIA_NOMEM);
+        xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "xiaSetDefaults",
+               "Unable to allocate %u bytes for defValues.",
+               numDefaults * (unsigned int) sizeof(*defValues));
         return XIA_NOMEM;
     }
 
@@ -1650,8 +1621,8 @@ static int HANDEL_API xiaSetDefaults(Module* module) {
         handel_md_free(nameBlk);
         handel_md_free(defValues);
 
-        xiaLogError("xiaSetDefaults", "Error getting default alias information",
-                    status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaSetDefaults",
+               "Error getting default alias information");
         return status;
     }
 
@@ -1680,8 +1651,8 @@ static int HANDEL_API xiaSetDefaults(Module* module) {
                 handel_md_free(nameBlk);
                 handel_md_free(defValues);
 
-                sprintf(info_string, "Error creating default with alias %s", alias);
-                xiaLogError("xiaSetDefaults", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaSetDefaults",
+                       "Error creating default with alias %s", alias);
                 return status;
             }
             defaults = xiaFindDefault(alias);
@@ -1700,8 +1671,8 @@ static int HANDEL_API xiaSetDefaults(Module* module) {
             handel_md_free(nameBlk);
             handel_md_free(defValues);
 
-            sprintf(info_string, "Error creating %s default list", tempAlias);
-            xiaLogError("xiaSetDefaults", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaSetDefaults",
+                   "Error creating %s default list", tempAlias);
             return status;
         }
 
@@ -1718,10 +1689,9 @@ static int HANDEL_API xiaSetDefaults(Module* module) {
                 handel_md_free(nameBlk);
                 handel_md_free(defValues);
 
-                sprintf(info_string,
-                        "Error adding default %s (value = %.3f) to alias %s",
-                        current->name, current->data, tempAlias);
-                xiaLogError("xiaSetDefaults", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaSetDefaults",
+                       "Error adding default %s (value = %.3f) to alias %s",
+                       current->name, current->data, tempAlias);
                 return status;
             }
 
@@ -1739,10 +1709,9 @@ static int HANDEL_API xiaSetDefaults(Module* module) {
                 handel_md_free(nameBlk);
                 handel_md_free(defValues);
 
-                sprintf(info_string,
-                        "Error adding default %s (value = %.3f) to alias %s",
-                        defNames[j], defValues[j], alias);
-                xiaLogError("xiaSetDefaults", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaSetDefaults",
+                       "Error adding default %s (value = %.3f) to alias %s",
+                       defNames[j], defValues[j], alias);
                 return status;
             }
         }
@@ -1757,10 +1726,9 @@ static int HANDEL_API xiaSetDefaults(Module* module) {
                 handel_md_free(nameBlk);
                 handel_md_free(defValues);
 
-                sprintf(info_string,
-                        "Error adding default %s (value = %.3f) to alias %s",
-                        current->name, current->data, alias);
-                xiaLogError("xiaSetDefaults", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaSetDefaults",
+                       "Error adding default %s (value = %.3f) to alias %s",
+                       current->name, current->data, alias);
                 return status;
             }
 
@@ -1775,8 +1743,8 @@ static int HANDEL_API xiaSetDefaults(Module* module) {
             handel_md_free(nameBlk);
             handel_md_free(defValues);
 
-            sprintf(info_string, "Error removing the %s list", tempAlias);
-            xiaLogError("xiaSetDefaults", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaSetDefaults",
+                   "Error removing the %s list", tempAlias);
             return status;
         }
 
@@ -1839,17 +1807,23 @@ int HANDEL_API xiaTagAllRunActive(Module* module, boolean_t state) {
 static int _initModule(Module* module, char* alias) {
     size_t aliasLen;
 
-    ASSERT(module);
-    ASSERT(alias);
+    if (module == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_VALUE, "_initModule", "module cannot be NULL");
+        return XIA_NULL_VALUE;
+    }
+
+    if (alias == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_ALIAS, "_initModule", "module cannot be NULL");
+        return XIA_NULL_ALIAS;
+    }
 
     aliasLen = strlen(alias) + 1;
 
     module->alias = handel_md_alloc(aliasLen);
 
     if (!module->alias) {
-        sprintf(info_string, "Error allocating %d bytes for module 'alias'.",
-                (int) aliasLen);
-        xiaLogError("_initModule", info_string, XIA_NOMEM);
+        xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "_initModule",
+               "Error allocating %d bytes for module 'alias'.", (int) aliasLen);
         return XIA_NOMEM;
     }
 
@@ -1859,11 +1833,9 @@ static int _initModule(Module* module, char* alias) {
 
     if (!module->interface_info) {
         handel_md_free(module->alias);
-        sprintf(info_string,
-                "Error allocating %d bytes for module "
-                "'interface_info'.",
-                (int) sizeof(HDLInterface));
-        xiaLogError("_initModule", info_string, XIA_NOMEM);
+        xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "_initModule",
+               "Error allocating %d bytes for module 'interface_info'.",
+               (int) sizeof(HDLInterface));
         return XIA_NOMEM;
     }
 
@@ -1902,11 +1874,9 @@ static int _addModuleType(Module* module, void* type, char* name) {
     ASSERT(type != NULL);
 
     if (module->type != NULL) {
-        status = XIA_TYPE_REDIRECT;
-        sprintf(info_string, "Module '%s' already has type '%s'", module->alias,
-                module->type);
-        xiaLogError("_addModuleType", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_TYPE_REDIRECT, "_addModuleType",
+               "Module '%s' already has type '%s'", module->alias, module->type);
+        return XIA_TYPE_REDIRECT;
     }
 
     status = XIA_UNKNOWN_BOARD;
@@ -1919,7 +1889,8 @@ static int _addModuleType(Module* module, void* type, char* name) {
 
             if (module->type == NULL) {
                 status = XIA_NOMEM;
-                xiaLogError("_addModuleType", "Error allocating module->type", status);
+                xiaLog(XIA_LOG_ERROR, status, "_addModuleType",
+                       "Error allocating module->type");
                 return status;
             }
 
@@ -1930,8 +1901,8 @@ static int _addModuleType(Module* module, void* type, char* name) {
     }
 
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error finding module type '%s'", requested);
-        xiaLogError("_addModuleType", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "_addModuleType",
+               "Error finding module type '%s'", requested);
         return status;
     }
 
@@ -1967,9 +1938,8 @@ static int _addNumChans(Module* module, void* nChans, char* name) {
         status = inits[i](module);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error initializing module '%s' memory (i = %u)",
-                    module->alias, i);
-            xiaLogError("_addNumChans", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "_addNumChans",
+                   "Error initializing module '%s' memory (i = %u)", module->alias, i);
             return status;
         }
     }
@@ -1986,21 +1956,19 @@ static int _doAddModuleItem(Module* module, void* data, unsigned int i, char* na
 
     if (items[i].needsBT) {
         if (module->type == NULL) {
-            status = XIA_NEEDS_BOARD_TYPE;
-            sprintf(info_string,
-                    "Item '%s' requires the module ('%s') board_type to be set first",
-                    items[i].name, module->alias);
-            xiaLogError("_doAddModuleItem", info_string, status);
-            return status;
+            xiaLog(XIA_LOG_ERROR, XIA_NEEDS_BOARD_TYPE, "_doAddModuleItem",
+                   "Item '%s' requires the module ('%s') board_type to be set first",
+                   items[i].name, module->alias);
+            return XIA_NEEDS_BOARD_TYPE;
         }
     }
 
     status = items[i].f(module, data, name);
 
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error adding module item '%s' to module '%s'",
-                items[i].name, module->alias);
-        xiaLogError("_doAddModuleItem", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "_doAddModuleItem",
+               "Error adding module item '%s' to module '%s'", items[i].name,
+               module->alias);
         return status;
     }
 
@@ -2019,9 +1987,8 @@ static int _initDefaults(Module* module) {
     status = xiaSetDefaults(module);
 
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error initializing defaults for module '%s'",
-                module->alias);
-        xiaLogError("_initDefaults", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "_initDefaults",
+               "Error initializing defaults for module '%s'", module->alias);
         return status;
     }
 
@@ -2041,9 +2008,8 @@ static int _initChannels(Module* module) {
     module->ch = (Channel_t*) handel_md_alloc(nBytes);
 
     if (!module->ch) {
-        sprintf(info_string, "Error allocating %ld bytes for module->ch",
-                (long) nBytes);
-        xiaLogError("_initChannels", info_string, XIA_NOMEM);
+        xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "_initChannels",
+               "Error allocating %ld bytes for module->ch", (long) nBytes);
         return XIA_NOMEM;
     }
 
@@ -2067,9 +2033,8 @@ static int _initDetectors(Module* module) {
     module->detector = (char**) handel_md_alloc(nBytes);
 
     if (!module->detector) {
-        sprintf(info_string, "Error allocating %ld bytes for module->detector",
-                (long) nBytes);
-        xiaLogError("_initDetectors", info_string, XIA_NOMEM);
+        xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "_initDetectors",
+               "Error allocating %ld bytes for module->detector", (long) nBytes);
         return XIA_NOMEM;
     }
 
@@ -2077,11 +2042,9 @@ static int _initDetectors(Module* module) {
         module->detector[i] = (char*) handel_md_alloc(nBytesMaxStr);
 
         if (!module->detector[i]) {
-            sprintf(info_string,
-                    "Error allocating %ld bytes for "
-                    "module->detector[%u]",
-                    (long) nBytesMaxStr, i);
-            xiaLogError("_initDetectors", info_string, XIA_NOMEM);
+            xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "_initDetectors",
+                   "Error allocating %ld bytes for module->detector[%u]",
+                   (long) nBytesMaxStr, i);
             return XIA_NOMEM;
         }
 
@@ -2101,11 +2064,8 @@ static int _initDetectorChans(Module* module) {
     module->detector_chan = (int*) handel_md_alloc(nBytes);
 
     if (!module->detector_chan) {
-        sprintf(info_string,
-                "Error allocating %ld bytes for "
-                "module->detector_chan",
-                (long) nBytes);
-        xiaLogError("_initDetectorChans", info_string, XIA_NOMEM);
+        xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "_initDetectorChans",
+               "Error allocating %ld bytes for module->detector_chan", (long) nBytes);
         return XIA_NOMEM;
     }
 
@@ -2127,9 +2087,8 @@ static int _initFirmware(Module* module) {
     module->firmware = (char**) handel_md_alloc(nBytes);
 
     if (!module->firmware) {
-        sprintf(info_string, "Error allocating %ld bytes for module->firmware",
-                (long) nBytes);
-        xiaLogError("_initFirmware", info_string, XIA_NOMEM);
+        xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "_initFirmware",
+               "Error allocating %ld bytes for module->firmware", (long) nBytes);
         return XIA_NOMEM;
     }
 
@@ -2137,11 +2096,9 @@ static int _initFirmware(Module* module) {
         module->firmware[i] = (char*) handel_md_alloc(nBytesMaxStr);
 
         if (!module->firmware[i]) {
-            sprintf(info_string,
-                    "Error allocating %ld bytes for "
-                    "module->detector[%u]",
-                    (long) nBytesMaxStr, i);
-            xiaLogError("_initFirmware", info_string, XIA_NOMEM);
+            xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "_initFirmware",
+                   "Error allocating %ld bytes for module->detector[%u]",
+                   (long) nBytesMaxStr, i);
             return XIA_NOMEM;
         }
 
@@ -2161,11 +2118,8 @@ static int _initCurrentFirmware(Module* module) {
     module->currentFirmware = (CurrentFirmware*) handel_md_alloc(nBytes);
 
     if (!module->currentFirmware) {
-        sprintf(info_string,
-                "Error allocating %ld bytes for "
-                "module->currentFirmware",
-                (long) nBytes);
-        xiaLogError("_initCurrentFirmware", info_string, XIA_NOMEM);
+        xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "_initCurrentFirmware",
+               "Error allocating %ld bytes for module->currentFirmware", (long) nBytes);
         return XIA_NOMEM;
     }
 
@@ -2201,20 +2155,17 @@ static int _initMultiState(Module* module) {
         module->state = (MultiChannelState*) handel_md_alloc(nBytes);
 
         if (!module->state) {
-            sprintf(info_string, "Error allocating %ld bytes for module->state",
-                    (long) nBytes);
-            xiaLogError("_initMultiState", info_string, XIA_NOMEM);
+            xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "_initMultiState",
+                   "Error allocating %ld bytes for module->state", (long) nBytes);
             return XIA_NOMEM;
         }
 
         module->state->runActive = (boolean_t*) handel_md_alloc(nBytesFlag);
 
         if (!module->state->runActive) {
-            sprintf(info_string,
-                    "Error allocating %ld bytes for "
-                    "module->state->runActive",
-                    (long) nBytesFlag);
-            xiaLogError("_initMultiState", info_string, XIA_NOMEM);
+            xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "_initMultiState",
+                   "Error allocating %ld bytes for module->state->runActive",
+                   (long) nBytesFlag);
             return XIA_NOMEM;
         }
 
@@ -2249,15 +2200,15 @@ static int _addChannel(Module* module, void* val, char* name) {
     status = _splitIdxAndType(name, &idx, type);
 
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error parsing channel item '%s'", name);
-        xiaLogError("_addChannel", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "_addChannel", "Error parsing channel item '%s'",
+               name);
         return status;
     }
 
     if (idx >= module->number_of_channels) {
-        sprintf(info_string, "Parsed channel '%u' > number channels in module '%u'",
-                idx, module->number_of_channels);
-        xiaLogError("_addChannel", info_string, XIA_BAD_NAME);
+        xiaLog(XIA_LOG_ERROR, XIA_BAD_NAME, "_addChannel",
+               "Parsed channel '%u' > number channels in module '%u'", idx,
+               module->number_of_channels);
         return XIA_BAD_NAME;
     }
 
@@ -2267,8 +2218,8 @@ static int _addChannel(Module* module, void* val, char* name) {
             status = chanTypes[i].f(module, (int) idx, val);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Error adding '%s' type to channel %u", type, idx);
-                xiaLogError("_addChannel", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "_addChannel",
+                       "Error adding '%s' type to channel %u", type, idx);
                 return status;
             }
 
@@ -2303,8 +2254,8 @@ static int _splitIdxAndType(char* str, unsigned int* idx, char* type) {
     underscore = strrchr(str, '_');
 
     if (underscore == NULL) {
-        sprintf(info_string, "Malformed item string: '%s'. Missing '_'", str);
-        xiaLogError("_splitIdxAndType", info_string, XIA_BAD_NAME);
+        xiaLog(XIA_LOG_ERROR, XIA_BAD_NAME, "_splitIdxAndType",
+               "Malformed item string: '%s'. Missing '_'", str);
         return XIA_BAD_NAME;
     }
 
@@ -2334,8 +2285,8 @@ static int _splitIdxAndType(char* str, unsigned int* idx, char* type) {
         }
     }
 
-    sprintf(info_string, "Unknown channel item type: '%s'", type);
-    xiaLogError("_splitIdxAndType", info_string, XIA_BAD_NAME);
+    xiaLog(XIA_LOG_ERROR, XIA_BAD_NAME, "_splitIdxAndType",
+           "Unknown channel item type: '%s'", type);
     return XIA_BAD_NAME;
 }
 
@@ -2349,9 +2300,8 @@ static int _initChanAliases(Module* module) {
     module->channels = (int*) handel_md_alloc(nBytes);
 
     if (!module->channels) {
-        sprintf(info_string, "Error allocating %ld bytes for module->channels",
-                (long) nBytes);
-        xiaLogError("_initChanAliases", info_string, XIA_NOMEM);
+        xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "_initChanAliases",
+               "Error allocating %ld bytes for module->channels", (long) nBytes);
         return XIA_NOMEM;
     }
 
@@ -2377,8 +2327,8 @@ static int _parseDetectorIdx(char* str, int* idx, char* alias) {
     colon = strrchr(str, ':');
 
     if (colon == NULL) {
-        sprintf(info_string, "Malformed detector string: '%s'. Missing ':'", str);
-        xiaLogError("_parseDetectorIdx", info_string, XIA_BAD_VALUE);
+        xiaLog(XIA_LOG_ERROR, XIA_BAD_VALUE, "_parseDetectorIdx",
+               "Malformed detector string: '%s'. Missing ':'", str);
         return XIA_BAD_VALUE;
     }
 
@@ -2407,9 +2357,8 @@ static int _addFirmware(Module* module, void* val, char* name) {
     status = xiaProcessFirmware(module, name, val);
 
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error adding firmware '%s' to module '%s'", (char*) val,
-                module->alias);
-        xiaLogError("_addFirmware", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "_addFirmware",
+               "Error adding firmware '%s' to module '%s'", (char*) val, module->alias);
         return status;
     }
 
@@ -2431,9 +2380,8 @@ static int _addDefault(Module* module, void* val, char* name) {
     status = xiaProcessDefault(module, name, val);
 
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error adding default '%s' to module '%s'", (char*) val,
-                module->alias);
-        xiaLogError("_addDefault", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "_addDefault",
+               "Error adding default '%s' to module '%s'", (char*) val, module->alias);
         return status;
     }
 
@@ -2455,9 +2403,9 @@ static int _addInterface(Module* module, void* val, char* name) {
     status = xiaProcessInterface(module, name, val);
 
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error adding interface component '%s' to module '%s'",
-                name, module->alias);
-        xiaLogError("_addInterface", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "_addInterface",
+               "Error adding interface component '%s' to module '%s'", name,
+               module->alias);
         return status;
     }
 
@@ -2476,7 +2424,8 @@ HANDEL_EXPORT int HANDEL_API xiaModuleFromDetChan(int detChan, char* alias) {
     unsigned int i;
 
     if (!alias) {
-        xiaLogError("xiaModuleFromDetChan", "'alias' may not be NULL.", XIA_NULL_ALIAS);
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_ALIAS, "xiaModuleFromDetChan",
+               "'alias' may not be NULL.");
         return XIA_NULL_ALIAS;
     }
 
@@ -2490,9 +2439,8 @@ HANDEL_EXPORT int HANDEL_API xiaModuleFromDetChan(int detChan, char* alias) {
         m = m->next;
     }
 
-    sprintf(info_string, "detChan %d is not defined in any of the known modules",
-            detChan);
-    xiaLogError("xiaModuleFromDetChan", info_string, XIA_INVALID_DETCHAN);
+    xiaLog(XIA_LOG_ERROR, XIA_INVALID_DETCHAN, "xiaModuleFromDetChan",
+           "detChan %d is not defined in any of the known modules", detChan);
     return XIA_INVALID_DETCHAN;
 }
 
@@ -2510,8 +2458,8 @@ HANDEL_EXPORT int HANDEL_API xiaDetectorFromDetChan(int detChan, char* alias) {
     char* t = NULL;
 
     if (!alias) {
-        xiaLogError("xiaDetectorFromDetChan", "'alias' may not be NULL.",
-                    XIA_NULL_ALIAS);
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_ALIAS, "xiaDetectorFromDetChan",
+               "'alias' may not be NULL.");
         return XIA_NULL_ALIAS;
     }
 
@@ -2532,8 +2480,7 @@ HANDEL_EXPORT int HANDEL_API xiaDetectorFromDetChan(int detChan, char* alias) {
         m = m->next;
     }
 
-    sprintf(info_string, "detChan %d is not defined in any of the known modules",
-            detChan);
-    xiaLogError("xiaDetectorFromDetChan", info_string, XIA_INVALID_DETCHAN);
+    xiaLog(XIA_LOG_ERROR, XIA_INVALID_DETCHAN, "xiaDetectorFromDetChan",
+           "detChan %d is not defined in any of the known modules", detChan);
     return XIA_INVALID_DETCHAN;
 }

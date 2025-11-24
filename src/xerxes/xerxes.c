@@ -62,6 +62,8 @@
 #include "xia_file.h"
 #include "xia_version.h"
 
+#include <util/xia_str_manip.h>
+
 /* Private routines */
 static int dxp_add_btype_library(Board_Info* current);
 static int dxp_init_iface_ds(void);
@@ -386,7 +388,7 @@ int XERXES_API dxp_add_system_item(char* ltoken, char** values) {
     int status = DXP_SUCCESS;
     unsigned int j;
 
-    char* strTmp = '\0';
+    char* strTmp = NULL;
 
     strTmp = (char*) xerxes_md_alloc((strlen(ltoken) + 1) * sizeof(char));
     strcpy(strTmp, ltoken);
@@ -395,10 +397,7 @@ int XERXES_API dxp_add_system_item(char* ltoken, char** values) {
     sprintf(info_string, "Adding system item '%s'", ltoken);
     dxp_log_info("dxp_add_system_item", info_string);
 
-    /* Convert the token to lower case for comparison */
-    for (j = 0; j < strlen(strTmp); j++) {
-        strTmp[j] = (char) tolower((int) strTmp[j]);
-    }
+    strTmp = xia_lower(strTmp);
 
     if ((strncmp(strTmp, "dxp", 3) == 0) || (STREQ(strTmp, "xmap")) ||
         (STREQ(strTmp, "stj")) || (STREQ(strTmp, "mercury")) ||
@@ -456,8 +455,7 @@ int dxp_add_board_item(char* ltoken, char** values) {
      * Now Identify the entry type
      */
     if (STREQ(ltoken, "board_type")) {
-        board_type = values[0];
-        MAKE_LOWER_CASE(board_type, j);
+        board_type = xia_lower(values[0]);
 
         /* Search thru board types to match find the structure
            in the linked list */
@@ -494,7 +492,7 @@ int dxp_add_board_item(char* ltoken, char** values) {
             return DXP_INITIALIZE;
         }
 
-        MAKE_LOWER_CASE(values[0], j);
+        values[0] = xia_lower(values[0]);
 
         status = dxp_add_iface(values[0], values[1], &working_iface);
 

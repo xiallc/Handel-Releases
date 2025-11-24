@@ -75,7 +75,6 @@ boolean_t HANDEL_API xiaIsDetChanFree(int detChan) {
  * VALUE HAS ALREADY BEEN VALIDATED, PREFERABLY BY CALLING xiaDetChanFree().
  */
 int HANDEL_API xiaAddDetChan(int type, unsigned int detChan, void* data) {
-    int status;
     int len;
 
     DetChanSetElem* newSetElem = NULL;
@@ -92,25 +91,21 @@ int HANDEL_API xiaAddDetChan(int type, unsigned int detChan, void* data) {
      */
 
     if (data == NULL) {
-        status = XIA_BAD_VALUE;
-        sprintf(info_string, "detChan data is NULL");
-        xiaLogError("xiaAddDetChan", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_BAD_VALUE, "xiaAddDetChan", "detChan data is NULL");
+        return XIA_BAD_VALUE;
     }
 
     if ((type != SINGLE) && (type != SET)) {
-        status = XIA_BAD_TYPE;
-        sprintf(info_string, "Specified DetChanElement type is invalid");
-        xiaLogError("xiaAddDetChan", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_BAD_TYPE, "xiaAddDetChan",
+               "DetChanElement type is invalid");
+        return XIA_BAD_TYPE;
     }
 
     newDetChan = (DetChanElement*) handel_md_alloc(sizeof(DetChanElement));
     if (newDetChan == NULL) {
-        status = XIA_NOMEM;
-        sprintf(info_string, "Not enough memory to create detChan %u", detChan);
-        xiaLogError("xiaAddDetChan", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "xiaAddDetChan",
+               "Not enough memory to create detChan %u", detChan);
+        return XIA_NOMEM;
     }
 
     newDetChan->type = type;
@@ -136,11 +131,9 @@ int HANDEL_API xiaAddDetChan(int type, unsigned int detChan, void* data) {
             newDetChan->data.modAlias =
                 (char*) handel_md_alloc((len + 1) * sizeof(char));
             if (newDetChan->data.modAlias == NULL) {
-                status = XIA_NOMEM;
-                xiaLogError("xiaAddDetChan",
-                            "Not enough memory to create newDetChan->data.modAlias",
-                            status);
-                return status;
+                xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "xiaAddDetChan",
+                       "cannot create new DetChan alias");
+                return XIA_NOMEM;
             }
 
             strcpy(newDetChan->data.modAlias, (char*) data);
@@ -149,17 +142,15 @@ int HANDEL_API xiaAddDetChan(int type, unsigned int detChan, void* data) {
              * Now add it to the -1 list: Does -1 already exist?
              */
             if (xiaIsDetChanFree(-1)) {
-                xiaLogInfo("xiaAddDetChan", "Creating master detChan");
+                xiaLog(XIA_LOG_INFO, "xiaAddDetChan", "Creating master detChan");
 
                 masterDetChan =
                     (DetChanElement*) handel_md_alloc(sizeof(DetChanElement));
 
                 if (masterDetChan == NULL) {
-                    status = XIA_NOMEM;
-                    xiaLogError("xiaAddDetChan",
-                                "Not enough memory to create the master detChan list",
-                                status);
-                    return status;
+                    xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "xiaAddDetChan",
+                           "Not enough memory to create the master detChan list");
+                    return XIA_NOMEM;
                 }
 
                 masterDetChan->type = SET;
@@ -175,9 +166,8 @@ int HANDEL_API xiaAddDetChan(int type, unsigned int detChan, void* data) {
 
                 current->next = masterDetChan;
 
-                sprintf(info_string, "(masterDetChan) current->next = %p",
-                        current->next);
-                xiaLogDebug("xiaAddDetChan", info_string);
+                xiaLog(XIA_LOG_DEBUG, "xiaAddDetChan",
+                       "(masterDetChan) current->next = %p", current->next);
             } else {
                 masterDetChan = xiaGetDetChanPtr(-1);
             }
@@ -185,11 +175,9 @@ int HANDEL_API xiaAddDetChan(int type, unsigned int detChan, void* data) {
             newSetElem = (DetChanSetElem*) handel_md_alloc(sizeof(DetChanSetElem));
 
             if (newSetElem == NULL) {
-                status = XIA_NOMEM;
-                xiaLogError("xiaAddDetChan",
-                            "Not enough memory to add channel to master detChan list",
-                            status);
-                return status;
+                xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "xiaAddDetChan",
+                       "Not enough memory to add channel to master detChan list");
+                return XIA_NOMEM;
             }
 
             newSetElem->next = NULL;
@@ -203,19 +191,17 @@ int HANDEL_API xiaAddDetChan(int type, unsigned int detChan, void* data) {
                 masterTail->next = newSetElem;
             }
 
-            sprintf(info_string, "Added detChan %u with modAlias %s", detChan,
-                    (char*) data);
-            xiaLogDebug("xiaAddDetChan", info_string);
+            xiaLog(XIA_LOG_DEBUG, "xiaAddDetChan", "Added detChan %u with modAlias %s",
+                   detChan, (char*) data);
             break;
         case SET:
             newDetChan->data.detChanSet = NULL;
 
             newSetElem = (DetChanSetElem*) handel_md_alloc(sizeof(DetChanSetElem));
             if (newSetElem == NULL) {
-                status = XIA_NOMEM;
-                xiaLogError("xiaAddDetChan", "Not enough memory to create detChan set",
-                            status);
-                return status;
+                xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "xiaAddDetChan",
+                       "Not enough memory to create detChan set");
+                return XIA_NOMEM;
             }
 
             newSetElem->next = NULL;
@@ -234,12 +220,10 @@ int HANDEL_API xiaAddDetChan(int type, unsigned int detChan, void* data) {
             /* Should NEVER get here...but that's no excuse for not putting
              * the default case in.
              */
-            status = XIA_BAD_TYPE;
-            sprintf(
-                info_string,
+            xiaLog(
+                XIA_LOG_ERROR, XIA_BAD_TYPE, "xiaAddDetChan",
                 "Specified DetChanElement type is invalid. Should not be seeing this!");
-            xiaLogError("xiaAddDetChan", info_string, status);
-            return status;
+            return XIA_BAD_TYPE;
             break;
     }
 
@@ -252,8 +236,6 @@ int HANDEL_API xiaAddDetChan(int type, unsigned int detChan, void* data) {
  * search the whole list and return an error if it doesn't find it.
  */
 int HANDEL_API xiaRemoveDetChan(unsigned int detChan) {
-    int status;
-
     DetChanElement* current;
     DetChanElement* prev;
     DetChanElement* next;
@@ -261,10 +243,9 @@ int HANDEL_API xiaRemoveDetChan(unsigned int detChan) {
     current = xiaDetChanHead;
 
     if (isListEmpty(current)) {
-        status = XIA_INVALID_DETCHAN;
-        sprintf(info_string, "Specified detChan %u doesn't exist", detChan);
-        xiaLogError("xiaRemoveDetChan", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_INVALID_DETCHAN, "xiaRemoveDetChan",
+               "Specified detChan %u doesn't exist", detChan);
+        return XIA_INVALID_DETCHAN;
     }
 
     prev = NULL;
@@ -277,14 +258,12 @@ int HANDEL_API xiaRemoveDetChan(unsigned int detChan) {
     }
 
     if ((next == NULL) && ((int) detChan != current->detChan)) {
-        status = XIA_INVALID_DETCHAN;
-        sprintf(info_string, "Specified detChan %u doesn't exist", detChan);
-        xiaLogError("xiaRemoveDetChan", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_INVALID_DETCHAN, "xiaRemoveDetChan",
+               "Specified detChan %u doesn't exist", detChan);
+        return XIA_INVALID_DETCHAN;
     }
 
-    sprintf(info_string, "Removing detChan %u", detChan);
-    xiaLogInfo("xiaRemoveDetChan", info_string);
+    xiaLog(XIA_LOG_INFO, "xiaRemoveDetChan", "Removing detChan %u", detChan);
 
     if (current == xiaDetChanHead) {
         xiaDetChanHead = current->next;
@@ -300,10 +279,9 @@ int HANDEL_API xiaRemoveDetChan(unsigned int detChan) {
             xiaFreeDetSet(current->data.detChanSet);
             break;
         default:
-            status = XIA_BAD_TYPE;
-            sprintf(info_string, "Invalid type. Should not be seeing this!");
-            xiaLogError("xiaRemoveDetChan", info_string, status);
-            return status;
+            xiaLog(XIA_LOG_ERROR, XIA_BAD_TYPE, "xiaRemoveDetChan",
+                   "Invalid type. Should not be seeing this!");
+            return XIA_BAD_TYPE;
             break;
     }
 
@@ -379,16 +357,16 @@ int HANDEL_API xiaGetBoardType(int detChan, char* boardType) {
     modAlias = xiaGetAliasFromDetChan(detChan);
 
     if (modAlias == NULL) {
-        status = XIA_INVALID_DETCHAN;
-        sprintf(info_string, "detChan %d is not a valid module", detChan);
-        xiaLogError("xiaGetBoardType", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_INVALID_DETCHAN, "xiaGetBoardType",
+               "detChan %d is not a valid module", detChan);
+        return XIA_INVALID_DETCHAN;
     }
 
     status = xiaGetModuleItem(modAlias, "module_type", (void*) boardType);
 
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaGetBoardType", "Error getting board_type from module", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaGetBoardType",
+               "Error getting board_type from module");
         return status;
     }
 

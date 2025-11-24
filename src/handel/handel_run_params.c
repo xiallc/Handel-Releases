@@ -1,6 +1,6 @@
 /*
  * This file contains the routines relating to control of the run
- * parameters, such as xiaSetAcquitionValues and xiaGainOperation.
+ * parameters, such as xiaSetAcquisitionValues and xiaGainOperation.
  */
 
 /*
@@ -101,11 +101,16 @@ HANDEL_EXPORT int HANDEL_API xiaSetAcquisitionValues(int detChan, char* name,
 
     PSLFuncs localFuncs;
 
-    if (name == NULL || value == NULL) {
-        status = XIA_NULL_VALUE;
-        xiaLogError("xiaSetAcquisitionValues", "Input name and value cannot be NULL",
-                    status);
-        return status;
+    if (name == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_NAME, "xiaSetAcquisitionValues",
+               "name cannot be NULL");
+        return XIA_NULL_NAME;
+    }
+
+    if (value == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_VALUE, "xiaSetAcquisitionValues",
+               "value cannot be NULL");
+        return XIA_NULL_VALUE;
     }
 
     elemType = xiaGetElemType((unsigned int) detChan);
@@ -115,17 +120,16 @@ HANDEL_EXPORT int HANDEL_API xiaSetAcquisitionValues(int detChan, char* name,
             status = xiaGetBoardType(detChan, boardType);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to get boardType for detChan %d", detChan);
-                xiaLogError("xiaSetAcquisitionValues", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaSetAcquisitionValues",
+                       "Unable to get boardType for detChan %d", detChan);
                 return status;
             }
 
             status = xiaLoadPSL(boardType, &localFuncs);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to load PSL funcs for detChan %d",
-                        detChan);
-                xiaLogError("xiaSetAcquisitionValues", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaSetAcquisitionValues",
+                       "Unable to load PSL funcs for detChan %d", detChan);
                 return status;
             }
 
@@ -159,12 +163,9 @@ HANDEL_EXPORT int HANDEL_API xiaSetAcquisitionValues(int detChan, char* name,
                     break;
                 default:
                 case XIA_DET_UNKNOWN:
-                    status = XIA_MISSING_TYPE;
-                    sprintf(info_string, "No detector type specified for detChan %d",
-                            detChan);
-                    xiaLogError("xiaSetAcquisitionValues", info_string, status);
-                    return status;
-                    break;
+                    xiaLog(XIA_LOG_ERROR, XIA_MISSING_TYPE, "xiaSetAcquisitionValues",
+                           "No detector type specified for detChan %d", detChan);
+                    return XIA_MISSING_TYPE;
             }
 
             /* At this stage, xiaStartSystem() has been called so we
@@ -184,15 +185,14 @@ HANDEL_EXPORT int HANDEL_API xiaSetAcquisitionValues(int detChan, char* name,
             }
 
             if (!valueExists) {
-                sprintf(info_string, "Adding %s to defaults %s", name, defaults->alias);
-                xiaLogInfo("xiaSetAcquisitionValues", info_string);
+                xiaLog(XIA_LOG_INFO, "xiaSetAcquisitionValues",
+                       "Adding %s to defaults %s", name, defaults->alias);
 
                 status = xiaAddDefaultItem(defaults->alias, name, value);
 
                 if (status != XIA_SUCCESS) {
-                    sprintf(info_string, "Error adding %s to defaults %s", name,
-                            defaults->alias);
-                    xiaLogError("xiaSetAcquisitionValues", info_string, status);
+                    xiaLog(XIA_LOG_ERROR, status, "xiaSetAcquisitionValues",
+                           "Error adding %s to defaults %s", name, defaults->alias);
                     return status;
                 }
             }
@@ -202,9 +202,9 @@ HANDEL_EXPORT int HANDEL_API xiaSetAcquisitionValues(int detChan, char* name,
                 detectorType, detector, detector_chan, module, modChan);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to set '%s' to %0.3f for detChan %d.",
-                        name, *((double*) value), detChan);
-                xiaLogError("xiaSetAcquisitionValues", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaSetAcquisitionValues",
+                       "Unable to set '%s' to %0.3f for detChan %d.", name,
+                       *((double*) value), detChan);
                 return status;
             }
             break;
@@ -225,26 +225,21 @@ HANDEL_EXPORT int HANDEL_API xiaSetAcquisitionValues(int detChan, char* name,
                     xiaSetAcquisitionValues((int) detChanSetElem->channel, name, value);
 
                 if (status != XIA_SUCCESS) {
-                    sprintf(info_string,
-                            "Error setting acquisition values for detChan %d", detChan);
-                    xiaLogError("xiaSetAcquisitionValues", info_string, status);
+                    xiaLog(XIA_LOG_ERROR, status, "xiaSetAcquisitionValues",
+                           "Error setting acquisition values for detChan %d", detChan);
                     return status;
                 }
                 detChanSetElem = getListNext(detChanSetElem);
             }
             break;
         case 999:
-            status = XIA_INVALID_DETCHAN;
-            xiaLogError("xiaSetAcquisitionValues",
-                        "detChan number is not in the list of valid values ", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_INVALID_DETCHAN, "xiaSetAcquisitionValues",
+                   "detChan number is not in the list of valid values ");
+            return XIA_INVALID_DETCHAN;
         default:
-            status = XIA_UNKNOWN;
-            xiaLogError("xiaSetAcquisitionValues", "Should not be seeing this message",
-                        status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_UNKNOWN, "xiaSetAcquisitionValues",
+                   "Should not be seeing this message");
+            return XIA_UNKNOWN;
     }
 
     return XIA_SUCCESS;
@@ -265,36 +260,38 @@ HANDEL_EXPORT int HANDEL_API xiaGetAcquisitionValues(int detChan, char* name,
 
     PSLFuncs localFuncs;
 
-    if (name == NULL || value == NULL) {
-        status = XIA_NULL_VALUE;
-        xiaLogError("xiaGetAcquisitionValues", "Input name and value cannot be NULL",
-                    status);
-        return status;
+    if (name == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_NAME, "xiaGetAcquisitionValues",
+               "name cannot be NULL");
+        return XIA_NULL_NAME;
+    }
+
+    if (value == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_VALUE, "xiaGetAcquisitionValues",
+               "value cannot be NULL");
+        return XIA_NULL_VALUE;
     }
 
     elemType = xiaGetElemType((unsigned int) detChan);
 
     switch (elemType) {
         case SET:
-            status = XIA_BAD_TYPE;
-            xiaLogError("xiaGetAcquisitionValues",
-                        "Unable to retrieve values for a detChan SET", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_BAD_TYPE, "xiaGetAcquisitionValues",
+                   "Unable to retrieve values for a detChan SET");
+            return XIA_BAD_TYPE;
         case SINGLE:
             status = xiaGetBoardType(detChan, boardType);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to get boardType for detChan %d", detChan);
-                xiaLogError("xiaGetAcquisitionValues", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaGetAcquisitionValues",
+                       "Unable to get boardType for detChan %d", detChan);
                 return status;
             }
             status = xiaLoadPSL(boardType, &localFuncs);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to load PSL funcs for detChan %d",
-                        detChan);
-                xiaLogError("xiaGetAcquisitionValues", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaGetAcquisitionValues",
+                       "Unable to load PSL funcs for detChan %d", detChan);
                 return status;
             }
 
@@ -303,24 +300,19 @@ HANDEL_EXPORT int HANDEL_API xiaGetAcquisitionValues(int detChan, char* name,
             status = localFuncs.getAcquisitionValues(detChan, name, value, defaults);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to get acquisition values for detChan %d",
-                        detChan);
-                xiaLogError("xiaGetAcquisitionValues", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaGetAcquisitionValues",
+                       "Unable to get acquisition values for detChan %d", detChan);
                 return status;
             }
             break;
         case 999:
-            status = XIA_INVALID_DETCHAN;
-            xiaLogError("xiaGetAcquisitionValues",
-                        "detChan number is not in the list of valid values ", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_INVALID_DETCHAN, "xiaGetAcquisitionValues",
+                   "detChan number is not in the list of valid values ");
+            return XIA_INVALID_DETCHAN;
         default:
-            status = XIA_UNKNOWN;
-            xiaLogError("xiaGetAcquisitionValues", "Should not be seeing this message",
-                        status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_UNKNOWN, "xiaGetAcquisitionValues",
+                   "Should not be seeing this message");
+            return XIA_UNKNOWN;
     }
 
     return XIA_SUCCESS;
@@ -368,9 +360,9 @@ HANDEL_EXPORT int HANDEL_API xiaRemoveAcquisitionValues(int detChan, char* name)
     char* detAlias = NULL;
 
     if (name == NULL) {
-        status = XIA_NULL_VALUE;
-        xiaLogError("xiaRemoveAcquisitionValues", "Input name cannot be NULL", status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_NAME, "xiaRemoveAcquisitionValues",
+               "Input name cannot be NULL");
+        return XIA_NULL_NAME;
     }
 
     elemType = xiaGetElemType(detChan);
@@ -380,18 +372,16 @@ HANDEL_EXPORT int HANDEL_API xiaRemoveAcquisitionValues(int detChan, char* name)
             status = xiaGetBoardType(detChan, boardType);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Error getting board type for detChan %d",
-                        detChan);
-                xiaLogError("xiaRemoveAcquisitionValues", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaRemoveAcquisitionValues",
+                       "Error getting board type for detChan %d", detChan);
                 return status;
             }
 
             status = xiaLoadPSL(boardType, &localFuncs);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to load PSL functions for detChan %d",
-                        detChan);
-                xiaLogError("xiaRemoveAcquisitionValues", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaRemoveAcquisitionValues",
+                       "Unable to load PSL functions for detChan %d", detChan);
                 return status;
             }
 
@@ -438,12 +428,9 @@ HANDEL_EXPORT int HANDEL_API xiaRemoveAcquisitionValues(int detChan, char* name)
                     break;
                 default:
                 case XIA_DET_UNKNOWN:
-                    sprintf(info_string, "No detector type specified for detChan %d",
-                            detChan);
-                    xiaLogError("xiaSetAcquisitionValues", info_string,
-                                XIA_MISSING_TYPE);
+                    xiaLog(XIA_LOG_ERROR, XIA_MISSING_TYPE, "xiaSetAcquisitionValues",
+                           "No detector type specified for detChan %d", detChan);
                     return XIA_MISSING_TYPE;
-                    break;
             }
 
             status = localFuncs.userSetup(detChan, defaults, fs,
@@ -451,11 +438,10 @@ HANDEL_EXPORT int HANDEL_API xiaRemoveAcquisitionValues(int detChan, char* name)
                                           m->detector_chan[modChan], m, modChan);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string,
-                        "Error updating acquisition values after '%s' "
-                        "removed from list for detChan %d",
-                        name, detChan);
-                xiaLogError("xiaRemoveAcquisitionValues", info_string, status);
+                xiaLog(
+                    XIA_LOG_ERROR, status, "xiaRemoveAcquisitionValues",
+                    "Error updating acquisition values after '%s' removed from list for detChan %d",
+                    name, detChan);
                 return status;
             }
             break;
@@ -465,27 +451,22 @@ HANDEL_EXPORT int HANDEL_API xiaRemoveAcquisitionValues(int detChan, char* name)
             while (detChanSetElem != NULL) {
                 status = xiaRemoveAcquisitionValues(detChanSetElem->channel, name);
                 if (status != XIA_SUCCESS) {
-                    sprintf(info_string, "Error removing %s from detChan %u", name,
-                            detChanSetElem->channel);
-                    xiaLogError("xiaRemoveAcquisitionValues", info_string, status);
+                    xiaLog(XIA_LOG_ERROR, status, "xiaRemoveAcquisitionValues",
+                           "Error removing %s from detChan %u", name,
+                           detChanSetElem->channel);
                     return status;
                 }
                 detChanSetElem = detChanSetElem->next;
             }
             break;
         case 999:
-            status = XIA_INVALID_DETCHAN;
-            xiaLogError("xiaRemoveAcquisitionValues",
-                        "detChan number is not in the list of valid values ", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_INVALID_DETCHAN, "xiaRemoveAcquisitionValues",
+                   "detChan number is not in the list of valid values ");
+            return XIA_INVALID_DETCHAN;
         default:
-
-            status = XIA_UNKNOWN;
-            xiaLogError("xiaRemoveAcquisitionValues",
-                        "Should not be seeing this message", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_UNKNOWN, "xiaRemoveAcquisitionValues",
+                   "Should not be seeing this message");
+            return XIA_UNKNOWN;
     }
 
     return XIA_SUCCESS;
@@ -509,7 +490,8 @@ HANDEL_EXPORT int HANDEL_API xiaUpdateUserParams(int detChan) {
 
     DetChanSetElem* detChanSetElem = NULL;
 
-    xiaLogDebug("xiaUpdateUserParams", "Searching for user params to download");
+    xiaLog(XIA_LOG_DEBUG, "xiaUpdateUserParams",
+           "Searching for user params to download");
 
     elemType = xiaGetElemType(detChan);
 
@@ -521,16 +503,15 @@ HANDEL_EXPORT int HANDEL_API xiaUpdateUserParams(int detChan) {
                 if (xiaIsUpperCase(entry->name)) {
                     param = (unsigned short) (entry->data);
 
-                    sprintf(info_string, "Setting %s to %u", entry->name, param);
-                    xiaLogDebug("xiaUpdateUserParams", info_string);
+                    xiaLog(XIA_LOG_DEBUG, "xiaUpdateUserParams", "Setting %s to %u",
+                           entry->name, param);
 
                     status = xiaSetParameter(detChan, entry->name, param);
 
                     if (status != XIA_SUCCESS) {
-                        sprintf(info_string,
-                                "Error setting parameter %s for detChan %d",
-                                entry->name, detChan);
-                        xiaLogError("xiaUpdateUserParams", info_string, status);
+                        xiaLog(XIA_LOG_ERROR, status, "xiaUpdateUserParams",
+                               "Error setting parameter %s for detChan %d", entry->name,
+                               detChan);
                         return status;
                     }
                 }
@@ -543,26 +524,22 @@ HANDEL_EXPORT int HANDEL_API xiaUpdateUserParams(int detChan) {
             while (detChanSetElem != NULL) {
                 status = xiaUpdateUserParams(detChanSetElem->channel);
                 if (status != XIA_SUCCESS) {
-                    sprintf(info_string, "Error setting user params for detChan %u",
-                            detChanSetElem->channel);
-                    xiaLogError("xiaUpdateUserParams", info_string, status);
+                    xiaLog(XIA_LOG_ERROR, status, "xiaUpdateUserParams",
+                           "Error setting user params for detChan %u",
+                           detChanSetElem->channel);
                     return status;
                 }
                 detChanSetElem = detChanSetElem->next;
             }
             break;
         case 999:
-            status = XIA_INVALID_DETCHAN;
-            xiaLogError("xiaUpdateUserParams",
-                        "detChan number is not in the list of valid values ", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_INVALID_DETCHAN, "xiaUpdateUserParams",
+                   "detChan number is not in the list of valid values ");
+            return XIA_INVALID_DETCHAN;
         default:
-            status = XIA_UNKNOWN;
-            xiaLogError("xiaUpdateUserParams", "Shouldn't be seeing this message",
-                        status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_UNKNOWN, "xiaUpdateUserParams",
+                   "Shouldn't be seeing this message");
+            return XIA_UNKNOWN;
     }
 
     return XIA_SUCCESS;
@@ -595,10 +572,15 @@ HANDEL_EXPORT int HANDEL_API xiaGainOperation(int detChan, char* name, void* val
 
     PSLFuncs localFuncs;
 
-    if (name == NULL || value == NULL) {
-        status = XIA_NULL_VALUE;
-        xiaLogError("xiaGainOperation", "Input name and value cannot be NULL", status);
-        return status;
+    if (name == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_NAME, "xiaGainOperation", "name cannot be NULL");
+        return XIA_NULL_NAME;
+    }
+
+    if (value == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_VALUE, "xiaGainOperation",
+               "value cannot be NULL");
+        return XIA_NULL_VALUE;
     }
 
     elemType = xiaGetElemType(detChan);
@@ -607,17 +589,16 @@ HANDEL_EXPORT int HANDEL_API xiaGainOperation(int detChan, char* name, void* val
         case SINGLE:
             status = xiaGetBoardType(detChan, boardType);
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to get boardType for detChan %d", detChan);
-                xiaLogError("xiaGainOperation", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaGainOperation",
+                       "Unable to get boardType for detChan %d", detChan);
                 return status;
             }
 
             status = xiaLoadPSL(boardType, &localFuncs);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to load PSL funcs for detChan %d",
-                        detChan);
-                xiaLogError("xiaGainOperation", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaGainOperation",
+                       "Unable to load PSL funcs for detChan %d", detChan);
                 return status;
             }
 
@@ -632,9 +613,8 @@ HANDEL_EXPORT int HANDEL_API xiaGainOperation(int detChan, char* name, void* val
                                               module, defaults);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string,
-                        "Error performing the gain Operation for detChan %d", detChan);
-                xiaLogError("xiaGainOperation", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaGainOperation",
+                       "Error performing the gain Operation for detChan %d", detChan);
                 return status;
             }
             break;
@@ -647,9 +627,8 @@ HANDEL_EXPORT int HANDEL_API xiaGainOperation(int detChan, char* name, void* val
                 status = xiaGainOperation(detChanSetElem->channel, name, value);
 
                 if (status != XIA_SUCCESS) {
-                    sprintf(info_string, "Error changing the gain for detChan %d",
-                            detChan);
-                    xiaLogError("xiaGainOperation", info_string, status);
+                    xiaLog(XIA_LOG_ERROR, status, "xiaGainOperation",
+                           "Error changing the gain for detChan %d", detChan);
                     return status;
                 }
 
@@ -657,17 +636,13 @@ HANDEL_EXPORT int HANDEL_API xiaGainOperation(int detChan, char* name, void* val
             }
             break;
         case 999:
-            status = XIA_INVALID_DETCHAN;
-            xiaLogError("xiaGainOperation",
-                        "detChan number is not in the list of valid values ", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_INVALID_DETCHAN, "xiaGainOperation",
+                   "detChan number is not in the list of valid values");
+            return XIA_INVALID_DETCHAN;
         default:
-            status = XIA_UNKNOWN;
-            xiaLogError("xiaGainOperation", "Should not be seeing this message",
-                        status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_UNKNOWN, "xiaGainOperation",
+                   "Should not be seeing this message");
+            return XIA_UNKNOWN;
     }
 
     return XIA_SUCCESS;
@@ -706,17 +681,16 @@ HANDEL_EXPORT int HANDEL_API xiaGainCalibrate(int detChan, double deltaGain) {
             status = xiaGetBoardType(detChan, boardType);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to get boardType for detChan %d", detChan);
-                xiaLogError("xiaGainCalibrate", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaGainCalibrate",
+                       "Unable to get boardType for detChan %d", detChan);
                 return status;
             }
 
             status = xiaLoadPSL(boardType, &localFuncs);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to load PSL funcs for detChan %d",
-                        detChan);
-                xiaLogError("xiaGainCalibrate", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaGainCalibrate",
+                       "Unable to load PSL funcs for detChan %d", detChan);
                 return status;
             }
 
@@ -731,9 +705,8 @@ HANDEL_EXPORT int HANDEL_API xiaGainCalibrate(int detChan, double deltaGain) {
                                               defaults, deltaGain);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Error calibrating the gain for detChan %d",
-                        detChan);
-                xiaLogError("xiaGainCalibrate", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaGainCalibrate",
+                       "Error calibrating the gain for detChan %d", detChan);
                 return status;
             }
             break;
@@ -743,26 +716,21 @@ HANDEL_EXPORT int HANDEL_API xiaGainCalibrate(int detChan, double deltaGain) {
             while (detChanSetElem != NULL) {
                 status = xiaGainCalibrate((int) detChanSetElem->channel, deltaGain);
                 if (status != XIA_SUCCESS) {
-                    sprintf(info_string, "Error calibrating the gain for detChan %d",
-                            detChan);
-                    xiaLogError("xiaGainCalibrate", info_string, status);
+                    xiaLog(XIA_LOG_ERROR, status, "xiaGainCalibrate",
+                           "Error calibrating the gain for detChan %d", detChan);
                     return status;
                 }
                 detChanSetElem = getListNext(detChanSetElem);
             }
             break;
         case 999:
-            status = XIA_INVALID_DETCHAN;
-            xiaLogError("xiaGainCalibrate",
-                        "detChan number is not in the list of valid values ", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_INVALID_DETCHAN, "xiaGainCalibrate",
+                   "detChan number is not in the list of valid values ");
+            return XIA_INVALID_DETCHAN;
         default:
-            status = XIA_UNKNOWN;
-            xiaLogError("xiaGainCalibrate", "Should not be seeing this message",
-                        status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_UNKNOWN, "xiaGainCalibrate",
+                   "Should not be seeing this message");
+            return XIA_UNKNOWN;
     }
 
     return XIA_SUCCESS;
@@ -781,10 +749,15 @@ HANDEL_EXPORT int HANDEL_API xiaGetParameter(int detChan, const char* name,
 
     PSLFuncs localFuncs;
 
-    if (name == NULL || value == NULL) {
-        status = XIA_NULL_VALUE;
-        xiaLogError("xiaGetParameter", "Input name and value cannot be NULL", status);
-        return status;
+    if (name == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_NAME, "xiaGetParameter", "name cannot be NULL");
+        return XIA_NULL_NAME;
+    }
+
+    if (value == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_VALUE, "xiaGetParameter",
+               "value cannot be NULL");
+        return XIA_NULL_VALUE;
     }
 
     elemType = xiaGetElemType((unsigned int) detChan);
@@ -795,46 +768,39 @@ HANDEL_EXPORT int HANDEL_API xiaGetParameter(int detChan, const char* name,
             status = xiaGetBoardType(detChan, boardType);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to get boardType for detChan %d", detChan);
-                xiaLogError("xiaGetParameter", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaGetParameter",
+                       "Unable to get boardType for detChan %d", detChan);
                 return status;
             }
 
             status = xiaLoadPSL(boardType, &localFuncs);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to load PSL funcs for detChan %d",
-                        detChan);
-                xiaLogError("xiaGetParameter", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaGetParameter",
+                       "Unable to load PSL funcs for detChan %d", detChan);
                 return status;
             }
 
             status = localFuncs.getParameter(detChan, name, value);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Error getting parameter %s from detChan %d", name,
-                        detChan);
-                xiaLogError("xiaGetParameter", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaGetParameter",
+                       "Error getting parameter %s from detChan %d", name, detChan);
                 return status;
             }
             break;
         case SET:
-            xiaLogError("xiaGetParameter",
-                        "detChan SETs are not supported for this routine",
-                        XIA_BAD_TYPE);
+            xiaLog(XIA_LOG_ERROR, XIA_BAD_TYPE, "xiaGetParameter",
+                   "detChan SETs are not supported for this routine");
             return XIA_BAD_TYPE;
-            break;
         case 999:
-            status = XIA_INVALID_DETCHAN;
-            xiaLogError("xiaGetParameter",
-                        "detChan number is not in the list of valid values ", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_INVALID_DETCHAN, "xiaGetParameter",
+                   "detChan number is not in the list of valid values ");
+            return XIA_INVALID_DETCHAN;
         default:
-            status = XIA_UNKNOWN;
-            xiaLogError("xiaGetParameter", "Should not be seeing this message", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_UNKNOWN, "xiaGetParameter",
+                   "Should not be seeing this message");
+            return XIA_UNKNOWN;
     }
 
     return XIA_SUCCESS;
@@ -857,9 +823,9 @@ HANDEL_EXPORT int HANDEL_API xiaSetParameter(int detChan, const char* name,
     PSLFuncs localFuncs;
 
     if (name == NULL) {
-        status = XIA_NULL_VALUE;
-        xiaLogError("xiaSetParameter", "Input name cannot be NULL", status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_NAME, "xiaSetParameter",
+               "Input name cannot be NULL");
+        return XIA_NULL_NAME;
     }
 
     elemType = xiaGetElemType((unsigned int) detChan);
@@ -869,26 +835,24 @@ HANDEL_EXPORT int HANDEL_API xiaSetParameter(int detChan, const char* name,
             status = xiaGetBoardType(detChan, boardType);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to get boardType for detChan %d", detChan);
-                xiaLogError("xiaSetParameter", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaSetParameter",
+                       "Unable to get boardType for detChan %d", detChan);
                 return status;
             }
 
             status = xiaLoadPSL(boardType, &localFuncs);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to load PSL funcs for detChan %d",
-                        detChan);
-                xiaLogError("xiaSetParameter", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaSetParameter",
+                       "Unable to load PSL funcs for detChan %d", detChan);
                 return status;
             }
 
             status = localFuncs.setParameter(detChan, name, value);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Error setting parameter %s from detChan %d", name,
-                        detChan);
-                xiaLogError("xiaSetParameter", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaSetParameter",
+                       "Error setting parameter %s from detChan %d", name, detChan);
                 return status;
             }
             break;
@@ -901,9 +865,8 @@ HANDEL_EXPORT int HANDEL_API xiaSetParameter(int detChan, const char* name,
                 status = xiaSetParameter((int) detChanSetElem->channel, name, value);
 
                 if (status != XIA_SUCCESS) {
-                    sprintf(info_string, "Error setting parameter %s for detChan %d",
-                            name, detChan);
-                    xiaLogError("xiaSetParameter", info_string, status);
+                    xiaLog(XIA_LOG_ERROR, status, "xiaSetParameter",
+                           "Error setting parameter %s for detChan %d", name, detChan);
                     return status;
                 }
 
@@ -911,16 +874,13 @@ HANDEL_EXPORT int HANDEL_API xiaSetParameter(int detChan, const char* name,
             }
             break;
         case 999:
-            status = XIA_INVALID_DETCHAN;
-            xiaLogError("xiaSetParameter",
-                        "detChan number is not in the list of valid values ", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_INVALID_DETCHAN, "xiaSetParameter",
+                   "detChan number is not in the list of valid values");
+            return XIA_INVALID_DETCHAN;
         default:
-            status = XIA_UNKNOWN;
-            xiaLogError("xiaSetParameter", "Should not be seeing this message", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_UNKNOWN, "xiaSetParameter",
+                   "Should not be seeing this message");
+            return XIA_UNKNOWN;
     }
 
     return XIA_SUCCESS;
@@ -938,9 +898,9 @@ HANDEL_EXPORT int HANDEL_API xiaGetNumParams(int detChan, unsigned short* value)
     PSLFuncs localFuncs;
 
     if (value == NULL) {
-        status = XIA_NULL_VALUE;
-        xiaLogError("xiaGetNumParams", "Input value cannot be NULL", status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_VALUE, "xiaGetNumParams",
+               "Input value cannot be NULL");
+        return XIA_NULL_VALUE;
     }
 
     elemType = xiaGetElemType((unsigned int) detChan);
@@ -951,46 +911,39 @@ HANDEL_EXPORT int HANDEL_API xiaGetNumParams(int detChan, unsigned short* value)
             status = xiaGetBoardType(detChan, boardType);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to get boardType for detChan %d", detChan);
-                xiaLogError("xiaGetNumParams", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaGetNumParams",
+                       "Unable to get boardType for detChan %d", detChan);
                 return status;
             }
 
             status = xiaLoadPSL(boardType, &localFuncs);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to load PSL funcs for detChan %d",
-                        detChan);
-                xiaLogError("xiaGetNumParams", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaGetNumParams",
+                       "Unable to load PSL funcs for detChan %d", detChan);
                 return status;
             }
 
             status = localFuncs.getNumParams(detChan, value);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string,
-                        "Error getting number of DSP params from detChan %d", detChan);
-                xiaLogError("xiaGetNumParams", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaGetNumParams",
+                       "Error getting number of DSP params from detChan %d", detChan);
                 return status;
             }
             break;
         case SET:
-            xiaLogError("xiaGetNumParams",
-                        "detChan SETs are not supported for this routine",
-                        XIA_BAD_TYPE);
+            xiaLog(XIA_LOG_ERROR, XIA_BAD_TYPE, "xiaGetNumParams",
+                   "detChan SETs are not supported for this routine");
             return XIA_BAD_TYPE;
-            break;
         case 999:
-            status = XIA_INVALID_DETCHAN;
-            xiaLogError("xiaGetNumParams",
-                        "detChan number is not in the list of valid values ", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_INVALID_DETCHAN, "xiaGetNumParams",
+                   "detChan number is not in the list of valid values ");
+            return XIA_INVALID_DETCHAN;
         default:
-            status = XIA_UNKNOWN;
-            xiaLogError("xiaGetNumParams", "Should not be seeing this message", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_UNKNOWN, "xiaGetNumParams",
+                   "Should not be seeing this message");
+            return XIA_UNKNOWN;
     }
 
     return XIA_SUCCESS;
@@ -1023,10 +976,15 @@ HANDEL_EXPORT int HANDEL_API xiaGetParamData(int detChan, char* name, void* valu
 
     PSLFuncs localFuncs;
 
-    if (name == NULL || value == NULL) {
-        status = XIA_NULL_VALUE;
-        xiaLogError("xiaGetParamData", "Input name and value cannot be NULL", status);
-        return status;
+    if (name == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_NAME, "xiaGetParamData", "name cannot be NULL");
+        return XIA_NULL_NAME;
+    }
+
+    if (value == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_VALUE, "xiaGetParamData",
+               "value cannot be NULL");
+        return XIA_NULL_VALUE;
     }
 
     elemType = xiaGetElemType((unsigned int) detChan);
@@ -1036,46 +994,39 @@ HANDEL_EXPORT int HANDEL_API xiaGetParamData(int detChan, char* name, void* valu
         case SINGLE:
             status = xiaGetBoardType(detChan, boardType);
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to get boardType for detChan %d", detChan);
-                xiaLogError("xiaGetParamData", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaGetParamData",
+                       "Unable to get boardType for detChan %d", detChan);
                 return status;
             }
 
             status = xiaLoadPSL(boardType, &localFuncs);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to load PSL funcs for detChan %d",
-                        detChan);
-                xiaLogError("xiaGetParamData", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaGetParamData",
+                       "Unable to load PSL funcs for detChan %d", detChan);
                 return status;
             }
 
             status = localFuncs.getParamData(detChan, name, value);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Error getting DSP param data from detChan %d",
-                        detChan);
-                xiaLogError("xiaGetParamData", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaGetParamData",
+                       "Error getting DSP param data from detChan %d", detChan);
                 return status;
             }
             break;
         case SET:
-            xiaLogError("xiaGetParamData",
-                        "detChan SETs are not supported for this routine",
-                        XIA_BAD_TYPE);
+            xiaLog(XIA_LOG_ERROR, XIA_BAD_TYPE, "xiaGetParamData",
+                   "detChan SETs are not supported for this routine");
             return XIA_BAD_TYPE;
-            break;
         case 999:
-            status = XIA_INVALID_DETCHAN;
-            xiaLogError("xiaGetParamData",
-                        "detChan number is not in the list of valid values ", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_INVALID_DETCHAN, "xiaGetParamData",
+                   "detChan number is not in the list of valid values ");
+            return XIA_INVALID_DETCHAN;
         default:
-            status = XIA_UNKNOWN;
-            xiaLogError("xiaGetParamData", "Should not be seeing this message", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_UNKNOWN, "xiaGetParamData",
+                   "Should not be seeing this message");
+            return XIA_UNKNOWN;
     }
 
     return XIA_SUCCESS;
@@ -1097,9 +1048,8 @@ HANDEL_EXPORT int HANDEL_API xiaGetParamName(int detChan, unsigned short index,
     PSLFuncs localFuncs;
 
     if (name == NULL) {
-        status = XIA_NULL_VALUE;
-        xiaLogError("xiaGetParamName", "Input name cannot be NULL", status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_NAME, "xiaGetParamName", "name cannot be NULL");
+        return XIA_NULL_NAME;
     }
 
     elemType = xiaGetElemType((unsigned int) detChan);
@@ -1110,46 +1060,39 @@ HANDEL_EXPORT int HANDEL_API xiaGetParamName(int detChan, unsigned short index,
             status = xiaGetBoardType(detChan, boardType);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to get boardType for detChan %d", detChan);
-                xiaLogError("xiaGetParamName", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaGetParamName",
+                       "Unable to get boardType for detChan %d", detChan);
                 return status;
             }
 
             status = xiaLoadPSL(boardType, &localFuncs);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to load PSL funcs for detChan %d",
-                        detChan);
-                xiaLogError("xiaGetParamName", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaGetParamName",
+                       "Unable to load PSL funcs for detChan %d", detChan);
                 return status;
             }
 
             status = localFuncs.getParamName(detChan, index, name);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Error getting DSP params from detChan %d",
-                        detChan);
-                xiaLogError("xiaGetParamName", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaGetParamName",
+                       "Error getting DSP params from detChan %d", detChan);
                 return status;
             }
             break;
         case SET:
-            xiaLogError("xiaGetParamName",
-                        "detChan SETs are not supported for this routine",
-                        XIA_BAD_TYPE);
+            xiaLog(XIA_LOG_ERROR, XIA_BAD_TYPE, "xiaGetParamName",
+                   "detChan SETs are not supported for this routine");
             return XIA_BAD_TYPE;
-            break;
         case 999:
-            status = XIA_INVALID_DETCHAN;
-            xiaLogError("xiaGetParamName",
-                        "detChan number is not in the list of valid values ", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_INVALID_DETCHAN, "xiaGetParamName",
+                   "detChan number is not in the list of valid values ");
+            return XIA_INVALID_DETCHAN;
         default:
-            status = XIA_UNKNOWN;
-            xiaLogError("xiaGetParamName", "Should not be seeing this message", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_UNKNOWN, "xiaGetParamName",
+                   "Should not be seeing this message");
+            return XIA_UNKNOWN;
     }
 
     return XIA_SUCCESS;

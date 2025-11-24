@@ -76,8 +76,7 @@ HANDEL_EXPORT int HANDEL_API xiaStartRun(int detChan, unsigned short resume) {
 
     PSLFuncs localFuncs;
 
-    sprintf(info_string, "Starting a run on chan %d...", detChan);
-    xiaLogInfo("xiaStartRun", info_string);
+    xiaLog(XIA_LOG_INFO, "xiaStartRun", "Starting a run on chan %d.", detChan);
 
     elemType = xiaGetElemType((unsigned int) detChan);
 
@@ -94,18 +93,16 @@ HANDEL_EXPORT int HANDEL_API xiaStartRun(int detChan, unsigned short resume) {
                 status = xiaGetAbsoluteChannel(detChan, module, &chan);
 
                 if (status != XIA_SUCCESS) {
-                    sprintf(info_string, "detChan = %d not found in module '%s'",
-                            detChan, alias);
-                    xiaLogError("xiaStartRun", info_string, status);
+                    xiaLog(XIA_LOG_ERROR, status, "xiaStartRun",
+                           "detChan = %d not found in module '%s'", detChan, alias);
                     return status;
                 }
 
                 if (module->state->runActive[chan]) {
-                    sprintf(
-                        info_string,
+                    xiaLog(
+                        XIA_LOG_INFO, "xiaStartRun",
                         "detChan %d is part of a multichannel module whose run was already started",
                         detChan);
-                    xiaLogInfo("xiaStartRun", info_string);
                     break;
                 }
             }
@@ -113,17 +110,16 @@ HANDEL_EXPORT int HANDEL_API xiaStartRun(int detChan, unsigned short resume) {
             status = xiaGetBoardType(detChan, boardType);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to get boardType for detChan %d", detChan);
-                xiaLogError("xiaStartRun", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaStartRun",
+                       "Unable to get boardType for detChan %d", detChan);
                 return status;
             }
 
             status = xiaLoadPSL(boardType, &localFuncs);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to load PSL funcs for detChan %d",
-                        detChan);
-                xiaLogError("xiaStartRun", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaStartRun",
+                       "Unable to load PSL funcs for detChan %d", detChan);
                 return status;
             }
 
@@ -132,8 +128,8 @@ HANDEL_EXPORT int HANDEL_API xiaStartRun(int detChan, unsigned short resume) {
             status = localFuncs.startRun(detChan, resume, defaults, module);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to start run for detChan %d", detChan);
-                xiaLogError("xiaStartRun", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaStartRun",
+                       "Unable to start run for detChan %d", detChan);
                 return status;
             }
 
@@ -144,9 +140,8 @@ HANDEL_EXPORT int HANDEL_API xiaStartRun(int detChan, unsigned short resume) {
                 status = xiaTagAllRunActive(module, TRUE_);
 
                 if (status != XIA_SUCCESS) {
-                    xiaLogError("xiaStartRun",
-                                "Error setting channel state information: runActive",
-                                status);
+                    xiaLog(XIA_LOG_ERROR, status, "xiaStartRun",
+                           "Error setting channel state information: runActive");
                     return status;
                 }
             }
@@ -159,8 +154,8 @@ HANDEL_EXPORT int HANDEL_API xiaStartRun(int detChan, unsigned short resume) {
             while (detChanSetElem != NULL) {
                 status = xiaStartRun((int) detChanSetElem->channel, resume);
                 if (status != XIA_SUCCESS) {
-                    sprintf(info_string, "Error starting run for detChan %d", detChan);
-                    xiaLogError("xiaStartRun", info_string, status);
+                    xiaLog(XIA_LOG_ERROR, status, "xiaStartRun",
+                           "Error starting run for detChan %d", detChan);
                     return status;
                 }
                 detChanSetElem = getListNext(detChanSetElem);
@@ -168,15 +163,14 @@ HANDEL_EXPORT int HANDEL_API xiaStartRun(int detChan, unsigned short resume) {
             break;
         case 999:
             status = XIA_INVALID_DETCHAN;
-            xiaLogError("xiaStartRun",
-                        "detChan number is not in the list of valid values ", status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaStartRun",
+                   "detChan number is not in the list of valid values ");
             return status;
-            break;
         default:
             status = XIA_UNKNOWN;
-            xiaLogError("xiaStartRun", "Should not be seeing this message", status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaStartRun",
+                   "Should not be seeing this message");
             return status;
-            break;
     }
 
     return XIA_SUCCESS;
@@ -204,8 +198,7 @@ HANDEL_EXPORT int HANDEL_API xiaStopRun(int detChan) {
 
     PSLFuncs localFuncs;
 
-    sprintf(info_string, "Stopping a run on chan %d...", detChan);
-    xiaLogInfo("xiaStopRun", info_string);
+    xiaLog(XIA_LOG_INFO, "xiaStopRun", "Stopping a run on chan %d...", detChan);
 
     elemType = xiaGetElemType((unsigned int) detChan);
 
@@ -218,18 +211,16 @@ HANDEL_EXPORT int HANDEL_API xiaStopRun(int detChan) {
                 status = xiaGetAbsoluteChannel(detChan, module, &chan);
 
                 if (status != XIA_SUCCESS) {
-                    sprintf(info_string, "detChan = %d not found in module '%s'",
-                            detChan, alias);
-                    xiaLogError("xiaStopRun", info_string, status);
+                    xiaLog(XIA_LOG_ERROR, status, "xiaStopRun",
+                           "detChan = %d not found in module '%s'", detChan, alias);
                     return status;
                 }
 
                 if (!module->state->runActive[chan]) {
-                    sprintf(
-                        info_string,
+                    xiaLog(
+                        XIA_LOG_INFO, "xiaStopRun",
                         "detChan %d is part of a multichannel module whose run was already stopped",
                         detChan);
-                    xiaLogInfo("xiaStopRun", info_string);
                     break;
                 }
             }
@@ -237,25 +228,24 @@ HANDEL_EXPORT int HANDEL_API xiaStopRun(int detChan) {
             status = xiaGetBoardType(detChan, boardType);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to get boardType for detChan %d", detChan);
-                xiaLogError("xiaStopRun", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaStopRun",
+                       "Unable to get boardType for detChan %d", detChan);
                 return status;
             }
 
             status = xiaLoadPSL(boardType, &localFuncs);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to load PSL funcs for detChan %d",
-                        detChan);
-                xiaLogError("xiaStopRun", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaStopRun",
+                       "Unable to load PSL funcs for detChan %d", detChan);
                 return status;
             }
 
             status = localFuncs.stopRun(detChan, module);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to stop run for detChan %d", detChan);
-                xiaLogError("xiaStopRun", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaStopRun",
+                       "Unable to stop run for detChan %d", detChan);
                 return status;
             }
 
@@ -263,9 +253,8 @@ HANDEL_EXPORT int HANDEL_API xiaStopRun(int detChan) {
                 status = xiaTagAllRunActive(module, FALSE_);
 
                 if (status != XIA_SUCCESS) {
-                    xiaLogError("xiaStopRun",
-                                "Error setting channel state information: runActive",
-                                status);
+                    xiaLog(XIA_LOG_ERROR, status, "xiaStopRun",
+                           "Error setting channel state information: runActive");
                     return status;
                 }
             }
@@ -280,8 +269,8 @@ HANDEL_EXPORT int HANDEL_API xiaStopRun(int detChan) {
                 status = xiaStopRun((int) detChanSetElem->channel);
 
                 if (status != XIA_SUCCESS) {
-                    sprintf(info_string, "Error stoping run for detChan %d", detChan);
-                    xiaLogError("xiaStopRun", info_string, status);
+                    xiaLog(XIA_LOG_ERROR, status, "xiaStopRun",
+                           "Error stopping run for detChan %d", detChan);
                     return status;
                 }
 
@@ -289,16 +278,13 @@ HANDEL_EXPORT int HANDEL_API xiaStopRun(int detChan) {
             }
             break;
         case 999:
-            status = XIA_INVALID_DETCHAN;
-            xiaLogError("xiaStopRun",
-                        "detChan number is not in the list of valid values ", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_INVALID_DETCHAN, "xiaStopRun",
+                   "detChan number is not in the list of valid values ");
+            return XIA_INVALID_DETCHAN;
         default:
-            status = XIA_UNKNOWN;
-            xiaLogError("xiaStopRun", "Should not be seeing this message", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_UNKNOWN, "xiaStopRun",
+                   "Should not be seeing this message");
+            return XIA_UNKNOWN;
     }
 
     return XIA_SUCCESS;
@@ -321,10 +307,14 @@ HANDEL_EXPORT int HANDEL_API xiaGetRunData(int detChan, char* name, void* value)
 
     Module* m = NULL;
 
-    if (name == NULL || value == NULL) {
-        status = XIA_NULL_VALUE;
-        xiaLogError("xiaGetRunData", "Input name and value cannot be NULL", status);
-        return status;
+    if (name == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_NAME, "xiaGetRunData", "name cannot be NULL");
+        return XIA_NULL_NAME;
+    }
+
+    if (value == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_VALUE, "xiaGetRunData", "value cannot be NULL");
+        return XIA_NULL_VALUE;
     }
 
     elemType = xiaGetElemType((unsigned int) detChan);
@@ -334,17 +324,16 @@ HANDEL_EXPORT int HANDEL_API xiaGetRunData(int detChan, char* name, void* value)
             status = xiaGetBoardType(detChan, boardType);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to get boardType for detChan %d", detChan);
-                xiaLogError("xiaGetRunData", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaGetRunData",
+                       "Unable to get boardType for detChan %d", detChan);
                 return status;
             }
 
             status = xiaLoadPSL(boardType, &localFuncs);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to load PSL funcs for detChan %d",
-                        detChan);
-                xiaLogError("xiaGetRunData", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaGetRunData",
+                       "Unable to load PSL funcs for detChan %d", detChan);
                 return status;
             }
 
@@ -361,9 +350,8 @@ HANDEL_EXPORT int HANDEL_API xiaGetRunData(int detChan, char* name, void* value)
             status = localFuncs.getRunData(detChan, name, value, defaults, m);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable get run data %s for detChan %d", name,
-                        detChan);
-                xiaLogError("xiaGetRunData", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaGetRunData",
+                       "Unable get run data %s for detChan %d", name, detChan);
                 return status;
             }
             break;
@@ -372,22 +360,17 @@ HANDEL_EXPORT int HANDEL_API xiaGetRunData(int detChan, char* name, void* value)
              * Don't allow SETs since there is no way to handle the potential of
              * multidimensional data.
              */
-            status = XIA_BAD_TYPE;
-            xiaLogError("xiaGetRunData", "Unable to get run data for a detChan SET",
-                        status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_BAD_TYPE, "xiaGetRunData",
+                   "Unable to get run data for a detChan SET");
+            return XIA_BAD_TYPE;
         case 999:
-            status = XIA_INVALID_DETCHAN;
-            xiaLogError("xiaGetRunData",
-                        "detChan number is not in the list of valid values ", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_INVALID_DETCHAN, "xiaGetRunData",
+                   "detChan number is not in the list of valid values ");
+            return XIA_INVALID_DETCHAN;
         default:
-            status = XIA_UNKNOWN;
-            xiaLogError("xiaGetRunData", "Should not be seeing this message", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_UNKNOWN, "xiaGetRunData",
+                   "Should not be seeing this message");
+            return XIA_UNKNOWN;
     }
 
     return XIA_SUCCESS;
@@ -423,13 +406,17 @@ HANDEL_EXPORT int HANDEL_API xiaDoSpecialRun(int detChan, char* name, void* info
     unsigned int modChan;
 
     if (name == NULL) {
-        status = XIA_NULL_VALUE;
-        xiaLogError("xiaDoSpecialRun", "Input name cannot be NULL", status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_NAME, "xiaDoSpecialRun", "name cannot be NULL");
+        return XIA_NULL_NAME;
     }
 
-    sprintf(info_string, "Starting special run %s on chan %d...", name, detChan);
-    xiaLogInfo("xiaDoSpecialRun", info_string);
+    if (info == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_INFO, "xiaDoSpecialRun", "info cannot be NULL");
+        return XIA_NULL_INFO;
+    }
+
+    xiaLog(XIA_LOG_INFO, "xiaDoSpecialRun", "Starting special run %s on chan %d...",
+           name, detChan);
 
     elemType = xiaGetElemType((unsigned int) detChan);
 
@@ -438,17 +425,16 @@ HANDEL_EXPORT int HANDEL_API xiaDoSpecialRun(int detChan, char* name, void* info
             status = xiaGetBoardType(detChan, boardType);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to get boardType for detChan %d", detChan);
-                xiaLogError("xiaDoSpecialRun", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaDoSpecialRun",
+                       "Unable to get boardType for detChan %d", detChan);
                 return status;
             }
 
             status = xiaLoadPSL(boardType, &localFuncs);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to load PSL funcs for detChan %d",
-                        detChan);
-                xiaLogError("xiaDoSpecialRun", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaDoSpecialRun",
+                       "Unable to load PSL funcs for detChan %d", detChan);
                 return status;
             }
 
@@ -467,9 +453,8 @@ HANDEL_EXPORT int HANDEL_API xiaDoSpecialRun(int detChan, char* name, void* info
                                              detector_chan);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to perform special run for detChan %d",
-                        detChan);
-                xiaLogError("xiaDoSpecialRun", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaDoSpecialRun",
+                       "Unable to perform special run for detChan %d", detChan);
                 return status;
             }
             break;
@@ -482,9 +467,8 @@ HANDEL_EXPORT int HANDEL_API xiaDoSpecialRun(int detChan, char* name, void* info
                 status = xiaDoSpecialRun((int) detChanSetElem->channel, name, info);
 
                 if (status != XIA_SUCCESS) {
-                    sprintf(info_string, "Error performing special run for detChan %d",
-                            detChan);
-                    xiaLogError("xiaDoSpecialRun", info_string, status);
+                    xiaLog(XIA_LOG_ERROR, status, "xiaDoSpecialRun",
+                           "Error performing special run for detChan %d", detChan);
                     return status;
                 }
 
@@ -492,16 +476,13 @@ HANDEL_EXPORT int HANDEL_API xiaDoSpecialRun(int detChan, char* name, void* info
             }
             break;
         case 999:
-            status = XIA_INVALID_DETCHAN;
-            xiaLogError("xiaDoSpecialRun",
-                        "detChan number is not in the list of valid values ", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_INVALID_DETCHAN, "xiaDoSpecialRun",
+                   "detChan number is not in the list of valid values");
+            return XIA_INVALID_DETCHAN;
         default:
-            status = XIA_UNKNOWN;
-            xiaLogError("xiaDoSpecialRun", "Should not be seeing this message", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_UNKNOWN, "xiaDoSpecialRun",
+                   "Should not be seeing this message");
+            return XIA_UNKNOWN;
     }
 
     return XIA_SUCCESS;
@@ -532,11 +513,16 @@ HANDEL_EXPORT int HANDEL_API xiaGetSpecialRunData(int detChan, char* name,
 
     PSLFuncs localFuncs;
 
-    if (name == NULL || value == NULL) {
-        status = XIA_NULL_VALUE;
-        xiaLogError("xiaGetSpecialRunData", "Input name and value cannot be NULL",
-                    status);
-        return status;
+    if (name == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_NAME, "xiaGetSpecialRunData",
+               "name cannot be NULL");
+        return XIA_NULL_NAME;
+    }
+
+    if (value == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_VALUE, "xiaGetSpecialRunData",
+               "value cannot be NULL");
+        return XIA_NULL_VALUE;
     }
 
     elemType = xiaGetElemType((unsigned int) detChan);
@@ -546,17 +532,16 @@ HANDEL_EXPORT int HANDEL_API xiaGetSpecialRunData(int detChan, char* name,
             status = xiaGetBoardType(detChan, boardType);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to get boardType for detChan %d", detChan);
-                xiaLogError("xiaGetSpecialRunData", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaGetSpecialRunData",
+                       "Unable to get boardType for detChan %d", detChan);
                 return status;
             }
 
             status = xiaLoadPSL(boardType, &localFuncs);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to load PSL funcs for detChan %d",
-                        detChan);
-                xiaLogError("xiaGetSpecialRunData", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaGetSpecialRunData",
+                       "Unable to load PSL funcs for detChan %d", detChan);
                 return status;
             }
 
@@ -566,9 +551,8 @@ HANDEL_EXPORT int HANDEL_API xiaGetSpecialRunData(int detChan, char* name,
             status = localFuncs.getSpecialRunData(detChan, name, value, defaults);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to get special run data for detChan %d",
-                        detChan);
-                xiaLogError("xiagetSpecialRunData", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaGetSpecialRunData",
+                       "Unable to get special run data for detChan %d", detChan);
                 return status;
             }
             break;
@@ -582,9 +566,8 @@ HANDEL_EXPORT int HANDEL_API xiaGetSpecialRunData(int detChan, char* name,
                     xiaGetSpecialRunData((int) detChanSetElem->channel, name, value);
 
                 if (status != XIA_SUCCESS) {
-                    sprintf(info_string,
-                            "Error getting special run data for detChan %d", detChan);
-                    xiaLogError("xiaGetSpecialRunData", info_string, status);
+                    xiaLog(XIA_LOG_ERROR, status, "xiaGetSpecialRunData",
+                           "Error getting special run data for detChan %d", detChan);
                     return status;
                 }
 
@@ -592,17 +575,13 @@ HANDEL_EXPORT int HANDEL_API xiaGetSpecialRunData(int detChan, char* name,
             }
             break;
         case 999:
-            status = XIA_INVALID_DETCHAN;
-            xiaLogError("xiaGetSpecialRunData",
-                        "detChan number is not in the list of valid values ", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_INVALID_DETCHAN, "xiaGetSpecialRunData",
+                   "detChan number is not in the list of valid values ");
+            return XIA_INVALID_DETCHAN;
         default:
-            status = XIA_UNKNOWN;
-            xiaLogError("xiaGetSpecialRunData", "Should not be seeing this message",
-                        status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_UNKNOWN, "xiaGetSpecialRunData",
+                   "Should not be seeing this message");
+            return XIA_UNKNOWN;
     }
 
     return XIA_SUCCESS;

@@ -41,6 +41,7 @@
 
 /* Define some generic constants for use by FDD */
 #include "handel_generic.h"
+#include "handel_log.h"
 #include "md_generic.h"
 
 /* Include structure typedefs for exporting of global variables */
@@ -93,7 +94,6 @@ DXP_MD_OUTPUT fdd_md_output;
 DXP_MD_SUPPRESS_LOG fdd_md_suppress_log;
 DXP_MD_ENABLE_LOG fdd_md_enable_log;
 DXP_MD_SET_LOG_LEVEL fdd_md_set_log_level;
-DXP_MD_LOG fdd_md_log;
 DXP_MD_ALLOC fdd_md_alloc;
 DXP_MD_FREE fdd_md_free;
 DXP_MD_PUTS fdd_md_puts;
@@ -101,11 +101,5 @@ DXP_MD_WAIT fdd_md_wait;
 DXP_MD_FGETS fdd_md_fgets;
 DXP_MD_PATH_SEP fdd_md_path_separator;
 DXP_MD_TMP_PATH fdd_md_tmp_path;
-
-/* Logging macro wrappers */
-#define xiaFddLogError(x, y, z) fdd_md_log(MD_ERROR, (x), (y), (z), __FILE__, __LINE__)
-#define xiaFddLogWarning(x, y) fdd_md_log(MD_WARNING, (x), (y), 0, __FILE__, __LINE__)
-#define xiaFddLogInfo(x, y) fdd_md_log(MD_INFO, (x), (y), 0, __FILE__, __LINE__)
-#define xiaFddLogDebug(x, y) fdd_md_log(MD_DEBUG, (x), (y), 0, __FILE__, __LINE__)
 
 #endif /* __XIA_FDD_H__ */

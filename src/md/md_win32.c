@@ -59,6 +59,7 @@
 #include "xia_assert.h"
 #include "xia_common.h"
 #include "xia_md.h"
+#include <util/xia_str_manip.h>
 
 /*
  * Just make this a local global so that each routine that wants to write an
@@ -206,11 +207,7 @@ XIA_MD_EXPORT int XIA_MD_API dxp_md_init_util(Xia_Util_Functions* funcs, char* t
  * char *type;
  */
 XIA_MD_EXPORT int XIA_MD_API dxp_md_init_io(Xia_Io_Functions* funcs, char* type) {
-    unsigned int i;
-
-    for (i = 0; i < strlen(type); i++) {
-        type[i] = (char) tolower((int) type[i]);
-    }
+    type = xia_lower(type);
 
 #ifndef EXCLUDE_EPP
     if (STREQ(type, "epp")) {

@@ -39,19 +39,18 @@
 #include "xerxes_structures.h"
 #include "xia_common.h"
 
-DXP_MD_LOG handel_md_log;
+void HANDEL_API xiaLog(int level, const char* file, int line, int status,
+                       const char* func, const char* fmt, ...) HANDEL_PRINTF(6, 7);
 
-/* Logging macro wrappers */
-#define xiaLogError(x, y, z) xiaLog(XIA_LOG_ERROR, (z), (x), "%s", (y))
-#define xiaLogWarning(x, y) xiaLog(XIA_LOG_WARNING, (x), "%s", (y))
-#define xiaLogInfo(x, y) xiaLog(XIA_LOG_INFO, (x), "%s", (y))
-#define xiaLogDebug(x, y) xiaLog(XIA_LOG_DEBUG, (x), "%s", (y))
+/*
+ * User supplied logging handler.
+ */
+void (*handel_md_log)(int level, const char* func, const char* msg, int status,
+                      const char* file, int line);
 
 #define XIA_LOG_ERROR MD_ERROR, XIA_FILE, __LINE__
 #define XIA_LOG_WARNING MD_WARNING, XIA_FILE, __LINE__, 0
 #define XIA_LOG_INFO MD_INFO, XIA_FILE, __LINE__, 0
 #define XIA_LOG_DEBUG MD_DEBUG, XIA_FILE, __LINE__, 0
-
-extern char info_string[4096];
 
 #endif /* __HANDEL_LOG_H__ */

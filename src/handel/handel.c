@@ -75,8 +75,6 @@ static int HANDEL_API xiaInitModuleDS(void);
 
 static int HANDEL_API xiaUnHook(void);
 
-char info_string[4096];
-
 /*
  * Used to track if the library functions are initialized.
  */
@@ -111,17 +109,16 @@ HANDEL_EXPORT int HANDEL_API xiaInit(char* iniFile) {
     int status;
     int nFilesOpen;
 
-    /* We need to clear and re-initialize Handel */
-    status = xiaInitHandel();
-
-    if (status != XIA_SUCCESS) {
-        xiaLogError("xiaInit", "Error reinitializing Handel", status);
-        return status;
+    if (iniFile == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_BAD_NAME, "xiaInit", "iniFile was NULL");
+        return XIA_BAD_NAME;
     }
 
-    if (iniFile == NULL) {
-        xiaLogError("xiaInit", ".INI file name must be non-NULL", XIA_BAD_NAME);
-        return XIA_BAD_NAME;
+    /* We need to clear and re-initialize Handel */
+    status = xiaInitHandel();
+    if (status != XIA_SUCCESS) {
+        xiaLog(XIA_LOG_ERROR, status, "xiaInit", "Error reinitializing Handel");
+        return status;
     }
 
     /*
@@ -139,8 +136,7 @@ HANDEL_EXPORT int HANDEL_API xiaInit(char* iniFile) {
     status = xiaReadIniFile(iniFile);
 
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error reading in .INI file '%s'", iniFile);
-        xiaLogError("xiaInit", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaInit", "unable to load %s", iniFile);
         return status;
     }
 
@@ -189,7 +185,8 @@ HANDEL_EXPORT int HANDEL_API xiaInitHandel(void) {
         status = xiaFddInitialize();
 
         if (status != XIA_SUCCESS) {
-            xiaLogError("xiaInitHandel", "Error initializing FDD layer", status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaInitHandel",
+                   "Error initializing FDD layer");
             return status;
         }
 
@@ -200,11 +197,11 @@ HANDEL_EXPORT int HANDEL_API xiaInitHandel(void) {
          * executed from xiaSetLogLevel. To be safe the connection is always
          * re-initialized.
          */
-        xiaLogInfo("xiaInitHandel", "Closing off existing connections.");
+        xiaLog(XIA_LOG_INFO, "xiaInitHandel", "Closing off existing connections.");
         status = xiaUnHook();
     }
 
-    xiaLogInfo("xiaInitHandel", "Starting Handel");
+    xiaLog(XIA_LOG_INFO, "xiaInitHandel", "Starting Handel");
 
     /*
      * Initialize the memory of both Handel and Xerxes.
@@ -212,61 +209,61 @@ HANDEL_EXPORT int HANDEL_API xiaInitHandel(void) {
     status = xiaInitMemory();
 
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaInitHandel", "Unable to Initialize memory", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaInitHandel", "Unable to Initialize memory");
         return status;
     }
 
     xiaGetVersionInfo(NULL, NULL, NULL, version);
-    sprintf(info_string, "Successfully initialized Handel %s", version);
-    xiaLogInfo("xiaInitHandel", info_string);
+    xiaLog(XIA_LOG_INFO, "xiaInitHandel", "Successfully initialized Handel %s",
+           version);
 
     /* Print out build configuration */
-    xiaLogInfo("xiaInitHandel", "--- Supported interface ---");
+    xiaLog(XIA_LOG_INFO, "xiaInitHandel", "--- Supported interface ---");
 
 #ifndef EXCLUDE_EPP
-    xiaLogInfo("xiaInitHandel", "epp");
+    xiaLog(XIA_LOG_INFO, "xiaInitHandel", "epp");
 #endif /* EXCLUDE_EPP */
 
 #ifndef EXCLUDE_USB
-    xiaLogInfo("xiaInitHandel", "usb");
+    xiaLog(XIA_LOG_INFO, "xiaInitHandel", "usb");
 #endif /* EXCLUDE_USB */
 
 #ifndef EXCLUDE_USB2
-    xiaLogInfo("xiaInitHandel", "usb2");
+    xiaLog(XIA_LOG_INFO, "xiaInitHandel", "usb2");
 #endif /* EXCLUDE_USB2 */
 
 #ifndef EXCLUDE_SERIAL
-    xiaLogInfo("xiaInitHandel", "serial");
+    xiaLog(XIA_LOG_INFO, "xiaInitHandel", "serial");
 #endif /* EXCLUDE_SERIAL */
 
 #ifndef EXCLUDE_PLX
-    xiaLogInfo("xiaInitHandel", "plx");
+    xiaLog(XIA_LOG_INFO, "xiaInitHandel", "plx");
 #endif /* EXCLUDE_PLX */
 
-    xiaLogInfo("xiaInitHandel", "--- Supported board types ---");
+    xiaLog(XIA_LOG_INFO, "xiaInitHandel", "--- Supported board types ---");
 
 #ifndef EXCLUDE_SATURN
-    xiaLogInfo("xiaInitHandel", "saturn");
+    xiaLog(XIA_LOG_INFO, "xiaInitHandel", "saturn");
 #endif
 
 #ifndef EXCLUDE_UDXPS
-    xiaLogInfo("xiaInitHandel", "udxps");
+    xiaLog(XIA_LOG_INFO, "xiaInitHandel", "udxps");
 #endif
 
 #ifndef EXCLUDE_UDXP
-    xiaLogInfo("xiaInitHandel", "udxp");
+    xiaLog(XIA_LOG_INFO, "xiaInitHandel", "udxp");
 #endif
 
 #ifndef EXCLUDE_XMAP
-    xiaLogInfo("xiaInitHandel", "xmap");
+    xiaLog(XIA_LOG_INFO, "xiaInitHandel", "xmap");
 #endif /* EXCLUDE_XMAP */
 
 #ifndef EXCLUDE_STJ
-    xiaLogInfo("xiaInitHandel", "stj");
+    xiaLog(XIA_LOG_INFO, "xiaInitHandel", "stj");
 #endif /* EXCLUDE_STJ */
 
 #ifndef EXCLUDE_MERCURY
-    xiaLogInfo("xiaInitHandel", "mercury");
+    xiaLog(XIA_LOG_INFO, "xiaInitHandel", "mercury");
 #endif /* EXCLUDE_MERCURY */
 
     return status;
@@ -278,35 +275,37 @@ HANDEL_EXPORT int HANDEL_API xiaInitHandel(void) {
 static int HANDEL_API xiaInitMemory(void) {
     int status = XIA_SUCCESS;
 
-    xiaLogInfo("xiaInitMemory", "Initializing Handel data structure.");
+    xiaLog(XIA_LOG_INFO, "xiaInitMemory", "Initializing Handel data structure.");
 
     status = xiaInitDetectorDS();
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaInitMemory", "Unable to clear the Detector LL", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaInitMemory",
+               "Unable to clear the Detector LL");
         return status;
     }
 
     status = xiaInitFirmwareSetDS();
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaInitMemory", "Unable to clear the FirmwareSet LL", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaInitMemory",
+               "Unable to clear the FirmwareSet LL");
         return status;
     }
 
     status = xiaInitModuleDS();
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaInitMemory", "Unable to clear Module LL", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaInitMemory", "Unable to clear Module LL");
         return status;
     }
 
     status = xiaInitDetChanDS();
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaInitMemory", "Unable to clear DetChan LL", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaInitMemory", "Unable to clear DetChan LL");
         return status;
     }
 
     status = xiaInitXiaDefaultsDS();
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaInitMemory", "Unable to clear Defaults LL", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaInitMemory", "Unable to clear Defaults LL");
         return status;
     }
 
@@ -319,7 +318,7 @@ static int HANDEL_API xiaInitMemory(void) {
  */
 HANDEL_EXPORT int HANDEL_API xiaExit(void) {
     int status;
-    xiaLogInfo("xiaExit", "Exiting...");
+    xiaLog(XIA_LOG_INFO, "xiaExit", "Exiting...");
 
     /*
      * Close down any communications that need to be shutdown.
@@ -327,8 +326,7 @@ HANDEL_EXPORT int HANDEL_API xiaExit(void) {
     status = xiaUnHook();
 
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaExit", "Error shutting down communications", status);
-        /* Ignore this status since we're on the way out */
+        xiaLog(XIA_LOG_ERROR, status, "xiaExit", "Error shutting down communications");
     }
 
     /* Other shutdown procedures go here */
@@ -376,7 +374,8 @@ static int HANDEL_API xiaInitDetectorDS(void) {
 
         status = xiaFreeDetector(current);
         if (status != XIA_SUCCESS) {
-            xiaLogError("xiaInitDetectorDS", "Error freeing detector", status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaInitDetectorDS",
+                   "Error freeing detector");
             return status;
         }
 
@@ -397,10 +396,9 @@ int HANDEL_API xiaFreeDetector(Detector* detector) {
     int status = XIA_SUCCESS;
 
     if (detector == NULL) {
-        status = XIA_NOMEM;
-        sprintf(info_string, "Detector object unallocated:  can not free");
-        xiaLogError("xiaFreeDetector", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "xiaFreeDetector",
+               "Detector object unallocated:  can not free");
+        return XIA_NOMEM;
     }
 
     if (detector->alias != NULL) {
@@ -437,7 +435,8 @@ static int HANDEL_API xiaInitFirmwareSetDS(void) {
 
         status = xiaFreeFirmwareSet(current);
         if (status != XIA_SUCCESS) {
-            xiaLogError("xiaInitFirmwareSetDS", "Error freeing FirmwareSet", status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaInitFirmwareSetDS",
+                   "Error freeing FirmwareSet");
             return status;
         }
 
@@ -463,8 +462,8 @@ int HANDEL_API xiaFreeFirmwareSet(FirmwareSet* firmwareSet) {
 
     if (firmwareSet == NULL) {
         status = XIA_NOMEM;
-        sprintf(info_string, "FirmwareSet object unallocated:  can not free");
-        xiaLogError("xiaFreeFirmwareSet", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaFreeFirmwareSet",
+               "FirmwareSet object unallocated:  can not free");
         return status;
     }
 
@@ -491,7 +490,8 @@ int HANDEL_API xiaFreeFirmwareSet(FirmwareSet* firmwareSet) {
         next = current->next;
         status = xiaFreeFirmware(current);
         if (status != XIA_SUCCESS) {
-            xiaLogError("xiaFreeFirmwareSet", "Error freeing firmware", status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaFreeFirmwareSet",
+                   "Error freeing firmware");
             return status;
         }
         current = next;
@@ -520,8 +520,8 @@ int HANDEL_API xiaFreeFirmware(Firmware* firmware) {
 
     if (firmware == NULL) {
         status = XIA_NOMEM;
-        sprintf(info_string, "Firmware object unallocated:  can not free");
-        xiaLogError("xiaFreeFirmware", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaFreeFirmware",
+               "Firmware object unallocated:  can not free");
         return status;
     }
 
@@ -570,7 +570,8 @@ static int HANDEL_API xiaInitXiaDefaultsDS(void) {
 
         status = xiaFreeXiaDefaults(current);
         if (status != XIA_SUCCESS) {
-            xiaLogError("xiaInitXiaDefaultDS", "Error freeing default", status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaInitXiaDefaultDS",
+                   "Error freeing default");
             return status;
         }
 
@@ -593,8 +594,8 @@ int HANDEL_API xiaFreeXiaDefaults(XiaDefaults* xiaDefaults) {
 
     if (xiaDefaults == NULL) {
         status = XIA_NOMEM;
-        sprintf(info_string, "XiaDefaults object unallocated:  can not free");
-        xiaLogError("xiaFreeXiaDefaults", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaFreeXiaDefaults",
+               "XiaDefaults object unallocated:  can not free");
         return status;
     }
 
@@ -609,7 +610,8 @@ int HANDEL_API xiaFreeXiaDefaults(XiaDefaults* xiaDefaults) {
         status = xiaFreeXiaDaqEntry(current);
 
         if (status != XIA_SUCCESS) {
-            xiaLogError("xiaFreeXiaDefaults", "Error freeing DAQ entry", status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaFreeXiaDefaults",
+                   "Error freeing DAQ entry");
             return status;
         }
         current = next;
@@ -630,8 +632,8 @@ int HANDEL_API xiaFreeXiaDaqEntry(XiaDaqEntry* entry) {
 
     if (entry == NULL) {
         status = XIA_NOMEM;
-        sprintf(info_string, "XiaDaqEntry object unallocated:  can not free");
-        xiaLogError("xiaFreeXiaDaqEntry", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaFreeXiaDaqEntry",
+               "XiaDaqEntry object unallocated:  can not free");
         return status;
     }
 
@@ -664,7 +666,10 @@ int HANDEL_API xiaFreeModule(Module* module) {
 
     PSLFuncs f;
 
-    ASSERT(module != NULL);
+    if (module == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_VALUE, "xiaAddFirmwareItem", "module is NULL");
+        return XIA_NULL_VALUE;
+    }
 
     switch (module->interface_info->type) {
         default:
@@ -707,8 +712,8 @@ int HANDEL_API xiaFreeModule(Module* module) {
             status = xiaRemoveDetChan((unsigned int) module->channels[i]);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Error removing detChan member");
-                xiaLogError("xiaFreeModule", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaFreeModule",
+                       "Error removing detChan member");
                 /*
                  * Should this continue since we'll leak memory if we return
                  * prematurely?
@@ -750,9 +755,8 @@ int HANDEL_API xiaFreeModule(Module* module) {
             status = xiaRemoveDefault(module->defaults[k]);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Error removing values associated with modChan %u",
-                        k);
-                xiaLogError("xiaFreeModule", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaFreeModule",
+                       "Error removing values associated with modChan %u", k);
                 return status;
             }
             handel_md_free((void*) module->defaults[k]);
@@ -777,8 +781,8 @@ int HANDEL_API xiaFreeModule(Module* module) {
         status = xiaLoadPSL(module->type, &f);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error loading PSL for '%s'", module->alias);
-            xiaLogError("xiaFreeModule", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaFreeModule", "Error loading PSL for '%s'",
+                   module->alias);
             return status;
         }
 
@@ -787,10 +791,9 @@ int HANDEL_API xiaFreeModule(Module* module) {
                 status = f.freeSCAs(module, i);
 
                 if (status != XIA_SUCCESS) {
-                    sprintf(info_string,
-                            "Error removing SCAs from modChan '%u', alias '%s'", i,
-                            module->alias);
-                    xiaLogError("xiaFreeModule", info_string, status);
+                    xiaLog(XIA_LOG_ERROR, status, "xiaFreeModule",
+                           "Error removing SCAs from modChan '%u', alias '%s'", i,
+                           module->alias);
                     return status;
                 }
             }
@@ -867,7 +870,7 @@ static int HANDEL_API xiaInitModuleDS(void) {
 
         status = xiaFreeModule(head);
         if (status != XIA_SUCCESS) {
-            xiaLogError("xiaInitModuleDS", "Error freeing module(s)", status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaInitModuleDS", "Error freeing module(s)");
             return status;
         }
     }
@@ -899,27 +902,24 @@ static int HANDEL_API xiaUnHook(void) {
             status = xiaGetBoardType(current->detChan, boardType);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to get boardType for detChan %d",
-                        current->detChan);
-                xiaLogError("xiaUnHook", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaUnHook",
+                       "Unable to get boardType for detChan %d", current->detChan);
                 return status;
             }
 
             status = xiaLoadPSL(boardType, &localFuncs);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to load PSL functions for boardType %s",
-                        boardType);
-                xiaLogError("xiaUnHook", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaUnHook",
+                       "Unable to load PSL functions for boardType %s", boardType);
                 return status;
             }
 
             status = localFuncs.unHook(current->detChan);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to close communications for boardType %s",
-                        boardType);
-                xiaLogError("xiaUnHook", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaUnHook",
+                       "Unable to close communications for boardType %s", boardType);
                 return status;
             }
         }

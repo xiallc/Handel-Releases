@@ -65,23 +65,20 @@ int HANDEL_API xiaNewDefault(char* alias) {
             fprintf(stderr, "FATAL ERROR: Unable to load libraries.\n");
             exit(XIA_INITIALIZE);
         }
-        xiaLogWarning("xiaNewDefault", "HanDeL was initialized silently");
+        xiaLog(XIA_LOG_WARNING, "xiaNewDefault", "HanDeL was initialized silently");
     }
 
     if ((strlen(alias) + 1) > MAXALIAS_LEN) {
-        status = XIA_ALIAS_SIZE;
-        sprintf(info_string, "Alias contains too many characters");
-        xiaLogError("xiaNewDefault", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_ALIAS_SIZE, "xiaNewDefault", "alias too long");
+        return XIA_ALIAS_SIZE;
     }
 
     /* First check if this alias exists already? */
     current = xiaFindDefault(alias);
     if (current != NULL) {
-        status = XIA_ALIAS_EXISTS;
-        sprintf(info_string, "Alias %s already in use.", alias);
-        xiaLogError("xiaNewDefault", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_ALIAS_EXISTS, "xiaNewDefault",
+               "Alias %s already in use.", alias);
+        return XIA_ALIAS_EXISTS;
     }
     /* Check that the Head of the linked list exists */
     if (xiaDefaultsHead == NULL) {
@@ -100,19 +97,17 @@ int HANDEL_API xiaNewDefault(char* alias) {
 
     /* Make sure memory was allocated */
     if (current == NULL) {
-        status = XIA_NOMEM;
-        sprintf(info_string, "Unable to allocate memory for default %s.", alias);
-        xiaLogError("xiaNewDefault", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "xiaNewDefault",
+               "Unable to allocate memory for default %s.", alias);
+        return XIA_NOMEM;
     }
 
     /* Do any other allocations, or initialize to NULL/0 */
     current->alias = (char*) handel_md_alloc((strlen(alias) + 1) * sizeof(char));
     if (current->alias == NULL) {
-        status = XIA_NOMEM;
-        xiaLogError("xiaNewDefault", "Unable to allocate memory for default->alias",
-                    status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "xiaNewDefault",
+               "Unable to allocate memory for default->alias");
+        return XIA_NOMEM;
     }
 
     strcpy(current->alias, alias);
@@ -137,25 +132,22 @@ int HANDEL_API xiaAddDefaultItem(char* alias, char* name, void* value) {
     /* Locate the XiaDefaults entry first */
     chosen = xiaFindDefault(alias);
     if (chosen == NULL) {
-        status = XIA_NO_ALIAS;
-        sprintf(info_string, "Alias %s has not been created.", alias);
-        xiaLogError("xiaAddDefaultItem", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NO_ALIAS, "xiaAddDefaultItem",
+               "Alias %s has not been created.", alias);
+        return XIA_NO_ALIAS;
     }
 
     /* Check that the value is not NULL. */
     if (value == NULL) {
-        status = XIA_BAD_VALUE;
-        sprintf(info_string, "Value can not be NULL");
-        xiaLogError("xiaAddDefualtItem", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_BAD_VALUE, "xiaAddDefualtItem",
+               "Value can not be NULL");
+        return XIA_BAD_VALUE;
     }
 
     if (name == NULL) {
-        status = XIA_BAD_NAME;
-        sprintf(info_string, "Name can not be NULL");
-        xiaLogError("xiaAddDefaultItem", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_BAD_NAME, "xiaAddDefaultItem",
+               "Name can not be NULL");
+        return XIA_BAD_NAME;
     }
 
     /*
@@ -200,10 +192,9 @@ int HANDEL_API xiaAddDefaultItem(char* alias, char* name, void* value) {
     }
 
     if (current == NULL) {
-        status = XIA_NOMEM;
-        xiaLogError("xiaAddDefaultItem", "Unable to allocate memory for DAQ entry",
-                    status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "xiaAddDefaultItem",
+               "Unable to allocate memory for DAQ entry");
+        return XIA_NOMEM;
     }
 
     current->next = NULL;
@@ -211,10 +202,9 @@ int HANDEL_API xiaAddDefaultItem(char* alias, char* name, void* value) {
     /* Create the name entry. */
     current->name = (char*) handel_md_alloc((strlen(name) + 1) * sizeof(char));
     if (current->name == NULL) {
-        status = XIA_NOMEM;
-        xiaLogError("xiaAddDefaultItem", "Unable to allocate memory for current->name",
-                    status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "xiaAddDefaultItem",
+               "Unable to allocate memory for current->name");
+        return XIA_NOMEM;
     }
 
     strcpy(current->name, name);
@@ -237,26 +227,23 @@ int HANDEL_API xiaModifyDefaultItem(char* alias, char* name, void* value) {
 
     /* Check that the name and value are not NULL */
     if (value == NULL) {
-        status = XIA_BAD_VALUE;
-        sprintf(info_string, "Value can not be NULL");
-        xiaLogError("xiaModifyDefaultItem", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_BAD_VALUE, "xiaModifyDefaultItem",
+               "Value can not be NULL");
+        return XIA_BAD_VALUE;
     }
 
     if (name == NULL) {
-        status = XIA_BAD_VALUE;
-        sprintf(info_string, "Name can not be NULL");
-        xiaLogError("xiaModifyDefaultItem", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_BAD_VALUE, "xiaModifyDefaultItem",
+               "Name can not be NULL");
+        return XIA_BAD_VALUE;
     }
 
     /* Locate the XiaDefaults entry first */
     chosen = xiaFindDefault(alias);
     if (chosen == NULL) {
-        status = XIA_NO_ALIAS;
-        sprintf(info_string, "Alias %s was not found.", alias);
-        xiaLogError("xiaModifyDefaultItem", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NO_ALIAS, "xiaModifyDefaultItem",
+               "Alias %s was not found.", alias);
+        return XIA_NO_ALIAS;
     }
 
     /* Now find a match to the name */
@@ -269,10 +256,9 @@ int HANDEL_API xiaModifyDefaultItem(char* alias, char* name, void* value) {
     }
 
     if (current == NULL) {
-        status = XIA_BAD_VALUE;
-        sprintf(info_string, "No entry named %s found.", name);
-        xiaLogError("xiaModifyDefaultItem", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_BAD_VALUE, "xiaModifyDefaultItem",
+               "No entry named %s found.", name);
+        return XIA_BAD_VALUE;
     }
 
     /* Now modify the value */
@@ -293,10 +279,9 @@ int HANDEL_API xiaGetDefaultItem(char* alias, char* name, void* value) {
     /* Find the alias */
     chosen = xiaFindDefault(alias);
     if (chosen == NULL) {
-        status = XIA_NO_ALIAS;
-        sprintf(info_string, "Alias: %s does not exist", alias);
-        xiaLogError("xiaGetDefaultItem", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NO_ALIAS, "xiaGetDefaultItem",
+               "Alias: %s does not exist", alias);
+        return XIA_NO_ALIAS;
     }
 
     /* Decide which data to return by searching through the entries LL */
@@ -315,10 +300,9 @@ int HANDEL_API xiaGetDefaultItem(char* alias, char* name, void* value) {
     }
 
     if (current == NULL) {
-        status = XIA_BAD_NAME;
-        sprintf(info_string, "Invalid name: %s", name);
-        xiaLogError("xiaGetDefaultItem", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_BAD_NAME, "xiaGetDefaultItem", "Invalid name: %s",
+               name);
+        return XIA_BAD_NAME;
     }
 
     *((double*) value) = current->data;
@@ -336,14 +320,13 @@ int HANDEL_API xiaRemoveDefault(char* alias) {
     XiaDefaults* current = NULL;
     XiaDefaults* next = NULL;
 
-    sprintf(info_string, "Preparing to remove default w/ alias %s", alias);
-    xiaLogDebug("xiaRemoveDefault", info_string);
+    xiaLog(XIA_LOG_DEBUG, "xiaRemoveDefault", "Preparing to remove default w/ alias %s",
+           alias);
 
     if (isListEmpty(xiaDefaultsHead)) {
-        status = XIA_NO_ALIAS;
-        sprintf(info_string, "Alias %s does not exist", alias);
-        xiaLogError("xiaRemoveDefault", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NO_ALIAS, "xiaRemoveDefault",
+               "Alias %s does not exist", alias);
+        return XIA_NO_ALIAS;
     }
 
     /* First check if this alias exists already? */
@@ -362,10 +345,9 @@ int HANDEL_API xiaRemoveDefault(char* alias) {
 
     /* Check if we found nothing */
     if ((next == NULL) && (!STREQ(current->alias, alias))) {
-        status = XIA_NO_ALIAS;
-        sprintf(info_string, "Alias %s does not exist.", alias);
-        xiaLogError("xiaRemoveDefault", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NO_ALIAS, "xiaRemoveDefault",
+               "Alias %s does not exist.", alias);
+        return XIA_NO_ALIAS;
     }
 
     /* Check if match is the head of the list */

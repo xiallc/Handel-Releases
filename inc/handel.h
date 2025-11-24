@@ -90,11 +90,6 @@ HANDEL_IMPORT int HANDEL_API xiaGetModules(char* modules[]);
 HANDEL_IMPORT int HANDEL_API xiaGetModules_VB(unsigned int index, char* alias);
 HANDEL_IMPORT int HANDEL_API xiaRemoveModule(char* alias);
 HANDEL_IMPORT int HANDEL_API xiaModuleFromDetChan(int detChan, char* alias);
-HANDEL_IMPORT int HANDEL_API xiaAddChannelSetElem(unsigned int detChanSet,
-                                                  unsigned int newChan);
-HANDEL_IMPORT int HANDEL_API xiaRemoveChannelSetElem(unsigned int detChan,
-                                                     unsigned int chan);
-HANDEL_IMPORT int HANDEL_API xiaRemoveChannelSet(unsigned int detChan);
 HANDEL_IMPORT int HANDEL_API xiaStartSystem(void);
 HANDEL_IMPORT int HANDEL_API xiaDownloadFirmware(int detChan, char* type);
 HANDEL_IMPORT int HANDEL_API xiaSetAcquisitionValues(int detChan, char* name,

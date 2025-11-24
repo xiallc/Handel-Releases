@@ -82,35 +82,30 @@ HANDEL_EXPORT int HANDEL_API xiaStartSystem(void) {
     int status;
 
     DetChanElement* current = NULL;
-    xiaLogInfo("xiaStartSystem", "Starting system...");
+    xiaLog(XIA_LOG_INFO, "xiaStartSystem", "Starting system...");
 
     status = xiaValidateFirmwareSets();
 
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaStartSystem",
-                    "Error validating system-wide firmware "
-                    "sets.",
-                    status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaStartSystem",
+               "Error validating system-wide firmware sets.");
         return status;
     }
 
     status = xiaValidateDetector();
 
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaStartSystem",
-                    "Error validating system-wide detector "
-                    "configurations.",
-                    status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaStartSystem",
+               "Error validating system-wide detector configurations.");
         return status;
     }
 
     current = xiaGetDetChanHead();
 
     if (!current) {
-        xiaLogError("xiaStartSystem",
-                    "Unable to start system, no detChans "
-                    "are defined.",
-                    XIA_NO_DETCHANS);
+        xiaLog(XIA_LOG_ERROR, XIA_NO_DETCHANS, "xiaStartSystem",
+               "Unable to start system, no detChans "
+               "are defined.");
         return XIA_NO_DETCHANS;
     }
 
@@ -125,9 +120,8 @@ HANDEL_EXPORT int HANDEL_API xiaStartSystem(void) {
                 break;
             case 999:
                 status = XIA_INVALID_DETCHAN;
-                sprintf(info_string, "detChan %d has an invalid type.",
-                        current->detChan);
-                xiaLogError("xiaStartSystem", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaStartSystem",
+                       "detChan %d has an invalid type.", current->detChan);
                 /* Let the check below do the "return" for us. */
                 break;
             default:
@@ -136,8 +130,8 @@ HANDEL_EXPORT int HANDEL_API xiaStartSystem(void) {
         }
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error validating detChan %d.", current->detChan);
-            xiaLogError("xiaStartSystem", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaStartSystem",
+                   "Error validating detChan %d.", current->detChan);
             return status;
         }
 
@@ -147,18 +141,19 @@ HANDEL_EXPORT int HANDEL_API xiaStartSystem(void) {
     status = xiaBuildXerxesConfig();
 
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaStartSystem", "Error configuring Xerxes.", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaStartSystem", "Error configuring Xerxes.");
         return status;
     }
 
     status = xiaUserSetup();
 
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaStartSystem", "Error performing user setup tasks.", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaStartSystem",
+               "Error performing user setup tasks.");
         return status;
     }
 
-    xiaLogInfo("xiaStartSystem", "System started successfully.");
+    xiaLog(XIA_LOG_INFO, "xiaStartSystem", "System started successfully.");
     return XIA_SUCCESS;
 }
 
@@ -207,7 +202,13 @@ HANDEL_EXPORT int HANDEL_API xiaDownloadFirmware(int detChan, char* type) {
 
     PSLFuncs localFuncs;
 
-    xiaLogInfo("xiaDownloadFirmware", "Downloading firmware");
+    xiaLog(XIA_LOG_INFO, "xiaDownloadFirmware", "Downloading firmware");
+
+    if (type == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_TYPE, "xiaDownloadFirmware",
+               "name cannot be NULL");
+        return XIA_NULL_TYPE;
+    }
 
     elemType = xiaGetElemType((unsigned int) detChan);
 
@@ -237,8 +238,8 @@ HANDEL_EXPORT int HANDEL_API xiaDownloadFirmware(int detChan, char* type) {
                 status =
                     xiaGetValueFromFirmware(firmAlias, peakingTime, type, fileName);
                 if (status != XIA_SUCCESS) {
-                    sprintf(info_string, "Error getting %s from %s", type, firmAlias);
-                    xiaLogError("xiaDownloadFirmware", info_string, status);
+                    xiaLog(XIA_LOG_ERROR, status, "xiaDownloadFirmware",
+                           "Error getting %s from %s", type, firmAlias);
                     return status;
                 }
 
@@ -259,11 +260,9 @@ HANDEL_EXPORT int HANDEL_API xiaDownloadFirmware(int detChan, char* type) {
                         strcpy(detType, "RC_FEEDBACK");
                         break;
                     default:
-                        status = XIA_UNKNOWN;
-                        xiaLogError("xiaDownloadFirmware",
-                                    "Should not be seeing this message", status);
-                        return status;
-                        break;
+                        xiaLog(XIA_LOG_ERROR, XIA_UNKNOWN, "xiaDownloadFirmware",
+                               "Should not be seeing this message");
+                        return XIA_UNKNOWN;
                 }
 
                 if (!firmwareSet->tmpPath) {
@@ -275,8 +274,8 @@ HANDEL_EXPORT int HANDEL_API xiaDownloadFirmware(int detChan, char* type) {
                                                    detType, fileName, rawFilename);
 
                 if (status != XIA_SUCCESS) {
-                    xiaLogError("xiaDownloadFirmware",
-                                "Error getting firmware from FDD", status);
+                    xiaLog(XIA_LOG_ERROR, status, "xiaDownloadFirmware",
+                           "Error getting firmware from FDD");
                     return status;
                 }
             }
@@ -284,17 +283,16 @@ HANDEL_EXPORT int HANDEL_API xiaDownloadFirmware(int detChan, char* type) {
             status = xiaGetBoardType(detChan, boardType);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to get boardType for detChan %d", detChan);
-                xiaLogError("xiaDownloadFirmware", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaDownloadFirmware",
+                       "Unable to get boardType for detChan %d", detChan);
                 return status;
             }
 
             status = xiaLoadPSL(boardType, &localFuncs);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to load PSL functions for boardType %s",
-                        boardType);
-                xiaLogError("xiaDownloadFirmware", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaDownloadFirmware",
+                       "Unable to load PSL functions for boardType %s", boardType);
                 return status;
             }
 
@@ -302,9 +300,8 @@ HANDEL_EXPORT int HANDEL_API xiaDownloadFirmware(int detChan, char* type) {
                                                  rawFilename, defs);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to download Firmware for detChan %d",
-                        detChan);
-                xiaLogError("xiaDownloadFirmware", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaDownloadFirmware",
+                       "Unable to download Firmware for detChan %d", detChan);
                 return status;
             }
 
@@ -334,9 +331,9 @@ HANDEL_EXPORT int HANDEL_API xiaDownloadFirmware(int detChan, char* type) {
                 status = xiaDownloadFirmware((int) detChanSetElem->channel, type);
 
                 if (status != XIA_SUCCESS) {
-                    sprintf(info_string, "Error downloading firmware to detChan %u",
-                            detChanSetElem->channel);
-                    xiaLogError("xiaDownloadFirmware", info_string, status);
+                    xiaLog(XIA_LOG_ERROR, status, "xiaDownloadFirmware",
+                           "Error downloading firmware to detChan %u",
+                           detChanSetElem->channel);
                     return status;
                 }
 
@@ -344,21 +341,16 @@ HANDEL_EXPORT int HANDEL_API xiaDownloadFirmware(int detChan, char* type) {
             }
             break;
         case 999:
-            status = XIA_INVALID_DETCHAN;
-            xiaLogError("xiaDownloadFirmware",
-                        "detChan number is not in the list of valid values ", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_INVALID_DETCHAN, "xiaDownloadFirmware",
+                   "detChan number is not in the list of valid values ");
+            return XIA_INVALID_DETCHAN;
         default:
-            /* Better not get here */
-            status = XIA_UNKNOWN;
-            xiaLogError("xiaDownloadFirmware", "Should not be seeing this message",
-                        XIA_UNKNOWN);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_UNKNOWN, "xiaDownloadFirmware",
+                   "Should not be seeing this message");
+            return XIA_UNKNOWN;
     }
 
-    xiaLogInfo("xiaDownloadFirmware", "Firmware downloaded successfully.");
+    xiaLog(XIA_LOG_INFO, "xiaDownloadFirmware", "Firmware downloaded successfully.");
     return XIA_SUCCESS;
 }
 
@@ -380,21 +372,19 @@ HANDEL_EXPORT int HANDEL_API xiaDownloadFirmware(int detChan, char* type) {
  */
 static int HANDEL_API xiaValidateFirmwareSets(void) {
     int status;
-
     FirmwareSet* current = NULL;
 
     current = xiaGetFirmwareSetHead();
 
     while (current != NULL) {
-        sprintf(info_string, "Validating firmware %s", current->alias);
-        xiaLogDebug("xiaValidateFirmwareSets", info_string);
+        xiaLog(XIA_LOG_DEBUG, "xiaValidateFirmwareSets", "Validating firmware %s",
+               current->alias);
 
         if (!xiaIsFDFvsFirmValid(current)) {
             status = XIA_FIRM_BOTH;
-            sprintf(info_string,
-                    "Firmware alias %s contains both an FDF and Firmware definitions",
-                    current->alias);
-            xiaLogWarning("xiaValidateFirmwareSets", info_string);
+            xiaLog(XIA_LOG_WARNING, "xiaValidateFirmwareSets",
+                   "Firmware alias %s contains both an FDF and Firmware definitions",
+                   current->alias);
         }
 
         /* If we only have an FDF file then we don't need to do anything else */
@@ -403,22 +393,18 @@ static int HANDEL_API xiaValidateFirmwareSets(void) {
         }
 
         if (!xiaArePTRsValid(&(current->firmware))) {
-            status = XIA_PTR_OVERLAP;
-            sprintf(info_string,
-                    "Firmware definitions in alias %s have overlapping peaking times",
-                    current->alias);
-            xiaLogError("xiaVAlidateFirmwareSets", info_string, status);
-            return status;
+            xiaLog(XIA_LOG_ERROR, XIA_PTR_OVERLAP, "xiaValidateFirmwareSets",
+                   "Firmware definitions in alias %s have overlapping peaking times",
+                   current->alias);
+            return XIA_PTR_OVERLAP;
         }
 
         if (!xiaAreFiPPIAndDSPValid(current->firmware)) {
-            status = XIA_MISSING_FIRM;
-            sprintf(
-                info_string,
+            xiaLog(
+                XIA_LOG_ERROR, XIA_MISSING_FIRM, "xiaValidateFirmwareSets",
                 "Firmware definition(s) in alias %s is/are missing FiPPI and DSP files",
                 current->alias);
-            xiaLogError("xiaValidateFirmwareSets", info_string, status);
-            return status;
+            return XIA_MISSING_FIRM;
         }
 
         current = getListNext(current);
@@ -438,32 +424,26 @@ static int HANDEL_API xiaValidateFirmwareSets(void) {
  * 3) Check that the type is defined beyond XIA_DET_UNKNOWN
  */
 static int HANDEL_API xiaValidateDetector(void) {
-    int status;
-
     Detector* current = NULL;
-
     current = xiaGetDetectorHead();
 
     while (current != NULL) {
         if (!xiaArePolaritiesValid(current)) {
-            status = XIA_MISSING_POL;
-            sprintf(info_string, "Missing polarity in alias %s\n", current->alias);
-            xiaLogError("xiaValidateDetector", info_string, status);
-            return status;
+            xiaLog(XIA_LOG_ERROR, XIA_MISSING_POL, "xiaValidateDetector",
+                   "Missing polarity in alias %s\n", current->alias);
+            return XIA_MISSING_POL;
         }
 
         if (!xiaAreGainsValid(current)) {
-            status = XIA_MISSING_GAIN;
-            sprintf(info_string, "Missing gain in alias %s\n", current->alias);
-            xiaLogError("xiaValidateDetector", info_string, status);
-            return status;
+            xiaLog(XIA_LOG_ERROR, XIA_MISSING_GAIN, "xiaValidateDetector",
+                   "Missing gain in alias %s\n", current->alias);
+            return XIA_MISSING_GAIN;
         }
 
         if (!xiaIsTypeValid(current)) {
-            status = XIA_MISSING_TYPE;
-            sprintf(info_string, "Missing type in alias %s\n", current->alias);
-            xiaLogError("xiaValidateDetector", info_string, status);
-            return status;
+            xiaLog(XIA_LOG_ERROR, XIA_MISSING_TYPE, "xiaValidateDetector",
+                   "Missing type in alias %s\n", current->alias);
+            return XIA_MISSING_TYPE;
         }
 
         current = getListNext(current);
@@ -490,8 +470,7 @@ static int HANDEL_API xiaValidateModule(PSLFuncs* funcs, unsigned int detChan) {
     status = funcs->validateModule(current);
 
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error validating module");
-        xiaLogError("xiaValidateModule", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaValidateModule", "Error validating module");
         return status;
     }
 
@@ -500,8 +479,8 @@ static int HANDEL_API xiaValidateModule(PSLFuncs* funcs, unsigned int detChan) {
     status = funcs->validateDefaults(defaults);
 
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error validating defaults for module");
-        xiaLogError("xiaValidateModule", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaValidateModule",
+               "Error validating defaults for module");
         return status;
     }
 
@@ -637,24 +616,24 @@ static int HANDEL_API xiaValidateDetChan(DetChanElement* current) {
     status = xiaGetBoardType(current->detChan, boardType);
 
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaValidateDetChan",
-                    "Error getting board type for specified detChan", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaValidateDetChan",
+               "Error getting board type for specified detChan");
         return status;
     }
 
     status = xiaLoadPSL(boardType, &localFuncs);
 
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaValidateDetChan", "Error loading PSL functions", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaValidateDetChan",
+               "Error loading PSL functions");
         return status;
     }
 
     status = xiaValidateModule(&localFuncs, current->detChan);
 
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error validating Module data for detChan %d",
-                current->detChan);
-        xiaLogError("xiaValidateDetChan", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaValidateDetChan",
+               "Error validating Module data for detChan %d", current->detChan);
         return status;
     }
 
@@ -687,11 +666,9 @@ static int HANDEL_API xiaValidateDetSet(DetChanElement* head) {
                 break;
             case SET:
                 if (current->isTagged) {
-                    sprintf(info_string,
-                            "Infinite loop detected involving "
-                            "detChan %d",
-                            current->detChan);
-                    xiaLogError("xiaValidateDetSet", info_string, XIA_INFINITE_LOOP);
+                    xiaLog(XIA_LOG_ERROR, XIA_INFINITE_LOOP, "xiaValidateDetSet",
+                           "Infinite loop detected involving detChan %d",
+                           current->detChan);
                     return XIA_INFINITE_LOOP;
                 }
                 status = xiaValidateDetSet(current);
@@ -702,8 +679,8 @@ static int HANDEL_API xiaValidateDetSet(DetChanElement* head) {
         }
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error validating detChans");
-            xiaLogError("xiaValidateDetSet", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaValidateDetSet",
+                   "Error validating detChans");
             return status;
         }
 
@@ -760,13 +737,12 @@ int HANDEL_API xiaLoadPSL(char* boardType, PSLFuncs* funcs) {
     }
 
     if (status == XIA_UNKNOWN_BOARD) {
-        sprintf(info_string,
-                "Board type '%s' is not supported in this version of the library",
-                boardType);
-        xiaLogError("xiaLoadPSL", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaLoadPSL",
+               "Board type '%s' is not supported in this version of the library",
+               boardType);
         return status;
     } else if (status != XIA_SUCCESS) {
-        xiaLogError("xiaLoadPSL", "Error initializing PSL functions", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaLoadPSL", "Error initializing PSL functions");
         return status;
     }
 
@@ -787,12 +763,14 @@ HANDEL_EXPORT int HANDEL_API xiaBoardOperation(int detChan, char* name, void* va
     PSLFuncs localFuncs;
 
     if (name == NULL) {
-        xiaLogError("xiaBoardOperation", "'name' can not be NULL", XIA_NULL_NAME);
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_NAME, "xiaBoardOperation",
+               "name cannot be NULL");
         return XIA_NULL_NAME;
     }
 
     if (value == NULL) {
-        xiaLogError("xiaBoardOperation", "'value' can not be NULL", XIA_NULL_VALUE);
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_VALUE, "xiaBoardOperation",
+               "value cannot be NULL");
         return XIA_NULL_VALUE;
     }
 
@@ -802,54 +780,46 @@ HANDEL_EXPORT int HANDEL_API xiaBoardOperation(int detChan, char* name, void* va
         case SINGLE:
             status = xiaGetBoardType(detChan, boardType);
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to get boardType for detChan %d", detChan);
-                xiaLogError("xiaBoardOperation", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaBoardOperation",
+                       "Unable to get boardType for detChan %d", detChan);
                 return status;
             }
 
             defs = xiaGetDefaultFromDetChan(detChan);
 
             if (!defs) {
-                sprintf(info_string, "Error getting defaults for detChan %d", detChan);
-                xiaLogError("xiaBoardOperation", info_string, XIA_BAD_CHANNEL);
+                xiaLog(XIA_LOG_ERROR, XIA_BAD_CHANNEL, "xiaBoardOperation",
+                       "Error getting defaults for detChan %d", detChan);
                 return XIA_BAD_CHANNEL;
             }
 
             status = xiaLoadPSL(boardType, &localFuncs);
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to load PSL functions for boardType %s",
-                        boardType);
-                xiaLogError("xiaBoardOperation", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaBoardOperation",
+                       "Unable to load PSL functions for boardType %s", boardType);
                 return status;
             }
 
             status = localFuncs.boardOperation(detChan, name, value, defs);
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to do board operation (%s) for detChan %d",
-                        name, detChan);
-                xiaLogError("xiaBoardOperation", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaBoardOperation",
+                       "Unable to do board operation (%s) for detChan %d", name,
+                       detChan);
                 return status;
             }
             break;
         case SET:
-            status = XIA_BAD_TYPE;
-            xiaLogError("xiaBoardOperation",
-                        "This routine only supports single detChans", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_BAD_TYPE, "xiaBoardOperation",
+                   "This routine only supports single detChans");
+            return XIA_BAD_TYPE;
         case 999:
-            status = XIA_INVALID_DETCHAN;
-            xiaLogError("xiaBoardOperation",
-                        "detChan number is not in the list of valid values ", status);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_INVALID_DETCHAN, "xiaBoardOperation",
+                   "detChan number is not in the list of valid values ");
+            return XIA_INVALID_DETCHAN;
         default:
-            /* Better not get here */
-            status = XIA_UNKNOWN;
-            xiaLogError("xiaBoardOperation", "Should not be seeing this message",
-                        XIA_UNKNOWN);
-            return status;
-            break;
+            xiaLog(XIA_LOG_ERROR, XIA_UNKNOWN, "xiaBoardOperation",
+                   "Should not be seeing this message");
+            return XIA_UNKNOWN;
     }
 
     return XIA_SUCCESS;
@@ -877,28 +847,30 @@ HANDEL_EXPORT int HANDEL_API xiaMemoryOperation(int detChan, char* name, void* v
     unsigned long len = 0x00000000;
 
     if (name == NULL) {
-        xiaLogError("xiaMemoryOperation", "'name' may not be 'NULL'", XIA_NULL_NAME);
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_NAME, "xiaMemoryOperation",
+               "name cannot be NULL");
         return XIA_NULL_NAME;
     }
 
     if (value == NULL) {
-        xiaLogError("xiaMemoryOperation", "'value' may not be 'NULL'", XIA_NULL_VALUE);
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_VALUE, "xiaMemoryOperation",
+               "value cannot be NULL");
         return XIA_NULL_VALUE;
     }
 
-    sprintf(info_string, "memory = %s", name);
-    xiaLogDebug("xiaMemoryOperation", info_string);
+    xiaLog(XIA_LOG_DEBUG, "xiaMemoryOperation", "memory = %s", name);
 
     status = _parseMemoryName(name, type, &isRead, &addr, &len);
 
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaMemoryOperation", "Error parsing memory name", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaMemoryOperation",
+               "Error parsing memory name");
         return status;
     }
 
-    sprintf(info_string, "type = '%s', isRead = '%u', addr = '%lx', len = '%lu'", type,
-            isRead, addr, len);
-    xiaLogDebug("xiaMemoryOperation", info_string);
+    xiaLog(XIA_LOG_DEBUG, "xiaMemoryOperation",
+           "type = '%s', isRead = '%u', addr = '%lx', len = '%lu'", type, isRead, addr,
+           len);
 
     /*
      * The choice of malloc size may seem unusual, but we can easily promise that
@@ -908,7 +880,8 @@ HANDEL_EXPORT int HANDEL_API xiaMemoryOperation(int detChan, char* name, void* v
     nameX = (char*) handel_md_alloc(strlen(name) + 1);
 
     if (nameX == NULL) {
-        xiaLogError("xiaMemoryOperation", "Out-of-memory creating 'nameX'", XIA_NOMEM);
+        xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "xiaMemoryOperation",
+               "Out-of-memory creating nameX");
         return XIA_NOMEM;
     }
 
@@ -923,9 +896,8 @@ HANDEL_EXPORT int HANDEL_API xiaMemoryOperation(int detChan, char* name, void* v
     handel_md_free(nameX);
 
     if (status != DXP_SUCCESS) {
-        sprintf(info_string, "Error reading/writing memory ('%s') for detChan '%d'",
-                name, detChan);
-        xiaLogError("xiaMemoryOperation", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaMemoryOperation",
+               "Error reading/writing memory ('%s') for detChan '%d'", name, detChan);
         return status;
     }
 
@@ -956,7 +928,7 @@ HANDEL_EXPORT int HANDEL_API xiaCommandOperation(int detChan, byte_t cmd,
     status = dxp_cmd(&detChan, &cmd, &lenS, send, &lenR, recv);
 
     if (status != DXP_SUCCESS) {
-        xiaLogError("xiaCommandOperation", "Error executing command", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaCommandOperation", "Error executing command");
         return status;
     }
 
@@ -972,8 +944,8 @@ HANDEL_EXPORT int HANDEL_API xiaSetIOPriority(int pri) {
     status = dxp_set_io_priority(&pri);
 
     if (status != DXP_SUCCESS) {
-        sprintf(info_string, "Error setting priority '%#x'", pri);
-        xiaLogError("xiaSetIOPriority", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaSetIOPriority",
+               "Error setting priority '%#x'", pri);
         return status;
     }
 
@@ -991,17 +963,39 @@ static int HANDEL_API _parseMemoryName(char* name, char* type, boolean_t* isRead
     char* tok = NULL;
     char* delim = ":";
 
-    ASSERT(name != NULL);
-    ASSERT(type != NULL);
-    ASSERT(isRead != NULL);
-    ASSERT(addr != NULL);
-    ASSERT(len != NULL);
+    if (name == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_NAME, "xiaSetIOPriority", "name cannot be null");
+        return XIA_NULL_NAME;
+    }
+
+    if (type == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_TYPE, "xiaSetIOPriority", "name cannot be null");
+        return XIA_NULL_TYPE;
+    }
+
+    if (isRead == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_VALUE, "xiaSetIOPriority",
+               "isRead cannot be null");
+        return XIA_NULL_VALUE;
+    }
+
+    if (addr == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_VALUE, "xiaSetIOPriority",
+               "name cannot be null");
+        return XIA_NULL_VALUE;
+    }
+
+    if (len == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_VALUE, "xiaSetIOPriority",
+               "name cannot be null");
+        return XIA_NULL_VALUE;
+    }
 
     n = (char*) handel_md_alloc(strlen(name) + 1);
 
     if (n == NULL) {
-        xiaLogError("_parseMemoryName", "Out-of-memory trying to create 'n' string",
-                    XIA_NOMEM);
+        xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "_parseMemoryName",
+               "Out-of-memory trying to create 'n' string");
         return XIA_NOMEM;
     }
 
@@ -1011,8 +1005,8 @@ static int HANDEL_API _parseMemoryName(char* name, char* type, boolean_t* isRead
 
     if (tok == NULL) {
         handel_md_free(n);
-        sprintf(info_string, "'%s' is not a valid memory string: missing 'type'", name);
-        xiaLogError("_parseMemoryName", info_string, XIA_INVALID_STR);
+        xiaLog(XIA_LOG_ERROR, XIA_INVALID_STR, "_parseMemoryName",
+               "'%s' is not a valid memory string: missing 'type'", name);
         return XIA_INVALID_STR;
     }
 
@@ -1022,8 +1016,8 @@ static int HANDEL_API _parseMemoryName(char* name, char* type, boolean_t* isRead
 
     if (tok == NULL) {
         handel_md_free(n);
-        sprintf(info_string, "'%s' is not a valid memory string: missing 'r/w'", name);
-        xiaLogError("_parseMemoryName", info_string, XIA_INVALID_STR);
+        xiaLog(XIA_LOG_ERROR, XIA_INVALID_STR, "_parseMemoryName",
+               "'%s' is not a valid memory string: missing 'r/w'", name);
         return XIA_INVALID_STR;
     }
 
@@ -1033,8 +1027,8 @@ static int HANDEL_API _parseMemoryName(char* name, char* type, boolean_t* isRead
         *isRead = FALSE_;
     } else {
         handel_md_free(n);
-        sprintf(info_string, "'%s' is not a valid r/w access specifier", tok);
-        xiaLogError("_parseMemoryName", info_string, XIA_INVALID_STR);
+        xiaLog(XIA_LOG_ERROR, XIA_INVALID_STR, "_parseMemoryName",
+               "'%s' is not a valid r/w access specifier", tok);
         return XIA_INVALID_STR;
     }
 
@@ -1042,9 +1036,8 @@ static int HANDEL_API _parseMemoryName(char* name, char* type, boolean_t* isRead
 
     if (tok == NULL) {
         handel_md_free(n);
-        sprintf(info_string, "'%s' is not a valid memory string: missing 'address'",
-                name);
-        xiaLogError("_parseMemoryName", info_string, XIA_INVALID_STR);
+        xiaLog(XIA_LOG_ERROR, XIA_INVALID_STR, "_parseMemoryName",
+               "'%s' is not a valid memory string: missing 'address'", name);
         return XIA_INVALID_STR;
     }
 
@@ -1052,9 +1045,8 @@ static int HANDEL_API _parseMemoryName(char* name, char* type, boolean_t* isRead
 
     if (n_matched == 0) {
         handel_md_free(n);
-        sprintf(info_string,
-                "'%s' is not a valid memory string: bad address token '%s'", name, tok);
-        xiaLogError("_parseMemoryName", info_string, XIA_INVALID_STR);
+        xiaLog(XIA_LOG_ERROR, XIA_INVALID_STR, "_parseMemoryName",
+               "'%s' is not a valid memory string: bad address token '%s'", name, tok);
         return XIA_INVALID_STR;
     }
 
@@ -1062,9 +1054,8 @@ static int HANDEL_API _parseMemoryName(char* name, char* type, boolean_t* isRead
 
     if (tok == NULL) {
         handel_md_free(n);
-        sprintf(info_string, "'%s' is not a valid memory string: missing 'length'",
-                name);
-        xiaLogError("_parseMemoryName", info_string, XIA_INVALID_STR);
+        xiaLog(XIA_LOG_ERROR, XIA_INVALID_STR, "_parseMemoryName",
+               "'%s' is not a valid memory string: missing 'length'", name);
         return XIA_INVALID_STR;
     }
 
@@ -1072,9 +1063,8 @@ static int HANDEL_API _parseMemoryName(char* name, char* type, boolean_t* isRead
 
     if (n_matched == 0) {
         handel_md_free(n);
-        sprintf(info_string, "'%s' is not a valid memory string: bad length token '%s'",
-                name, tok);
-        xiaLogError("_parseMemoryName", info_string, XIA_INVALID_STR);
+        xiaLog(XIA_LOG_ERROR, XIA_INVALID_STR, "_parseMemoryName",
+               "'%s' is not a valid memory string: bad length token '%s'", name, tok);
         return XIA_INVALID_STR;
     }
 

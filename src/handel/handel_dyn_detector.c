@@ -52,47 +52,46 @@
 #include "handel_log.h"
 #include "handeldef.h"
 
+#include <util/xia_str_manip.h>
+
 HANDEL_EXPORT int HANDEL_API xiaNewDetector(char* alias) {
     int status = XIA_SUCCESS;
 
     Detector* current = NULL;
 
-    /* If HanDeL isn't initialized, go ahead and call it... */
+    if (alias == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_ALIAS, "xiaNewDetector", "alias cannot be NULL");
+        return XIA_NULL_ALIAS;
+    }
+
     if (!isHandelInit) {
         status = xiaInitHandel();
         if (status != XIA_SUCCESS) {
             fprintf(stderr, "FATAL ERROR: Unable to load libraries.\n");
             exit(XIA_INITIALIZE);
         }
-        xiaLogWarning("xiaNewDetector", "HanDeL was initialized silently");
+        xiaLog(XIA_LOG_WARNING, "xiaNewDetector", "Handel initialized silently");
     }
-
-    sprintf(info_string, "Creating new detector w/ alias = %s", alias);
-    xiaLogDebug("xiaNewDetector", info_string);
 
     if ((strlen(alias) + 1) > MAXALIAS_LEN) {
-        status = XIA_ALIAS_SIZE;
-        sprintf(info_string, "Alias contains too many characters");
-        xiaLogError("xiaNewDetector", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_ALIAS_SIZE, "xiaNewDetector",
+               "Alias contains too many characters");
+        return XIA_ALIAS_SIZE;
     }
 
-    /* First check if this alias exists already? */
     current = xiaFindDetector(alias);
     if (current != NULL) {
-        status = XIA_ALIAS_EXISTS;
-        sprintf(info_string, "Alias %s already in use.", alias);
-        xiaLogError("xiaNewDetector", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_ALIAS_EXISTS, "xiaNewDetector",
+               "Alias %s already in use.", alias);
+        return XIA_ALIAS_EXISTS;
     }
 
-    /* Check that the Head of the linked list exists */
+    xiaLog(XIA_LOG_DEBUG, "xiaNewDetector", "create new detector w/ alias = %s", alias);
+
     if (xiaDetectorHead == NULL) {
-        /* Create an entry that is the Head of the linked list */
         xiaDetectorHead = (Detector*) handel_md_alloc(sizeof(Detector));
         current = xiaDetectorHead;
     } else {
-        /* Find the end of the linked list */
         current = xiaDetectorHead;
         while (current->next != NULL) {
             current = current->next;
@@ -101,21 +100,17 @@ HANDEL_EXPORT int HANDEL_API xiaNewDetector(char* alias) {
         current = current->next;
     }
 
-    /* Make sure memory was allocated */
     if (current == NULL) {
-        status = XIA_NOMEM;
-        sprintf(info_string, "Unable to allocate memory for Detector alias %s.", alias);
-        xiaLogError("xiaNewDetector", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "xiaNewDetector",
+               "Unable to allocate memory for Detector alias %s.", alias);
+        return XIA_NOMEM;
     }
 
-    /* Do any other allocations, or initialize to NULL/0 */
     current->alias = (char*) handel_md_alloc((strlen(alias) + 1) * sizeof(char));
     if (current->alias == NULL) {
-        status = XIA_NOMEM;
-        xiaLogError("xiaNewDetector", "Unable to allocate memory for current->alias",
-                    status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "xiaNewDetector",
+               "Unable to allocate memory for current->alias");
+        return XIA_NOMEM;
     }
 
     strcpy(current->alias, alias);
@@ -131,42 +126,44 @@ HANDEL_EXPORT int HANDEL_API xiaNewDetector(char* alias) {
 }
 
 HANDEL_EXPORT int HANDEL_API xiaAddDetectorItem(char* alias, char* name, void* value) {
-    int status = XIA_SUCCESS;
-
-    unsigned int i, slen;
+    unsigned int slen;
 
     long chan = 0;
 
     unsigned short j;
 
-    char strtemp[MAXALIAS_LEN];
+    char* strtemp;
 
     Detector* chosen = NULL;
 
-    /* Check that the value is not NULL */
+    if (alias == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_ALIAS, "xiaAddDetectorItem",
+               "alias cannot be NULL");
+        return XIA_NULL_ALIAS;
+    }
+
+    if (name == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_NAME, "xiaAddDetectorItem",
+               "name cannot be NULL");
+        return XIA_NULL_NAME;
+    }
+
     if (value == NULL) {
-        status = XIA_BAD_VALUE;
-        sprintf(info_string, "Value can not be NULL");
-        xiaLogError("xiaAddDetectorItem", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_VALUE, "xiaAddDetectorItem",
+               "value cannot be NULL");
+        return XIA_NULL_VALUE;
     }
 
     /* Locate the Detector entry first */
     chosen = xiaFindDetector(alias);
     if (chosen == NULL) {
-        status = XIA_NO_ALIAS;
-        sprintf(info_string, "Alias %s has not been created.", alias);
-        xiaLogError("xiaAddDetectorItem", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NO_ALIAS, "xiaAddDetectorItem",
+               "Alias %s has not been created.", alias);
+        return XIA_NO_ALIAS;
     }
 
-    /* convert the name to lower case */
-    for (i = 0; i < (unsigned int) strlen(name); i++) {
-        strtemp[i] = (char) tolower((int) name[i]);
-    }
-    strtemp[strlen(name)] = '\0';
+    strtemp = xia_lower(name);
 
-    /* Switch through the possible entries */
     if (STREQ(strtemp, "number_of_channels")) {
         chosen->nchan = *((unsigned short*) value);
         chosen->polarity =
@@ -189,10 +186,9 @@ HANDEL_EXPORT int HANDEL_API xiaAddDetectorItem(char* alias, char* name, void* v
                 chosen->typeValue = NULL;
             }
 
-            status = XIA_NOMEM;
-            xiaLogError("xiaAddDetectorItem",
-                        "Unable to allocate memory for detector info", status);
-            return status;
+            xiaLog(XIA_LOG_ERROR, XIA_NOMEM, "xiaAddDetectorItem",
+                   "Unable to allocate memory for detector info");
+            return XIA_NOMEM;
         }
 
         return XIA_SUCCESS;
@@ -204,11 +200,9 @@ HANDEL_EXPORT int HANDEL_API xiaAddDetectorItem(char* alias, char* name, void* v
      * is known.
      */
     if (chosen->nchan == 0) {
-        sprintf(info_string,
-                "Detector '%s' must set its number of channels before "
-                "setting '%s'",
-                chosen->alias, strtemp);
-        xiaLogError("xiaAddDetectorItem", info_string, XIA_NO_CHANNELS);
+        xiaLog(XIA_LOG_ERROR, XIA_NO_CHANNELS, "xiaAddDetectorItem",
+               "Detector '%s' must set its number of channels before setting '%s'",
+               chosen->alias, strtemp);
         return XIA_NO_CHANNELS;
     }
 
@@ -218,10 +212,9 @@ HANDEL_EXPORT int HANDEL_API xiaAddDetectorItem(char* alias, char* name, void* v
         } else if (STREQ((char*) value, "rc_feedback")) {
             chosen->type = XIA_DET_RCFEED;
         } else {
-            status = XIA_BAD_VALUE;
-            sprintf(info_string, "Error setting detector type for %s", chosen->alias);
-            xiaLogError("xiaAddDetectorItem", info_string, status);
-            return status;
+            xiaLog(XIA_LOG_ERROR, XIA_BAD_VALUE, "xiaAddDetectorItem",
+                   "Error setting detector type for %s", chosen->alias);
+            return XIA_BAD_VALUE;
         }
     } else if (STREQ(strtemp, "type_value")) {
         /*
@@ -240,10 +233,9 @@ HANDEL_EXPORT int HANDEL_API xiaAddDetectorItem(char* alias, char* name, void* v
             chan = atol(strtemp + 7);
             /* Now store the value for the gain if the channel number is value */
             if (chan >= (long) chosen->nchan) {
-                status = XIA_BAD_VALUE;
-                sprintf(info_string, "Channel number invalid for %s.", name);
-                xiaLogError("xiaAddDetectorItem", info_string, status);
-                return status;
+                xiaLog(XIA_LOG_ERROR, XIA_BAD_VALUE, "xiaAddDetectorItem",
+                       "Channel number invalid for %s.", name);
+                return XIA_BAD_VALUE;
             }
             chosen->gain[chan] = *((double*) value);
         } else if (STREQ(strtemp + slen - 9, "_polarity")) {
@@ -252,10 +244,9 @@ HANDEL_EXPORT int HANDEL_API xiaAddDetectorItem(char* alias, char* name, void* v
             chan = atol(strtemp + 7);
             /* Now store the value for the gain if the channel number is value */
             if (chan >= (long) chosen->nchan) {
-                status = XIA_BAD_VALUE;
-                sprintf(info_string, "Channel number invalid for %s.", name);
-                xiaLogError("xiaAddDetectorItem", info_string, status);
-                return status;
+                xiaLog(XIA_LOG_ERROR, XIA_BAD_VALUE, "xiaAddDetectorItem",
+                       "Channel number invalid for %s.", name);
+                return XIA_BAD_VALUE;
             }
 
             if ((STREQ((char*) value, "pos")) || (STREQ((char*) value, "+")) ||
@@ -265,22 +256,19 @@ HANDEL_EXPORT int HANDEL_API xiaAddDetectorItem(char* alias, char* name, void* v
                        (STREQ((char*) value, "negative"))) {
                 chosen->polarity[chan] = 0;
             } else {
-                status = XIA_BAD_VALUE;
-                sprintf(info_string, "Invalid polarity %s.", (char*) value);
-                xiaLogError("xiaAddDetectorItem", info_string, status);
-                return status;
+                xiaLog(XIA_LOG_ERROR, XIA_BAD_VALUE, "xiaAddDetectorItem",
+                       "Invalid polarity %s.", (char*) value);
+                return XIA_BAD_VALUE;
             }
         } else {
-            status = XIA_BAD_NAME;
-            sprintf(info_string, "Invalid name %s.", name);
-            xiaLogError("xiaAddDetectorItem", info_string, status);
-            return status;
+            xiaLog(XIA_LOG_ERROR, XIA_BAD_NAME, "xiaAddDetectorItem",
+                   "Invalid name %s.", name);
+            return XIA_BAD_NAME;
         }
     } else {
-        status = XIA_BAD_NAME;
-        sprintf(info_string, "Invalid name %s.", name);
-        xiaLogError("xiaAddDetectorItem", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_BAD_NAME, "xiaAddDetectorItem", "Invalid name %s.",
+               name);
+        return XIA_BAD_NAME;
     }
 
     return XIA_SUCCESS;
@@ -290,28 +278,28 @@ HANDEL_EXPORT int HANDEL_API xiaModifyDetectorItem(char* alias, char* name,
                                                    void* value) {
     int status = XIA_SUCCESS;
 
-    unsigned int i, slen;
-    char strtemp[MAXALIAS_LEN];
+    unsigned int slen;
+    char* strtemp = NULL;
 
     if (alias == NULL) {
-        status = XIA_NULL_ALIAS;
-        xiaLogError("xiaModifyDetectorItem", "Alias can not be NULL", status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_ALIAS, "xiaModifyDetectorItem",
+               "alias cannot be NULL");
+        return XIA_NULL_ALIAS;
     }
 
-    /* Check that the value is not NULL */
+    if (name == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_NAME, "xiaModifyDetectorItem",
+               "name cannot be NULL");
+        return XIA_NULL_NAME;
+    }
+
     if (value == NULL) {
-        status = XIA_BAD_VALUE;
-        sprintf(info_string, "Value can not be NULL");
-        xiaLogError("xiaModifyDetectorItem", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_VALUE, "xiaModifyDetectorItem",
+               "value can not be NULL");
+        return XIA_NULL_VALUE;
     }
 
-    /* convert the name to lower case */
-    for (i = 0; i < (unsigned int) strlen(name); i++) {
-        strtemp[i] = (char) tolower((int) name[i]);
-    }
-    strtemp[strlen(name)] = '\0';
+    strtemp = xia_lower(name);
 
     if (strncmp(strtemp, "channel", 7) == 0) {
         /*
@@ -325,8 +313,8 @@ HANDEL_EXPORT int HANDEL_API xiaModifyDetectorItem(char* alias, char* name,
             status = xiaAddDetectorItem(alias, name, value);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to modify detector value");
-                xiaLogError("xiaModifyDetectorItem", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaModifyDetectorItem",
+                       "Unable to modify detector value");
                 return status;
             }
             return status;
@@ -337,48 +325,57 @@ HANDEL_EXPORT int HANDEL_API xiaModifyDetectorItem(char* alias, char* name,
         status = xiaAddDetectorItem(alias, name, value);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Unable to modify detector value");
-            xiaLogError("xiaModifyDetectorItem", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaModifyDetectorItem",
+                   "Unable to modify detector value");
             return status;
         }
         return XIA_SUCCESS;
     }
 
     /* Not a valid name to modify */
-    status = XIA_BAD_NAME;
-    sprintf(info_string, "Can not modify the name:%s", name);
-    xiaLogError("xiaModifyDetectorItem", info_string, status);
-    return status;
+    xiaLog(XIA_LOG_ERROR, XIA_BAD_NAME, "xiaModifyDetectorItem",
+           "Cannot modify the name:%s", name);
+    return XIA_BAD_NAME;
 }
 
 HANDEL_EXPORT int HANDEL_API xiaGetDetectorItem(char* alias, char* name, void* value) {
     int status = XIA_SUCCESS;
     int idx;
 
-    unsigned int i;
-
     char* sidx;
 
-    char strtemp[MAXALIAS_LEN];
+    char* strtemp = NULL;
 
     Detector* chosen = NULL;
+
+    if (alias == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_ALIAS, "xiaAddFirmwareItem",
+               "alias cannot be NULL");
+        return XIA_NULL_ALIAS;
+    }
+
+    if (name == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_NAME, "xiaAddFirmwareItem",
+               "name cannot be NULL");
+        return XIA_NULL_NAME;
+    }
+
+    if (value == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_VALUE, "xiaAddFirmwareItem",
+               "value cannot be NULL");
+        return XIA_NULL_VALUE;
+    }
 
     /* Try and find the alias */
     chosen = xiaFindDetector(alias);
     if (chosen == NULL) {
-        status = XIA_NO_ALIAS;
-        sprintf(info_string, "Alias %s has not been created.", alias);
-        xiaLogError("xiaGetDetectorItem", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_NO_ALIAS, "xiaGetDetectorItem",
+               "Alias %s has not been created.", alias);
+        return XIA_NO_ALIAS;
     }
 
-    /* Convert name to lowercase */
-    for (i = 0; i < (unsigned int) strlen(name); i++) {
-        strtemp[i] = (char) tolower((int) name[i]);
-    }
-    strtemp[strlen(name)] = '\0';
+    strtemp = xia_lower(name);
 
-    /* Decide which data should be returned */
     if (STREQ(name, "number_of_channels")) {
         *((unsigned short*) value) = chosen->nchan;
     } else if (STREQ(name, "type")) {
@@ -391,13 +388,10 @@ HANDEL_EXPORT int HANDEL_API xiaGetDetectorItem(char* alias, char* name, void* v
                 break;
             default:
             case XIA_DET_UNKNOWN:
-                status = XIA_BAD_VALUE;
-                sprintf(info_string,
-                        "Detector %s currently is not assigned a valid type",
-                        chosen->alias);
-                xiaLogError("xiaGetDetectorItem", info_string, status);
-                return status;
-                break;
+                xiaLog(XIA_LOG_ERROR, XIA_BAD_VALUE, "xiaGetDetectorItem",
+                       "Detector %s currently is not assigned a valid type",
+                       chosen->alias);
+                return XIA_BAD_VALUE;
         }
     } else if (STREQ(name, "type_value")) {
         /*
@@ -414,10 +408,9 @@ HANDEL_EXPORT int HANDEL_API xiaGetDetectorItem(char* alias, char* name, void* v
 
         /* Sanity Check: This *is* a valid channel, right?? */
         if (idx >= (int) chosen->nchan) {
-            status = XIA_BAD_VALUE;
-            sprintf(info_string, "Channel #: %d is invalid for %s", idx, name);
-            xiaLogError("xiaGetDetectorItem", info_string, status);
-            return status;
+            xiaLog(XIA_LOG_ERROR, XIA_BAD_VALUE, "xiaGetDetectorItem",
+                   "Channel #: %d is invalid for %s", idx, name);
+            return XIA_BAD_VALUE;
         }
 
         if (STREQ(sidx + 1, "gain")) {
@@ -426,11 +419,9 @@ HANDEL_EXPORT int HANDEL_API xiaGetDetectorItem(char* alias, char* name, void* v
             switch (chosen->polarity[idx]) {
                 default:
                     /* Bad Trouble */
-                    status = XIA_BAD_VALUE;
-                    sprintf(info_string, "Internal polarity value inconsistient");
-                    xiaLogError("xiaGetDetectorItem", info_string, status);
-                    return status;
-                    break;
+                    xiaLog(XIA_LOG_ERROR, XIA_BAD_VALUE, "xiaGetDetectorItem",
+                           "Internal polarity value inconsistent");
+                    return XIA_BAD_VALUE;
                 case 0:
                     strcpy((char*) value, "neg");
                     break;
@@ -439,16 +430,14 @@ HANDEL_EXPORT int HANDEL_API xiaGetDetectorItem(char* alias, char* name, void* v
                     break;
             }
         } else {
-            status = XIA_BAD_NAME;
-            sprintf(info_string, "Invalid name: %s", name);
-            xiaLogError("xiaGetDetectorItem", info_string, status);
-            return status;
+            xiaLog(XIA_LOG_ERROR, XIA_BAD_NAME, "xiaGetDetectorItem",
+                   "Invalid name: %s", name);
+            return XIA_BAD_NAME;
         }
     } else {
-        status = XIA_BAD_NAME;
-        sprintf(info_string, "Invalid name: %s", name);
-        xiaLogError("xiaGetDetectorItem", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_BAD_NAME, "xiaGetDetectorItem", "Invalid name: %s",
+               name);
+        return XIA_BAD_NAME;
     }
 
     return status;
@@ -456,6 +445,12 @@ HANDEL_EXPORT int HANDEL_API xiaGetDetectorItem(char* alias, char* name, void* v
 
 HANDEL_EXPORT int HANDEL_API xiaGetNumDetectors(unsigned int* numDetectors) {
     unsigned int count = 0;
+
+    if (numDetectors == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_VALUE, "xiaGetNumDetectors",
+               "numDetectors cannot be NULL");
+        return XIA_NULL_VALUE;
+    }
 
     Detector* current = xiaDetectorHead;
 
@@ -474,7 +469,18 @@ HANDEL_EXPORT int HANDEL_API xiaGetDetectors(char* detectors[]) {
 
     Detector* current = xiaDetectorHead;
 
+    if (detectors == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_VALUE, "xiaGetDetectors",
+               "detectors array is NULL");
+        return XIA_NULL_VALUE;
+    }
+
     for (i = 0; current != NULL; current = getListNext(current), i++) {
+        if (detectors[i] == NULL) {
+            xiaLog(XIA_LOG_ERROR, XIA_NULL_VALUE, "xiaGetDetectors",
+                   "detector[%i] is NULL", i);
+            return XIA_NULL_VALUE;
+        }
         strcpy(detectors[i], current->alias);
     }
 
@@ -482,8 +488,6 @@ HANDEL_EXPORT int HANDEL_API xiaGetDetectors(char* detectors[]) {
 }
 
 HANDEL_EXPORT int HANDEL_API xiaGetDetectors_VB(unsigned int index, char* alias) {
-    int status;
-
     unsigned int curIdx;
 
     Detector* current = xiaDetectorHead;
@@ -496,66 +500,55 @@ HANDEL_EXPORT int HANDEL_API xiaGetDetectors_VB(unsigned int index, char* alias)
         }
     }
 
-    status = XIA_BAD_INDEX;
-    sprintf(info_string, "Index = %u is out of range for the detectors list", index);
-    xiaLogError("xiaGetDetectors_VB", info_string, status);
-    return status;
+    xiaLog(XIA_LOG_ERROR, XIA_BAD_INDEX, "xiaGetDetectors_VB",
+           "Index = %u is out of range for the detectors list", index);
+    return XIA_BAD_INDEX;
 }
 
 HANDEL_EXPORT int HANDEL_API xiaRemoveDetector(char* alias) {
     int status = XIA_SUCCESS;
-    int i;
+    char* strtemp = NULL;
 
-    char strtemp[MAXALIAS_LEN];
-
+    Detector* found = NULL;
     Detector* prev = NULL;
     Detector* current = NULL;
     Detector* next = NULL;
 
-    if (isListEmpty(xiaDetectorHead)) {
-        status = XIA_NO_ALIAS;
-        sprintf(info_string, "Alias %s does not exist", alias);
-        xiaLogError("xiaRemoveDetector", info_string, status);
-        return status;
+    if (alias == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_ALIAS, "xiaRemoveDetector",
+               "alias cannot be NULL");
+        return XIA_NULL_ALIAS;
     }
 
-    /* Turn the alias into lower case version, and terminate with a null char */
-    for (i = 0; i < (int) strlen(alias); i++) {
-        strtemp[i] = (char) tolower((int) alias[i]);
+    found = xiaFindDetector(alias);
+    if (isListEmpty(xiaDetectorHead) || found == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NO_ALIAS, "xiaRemoveDetector",
+               "Alias %s does not exist", alias);
+        return XIA_NO_ALIAS;
     }
-    strtemp[strlen(alias)] = '\0';
 
-    /* First check if this alias exists already? */
-    prev = NULL;
+    strtemp = xia_lower(alias);
+
     current = xiaDetectorHead;
     next = current->next;
     while (!STREQ(strtemp, current->alias)) {
-        /* Move to the next element */
         prev = current;
         current = next;
         next = current->next;
     }
 
-    /* Check if we found nothing */
-    if ((next == NULL) && (current == NULL)) {
-        status = XIA_NO_ALIAS;
-        sprintf(info_string, "Alias %s does not exist.", alias);
-        xiaLogError("xiaRemoveDetector", info_string, status);
-        return status;
-    }
-
-    /* Check if match is the head of the list */
     if (current == xiaDetectorHead) {
-        /* Move the next element into the Head position. */
-        xiaDetectorHead = next;
+        xiaDetectorHead = current->next;
     } else {
-        /* Element is inside the list, change the pointers to skip the
-         * matching element
-         */
-        prev->next = next;
+        if (prev != NULL) {
+            prev->next = current->next;
+        } else {
+            xiaLog(XIA_LOG_ERROR, XIA_BAD_INDEX, "xiaRemoveDetector",
+                   "no previous element in det list");
+            return XIA_BAD_INDEX;
+        }
     }
 
-    /* Free up the memory associated with this element */
     xiaFreeDetector(current);
 
     return status;
@@ -566,17 +559,10 @@ HANDEL_EXPORT int HANDEL_API xiaRemoveDetector(char* alias) {
  * the alias.  If NULL is returned, then no match was found.
  */
 Detector* HANDEL_API xiaFindDetector(char* alias) {
-    int i;
-
-    char strtemp[MAXALIAS_LEN];
-
+    char* strtemp = NULL;
     Detector* current = NULL;
 
-    /* Turn the alias into lower case version, and terminate with a null char */
-    for (i = 0; i < (int) strlen(alias); i++) {
-        strtemp[i] = (char) tolower((int) alias[i]);
-    }
-    strtemp[strlen(alias)] = '\0';
+    strtemp = xia_lower(alias);
 
     /* First check if this alias exists already? */
     current = xiaDetectorHead;

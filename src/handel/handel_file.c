@@ -93,13 +93,12 @@ HANDEL_EXPORT int HANDEL_API xiaLoadSystem(char* type, char* filename) {
     int status;
 
     if (type == NULL) {
-        xiaLogError("xiaLoadSystem", ".INI file 'type' string is NULL", XIA_NULL_TYPE);
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_TYPE, "xiaLoadSystem", "type is NULL");
         return XIA_NULL_TYPE;
     }
 
     if (filename == NULL) {
-        xiaLogError("xiaLoadSystem", ".INI file 'name' string is NULL",
-                    XIA_NO_FILENAME);
+        xiaLog(XIA_LOG_ERROR, XIA_NO_FILENAME, "xiaLoadSystem", "filename is NULL");
         return XIA_NO_FILENAME;
     }
 
@@ -108,17 +107,16 @@ HANDEL_EXPORT int HANDEL_API xiaLoadSystem(char* type, char* filename) {
      * this logic around.
      */
     if (!STREQ(type, "handel_ini")) {
-        sprintf(info_string, "Unknown file type '%s' for target save file '%s'", type,
-                filename);
-        xiaLogError("xiaLoadSystem", info_string, XIA_FILE_TYPE);
+        xiaLog(XIA_LOG_ERROR, XIA_FILE_TYPE, "xiaLoadSystem",
+               "Unknown file type '%s' for target save file '%s'", type, filename);
         return XIA_FILE_TYPE;
     }
 
     status = xiaInit(filename);
 
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error reading in .INI file '%s'", filename);
-        xiaLogError("xiaLoadSystem", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaLoadSystem",
+               "Error reading in .INI file '%s'", filename);
         return status;
     }
 
@@ -133,13 +131,13 @@ HANDEL_EXPORT int HANDEL_API xiaSaveSystem(char* type, char* filename) {
     int status;
 
     if (type == NULL) {
-        xiaLogError("xiaSaveSystem", ".INI file 'type' string is NULL", XIA_NULL_TYPE);
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_TYPE, "xiaSaveSystem", "type cannot be NULL");
         return XIA_NULL_TYPE;
     }
 
     if (filename == NULL) {
-        xiaLogError("xiaSaveSystem", ".INI file 'name' string is NULL",
-                    XIA_NO_FILENAME);
+        xiaLog(XIA_LOG_ERROR, XIA_NO_FILENAME, "xiaSaveSystem",
+               "filename cannot be NULL");
         return XIA_NO_FILENAME;
     }
 
@@ -150,8 +148,7 @@ HANDEL_EXPORT int HANDEL_API xiaSaveSystem(char* type, char* filename) {
     }
 
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error writing %s", filename);
-        xiaLogError("xiaSaveSystem", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaSaveSystem", "Error writing %s", filename);
         return status;
     }
 
@@ -179,19 +176,23 @@ static int HANDEL_API xiaWriteIniFile(char* filename) {
     XiaDaqEntry* entry = NULL;
     Module* module = xiaGetModuleHead();
 
-    if ((filename == NULL) || (STREQ(filename, ""))) {
-        status = XIA_NO_FILENAME;
-        sprintf(info_string, "Filename is either NULL or empty, illegal value");
-        xiaLogError("xiaWriteIniFile", info_string, status);
-        return status;
+    if (filename == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NULL_PATH, "xiaWriteIniFile",
+               "filename cannot be NULL");
+        return XIA_NULL_PATH;
+    }
+
+    if (STREQ(filename, "")) {
+        xiaLog(XIA_LOG_ERROR, XIA_NO_FILENAME, "xiaWriteIniFile",
+               "filename cannot be empty string");
+        return XIA_NO_FILENAME;
     }
 
     iniFile = xia_file_open(filename, "w");
     if (iniFile == NULL) {
-        status = XIA_OPEN_FILE;
-        sprintf(info_string, "Could not open %s", filename);
-        xiaLogError("xiaWriteIniFile", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_OPEN_FILE, "xiaWriteIniFile", "Could not open %s",
+               filename);
+        return XIA_OPEN_FILE;
     }
 
     /* Write the sections in the same order that they are read in */
@@ -212,11 +213,9 @@ static int HANDEL_API xiaWriteIniFile(char* filename) {
             default:
             case XIA_DET_UNKNOWN:
                 xia_file_close(iniFile);
-                status = XIA_MISSING_TYPE;
-                sprintf(info_string, "Unknown detector type for alias %s",
-                        detector->alias);
-                xiaLogError("xiaWriteIniFile", info_string, status);
-                return status;
+                xiaLog(XIA_LOG_ERROR, XIA_MISSING_TYPE, "xiaWriteIniFile",
+                       "Unknown detector type for alias %s", detector->alias);
+                return XIA_MISSING_TYPE;
                 break;
         }
 
@@ -235,11 +234,10 @@ static int HANDEL_API xiaWriteIniFile(char* filename) {
                     break;
                 default:
                     xia_file_close(iniFile);
-                    status = XIA_POL_OOR;
-                    sprintf(info_string, "Unknown detector polarity %hu for alias %s",
-                            detector->polarity[j], detector->alias);
-                    xiaLogError("xiaWriteIniFile", info_string, status);
-                    return status;
+                    xiaLog(XIA_LOG_ERROR, XIA_POL_OOR, "xiaWriteIniFile",
+                           "Unknown detector polarity %hu for alias %s",
+                           detector->polarity[j], detector->alias);
+                    return XIA_POL_OOR;
                     break;
             }
         }
@@ -330,11 +328,9 @@ static int HANDEL_API xiaWriteIniFile(char* filename) {
         status = writeInterface(iniFile, module);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string,
-                    "Error writing interface information for module "
-                    "'%s'",
-                    module->alias);
-            xiaLogError("xiaWriteIniFile", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaWriteIniFile",
+                   "Error writing interface information for module '%s'",
+                   module->alias);
             return status;
         }
 
@@ -385,17 +381,15 @@ int HANDEL_API xiaReadIniFile(char* inifile) {
         inifile = xiaini;
     }
 
-    sprintf(info_string, "Reading in .INI file '%s'", inifile);
-    xiaLogInfo("xiaReadIniFile", info_string);
+    xiaLog(XIA_LOG_INFO, "xiaReadIniFile", "Reading in .INI file '%s'", inifile);
 
     /* Open the .ini file */
     fp = xia_find_file(inifile, "rb");
 
     if (fp == NULL) {
-        status = XIA_OPEN_FILE;
-        sprintf(info_string, "Could not open %s", inifile);
-        xiaLogError("xiaReadIniFile", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_OPEN_FILE, "xiaReadIniFile", "Could not open %s",
+               inifile);
+        return XIA_OPEN_FILE;
     }
 
     /* Loop over all the sections as defined in sectionInfo
@@ -407,9 +401,8 @@ int HANDEL_API xiaReadIniFile(char* inifile) {
         status = xiaFindEntryLimits(fp, sectionInfo[i].section, &start, &end);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Section missing from ini file: %s",
-                    sectionInfo[i].section);
-            xiaLogWarning("xiaReadIniFile", info_string);
+            xiaLog(XIA_LOG_WARNING, "xiaReadIniFile",
+                   "Section missing from ini file: %s", sectionInfo[i].section);
             continue;
         }
 
@@ -433,47 +426,42 @@ int HANDEL_API xiaReadIniFile(char* inifile) {
         status = fsetpos(fp, &end);
 
         if (status != 0) {
-            sprintf(info_string,
-                    "Error setting file position to the end of "
-                    "the current section. errno = %d, '%s'.",
-                    (int) errno, strerror(errno));
-            xiaLogError("xiaReadIniFile", info_string, XIA_SET_POS);
+            xiaLog(XIA_LOG_ERROR, XIA_SET_POS, "xiaReadIniFile",
+                   "Error setting file position to the end of "
+                   "the current section. errno = %d, '%s'.",
+                   (int) errno, strerror(errno));
             return XIA_SET_POS;
         }
 
         status = xiaGetLine(fp, tmpLine);
 
         if (status != XIA_SUCCESS && status != XIA_EOF) {
-            xiaLogError("xiaReadIniFile",
-                        "Error getting end of section line "
-                        "after setting the file position.",
-                        status);
+            xiaLog(
+                XIA_LOG_ERROR, status, "xiaReadIniFile",
+                "Error getting end of section line after setting the file position.");
             return status;
         }
 
         ASSERT(tmpLine[0] == '[');
 
-        sprintf(info_string, "Cached end string = %s", tmpLine);
-        xiaLogDebug("xiaReadIniFile", info_string);
+        xiaLog(XIA_LOG_DEBUG, "xiaReadIniFile", "Cached end string = %s", tmpLine);
 
         status = fsetpos(fp, &start);
 
         if (status != 0) {
-            sprintf(info_string,
-                    "Error setting file position to the end of "
-                    "the current section. errno = %d, '%s'.",
-                    (int) errno, strerror(errno));
-            xiaLogError("xiaReadIniFile", info_string, XIA_SET_POS);
+            xiaLog(XIA_LOG_ERROR, XIA_SET_POS, "xiaReadIniFile",
+                   "Error setting file position to the end of "
+                   "the current section. errno = %d, '%s'.",
+                   (int) errno, strerror(errno));
             return XIA_SET_POS;
         }
 
         status = xiaGetLine(fp, line);
 
         if (status != XIA_SUCCESS && status != XIA_EOF) {
-            xiaLogError("xiaReadIniFile",
-                        "Error getting start of section line "
-                        "after setting the file position.",
-                        status);
+            xiaLog(
+                XIA_LOG_ERROR, status, "xiaReadIniFile",
+                "Error getting start of section line after setting the file position.");
             return status;
         }
 
@@ -484,16 +472,16 @@ int HANDEL_API xiaReadIniFile(char* inifile) {
                 do {
                     status = fgetpos(fp, &local_end);
                     status = xiaGetLine(fp, line);
-                    sprintf(info_string, "Inside START/END bracket: %s", line);
-                    xiaLogDebug("xiaReadIniFile", info_string);
+                    xiaLog(XIA_LOG_DEBUG, "xiaReadIniFile",
+                           "Inside START/END bracket: %s", line);
                 } while (strncmp(line, "END", 3) != 0);
 
                 status = sectionInfo[i].function_ptr(fp, &local, &local_end);
 
                 if (status != XIA_SUCCESS) {
                     xia_file_close(fp);
-                    xiaLogError("xiaReadIniFile",
-                                "Error loading information from ini file", status);
+                    xiaLog(XIA_LOG_ERROR, status, "xiaReadIniFile",
+                           "Error loading information from ini file");
                     return status;
                 }
             }
@@ -504,13 +492,12 @@ int HANDEL_API xiaReadIniFile(char* inifile) {
                 break;
             }
 
-            sprintf(info_string, "Looking for START: %s", line);
-            xiaLogDebug("xiaReadIniFile", info_string);
+            xiaLog(XIA_LOG_DEBUG, "xiaReadIniFile", "Looking for START: %s", line);
         }
     }
 
     xia_file_close(fp);
-    xiaLogInfo("xiaReadIniFile", "Successfully read ini file.");
+    xiaLog(XIA_LOG_INFO, "xiaReadIniFile", "Successfully read ini file.");
 
     return XIA_SUCCESS;
 }
@@ -538,10 +525,9 @@ static int HANDEL_API xiaGetLineData(char* lline, char* name, char* value) {
     /* Start by finding the '=' within the line */
     loc = strcspn(lline, "=");
     if (loc == 0) {
-        status = XIA_FORMAT_ERROR;
-        sprintf(info_string, "No = present in xia.ini line: \n %s", lline);
-        xiaLogError("xiaGetLineData", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_FORMAT_ERROR, "xiaGetLineData",
+               "No = present in xia.ini line: \n %s", lline);
+        return XIA_FORMAT_ERROR;
     }
 
     /* Strip all the leading blanks */
@@ -558,10 +544,9 @@ static int HANDEL_API xiaGetLineData(char* lline, char* name, char* value) {
 
     /* Bug #76, prevents a bad core dump */
     if (begin > end) {
-        status = XIA_FORMAT_ERROR;
-        sprintf(info_string, "Invalid name found in line:  %s", lline);
-        xiaLogError("xiaGetLineData", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_FORMAT_ERROR, "xiaGetLineData",
+               "Invalid name found in line:  %s", lline);
+        return XIA_FORMAT_ERROR;
     }
 
     /* copy the name */
@@ -585,10 +570,9 @@ static int HANDEL_API xiaGetLineData(char* lline, char* name, char* value) {
 
     /* Bug #76, prevents a bad core dump */
     if (begin > end) {
-        status = XIA_FORMAT_ERROR;
-        sprintf(info_string, "Invalid value found in line:  %s", lline);
-        xiaLogError("xiaGetLineData", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_FORMAT_ERROR, "xiaGetLineData",
+               "Invalid value found in line:  %s", lline);
+        return XIA_FORMAT_ERROR;
     }
 
     /* copy the value */
@@ -684,13 +668,12 @@ static int HANDEL_API xiaFindEntryLimits(FILE* fp, const char* section, fpos_t* 
         } while ((line[0] != '[') && (cstatus != NULL));
 
         if (cstatus == NULL) {
-            status = XIA_NOSECTION;
-            sprintf(info_string, "Unable to find section %s", section);
             /* This isn't an error since the user has the option of specifying the missing
              * information using the dynamic configuration routines.
              */
-            xiaLogWarning("xiaFindEntryLimits", info_string);
-            return status;
+            xiaLog(XIA_LOG_WARNING, "xiaFindEntryLimits", "Unable to find section %s",
+                   section);
+            return XIA_NOSECTION;
         }
 
         /* Find the terminating ] to this section */
@@ -701,10 +684,9 @@ static int HANDEL_API xiaFindEntryLimits(FILE* fp, const char* section, fpos_t* 
         }
         /* Did we not find the terminating ]? */
         if (j == (unsigned int) strlen(line)) {
-            status = XIA_FORMAT_ERROR;
-            sprintf(info_string, "Syntax error in Init file, no terminating ] found");
-            xiaLogError("xiaFindEntryLimits", info_string, status);
-            return status;
+            xiaLog(XIA_LOG_ERROR, XIA_FORMAT_ERROR, "xiaFindEntryLimits",
+                   "Syntax error in Init file, no terminating ] found");
+            return XIA_FORMAT_ERROR;
         }
 
         if (strncmp(line + 1, section, j - 1) == 0) {
@@ -762,63 +744,63 @@ static int xiaLoadDetector(FILE* fp, fpos_t* start, fpos_t* end) {
     status = xiaFileRA(fp, start, end, "alias", value);
 
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaLoadDetector", "Unable to load alias information", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaLoadDetector",
+               "Unable to load alias information");
         return status;
     }
 
-    sprintf(info_string, "alias = %s", value);
-    xiaLogDebug("xiaLoadDetector", info_string);
+    xiaLog(XIA_LOG_DEBUG, "xiaLoadDetector", "alias = %s", value);
 
     strcpy(alias, value);
 
     status = xiaNewDetector(alias);
 
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaLoadDetector", "Error creating new detector", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaLoadDetector", "Error creating new detector");
         return status;
     }
 
     status = xiaFileRA(fp, start, end, "number_of_channels", value);
 
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaLoadDetector", "Unable to find number_of_channels", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaLoadDetector",
+               "Unable to find number_of_channels");
         return status;
     }
 
     sscanf(value, "%hu", &numChans);
 
-    sprintf(info_string, "number_of_channels = %hu", numChans);
-    xiaLogDebug("xiaLoadDetector", info_string);
+    xiaLog(XIA_LOG_DEBUG, "xiaLoadDetector", "number_of_channels = %hu", numChans);
 
     status = xiaAddDetectorItem(alias, "number_of_channels", (void*) &numChans);
 
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error adding number_of_channels to detector %s", alias);
-        xiaLogError("xiaLoadDetector", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaLoadDetector",
+               "Error adding number_of_channels to detector %s", alias);
         return status;
     }
 
     status = xiaFileRA(fp, start, end, "type", value);
 
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Unable to find type for detector %s", alias);
-        xiaLogError("xiaLoadDetector", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaLoadDetector",
+               "Unable to find type for detector %s", alias);
         return status;
     }
 
     status = xiaAddDetectorItem(alias, "type", (void*) value);
 
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error adding type to detector %s", alias);
-        xiaLogError("xiaLoadDetector", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaLoadDetector",
+               "Error adding type to detector %s", alias);
         return status;
     }
 
     status = xiaFileRA(fp, start, end, "type_value", value);
 
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Unable to find type_value for detector %s", alias);
-        xiaLogError("xiaLoadDetector", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaLoadDetector",
+               "Unable to find type_value for detector %s", alias);
         return status;
     }
 
@@ -827,8 +809,8 @@ static int xiaLoadDetector(FILE* fp, fpos_t* start, fpos_t* end) {
     status = xiaAddDetectorItem(alias, "type_value", (void*) &typeValue);
 
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error adding type_value to detector %s", alias);
-        xiaLogError("xiaLoadDetector", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaLoadDetector",
+               "Error adding type_value to detector %s", alias);
         return status;
     }
 
@@ -837,24 +819,24 @@ static int xiaLoadDetector(FILE* fp, fpos_t* start, fpos_t* end) {
         status = xiaFileRA(fp, start, end, name, value);
 
         if (status == XIA_FILE_RA) {
-            sprintf(info_string, "Current configuration file missing %s", name);
-            xiaLogWarning("xiaLoadDetector", info_string);
+            xiaLog(XIA_LOG_WARNING, "xiaLoadDetector",
+                   "Current configuration file missing %s", name);
         } else {
             if (status != XIA_SUCCESS) {
-                xiaLogError("xiaLoadDetector", "Unable to load channel gain", status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaLoadDetector",
+                       "Unable to load channel gain");
                 return status;
             }
 
             sscanf(value, "%6lf", &gain);
 
-            sprintf(info_string, "%s = %f", name, gain);
-            xiaLogDebug("xiaLoadDetector", info_string);
+            xiaLog(XIA_LOG_DEBUG, "xiaLoadDetector", "%s = %f", name, gain);
 
             status = xiaAddDetectorItem(alias, name, (void*) &gain);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Error adding %s to detector %s", name, alias);
-                xiaLogError("xiaLoadDetector", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaLoadDetector",
+                       "Error adding %s to detector %s", name, alias);
                 return status;
             }
         }
@@ -863,23 +845,22 @@ static int xiaLoadDetector(FILE* fp, fpos_t* start, fpos_t* end) {
         status = xiaFileRA(fp, start, end, name, value);
 
         if (status == XIA_FILE_RA) {
-            sprintf(info_string, "Current configuration file missing %s", name);
-            xiaLogWarning("xiaLoadDetector", info_string);
+            xiaLog(XIA_LOG_WARNING, "xiaLoadDetector",
+                   "Current configuration file missing %s", name);
         } else {
             if (status != XIA_SUCCESS) {
-                xiaLogError("xiaLoadDetector", "Unable to load channel polarity",
-                            status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaLoadDetector",
+                       "Unable to load channel polarity");
                 return status;
             }
 
-            sprintf(info_string, "%s = %s", name, value);
-            xiaLogDebug("xiaLoadDetector", info_string);
+            xiaLog(XIA_LOG_DEBUG, "xiaLoadDetector", "%s = %s", name, value);
 
             status = xiaAddDetectorItem(alias, name, (void*) value);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Error adding %s to detector %s", name, alias);
-                xiaLogError("xiaLoadDetector", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaLoadDetector",
+                       "Error adding %s to detector %s", name, alias);
                 return status;
             }
         }
@@ -925,59 +906,58 @@ static int xiaLoadModule(FILE* fp, fpos_t* start, fpos_t* end) {
     status = xiaFileRA(fp, start, end, "alias", value);
 
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaLoadModule", "Unable to load alias information", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+               "Unable to load alias information");
         return status;
     }
 
-    sprintf(info_string, "alias = %s", value);
-    xiaLogDebug("xiaLoadModule", info_string);
+    xiaLog(XIA_LOG_DEBUG, "xiaLoadModule", "alias = %s", value);
 
     strcpy(alias, value);
 
     status = xiaNewModule(alias);
 
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaLoadModule", "Error creating new module", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule", "Error creating new module");
         return status;
     }
 
     status = xiaFileRA(fp, start, end, "module_type", value);
 
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaLoadModule", "Unable to load module type", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule", "Unable to load module type");
         return status;
     }
 
     sscanf(value, "%s", moduleType);
 
-    sprintf(info_string, "moduleType = %s", moduleType);
-    xiaLogDebug("xiaLoadModule", info_string);
+    xiaLog(XIA_LOG_DEBUG, "xiaLoadModule", "moduleType = %s", moduleType);
 
     status = xiaAddModuleItem(alias, "module_type", (void*) moduleType);
 
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error adding module type to module %s", alias);
-        xiaLogError("xiaLoadModule", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+               "Error adding module type to module %s", alias);
         return status;
     }
 
     status = xiaFileRA(fp, start, end, "number_of_channels", value);
 
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaLoadModule", "Unable to load number of channels", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+               "Unable to load number of channels");
         return status;
     }
 
     sscanf(value, "%u", &numChans);
 
-    sprintf(info_string, "number_of_channels = %u", numChans);
-    xiaLogDebug("xiaLoadModule", info_string);
+    xiaLog(XIA_LOG_DEBUG, "xiaLoadModule", "number_of_channels = %u", numChans);
 
     status = xiaAddModuleItem(alias, "number_of_channels", (void*) &numChans);
 
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error adding number_of_channels to module %s", alias);
-        xiaLogError("xiaLoadModule", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+               "Error adding number_of_channels to module %s", alias);
         return status;
     }
 
@@ -986,11 +966,10 @@ static int xiaLoadModule(FILE* fp, fpos_t* start, fpos_t* end) {
 
     sscanf(value, "%s", interface);
 
-    sprintf(info_string, "interface = %s", interface);
-    xiaLogDebug("xiaLoadModule", info_string);
+    xiaLog(XIA_LOG_DEBUG, "xiaLoadModule", "interface = %s", interface);
 
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaLoadModule", "Unable to load interface", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule", "Unable to load interface");
         return status;
     }
 
@@ -998,88 +977,88 @@ static int xiaLoadModule(FILE* fp, fpos_t* start, fpos_t* end) {
         status = xiaAddModuleItem(alias, "interface", (void*) interface);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error adding interface to module %s", alias);
-            xiaLogError("xiaLoadModule", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                   "Error adding interface to module %s", alias);
             return status;
         }
 
         status = xiaFileRA(fp, start, end, "scsibus_number", value);
 
         if (status != XIA_SUCCESS) {
-            xiaLogError("xiaLoadModule", "Unable to load SCSI bus number", status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                   "Unable to load SCSI bus number");
             return status;
         }
 
         sscanf(value, "%u", &scsiBus);
 
-        sprintf(info_string, "scsiBus = %u", scsiBus);
-        xiaLogDebug("xiaLoadModule", info_string);
+        xiaLog(XIA_LOG_DEBUG, "xiaLoadModule", "scsiBus = %u", scsiBus);
 
         status = xiaAddModuleItem(alias, "scsibus_number", (void*) &scsiBus);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error adding scsi bus number to module %s", alias);
-            xiaLogError("xiaLoadModule", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                   "Error adding scsi bus number to module %s", alias);
             return status;
         }
 
         status = xiaFileRA(fp, start, end, "crate_number", value);
 
         if (status != XIA_SUCCESS) {
-            xiaLogError("xiaLoadModule", "Unable to load crate number", status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                   "Unable to load crate number");
             return status;
         }
 
         sscanf(value, "%u", &crate);
 
-        sprintf(info_string, "crate = %u", crate);
-        xiaLogDebug("xiaLoadModule", info_string);
+        xiaLog(XIA_LOG_DEBUG, "xiaLoadModule", "crate = %u", crate);
 
         status = xiaAddModuleItem(alias, "crate_number", (void*) &crate);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error adding crate number to module %s", alias);
-            xiaLogError("xiaLoadModule", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                   "Error adding crate number to module %s", alias);
             return status;
         }
 
         status = xiaFileRA(fp, start, end, "slot", value);
 
         if (status != XIA_SUCCESS) {
-            xiaLogError("xiaLoadModule", "Unable to load slot number", status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                   "Unable to load slot number");
             return status;
         }
 
         sscanf(value, "%u", &slot);
 
-        sprintf(info_string, "slot = %u", slot);
-        xiaLogDebug("xiaLoadModule", info_string);
+        xiaLog(XIA_LOG_DEBUG, "xiaLoadModule", "slot = %u", slot);
 
         status = xiaAddModuleItem(alias, "slot", (void*) &slot);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error adding slot number to module %s", alias);
-            xiaLogError("xiaLoadModule", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                   "Error adding slot number to module %s", alias);
             return status;
         }
     } else if ((STREQ(interface, "epp")) || (STREQ(interface, "genericEPP"))) {
         status = xiaFileRA(fp, start, end, "epp_address", value);
 
         if (status != XIA_SUCCESS) {
-            xiaLogError("xiaLoadModule", "Unable to load EPP address", status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                   "Unable to load EPP address");
             return status;
         }
 
         sscanf(value, "%x", &eppAddr);
 
-        sprintf(info_string, "EPP Address = %#x", eppAddr);
-        xiaLogDebug("xiaLoadModule", info_string);
+        xiaLog(XIA_LOG_DEBUG, "xiaLoadModule", "EPP Address = %#x", eppAddr);
 
         status = xiaAddModuleItem(alias, "epp_address", (void*) &eppAddr);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error adding EPP address to module %s", alias);
-            xiaLogError("xiaLoadModule", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                   "Error adding EPP address to module %s", alias);
             return status;
         }
 
@@ -1092,14 +1071,13 @@ static int xiaLoadModule(FILE* fp, fpos_t* start, fpos_t* end) {
         if (status == XIA_SUCCESS) {
             sscanf(value, "%u", &daisyID);
 
-            sprintf(info_string, "Daisy Chain ID = %#x", daisyID);
-            xiaLogDebug("xiaLoadModule", info_string);
+            xiaLog(XIA_LOG_DEBUG, "xiaLoadModule", "Daisy Chain ID = %#x", daisyID);
 
             status = xiaAddModuleItem(alias, "daisy_chain_id", (void*) &daisyID);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Error adding daisy chain id to module %s", alias);
-                xiaLogError("xiaLoadModule", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                       "Error adding daisy chain id to module %s", alias);
                 return status;
             }
         }
@@ -1107,106 +1085,100 @@ static int xiaLoadModule(FILE* fp, fpos_t* start, fpos_t* end) {
         status = xiaAddModuleItem(alias, "interface", interface);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string,
-                    "Error setting interface to '%s' for module "
-                    "with alias '%s'",
-                    interface, alias);
-            xiaLogError("xiaLoadModule", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                   "Error setting interface to '%s' for module with alias '%s'",
+                   interface, alias);
             return status;
         }
 
         status = xiaFileRA(fp, start, end, "device_number", value);
 
         if (status != XIA_SUCCESS) {
-            xiaLogError("xiaLoadModule", "Unable to load device number", status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                   "Unable to load device number");
             return status;
         }
 
         sscanf(value, "%u", &deviceNumber);
 
-        sprintf(info_string, "Device Number = %u", deviceNumber);
-        xiaLogDebug("xiaLoadModule", info_string);
+        xiaLog(XIA_LOG_DEBUG, "xiaLoadModule", "Device Number = %u", deviceNumber);
 
         status = xiaAddModuleItem(alias, "device_number", (void*) &deviceNumber);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error adding Device Number to module %s", alias);
-            xiaLogError("xiaLoadModule", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                   "Error adding Device Number to module %s", alias);
             return status;
         }
     } else if (STREQ(interface, "usb2")) {
         status = xiaAddModuleItem(alias, "interface", interface);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string,
-                    "Error setting interface to '%s' for module "
-                    "with alias '%s'",
-                    interface, alias);
-            xiaLogError("xiaLoadModule", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                   "Error setting interface to '%s' for module with alias '%s'",
+                   interface, alias);
             return status;
         }
 
         status = xiaFileRA(fp, start, end, "device_number", value);
 
         if (status != XIA_SUCCESS) {
-            xiaLogError("xiaLoadModule", "Unable to load device number", status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                   "Unable to load device number");
             return status;
         }
 
         sscanf(value, "%u", &deviceNumber);
 
-        sprintf(info_string, "Device Number = %u", deviceNumber);
-        xiaLogDebug("xiaLoadModule", info_string);
+        xiaLog(XIA_LOG_DEBUG, "xiaLoadModule", "Device Number = %u", deviceNumber);
 
         status = xiaAddModuleItem(alias, "device_number", (void*) &deviceNumber);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error adding Device Number to module %s", alias);
-            xiaLogError("xiaLoadModule", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                   "Error adding Device Number to module %s", alias);
             return status;
         }
     } else if (STREQ(interface, "pxi")) {
         status = xiaFileRA(fp, start, end, "pci_slot", value);
 
         if (status != XIA_SUCCESS) {
-            xiaLogError("xiaLoadModule", "Unable to load 'pci_slot'", status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule", "Unable to load 'pci_slot'");
             return status;
         }
 
         sscanf(value, "%u", &pciSlot);
 
-        sprintf(info_string, "PCI Slot = %u", pciSlot);
-        xiaLogDebug("xiaLoadModule", info_string);
+        xiaLog(XIA_LOG_DEBUG, "xiaLoadModule", "PCI Slot = %u", pciSlot);
 
         bPciSlot = (byte_t) pciSlot;
 
         status = xiaAddModuleItem(alias, "pci_slot", (void*) &bPciSlot);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error adding PCI slot to module %s", alias);
-            xiaLogError("xiaLoadModule", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                   "Error adding PCI slot to module %s", alias);
             return status;
         }
 
         status = xiaFileRA(fp, start, end, "pci_bus", value);
 
         if (status != XIA_SUCCESS) {
-            xiaLogError("xiaLoadModule", "Unable to load 'pci_bus'", status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule", "Unable to load 'pci_bus'");
             return status;
         }
 
         sscanf(value, "%u", &pciBus);
 
-        sprintf(info_string, "PCI Bus = %u", pciBus);
-        xiaLogDebug("xiaLoadModule", info_string);
+        xiaLog(XIA_LOG_DEBUG, "xiaLoadModule", "PCI Bus = %u", pciBus);
 
         bPciBus = (byte_t) pciBus;
 
         status = xiaAddModuleItem(alias, "pci_bus", (void*) &bPciBus);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error adding PCI bus to module %s", alias);
-            xiaLogError("xiaLoadModule", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                   "Error adding PCI bus to module %s", alias);
             return status;
         }
     } else if (STREQ(interface, "serial")) {
@@ -1215,33 +1187,31 @@ static int xiaLoadModule(FILE* fp, fpos_t* start, fpos_t* end) {
         if (status == XIA_SUCCESS) {
             sscanf(value, "%u", &comPort);
 
-            sprintf(info_string, "COM Port = %u", comPort);
-            xiaLogDebug("xiaLoadModule", info_string);
+            xiaLog(XIA_LOG_DEBUG, "xiaLoadModule", "COM Port = %u", comPort);
 
             status = xiaAddModuleItem(alias, "com_port", (void*) &comPort);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Error adding COM port to module %s", alias);
-                xiaLogError("xiaLoadModule", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                       "Error adding COM port to module %s", alias);
                 return status;
             }
         } else {
             status = xiaFileRA(fp, start, end, "device_file", value);
 
             if (status != XIA_SUCCESS) {
-                xiaLogError("xiaLoadModule", "Unable to load COM port or device_file",
-                            status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                       "Unable to load COM port or device_file");
                 return status;
             }
 
-            sprintf(info_string, "Device file = %s", value);
-            xiaLogDebug("xiaLoadModule", info_string);
+            xiaLog(XIA_LOG_DEBUG, "xiaLoadModule", "Device file = %s", value);
 
             status = xiaAddModuleItem(alias, "device_file", value);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Error adding device file to module %s", alias);
-                xiaLogError("xiaLoadModule", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                       "Error adding device file to module %s", alias);
                 return status;
             }
         }
@@ -1249,27 +1219,25 @@ static int xiaLoadModule(FILE* fp, fpos_t* start, fpos_t* end) {
         status = xiaFileRA(fp, start, end, "baud_rate", value);
 
         if (status != XIA_SUCCESS) {
-            xiaLogError("xiaLoadModule", "Unable to load baud rate", status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule", "Unable to load baud rate");
             return status;
         }
 
         sscanf(value, "%u", &baudRate);
 
-        sprintf(info_string, "Baud Rate = %u", baudRate);
-        xiaLogDebug("xiaLoadModule", info_string);
+        xiaLog(XIA_LOG_DEBUG, "xiaLoadModule", "Baud Rate = %u", baudRate);
 
         status = xiaAddModuleItem(alias, "baud_rate", (void*) &baudRate);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error adding baud rate to module %s", alias);
-            xiaLogError("xiaLoadModule", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                   "Error adding baud rate to module %s", alias);
             return status;
         }
     } else {
-        status = XIA_BAD_INTERFACE;
-        sprintf(info_string, "The interface defined for %s does not exist", alias);
-        xiaLogError("xiaLoadModule", info_string, status);
-        return status;
+        xiaLog(XIA_LOG_ERROR, XIA_BAD_INTERFACE, "xiaLoadModule",
+               "The interface defined for %s does not exist", alias);
+        return XIA_BAD_INTERFACE;
     }
 
     for (i = 0; i < numChans; i++) {
@@ -1277,21 +1245,20 @@ static int xiaLoadModule(FILE* fp, fpos_t* start, fpos_t* end) {
         status = xiaFileRA(fp, start, end, name, value);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Unable to load %s from %s", name, alias);
-            xiaLogError("xiaLoadModule", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule", "Unable to load %s from %s",
+                   name, alias);
             return status;
         }
 
         sscanf(value, "%d", &chanAlias);
 
-        sprintf(info_string, "%s = %d", name, chanAlias);
-        xiaLogDebug("xiaLoadDetector", info_string);
+        xiaLog(XIA_LOG_DEBUG, "xiaLoadDetector", "%s = %d", name, chanAlias);
 
         status = xiaAddModuleItem(alias, name, (void*) &chanAlias);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error adding %s to module %s", name, alias);
-            xiaLogError("xiaLoadModule", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                   "Error adding %s to module %s", name, alias);
             return status;
         }
 
@@ -1299,25 +1266,24 @@ static int xiaLoadModule(FILE* fp, fpos_t* start, fpos_t* end) {
         status = xiaFileRA(fp, start, end, name, value);
 
         if (status == XIA_FILE_RA) {
-            sprintf(info_string, "Current configuration file missing %s", name);
-            xiaLogWarning("xiaLoadModule", info_string);
+            xiaLog(XIA_LOG_WARNING, "xiaLoadModule",
+                   "Current configuration file missing %s", name);
         } else {
             if (status != XIA_SUCCESS) {
-                xiaLogError("xiaLoadModule", "Unable to load channel detector alias",
-                            status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                       "Unable to load channel detector alias");
                 return status;
             }
 
             sscanf(value, "%s", detAlias);
 
-            sprintf(info_string, "%s = %s", name, detAlias);
-            xiaLogDebug("xiaLoadModule", info_string);
+            xiaLog(XIA_LOG_DEBUG, "xiaLoadModule", "%s = %s", name, detAlias);
 
             status = xiaAddModuleItem(alias, name, (void*) detAlias);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Error adding %s to module %s", name, alias);
-                xiaLogError("xiaLoadModule", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                       "Error adding %s to module %s", name, alias);
                 return status;
             }
         }
@@ -1336,25 +1302,24 @@ static int xiaLoadModule(FILE* fp, fpos_t* start, fpos_t* end) {
             status = xiaFileRA(fp, start, end, name, value);
 
             if (status == XIA_FILE_RA) {
-                sprintf(info_string, "Current configuration file missing %s", name);
-                xiaLogWarning("xiaLoadModule", info_string);
+                xiaLog(XIA_LOG_WARNING, "xiaLoadModule",
+                       "Current configuration file missing %s", name);
             } else {
                 if (status != XIA_SUCCESS) {
-                    xiaLogError("xiaLoadModule",
-                                "Unable to load channel firmware information", status);
+                    xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                           "Unable to load channel firmware information");
                     return status;
                 }
 
                 strcpy(firmAlias, value);
 
-                sprintf(info_string, "%s = %s", name, firmAlias);
-                xiaLogDebug("xiaLoadModule", info_string);
+                xiaLog(XIA_LOG_DEBUG, "xiaLoadModule", "%s = %s", name, firmAlias);
 
                 status = xiaAddModuleItem(alias, name, (void*) firmAlias);
 
                 if (status != XIA_SUCCESS) {
-                    sprintf(info_string, "Error adding %s to module %s", name, alias);
-                    xiaLogError("xiaLoadModule", info_string, status);
+                    xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                           "Error adding %s to module %s", name, alias);
                     return status;
                 }
             }
@@ -1365,8 +1330,8 @@ static int xiaLoadModule(FILE* fp, fpos_t* start, fpos_t* end) {
         status = xiaAddModuleItem(alias, "firmware_set_all", (void*) firmAlias);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error adding firmware_set_all to module %s", alias);
-            xiaLogError("xiaLoadModule", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                   "Error adding firmware_set_all to module %s", alias);
             return status;
         }
     }
@@ -1379,25 +1344,24 @@ static int xiaLoadModule(FILE* fp, fpos_t* start, fpos_t* end) {
             status = xiaFileRA(fp, start, end, name, value);
 
             if (status == XIA_FILE_RA) {
-                sprintf(info_string, "Current configuration file missing %s", name);
-                xiaLogInfo("xiaLoadModule", info_string);
+                xiaLog(XIA_LOG_INFO, "xiaLoadModule",
+                       "Current configuration file missing %s", name);
             } else {
                 if (status != XIA_SUCCESS) {
-                    xiaLogError("xiaLoadModule",
-                                "Unable to load channel default information", status);
+                    xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                           "Unable to load channel default information");
                     return status;
                 }
 
                 strcpy(defAlias, value);
 
-                sprintf(info_string, "%s = %s", name, defAlias);
-                xiaLogDebug("xiaLoadModule", info_string);
+                xiaLog(XIA_LOG_DEBUG, "xiaLoadModule", "%s = %s", name, defAlias);
 
                 status = xiaAddModuleItem(alias, name, (void*) defAlias);
 
                 if (status != XIA_SUCCESS) {
-                    sprintf(info_string, "Error adding %s to module %s", name, alias);
-                    xiaLogError("xiaLoadModule", info_string, status);
+                    xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                           "Error adding %s to module %s", name, alias);
                     return status;
                 }
             }
@@ -1408,8 +1372,8 @@ static int xiaLoadModule(FILE* fp, fpos_t* start, fpos_t* end) {
         status = xiaAddModuleItem(alias, "default_all", (void*) defAlias);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error adding firmware_set_all to module %s", alias);
-            xiaLogError("xiaLoadModule", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadModule",
+                   "Error adding firmware_set_all to module %s", alias);
             return status;
         }
     }
@@ -1441,19 +1405,19 @@ static int xiaLoadFirmware(FILE* fp, fpos_t* start, fpos_t* end) {
     status = xiaFileRA(fp, start, end, "alias", value);
 
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaLoadFirmware", "Unable to load alias information", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaLoadFirmware",
+               "Unable to load alias information");
         return status;
     }
 
-    sprintf(info_string, "alias = %s", value);
-    xiaLogDebug("xiaLoadFirmware", info_string);
+    xiaLog(XIA_LOG_DEBUG, "xiaLoadFirmware", "alias = %s", value);
 
     strcpy(alias, value);
 
     status = xiaNewFirmware(alias);
 
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaLoadFirmware", "Error creating new firmware", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaLoadFirmware", "Error creating new firmware");
         return status;
     }
 
@@ -1461,15 +1425,14 @@ static int xiaLoadFirmware(FILE* fp, fpos_t* start, fpos_t* end) {
     status = xiaFileRA(fp, start, end, "mmu", value);
 
     if (status == XIA_SUCCESS) {
-        sprintf(info_string, "mmu = %s", value);
-        xiaLogDebug("xiaLoadFirmware", info_string);
+        xiaLog(XIA_LOG_DEBUG, "xiaLoadFirmware", "mmu = %s", value);
 
         strcpy(mmu, value);
         status = xiaAddFirmwareItem(alias, "mmu", (void*) mmu);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error adding MMU to alias %s", alias);
-            xiaLogError("xiaLoadFirmware", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadFirmware",
+                   "Error adding MMU to alias %s", alias);
             return status;
         }
     }
@@ -1478,15 +1441,14 @@ static int xiaLoadFirmware(FILE* fp, fpos_t* start, fpos_t* end) {
     status = xiaFileRA(fp, start, end, "filename", value);
 
     if (status == XIA_SUCCESS) {
-        sprintf(info_string, "filename = %s", value);
-        xiaLogDebug("xiaLoadFirmware", info_string);
+        xiaLog(XIA_LOG_DEBUG, "xiaLoadFirmware", "filename = %s", value);
 
         strcpy(file, value);
         status = xiaAddFirmwareItem(alias, "filename", (void*) file);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error adding filename to alias %s", alias);
-            xiaLogError("xiaLoadFirmware", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadFirmware",
+                   "Error adding filename to alias %s", alias);
             return status;
         }
 
@@ -1498,8 +1460,8 @@ static int xiaLoadFirmware(FILE* fp, fpos_t* start, fpos_t* end) {
             status = xiaAddFirmwareItem(alias, "fdd_tmp_path", (void*) path);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Error adding FDD temporary path to '%s'", alias);
-                xiaLogError("xiaLoadFirmware", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaLoadFirmware",
+                       "Error adding FDD temporary path to '%s'", alias);
                 return status;
             }
         }
@@ -1511,8 +1473,7 @@ static int xiaLoadFirmware(FILE* fp, fpos_t* start, fpos_t* end) {
         status = xiaFileRA(fp, start, end, "num_keywords", value);
 
         if (status == XIA_SUCCESS) {
-            sprintf(info_string, "num_keywords = %s", value);
-            xiaLogDebug("xiaLoadFirmware", info_string);
+            xiaLog(XIA_LOG_DEBUG, "xiaLoadFirmware", "num_keywords = %s", value);
 
             sscanf(value, "%hu", &numKeywords);
             for (i = 0; i < numKeywords; i++) {
@@ -1520,19 +1481,18 @@ static int xiaLoadFirmware(FILE* fp, fpos_t* start, fpos_t* end) {
                 status = xiaFileRA(fp, start, end, keyword, value);
 
                 if (status != XIA_SUCCESS) {
-                    xiaLogError("xiaLoadFirmware", "Unable to load keyword", status);
+                    xiaLog(XIA_LOG_ERROR, status, "xiaLoadFirmware",
+                           "Unable to load keyword");
                     return status;
                 }
 
-                sprintf(info_string, "%s = %s", keyword, value);
-                xiaLogDebug("xiaLoadFirmware", info_string);
+                xiaLog(XIA_LOG_DEBUG, "xiaLoadFirmware", "%s = %s", keyword, value);
 
                 status = xiaAddFirmwareItem(alias, "keyword", (void*) keyword);
 
                 if (status != XIA_SUCCESS) {
-                    sprintf(info_string, "Error adding keyword, %s, to alias %s",
-                            keyword, alias);
-                    xiaLogError("xiaLoadFirmware", info_string, status);
+                    xiaLog(XIA_LOG_ERROR, status, "xiaLoadFirmware",
+                           "Error adding keyword, %s, to alias %s", keyword, alias);
                     return status;
                 }
             }
@@ -1548,8 +1508,8 @@ static int xiaLoadFirmware(FILE* fp, fpos_t* start, fpos_t* end) {
     status = xiaReadPTRRs(fp, start, end, alias);
 
     if (status != XIA_SUCCESS) {
-        sprintf(info_string, "Error loading PTRR information for alias %s", alias);
-        xiaLogError("xiaLoadFirmware", info_string, status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaLoadFirmware",
+               "Error loading PTRR information for alias %s", alias);
         return status;
     }
 
@@ -1576,19 +1536,19 @@ static int xiaLoadDefaults(FILE* fp, fpos_t* start, fpos_t* end) {
     status = xiaFileRA(fp, start, end, "alias", value);
 
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaLoadDefaults", "Unable to load alias information", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaLoadDefaults",
+               "Unable to load alias information");
         return status;
     }
 
-    sprintf(info_string, "alias = %s", value);
-    xiaLogDebug("xiaLoadDefaults", info_string);
+    xiaLog(XIA_LOG_DEBUG, "xiaLoadDefaults", "alias = %s", value);
 
     strcpy(alias, value);
 
     status = xiaNewDefault(alias);
 
     if (status != XIA_SUCCESS) {
-        xiaLogError("xiaLoadDefaults", "Error creating new default", status);
+        xiaLog(XIA_LOG_ERROR, status, "xiaLoadDefaults", "Error creating new default");
         return status;
     }
 
@@ -1607,8 +1567,8 @@ static int xiaLoadDefaults(FILE* fp, fpos_t* start, fpos_t* end) {
     while (!STREQ(currentLine, endLine)) {
         status = xiaGetLineData(currentLine, tmpName, tmpValue);
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error getting data for entry %s", tmpName);
-            xiaLogError("xiaLoadDefaults", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaLoadDefaults",
+                   "Error getting data for entry %s", tmpName);
             return status;
         }
 
@@ -1618,15 +1578,14 @@ static int xiaLoadDefaults(FILE* fp, fpos_t* start, fpos_t* end) {
             status = xiaAddDefaultItem(alias, tmpName, (void*) &defValue);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Error adding %s (value = %.3f) to alias %s",
-                        tmpName, defValue, alias);
-                xiaLogError("xiaLoadDefaults", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaLoadDefaults",
+                       "Error adding %s (value = %.3f) to alias %s", tmpName, defValue,
+                       alias);
                 return status;
             }
 
-            sprintf(info_string, "Added %s (value = %.3f) to alias %s", tmpName,
-                    defValue, alias);
-            xiaLogDebug("xiaLoadDefaults", info_string);
+            xiaLog(XIA_LOG_DEBUG, "xiaLoadDefaults",
+                   "Added %s (value = %.3f) to alias %s", tmpName, defValue, alias);
         }
 
         status = xiaGetLine(fp, currentLine);
@@ -1661,7 +1620,7 @@ static int HANDEL_API xiaReadPTRRs(FILE* fp, fpos_t* start, fpos_t* end, char* a
 
     boolean_t isLast = FALSE_;
 
-    xiaLogDebug("xiaReadPTRRs", "Starting parse of PTRRs");
+    xiaLog(XIA_LOG_DEBUG, "xiaReadPTRRs", "Starting parse of PTRRs");
 
     /* This assumes that there is at least one PTRR for a specified alias */
     newEnd = *start;
@@ -1680,29 +1639,28 @@ static int HANDEL_API xiaReadPTRRs(FILE* fp, fpos_t* start, fpos_t* end, char* a
         status = xiaFileRA(fp, &newStart, &newEnd, "ptrr", value);
 
         if (status != XIA_SUCCESS) {
-            xiaLogError("xiaReadPTRRs", "Unable to read ptrr from file", status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaReadPTRRs",
+                   "Unable to read ptrr from file");
             return status;
         }
 
         sscanf(value, "%hu", &ptrr);
 
-        sprintf(info_string, "ptrr = %hu", ptrr);
-        xiaLogDebug("xiaReadPTRRs", info_string);
+        xiaLog(XIA_LOG_DEBUG, "xiaReadPTRRs", "ptrr = %hu", ptrr);
 
         status = xiaAddFirmwareItem(alias, "ptrr", (void*) &ptrr);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error adding ptrr to alias %s", alias);
-            xiaLogError("xiaReadPTRRs", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaReadPTRRs",
+                   "Error adding ptrr to alias %s", alias);
             return status;
         }
 
         status = xiaFileRA(fp, &newStart, &newEnd, "min_peaking_time", value);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Unable to read min_peaking_time from ptrr = %hu",
-                    ptrr);
-            xiaLogError("xiaReadPTRRs", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaReadPTRRs",
+                   "Unable to read min_peaking_time from ptrr = %hu", ptrr);
             return status;
         }
 
@@ -1712,17 +1670,16 @@ static int HANDEL_API xiaReadPTRRs(FILE* fp, fpos_t* start, fpos_t* end, char* a
             xiaAddFirmwareItem(alias, "min_peaking_time", (void*) &min_peaking_time);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error adding min_peaking_time to alias %s", alias);
-            xiaLogError("xiaReadPTRRs", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaReadPTRRs",
+                   "Error adding min_peaking_time to alias %s", alias);
             return status;
         }
 
         status = xiaFileRA(fp, &newStart, &newEnd, "max_peaking_time", value);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Unable to read max_peaking_time from ptrr = %hu",
-                    ptrr);
-            xiaLogError("xiaReadPTRRs", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaReadPTRRs",
+                   "Unable to read max_peaking_time from ptrr = %hu", ptrr);
             return status;
         }
 
@@ -1732,40 +1689,40 @@ static int HANDEL_API xiaReadPTRRs(FILE* fp, fpos_t* start, fpos_t* end, char* a
             xiaAddFirmwareItem(alias, "max_peaking_time", (void*) &max_peaking_time);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error adding max_peaking_time to alias %s", alias);
-            xiaLogError("xiaReadPTRRs", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaReadPTRRs",
+                   "Error adding max_peaking_time to alias %s", alias);
             return status;
         }
 
         status = xiaFileRA(fp, &newStart, &newEnd, "fippi", value);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Unable to read fippi from ptrr = %hu", ptrr);
-            xiaLogError("xiaReadPTRRs", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaReadPTRRs",
+                   "Unable to read fippi from ptrr = %hu", ptrr);
             return status;
         }
 
         status = xiaAddFirmwareItem(alias, "fippi", (void*) value);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error adding fippi to alias %s", alias);
-            xiaLogError("xiaReadPTRRs", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaReadPTRRs",
+                   "Error adding fippi to alias %s", alias);
             return status;
         }
 
         status = xiaFileRA(fp, &newStart, &newEnd, "dsp", value);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Unable to read dsp from ptrr = %hu", ptrr);
-            xiaLogError("xiaReadPTRRs", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaReadPTRRs",
+                   "Unable to read dsp from ptrr = %hu", ptrr);
             return status;
         }
 
         status = xiaAddFirmwareItem(alias, "dsp", (void*) value);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error adding dsp to alias %s", alias);
-            xiaLogError("xiaReadPTRRs", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaReadPTRRs",
+                   "Error adding dsp to alias %s", alias);
             return status;
         }
 
@@ -1776,52 +1733,49 @@ static int HANDEL_API xiaReadPTRRs(FILE* fp, fpos_t* start, fpos_t* end, char* a
             status = xiaAddFirmwareItem(alias, "user_fippi", (void*) value);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Error adding user_fippi to alias %s", alias);
-                xiaLogError("xiaReadPTRRs", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaReadPTRRs",
+                       "Error adding user_fippi to alias %s", alias);
                 return status;
             }
         } else if (status == XIA_FILE_RA) {
-            xiaLogInfo("xiaReadPTRRs", "No user_fippi present in .ini file");
+            xiaLog(XIA_LOG_INFO, "xiaReadPTRRs", "No user_fippi present in .ini file");
         } else {
-            sprintf(info_string, "Unable to read user_fippi from ptrr = %hu", ptrr);
-            xiaLogError("xiaReadPTRRs", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaReadPTRRs",
+                   "Unable to read user_fippi from ptrr = %hu", ptrr);
             return status;
         }
 
         status = xiaFileRA(fp, &newStart, &newEnd, "num_filter", value);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Unable to read num_filter from ptrr = %hu", ptrr);
-            xiaLogError("xiaReadPTRRs", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaReadPTRRs",
+                   "Unable to read num_filter from ptrr = %hu", ptrr);
             return status;
         }
 
         sscanf(value, "%hu", &numFilter);
 
-        sprintf(info_string, "numFilter = %hu", numFilter);
-        xiaLogDebug("xiaReadPTRRs", info_string);
+        xiaLog(XIA_LOG_DEBUG, "xiaReadPTRRs", "numFilter = %hu", numFilter);
 
         for (i = 0; i < numFilter; i++) {
             sprintf(filterName, "filter_info%hu", i);
             status = xiaFileRA(fp, &newStart, &newEnd, filterName, value);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Unable to read %s from ptrr = %hu", filterName,
-                        ptrr);
-                xiaLogError("xiaReadPTRRs", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaReadPTRRs",
+                       "Unable to read %s from ptrr = %hu", filterName, ptrr);
                 return status;
             }
 
             sscanf(value, "%hu", &filterInfo);
 
-            sprintf(info_string, "filterInfo = %hu", filterInfo);
-            xiaLogDebug("xiaReadPTRRs", info_string);
+            xiaLog(XIA_LOG_DEBUG, "xiaReadPTRRs", "filterInfo = %hu", filterInfo);
 
             status = xiaAddFirmwareItem(alias, "filter_info", (void*) &filterInfo);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Error adding filter_info to alias %s", alias);
-                xiaLogError("xiaReadPTRRs", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "xiaReadPTRRs",
+                       "Error adding filter_info to alias %s", alias);
                 return status;
             }
         }
@@ -1857,17 +1811,15 @@ static int HANDEL_API xiaSetPosOnNext(FILE* fp, fpos_t* start, fpos_t* end, char
     fgetpos(fp, newPos);
     status = xiaGetLine(fp, currentLine);
 
-    sprintf(info_string, "endLine: %s", endLine);
-    xiaLogDebug("xiaSetPosOnNext", info_string);
-    sprintf(info_string, "startLine: %s", currentLine);
-    xiaLogDebug("xiaSetPosOnNext", info_string);
+    xiaLog(XIA_LOG_DEBUG, "xiaSetPosOnNext", "endLine: %s", endLine);
+    xiaLog(XIA_LOG_DEBUG, "xiaSetPosOnNext", "startLine: %s", currentLine);
 
     while (!STREQ(currentLine, endLine)) {
         status = xiaGetLineData(currentLine, tmpName, tmpValue);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error trying to find %s", name);
-            xiaLogError("xiaSetPosOnNext", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaSetPosOnNext", "Error trying to find %s",
+                   name);
             return status;
         }
 
@@ -1878,8 +1830,8 @@ static int HANDEL_API xiaSetPosOnNext(FILE* fp, fpos_t* start, fpos_t* end, char
 
             fsetpos(fp, newPos);
             status = xiaGetLine(fp, currentLine);
-            sprintf(info_string, "newPos set to line: %s", currentLine);
-            xiaLogDebug("xiaSetPosOnNext", info_string);
+            xiaLog(XIA_LOG_DEBUG, "xiaSetPosOnNext", "newPos set to line: %s",
+                   currentLine);
 
             return XIA_SUCCESS;
         }
@@ -1920,8 +1872,8 @@ static int HANDEL_API xiaFileRA(FILE* fp, fpos_t* start, fpos_t* end, char* name
         status = xiaGetLineData(line, tmpName, tmpValue);
 
         if (status != XIA_SUCCESS) {
-            sprintf(info_string, "Error trying to find value for %s", name);
-            xiaLogError("xiaFileRA", info_string, status);
+            xiaLog(XIA_LOG_ERROR, status, "xiaFileRA",
+                   "Error trying to find value for %s", name);
             return status;
         }
 
@@ -1944,17 +1896,24 @@ static int writeInterface(FILE* fp, Module* module) {
     int i;
     int status;
 
-    ASSERT(fp != NULL);
-    ASSERT(module != NULL);
+    if (fp == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NO_FILENAME, "writeInterface", "fp cannot be NULL");
+        return XIA_NO_FILENAME;
+    }
+
+    if (module == NULL) {
+        xiaLog(XIA_LOG_ERROR, XIA_NO_MODULE, "writeInterface", "module cannot be NULL");
+        return XIA_NO_MODULE;
+    }
 
     for (i = 0; i < (int) N_ELEMS(INTERFACE_WRITERS); i++) {
         if (module->interface_info->type == INTERFACE_WRITERS[i].type) {
             status = INTERFACE_WRITERS[i].fn(fp, module);
 
             if (status != XIA_SUCCESS) {
-                sprintf(info_string, "Error writing interface data for type '%u'",
-                        module->interface_info->type);
-                xiaLogError("writeInterface", info_string, status);
+                xiaLog(XIA_LOG_ERROR, status, "writeInterface",
+                       "Error writing interface data for type '%u'",
+                       module->interface_info->type);
                 return status;
             }
 
@@ -1962,8 +1921,8 @@ static int writeInterface(FILE* fp, Module* module) {
         }
     }
 
-    sprintf(info_string, "Unknown interface type: '%u'", module->interface_info->type);
-    xiaLogError("writeInterface", info_string, XIA_BAD_INTERFACE);
+    xiaLog(XIA_LOG_ERROR, XIA_BAD_INTERFACE, "writeInterface",
+           "Unknown interface type: '%u'", module->interface_info->type);
     return XIA_BAD_INTERFACE;
 }
 

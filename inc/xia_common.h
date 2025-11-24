@@ -81,9 +81,6 @@ typedef unsigned long* PULONG;
 #define HI_BYTE(word) (byte_t)(((word) >> 8) & 0xFF)
 #define LO_WORD(dword) ((dword) & 0xFFFF)
 #define HI_WORD(dword) (((dword) >> 16) & 0xFFFF)
-#define MAKE_LOWER_CASE(s, i)                                                          \
-    for ((i) = 0; (i) < strlen((s)); (i)++)                                            \
-    (s)[i] = (char) tolower((int) ((s)[i]))
 #define N_ELEMS(x) (sizeof(x) / sizeof((x)[0]))
 
 /*
