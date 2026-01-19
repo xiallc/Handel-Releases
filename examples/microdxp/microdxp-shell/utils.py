@@ -35,7 +35,7 @@ def read_ini(file):
     """
     Reads the Handel ini file, validates the shell sections, and returns the config.
     """
-    parser = configparser.ConfigParser(allow_no_value=True)
+    parser = configparser.ConfigParser(allow_no_value=True, strict=False)
     parser.read(file)
 
     for section in parser.sections():

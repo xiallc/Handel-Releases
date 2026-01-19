@@ -38,7 +38,7 @@ logging.basicConfig(format=('[%(asctime)s] %(levelname)s-%(funcName)s-%(message)
                     level=logging.INFO)
 
 
-def run_data_to_json(mca, stats):
+def run_data_to_json(detnum, mca, stats):
     """
     Takes MCA and stats data, stuffs them into a dictionary, and returns it as a JSON
     string.
@@ -49,25 +49,28 @@ def run_data_to_json(mca, stats):
     """
     return json.dumps({
         "timestamp": utils.get_timestamp(),
+        "detnum": detnum,
         **(utils.cstruct_as_dict(stats)),
         "mca": [x for x in mca]
     })
 
 
+def check_code(name, rc):
+    """
+    Checks that a handel return code is 0. Raises a ValueError if not.
+    """
+    if rc != 0:
+        raise ValueError(f"{name} failed with {rc}")
+
+
 class MicroDxpShell(cmd.Cmd):
-    intro = """Welcome to the microDXP shell prototype!
+    modules = []
+    intro = f"""Welcome to the microDXP shell prototype!
     Please be aware that this is for demonstration purposes only!
     The commands, functionality, and features may change without warning.
-
-    Note:
-    The prototype assumes you have one detector int your init file, and it's
-    detector number 0.
     """
     prompt = 'microDXP> '
     file = None
-    board_info = None
-    serial_num = None
-    current_led_status = None
 
     def emptyline(self):
         pass
@@ -80,41 +83,57 @@ class MicroDxpShell(cmd.Cmd):
         self.handel = handel
         self.cfg = cfg
 
-        self.board_info = microdxp.BoardInformation()
-        rc = self.handel.xiaBoardOperation(ctypes.c_uint(0),
-                                           ctypes.c_char_p("get_board_info".encode()),
-                                           ctypes.byref(self.board_info))
-        if rc != 0:
-            raise ValueError(f"get_board_info failed with {rc}")
-        self.serial_num = microdxp.SerialNumber()
-        self.handel.xiaBoardOperation(ctypes.c_uint(0),
-                                      ctypes.c_char_p("get_serial_number".encode()),
-                                      ctypes.byref(self.serial_num))
-        if rc != 0:
-            raise ValueError(f"get_board_info failed with {rc}")
+        for chan in range(cfg.getint('detector definitions', 'number_of_channels')):
+            board_info = microdxp.BoardInformation()
+            rc = self.handel.xiaBoardOperation(ctypes.c_uint(chan),
+                                               ctypes.c_char_p("get_board_info".encode()),
+                                               ctypes.byref(board_info))
+            if rc != 0:
+                raise ValueError(f"get_board_info failed with {rc}")
 
-    def check_code(self, name, rc):
-        """
-        Checks that a handel return code is 0. Raises a ValueError if not.
-        """
-        if rc != 0:
-            raise ValueError(f"{name} failed with {rc}")
+            serial_num = microdxp.SerialNumber()
+            rc = self.handel.xiaBoardOperation(ctypes.c_uint(chan),
+                                               ctypes.c_char_p("get_serial_number".encode()),
+                                               ctypes.byref(serial_num))
+            if rc != 0:
+                raise ValueError(f"get_board_info failed with {rc}")
+
+            self.modules.append({
+                "info": utils.cstruct_as_dict(board_info),
+                "sn": {k: v.decode() for k, v in utils.cstruct_as_dict(serial_num).items()},
+                "led": {}
+            })
 
     def do_monitor(self, arg):
         """
-        Monitors the temperature and HV every X seconds where x is given by the arg.
-        Default polling period is 15 seconds.
+        Monitors the temperature and HV every X seconds where x is given by the arg. Set device_id to
+        `-1` to monitor all devices.
+        Usage: read device_id poll_period
+        Options:
+           * poll_period: Defaults to 15 seconds.
         """
+        args = arg.split()
+        if len(args) < 1:
+            self.do_help("monitor")
+            return
+
         period = 15.
-        if arg != "":
-            period = int(arg)
+        if len(args) == 2:
+            period = int(args[1])
+
+        device_id = int(args[0])
+        device_set = device_id,
+        if device_id == -1 or device_id > len(self.modules):
+            device_set = range(len(self.modules))
+
         starttime = time.monotonic()
         try:
             print(f"polls every {period} seconds\nCTRL+C to exit polling.")
             while True:
                 print(datetime.datetime.now().isoformat())
-                self.do_read("hv")
-                self.do_read("temp")
+                for device in device_set:
+                    self.do_read(f"{device} hv")
+                    self.do_read(f"{device} temp")
                 time.sleep(period - ((time.monotonic() - starttime) % period))
         except KeyboardInterrupt:
             pass
@@ -122,107 +141,116 @@ class MicroDxpShell(cmd.Cmd):
     def do_read(self, arg):
         """
         Read the requested information and print it to the screen.
-        Known arguments:
+        Usage: read device_id <operation>
+        Known operations:
            * acq <name>: Executes a xiaGetAcquisitionValues call with the provided name
-           * board: prints the board information to the terminal
            * hv: reads the HV output from the I2C
+           * info: prints the board information to the terminal
            * led: reads the LED information from the I2C
            * sn: prints the board information to the terminal
            * temp: reads the on-board temperature sensor from the I2C
         """
-        if arg == "":
-            print("command requires an argument")
+        args = arg.split()
+        if len(args) < 2:
+            self.do_help("read")
             return
 
-        args = arg.split()
-
         try:
-            opt = args[0].lower()
-            if opt == 'acq':
-                if len(args) < 2:
-                    print('must include acquisition parameter')
-                    return
+            device_id = int(args[0])
+            device_set = device_id,
+            if device_id == -1 or device_id > len(self.modules):
+                device_set = range(len(self.modules))
 
-                # Alias set_voltage to high_voltage so we use the right acq val.
-                if args[1] == 'set_voltage':
-                    args[1] = 'high_voltage'
+            opt = args[1].lower()
 
-                detchan = ctypes.c_int(0)
-                name = ctypes.c_char_p(args[1].encode())
-                val = ctypes.c_double(0)
-                rc = self.handel.xiaGetAcquisitionValues(detchan,
-                                                         name,
-                                                         ctypes.byref(val))
-                if rc != 0:
-                    raise ValueError(f"read {args[1]} failed with {rc}")
+            for device in device_set:
+                if opt == 'acq':
+                    if len(args) < 3:
+                        print('must include acquisition parameter')
+                        return
 
-                # Handel API mishandles this DSP parameter, we fix it here.
-                if args[1] == 'high_voltage':
-                    args[1] = 'set_voltage'
-                    val.value = val.value*self.cfg.getfloat('udxp.hv', 'set')
+                    # Alias set_voltage to high_voltage so we use the right acq val.
+                    if args[2] == 'set_voltage':
+                        args[2] = 'high_voltage'
 
-                print(f"{args[1]}: {round(val.value, 3)}")
-            elif opt == 'board':
-                pprint.pprint(utils.cstruct_as_dict(self.board_info))
-            elif opt == 'hv':
-                cmd = microdxp.UsbSerialCommand(self.handel, 0x40)
-                cmd.append(4, int)
-                cmd.append(0, bytes)
-                cmd.append(0x29, bytes)
-                cmd.append(0, bytes)
-                cmd.append(2, bytes)
+                    name = ctypes.c_char_p(args[2].encode())
+                    val = ctypes.c_double(0)
+                    rc = self.handel.xiaGetAcquisitionValues(ctypes.c_int(device),
+                                                             name,
+                                                             ctypes.byref(val))
+                    if rc != 0:
+                        raise ValueError(f"read {args[2]} failed with {rc}")
 
-                # The ADC is a low power device. We need to read it
-                # once to awaken it, then a second time to get the data.
-                response_length = 8
-                cmd.write()
-                time.sleep(0.1)
-                cmd.write()
-                payload = cmd.read(response_length)
-                print("monitor_voltage:",
-                      round(self.cfg.getfloat('udxp.hv', 'monitor') *
-                            int.from_bytes(payload[1:], 'big'), 3))
-            elif opt == 'led':
-                cmd = microdxp.UsbSerialCommand(self.handel, 0xC0)
-                cmd.append(1, int)
-                cmd.append(1, bytes)
-                cmd.finalize()
-                cmd.write()
-                payload = cmd.read(11)
-                self.current_led_status = {
-                    "cmd_status": payload[0],
-                    "enabled": bool(payload[1]),
-                    "period_us": round(
-                        int.from_bytes(payload[2:4], 'little') *
-                        self.cfg.getfloat('udxp.led.period', 'scale') +
-                        self.cfg.getfloat('udxp.led.period', 'offset'), 2),
-                    "width_ns": round(
-                        int.from_bytes(payload[4:], 'little') *
-                        self.cfg.getfloat('udxp.led.width', 'scale') +
-                        self.cfg.getfloat('udxp.led.width', 'offset'), 2),
-                }
-                pprint.pprint(self.current_led_status)
-            elif opt == 'sn':
-                pprint.pprint(utils.cstruct_as_dict(self.serial_num))
-            elif opt == 'temp':
-                cmd = microdxp.UsbSerialCommand(self.handel, 0x41)
-                cmd.append(0, int)
-                cmd.write()
-                data = cmd.read(8)
-                temp = data[1]
-                for i in range(4, 8):
-                    if data[2] & (1 << i):
-                        temp = temp + 2 ** (i - 8)
-                print(f'temp (C): {temp}')
-            else:
-                print("unknown option")
-                self.do_help("read")
+                    # Handel API mishandles this DSP parameter, we fix it here.
+                    if args[1] == 'high_voltage':
+                        args[1] = 'set_voltage'
+                        val.value = val.value * self.cfg.getfloat('udxp.hv', 'set')
+
+                    print(f"{device}.{args[2]}: {round(val.value, 3)}")
+                elif opt == 'hv':
+                    cmd = microdxp.UsbSerialCommand(self.handel, device, 0x40)
+                    cmd.append(4, int)
+                    cmd.append(0, bytes)
+                    cmd.append(0x29, bytes)
+                    cmd.append(0, bytes)
+                    cmd.append(2, bytes)
+
+                    # The ADC is a low power device. We need to read it
+                    # once to awaken it, then a second time to get the data.
+                    response_length = 8
+                    cmd.write()
+                    time.sleep(0.1)
+                    cmd.write()
+                    payload = cmd.read(response_length)
+                    print(f"{device_id}.monitor_voltage:",
+                          round(self.cfg.getfloat('udxp.hv', 'monitor') *
+                                int.from_bytes(payload[1:], 'big'), 3))
+                elif opt == 'info':
+                    print(f"{device}.info:", json.dumps(self.modules[device]['info']))
+                elif opt == 'led':
+                    cmd = microdxp.UsbSerialCommand(self.handel, device, 0xC0)
+                    cmd.append(1, int)
+                    cmd.append(1, bytes)
+                    cmd.finalize()
+                    cmd.write()
+                    payload = cmd.read(11)
+                    self.modules[device_id]['led'] = {
+                        "cmd_status": payload[0],
+                        "enabled": bool(payload[1]),
+                        "period_us": round(
+                            int.from_bytes(payload[2:4], 'little') *
+                            self.cfg.getfloat('udxp.led.period', 'scale') +
+                            self.cfg.getfloat('udxp.led.period', 'offset'), 2),
+                        "width_ns": round(
+                            int.from_bytes(payload[4:], 'little') *
+                            self.cfg.getfloat('udxp.led.width', 'scale') +
+                            self.cfg.getfloat('udxp.led.width', 'offset'), 2),
+                    }
+                    print(f"{device}.led:", self.modules[device]['led'])
+                elif opt == 'sn':
+                    print(f"{device}.sn:", json.dumps(self.modules[device]['sn']))
+                elif opt == 'temp':
+                    cmd = microdxp.UsbSerialCommand(self.handel, device, 0x41)
+                    cmd.append(0, int)
+                    cmd.write()
+                    data = cmd.read(8)
+                    temp = data[1]
+                    for i in range(4, 8):
+                        if data[2] & (1 << i):
+                            temp = temp + 2 ** (i - 8)
+                    print(f'{device}.temp_c: {temp}')
+                else:
+                    print("unknown operation")
+                    self.do_help("read")
         except Exception as e:
             print(e)
 
     def do_run(self, arg):
         """
-        Executes data runs with various options:
+        Executes data runs of various types. Data runs with a device ID set to -1 will
+        execute against all channels in the system.
+        Usage: run device_id <type>
+        Run types:
             * mca <type> <value> <resume>: Executes a bound MCA run.
                 * type -> The type of data run to execute.
                     * real -> runs until reaching the specified clock time (default)
@@ -239,32 +267,38 @@ class MicroDxpShell(cmd.Cmd):
             * trace <period> : Collects an ADC trace and returns it
                 * period -> Time between ADC samples in nanoseconds. Default 25. Max 5000.
         """
-        if arg == "":
-            print("command requires an argument")
-            return
         args = arg.split()
+        if len(args) < 2:
+            self.do_help("run")
+            return
 
         try:
-            opt = args[0].lower()
+            device_id = int(args[0])
+            device_set = device_id,
+            if device_id == -1:
+                device_set = range(len(self.modules))
+            opt = args[1].lower()
+
             if opt == 'mca':
-                if len(args) != 1 and len(args) != 4:
+                if len(args) != 2 and len(args) != 5:
                     print('must include run type, value and clear')
                     return
 
                 run_type = 1.
                 run_len = 1.
                 resume = 0
-                if len(args) == 4:
-                    run_type = microdxp.PRESET_RUN_TYPES.get(args[1], 1.)
-                    run_len = float(args[2])
-                    resume = int(args[3])
+                if len(args) == 5:
+                    run_type = microdxp.PRESET_RUN_TYPES.get(args[2], 1.)
+                    run_len = float(args[3])
+                    resume = int(args[4])
 
-                self.do_set(f'acq preset_type {run_type}')
-                self.do_set(f'acq preset_value {run_len}')
+                for device in device_set:
+                    self.do_set(f'{device} acq preset_type {run_type}')
+                    self.do_set(f'{device} acq preset_value {run_len}')
 
                 print('starting run. CTRL+C to stop early.')
-                rc = self.handel.xiaStartRun(0, resume)
-                self.check_code("xiaStartRun", rc)
+                rc = self.handel.xiaStartRun(device_id, resume)
+                check_code("xiaStartRun", rc)
 
                 try:
                     run_active = ctypes.c_ushort(1)
@@ -274,54 +308,56 @@ class MicroDxpShell(cmd.Cmd):
                             print(f"remaining time: {remaining_time}")
                         rc = self.handel.xiaGetRunData(0, ctypes.c_char_p(
                             "run_active".encode()), ctypes.byref(run_active))
-                        self.check_code("xiaGetRunData:run_active", rc)
+                        check_code("xiaGetRunData:run_active", rc)
                         remaining_time -= 1
                         time.sleep(1)
                 except KeyboardInterrupt:
                     pass
                 finally:
                     print("stopping run")
-                    rc = self.handel.xiaStopRun(0)
-                    self.check_code("xiaStopRun", rc)
+                    rc = self.handel.xiaStopRun(device_id)
+                    check_code("xiaStopRun", rc)
 
-                mca_len = ctypes.c_ulong(0)
-                rc = self.handel.xiaGetRunData(0, ctypes.c_char_p(
-                    "mca_length".encode()), ctypes.byref(mca_len))
-                self.check_code("get mca_length", rc)
+                for device in device_set:
+                    mca_len = ctypes.c_ulong(0)
+                    rc = self.handel.xiaGetRunData(device, ctypes.c_char_p(
+                        "mca_length".encode()), ctypes.byref(mca_len))
+                    check_code("get mca_length", rc)
 
-                mca = (ctypes.c_ulong * mca_len.value)()
-                rc = self.handel.xiaGetRunData(0, ctypes.c_char_p("mca".encode()),
-                                               ctypes.byref(mca))
-                self.check_code("get mca", rc)
+                    mca = (ctypes.c_ulong * mca_len.value)()
+                    rc = self.handel.xiaGetRunData(device, ctypes.c_char_p("mca".encode()),
+                                                   ctypes.byref(mca))
+                    check_code("get mca", rc)
 
-                stats = microdxp.McaStats()
-                rc = self.handel.xiaGetRunData(0, ctypes.c_char_p(
-                    "module_statistics_2".encode()), ctypes.byref(stats))
-                self.check_code("get module_statistics_2", rc)
+                    stats = microdxp.McaStats()
+                    rc = self.handel.xiaGetRunData(device, ctypes.c_char_p(
+                        "module_statistics_2".encode()), ctypes.byref(stats))
+                    check_code("get module_statistics_2", rc)
 
-                print(run_data_to_json(mca, stats))
+                    print(run_data_to_json(device, mca, stats))
             elif opt == 'snapshot':
-                if len(args) != 1 and len(args) != 3:
+                if len(args) != 2 and len(args) != 4:
                     print('must include read period and clear')
                     return
 
                 period = 5.
                 clear = (ctypes.c_double * 1)(*[1])
-                if len(args) == 3:
-                    if float(args[1]) >= 1.:
+                if len(args) == 4:
+                    if float(args[2]) >= 1.:
                         period = float(args[1])
-                    if not float(args[2]) in [0., 1.]:
+                    if not float(args[3]) in [0., 1.]:
                         raise ValueError(f"clear must be 0 or 1.")
                     else:
-                        clear[0] = float(args[2])
+                        clear[0] = float(args[3])
 
-                self.do_set(
-                    f'acq number_mca_channels {microdxp.MAX_MCA_SNAPSHOT_SIZE}')
-                self.do_set('acq preset_type 0')
+                for device in device_set:
+                    self.do_set(
+                        f'{device} acq number_mca_channels {microdxp.MAX_MCA_SNAPSHOT_SIZE}')
+                    self.do_set(f'{device} acq preset_type 0')
 
                 starttime = time.monotonic()
-                rc = self.handel.xiaStartRun(0, 0)
-                self.check_code("xiaStartRun", rc)
+                rc = self.handel.xiaStartRun(device_id, 0)
+                check_code("xiaStartRun", rc)
 
                 mca = (ctypes.c_ulong * microdxp.MAX_MCA_SNAPSHOT_SIZE)()
                 try:
@@ -329,47 +365,51 @@ class MicroDxpShell(cmd.Cmd):
                     while True:
                         time.sleep(
                             period - ((time.monotonic() - starttime) % period))
-                        rc = self.handel.xiaDoSpecialRun(0, ctypes.c_char_p(
+
+                        rc = self.handel.xiaDoSpecialRun(device_id, ctypes.c_char_p(
                             "snapshot".encode()), ctypes.byref(clear))
-                        self.check_code("snapshot", rc)
+                        check_code("snapshot", rc)
 
-                        rc = self.handel.xiaGetSpecialRunData(0, ctypes.c_char_p(
-                            "snapshot_mca".encode()), ctypes.byref(mca))
-                        self.check_code("snapshot_mca", rc)
+                        for device in device_set:
+                            rc = self.handel.xiaGetSpecialRunData(device, ctypes.c_char_p(
+                                "snapshot_mca".encode()), ctypes.byref(mca))
+                            check_code("snapshot_mca", rc)
 
-                        stats = microdxp.McaStats()
-                        rc = self.handel.xiaGetSpecialRunData(0, ctypes.c_char_p(
-                            "snapshot_statistics".encode()), ctypes.byref(stats))
-                        self.check_code("snapshot_statistics", rc)
+                            stats = microdxp.McaStats()
+                            rc = self.handel.xiaGetSpecialRunData(device, ctypes.c_char_p(
+                                "snapshot_statistics".encode()), ctypes.byref(stats))
+                            check_code("snapshot_statistics", rc)
 
-                        print(run_data_to_json(mca, stats))
+                            print(run_data_to_json(device, mca, stats))
                 except KeyboardInterrupt:
                     pass
                 finally:
-                    rc = self.handel.xiaStopRun(0)
-                    self.check_code("xiaStopRun", rc)
+                    rc = self.handel.xiaStopRun(device_id)
+                    check_code("xiaStopRun", rc)
             elif opt == 'trace':
                 info = (ctypes.c_double * 2)(*[0., 25.])
-                if len(args) == 2:
-                    if 25. <= float(args[1]) <= 5000.:
-                        info[1] = float(args[1])
+                if len(args) == 3:
+                    if 25. <= float(args[2]) <= 5000.:
+                        info[1] = float(args[2])
 
-                rc = self.handel.xiaDoSpecialRun(0, ctypes.c_char_p(
+                rc = self.handel.xiaDoSpecialRun(device_id, ctypes.c_char_p(
                     "adc_trace".encode()), ctypes.byref(info))
-                self.check_code("adc_trace", rc)
+                check_code("adc_trace", rc)
 
-                trace_len = ctypes.c_ulong(0)
-                rc = self.handel.xiaGetSpecialRunData(0, ctypes.c_char_p(
-                    "adc_trace_length".encode()), ctypes.byref(trace_len))
-                self.check_code("adc_trace_length", rc)
+                for device in device_set:
+                    trace_len = ctypes.c_ulong(0)
+                    rc = self.handel.xiaGetSpecialRunData(device, ctypes.c_char_p(
+                        "adc_trace_length".encode()), ctypes.byref(trace_len))
+                    check_code("adc_trace_length", rc)
 
-                trace = (ctypes.c_ulong * trace_len.value)()
-                rc = self.handel.xiaGetSpecialRunData(0, ctypes.c_char_p(
-                    "adc_trace".encode()), ctypes.byref(trace))
-                self.check_code("adc_trace", rc)
+                    trace = (ctypes.c_ulong * trace_len.value)()
+                    rc = self.handel.xiaGetSpecialRunData(device, ctypes.c_char_p(
+                        "adc_trace".encode()), ctypes.byref(trace))
+                    check_code("adc_trace", rc)
 
-                print(json.dumps({"timestamp": utils.get_timestamp(),
-                                  "trace": [val for val in trace]}))
+                    print(json.dumps({"timestamp": utils.get_timestamp(),
+                                      "id": device,
+                                      "trace": [val for val in trace]}))
             else:
                 print("unknown option")
                 self.do_help("run")
@@ -378,7 +418,9 @@ class MicroDxpShell(cmd.Cmd):
 
     def do_set(self, arg):
         """
-        Sets the requested value. Known keys:
+        Sets the requested value.
+        Usage: set <device_id> operation
+        Known operations:
             * acq <name> <value>: calls xiaSetAcquisitionValues with the provided name and value
                 * name -> The name of the parameter that will be set
                 * value -> the value that will be set
@@ -389,105 +431,117 @@ class MicroDxpShell(cmd.Cmd):
                 * period -> LED pulse period in us
                 * width -> LED pulse width in ns
         """
-        if arg == "":
-            print("command requires an argument")
-            return
         args = arg.split()
+        if len(args) < 3:
+            self.do_help("set")
+            return
+
         try:
-            opt = args[0].lower()
-            if opt == 'acq':
-                if len(args) < 3:
-                    print('must include name and value')
-                    return
+            device_id = int(args[0])
+            device_set = device_id,
+            if device_id == -1 or device_id > len(self.modules):
+                device_set = range(len(self.modules))
+            opt = args[1].lower()
 
-                detchan = ctypes.c_int(0)
-                name = ctypes.c_char_p(args[1].encode())
-                val = ctypes.c_double(float(args[2]))
-                rc = self.handel.xiaSetAcquisitionValues(detchan,
-                                                         name,
-                                                         ctypes.byref(val))
+            for device in device_set:
+                if opt == 'acq':
+                    if len(args) < 4:
+                        print('must include name and value')
+                        return
 
-                if rc != 0:
-                    raise ValueError(f"read {args[1]} failed with {rc}")
+                    name = ctypes.c_char_p(args[2].encode())
+                    val = ctypes.c_double(float(args[3]))
+                    rc = self.handel.xiaSetAcquisitionValues(ctypes.c_int(device),
+                                                             name,
+                                                             ctypes.byref(val))
+                    if rc != 0:
+                        raise ValueError(f"read {args[2]} failed with {rc}")
+                    self.do_read(f'{device} acq {args[2]}')
+                elif opt == 'hv':
+                    val = float(args[2])
+                    val_range = (self.cfg.getfloat('udxp.hv', 'low'),
+                                 self.cfg.getfloat('udxp.hv', 'high'))
+                    if not val_range[0] <= val < val_range[1] and val != 0.0:
+                        print(f'val not in range {val_range}')
+                        return
+                    self.do_set(f'{device} acq high_voltage '
+                                f'{val / self.cfg.getfloat("udxp.hv", "set")}')
+                elif opt == 'led':
+                    if len(args) < 5:
+                        print('must include all 3 values to set')
+                        return
 
-                self.do_read(f'acq {args[1]}')
-            elif opt == 'hv':
-                if len(args) < 2:
-                    print('must include value')
-                    return
+                    enable = int(args[2])
+                    period = float(args[3])
+                    width = float(args[4])
+                    width_range = (self.cfg.getfloat('udxp.led.width', 'low'),
+                                   self.cfg.getfloat('udxp.led.width', 'high'))
+                    period_range = (self.cfg.getfloat('udxp.led.period', 'low'),
+                                    self.cfg.getfloat('udxp.led.period', 'high'))
 
-                val = float(args[1])
-                val_range = (self.cfg.getfloat('udxp.hv', 'low'),
-                             self.cfg.getfloat('udxp.hv', 'high'))
-                if not val_range[0] <= val < val_range[1] and val != 0.0:
-                    print(f'val not in range {val_range}')
-                    return
-                self.do_set(f'acq high_voltage '
-                            f'{val / self.cfg.getfloat("udxp.hv", "set")}')
-            elif opt == 'led':
-                if len(args) < 4:
-                    print('must include all 3 values to set')
-                    return
+                    if not 0 <= enable < 2:
+                        print(f"invalid enable option")
+                        return
+                    if not period_range[0] <= period <= period_range[1]:
+                        print(
+                            f"invalid led period: {period_range} "
+                            f"{self.cfg.get('udxp.led.period', 'unit')}")
+                        return
+                    if not width_range[0] <= width <= width_range[1]:
+                        print(f"invalid led width: {width_range} "
+                              f"{self.cfg.get('udxp.led.width', 'unit')}")
+                        return
 
-                enable = int(args[1])
-                period = float(args[2])
-                width = float(args[3])
-                width_range = (self.cfg.getfloat('udxp.led.width', 'low'),
-                               self.cfg.getfloat('udxp.led.width', 'high'))
-                period_range = (self.cfg.getfloat('udxp.led.period', 'low'),
-                                self.cfg.getfloat('udxp.led.period', 'high'))
+                    period_cfg = (self.cfg.getfloat('udxp.led.period', 'offset'),
+                                  self.cfg.getfloat('udxp.led.period', 'scale'))
+                    width_cfg = (self.cfg.getfloat('udxp.led.width', 'offset'),
+                                 self.cfg.getfloat('udxp.led.width', 'scale'))
 
-                if not 0 <= enable < 2:
-                    print(f"invalid enable option")
-                    return
-                if not period_range[0] <= period <= period_range[1]:
-                    print(
-                        f"invalid led period: {period_range} "
-                        f"{self.cfg.get('udxp.led.period', 'unit')}")
-                    return
-                if not width_range[0] <= width <= width_range[1]:
-                    print(f"invalid led width: {width_range} "
-                          f"{self.cfg.get('udxp.led.width', 'unit')}")
-                    return
+                    cmd = microdxp.UsbSerialCommand(self.handel, device, 0xC0)
+                    cmd.append(6, int)
+                    cmd.append(0, bytes)
+                    cmd.append(enable, bytes)
+                    cmd.append(round((period - period_cfg[0]) / period_cfg[1]), int)
+                    cmd.append(round((width - width_cfg[0]) / width_cfg[1]), int)
+                    cmd.write()
 
-                period_cfg = (self.cfg.getfloat('udxp.led.period', 'offset'),
-                              self.cfg.getfloat('udxp.led.period', 'scale'))
-                width_cfg = (self.cfg.getfloat('udxp.led.width', 'offset'),
-                             self.cfg.getfloat('udxp.led.width', 'scale'))
-
-                cmd = microdxp.UsbSerialCommand(self.handel, 0xC0)
-                cmd.append(6, int)
-                cmd.append(0, bytes)
-                cmd.append(enable, bytes)
-                cmd.append(round((period - period_cfg[0]) / period_cfg[1]), int)
-                cmd.append(round((width - width_cfg[0]) / width_cfg[1]), int)
-                cmd.write()
-
-                payload = cmd.read(11)
-                self.current_led_status = {
-                    "cmd_status": payload[0],
-                    "enabled": bool(payload[1]),
-                    "period_us": round(int.from_bytes(payload[2:4], 'little') *
-                                       period_cfg[1] + period_cfg[0], 2),
-                    "width_ns": round(int.from_bytes(payload[4:], 'little') *
-                                      width_cfg[1] + width_cfg[0], 2),
-                }
-                pprint.pprint(self.current_led_status)
-            else:
-                print("unknown option")
-                self.do_help("set")
+                    payload = cmd.read(11)
+                    self.modules[device]['led'] = {
+                        "cmd_status": payload[0],
+                        "enabled": bool(payload[1]),
+                        "period_us": round(int.from_bytes(payload[2:4], 'little') *
+                                           period_cfg[1] + period_cfg[0], 2),
+                        "width_ns": round(int.from_bytes(payload[4:], 'little') *
+                                          width_cfg[1] + width_cfg[0], 2),
+                    }
+                    print(f"{device}.led:", json.dumps(self.modules[device]['led']))
+                else:
+                    print("unknown option")
+                    self.do_help("set")
         except Exception as e:
             print(repr(e))
 
     def do_toggle_led(self, arg):
         """
         Toggles the LED on or off.
+        Usage toggle_led <device_id>
         """
+        args = arg.split()
+        if len(args) < 1:
+            self.do_help("toggle_led")
+            return
         try:
-            self.do_read('led')
-            self.do_set(f"led {int(not self.current_led_status['enabled'])} "
-                        f"{self.current_led_status['period_us']} "
-                        f"{self.current_led_status['width_ns']}")
+            device_id = int(args[0])
+            device_set = device_id,
+            if device_id == -1 or device_id > len(self.modules):
+                device_set = range(len(self.modules))
+
+            for device in device_set:
+                self.do_read(f'{device} led')
+                self.do_set(f"{device} led "
+                            f"{int(not self.modules[device]['led']['enabled'])} "
+                            f"{self.modules[device]['led']['period_us']} "
+                            f"{self.modules[device]['led']['width_ns']}")
         except Exception as e:
             print(e)
 

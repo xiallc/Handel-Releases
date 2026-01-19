@@ -92,7 +92,15 @@ class BoardInformation(ctypes.Structure):
                 ("adc_speed_grade", ctypes.c_ubyte),
                 ("fpga_speed_grade", ctypes.c_ubyte),
                 ("analog_power", ctypes.c_ubyte),
-                ("fippis", ctypes.c_ubyte * 9)]
+                ("fippi0.decimation", ctypes.c_ubyte),
+                ("fippi0.version", ctypes.c_ubyte),
+                ("fippi0.variant", ctypes.c_ubyte),
+                ("fippi1.decimation", ctypes.c_ubyte),
+                ("fippi1.version", ctypes.c_ubyte),
+                ("fippi1.variant", ctypes.c_ubyte),
+                ("fippi2.decimation", ctypes.c_ubyte),
+                ("fippi2.version", ctypes.c_ubyte),
+                ("fippi2.variant", ctypes.c_ubyte)]
 
 
 class UsbSerialCommand:
@@ -101,17 +109,19 @@ class UsbSerialCommand:
     actually gets executed over the USB 2.0 interface.
     """
 
-    def __init__(self, lib, cmd):
+    def __init__(self, lib, device_id, cmd):
         """
         Initializes the variables we need
         :param lib: The handel library that handles communication with the device.
+        :param device_id: The device id to send the command to.
         :param cmd: The command that we'll be executing.
         """
         self.lib = lib
         self.cmd = bytearray(cmd.to_bytes(1, 'little'))
         self.UART_ADDRESS_0 = 0x01000000
 
-        self.device = None
+        self.device_id = device_id
+        self.handle = ctypes.c_void_p(0)
         self.response = None
         self.payload = None
 
@@ -137,7 +147,7 @@ class UsbSerialCommand:
         :return:
         """
         if self.opened:
-            rc = self.lib.xia_usb2_close(self.device)
+            rc = self.lib.xia_usb2_close(self.handle)
             if rc != 0:
                 raise IOError(f"close usb2 device failed with {rc}")
 
@@ -173,14 +183,13 @@ class UsbSerialCommand:
         self.cmd[0:0] = bytearray(b'\x1b')
         self.finalized = True
 
-    def open(self, device_id: int = 0):
+    def open(self):
         """
         Opens up a new USB2 based RS232 connection for the device provided.
         :param device_id: The ID of the device to open. Defaults to 0.
         :return: None
         """
-        self.device = ctypes.c_void_p(device_id)
-        rc = self.lib.xia_usb2_open(ctypes.c_int(0), ctypes.byref(self.device))
+        rc = self.lib.xia_usb2_open(ctypes.c_int(self.device_id), ctypes.byref(self.handle))
         if rc != 0:
             raise IOError(f"open usb2 device failed with {rc}")
         self.opened = True
@@ -193,7 +202,7 @@ class UsbSerialCommand:
         :return: An array containing just the data payload.
         """
         response = ctypes.create_string_buffer(size)
-        rc = self.lib.xia_usb2_read(self.device, ctypes.c_ulong(self.UART_ADDRESS_0),
+        rc = self.lib.xia_usb2_read(self.handle, ctypes.c_ulong(self.UART_ADDRESS_0),
                                     ctypes.c_ulong(size), ctypes.byref(response))
         if rc != 0:
             raise IOError(f"read usb2 device failed with {rc}")
@@ -225,7 +234,7 @@ class UsbSerialCommand:
         c_pkt = (ctypes.c_ubyte * len(self.cmd))(*self.cmd)
         c_pkti = ctypes.pointer(c_pkt)
 
-        rc = self.lib.xia_usb2_write(self.device,
+        rc = self.lib.xia_usb2_write(self.handle,
                                      ctypes.c_ulong(self.UART_ADDRESS_0),
                                      ctypes.c_ulong(len(self.cmd)),
                                      c_pkti)
