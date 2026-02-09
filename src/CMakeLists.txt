@@ -118,6 +118,7 @@ target_link_libraries(handel PUBLIC
         ${USB2_LIB}
         ${PLX_STATIC_LIB}
         $<$<C_COMPILER_ID:GNU>:"m">
+        $<$<C_COMPILER_ID:GNU>:"pthread">
 )
 
 sign_code(handel)

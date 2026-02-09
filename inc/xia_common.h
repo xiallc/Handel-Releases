@@ -55,7 +55,7 @@ typedef unsigned short flag_t;
 
 #ifdef __linux__
 #include <stdint.h>
-typedef intptr_t HANDLE;
+typedef void* HANDLE;
 
 typedef unsigned char UCHAR;
 typedef unsigned short USHORT;

@@ -49,6 +49,7 @@
 #include "xia_module.h"
 #include "xia_psl.h"
 #include "xia_system.h"
+#include <util/xia_sleep.h>
 
 #include "psl_common.h"
 
@@ -371,6 +372,8 @@ PSL_STATIC int pslGetGainMode(int detChan, char* name, XiaDefaults* defs, void* 
 PSL_STATIC int pslGetBoardFeatures(int detChan, char* name, XiaDefaults* defs,
                                    void* value);
 PSL_STATIC int pslPassthrough(int detChan, char* name, XiaDefaults* defs, void* value);
+PSL_STATIC int pslGetMonitorDac(int detchan, char* name, XiaDefaults* defs,
+                                void* value);
 
 #ifndef EXCLUDE_XUP
 PSL_STATIC int pslQueryStatus(int detChan);
@@ -607,6 +610,7 @@ static BoardOperation boardOps[] = {
     {"get_preamp_type", pslGetPreampType},
     {"recover", pslRecover},
     {"passthrough", pslPassthrough},
+    {"get_monitor_dac", pslGetMonitorDac},
 #ifndef EXCLUDE_XUP
     {"download_xup", pslDownloadXUP},
     {"set_xup_backup_path", pslSetXUPBackupPath},
@@ -4473,6 +4477,50 @@ PSL_STATIC int pslGetTemperature(int detChan, char* name, XiaDefaults* defs,
 }
 
 /*
+ * Reads the DAC value that monitors the voltage. There's a conversion factor that needs
+ * applied to this value to turn it into the actual voltage. That value is
+ * implementation dependent so we just return the raw value here.
+ */
+PSL_STATIC int pslGetMonitorDac(int detChan, char* name, XiaDefaults* defs,
+                                void* value) {
+    UNUSED(name);
+    UNUSED(defs);
+    ASSERT(value != NULL);
+
+    DEFINE_CMD(CMD_ACCESS_I2C, 5, 3);
+    send[0] = 0x0;
+    send[1] = 0x29;
+    send[2] = 0x0;
+    send[3] = 0x2;
+    send[4] = 0x6F;
+
+    /**
+     * The ADC is a low power device. We need to read it once to awaken it, then a
+     * second time to get the data.
+     */
+    for (unsigned int count = 0; count < 2; count++) {
+        int status = dxp_cmd(&detChan, &cmd, &lenS, send, &lenR, receive);
+        if (status != DXP_SUCCESS) {
+            sprintf(info_string, "Error getting monitor dac for detChan %d", detChan);
+            pslLogError("pslGetMonitorDac", info_string, status);
+            return status;
+        }
+        xia_sleep(100);
+    }
+
+    /*
+     * The DAC value returns in big endian format.
+     */
+    *((unsigned int*) value) = receive[7] + (receive[6] << 8) + (receive[5] << 16);
+
+    sprintf(info_string, "channel %d monitor dac : %u", detChan,
+            *((unsigned int*) value));
+    pslLogInfo("pslGetMonitorVoltage", info_string);
+
+    return XIA_SUCCESS;
+}
+
+/*
  * Converts the stored RC Tau value into microseconds
  */
 PSL_STATIC int pslGetRCTau(int detChan, XiaDefaults* defs, double* val) {
@@ -7338,8 +7386,7 @@ PSL_STATIC int pslPassthrough(int detChan, char* name, XiaDefaults* defs, void* 
         return status;
     }
 
-    /* Start copying after RECV_BASE + 1 (passthrough status) */
-    memcpy(receive_byte, receive + RECV_BASE + 1, receive_len);
+    memcpy(receive_byte, receive + RECV_BASE, receive_len);
     return XIA_SUCCESS;
 }
 

@@ -1,81 +1,64 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
 /*
- * This code accompanies the XIA Application Note
- * "Handel Quick Start Guide: microDXP".
+ * Copyright Monday, February 9, 2026 XIA LLC, All rights reserved.
  *
- * Copyright (c) 2004-2015 XIA LLC
- * All rights reserved
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/** @file hqsg-microdxp.c
+ * @brief Provides example functionality for the microDXP device.
  */
 
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef _WIN32
-#pragma warning(disable : 4115)
+#include <handel.h>
+#include <handel_errors.h>
+#include <md_generic.h>
+#include "util/xia_sleep.h"
 
-/* For Sleep() */
-#include <windows.h>
-#else
-#include <time.h>
-#endif
-
-#include "handel.h"
-#include "handel_errors.h"
-#include "md_generic.h"
-
-/**
- * @brief Cleanly exits the system when an error is encountered.
- */
-static void clean_exit(int exit_code) {
+static void xia_cleanup(const int status) {
     xiaExit();
     xiaCloseLog();
-    exit(exit_code);
+    exit(status);
 }
 
 /**
- * This is an example of how to handle error values. In your program
- * it is likely that you will want to do something more robust than
- * just exit the program.
+ * This is just an example of how to handle error values.  A program
+ * of any reasonable size should implement a more robust error
+ * handling mechanism.
  */
-static void CHECK_ERROR(int status) {
-    /* XIA_SUCCESS is defined in handel_errors.h */
+static void xia_error_check(const int status) {
     if (status != XIA_SUCCESS) {
-        fprintf(stderr, "Error encountered! Status = %d\n", status);
-        clean_exit(status);
+        const char* msg = xiaGetErrorText(status);
+        printf("[ERROR] %d: %s \n", status, msg);
+        xia_cleanup(status);
     }
 }
 
 static void CHECK_MEM(void* mem) {
     if (mem == NULL) {
         printf("Memory allocation failed\n");
-        clean_exit(EXIT_FAILURE);
+        xia_cleanup(EXIT_FAILURE);
     }
 }
 
-static void SLEEP(double time_seconds) {
-#if _WIN32
-    DWORD wait = (DWORD) (1000.0 * time_seconds);
-    Sleep(wait);
-#else
-    unsigned long secs = (unsigned long) time_seconds;
-    struct timespec req = {.tv_sec = secs,
-                           .tv_nsec = ((time_seconds - secs) * 1000000000.0)};
-    struct timespec rem = {.tv_sec = 0, .tv_nsec = 0};
-    while (TRUE_) {
-        if (nanosleep(&req, &rem) == 0)
-            break;
-        req = rem;
-    }
-#endif
-}
-
-static void get_serial_number() {
-    int i;
+static void get_serial_number(const int* mod_num) {
     unsigned char serial_number[17];
-    int status;
-
-    status = xiaBoardOperation(0, "get_serial_number", serial_number);
-    CHECK_ERROR(status);
+    int status = xiaBoardOperation(*mod_num, "get_serial_number", serial_number);
+    xia_error_check(status);
     printf("hardware:\n");
     printf("    variant: %c%c\n", serial_number[3], serial_number[4]);
     printf("    revision: %c%c\n", serial_number[5], serial_number[6]);
@@ -84,13 +67,13 @@ static void get_serial_number() {
            "        year: %c%c\n",
            serial_number[7], serial_number[8], serial_number[9], serial_number[10]);
     printf("    sn: \'");
-    for (i = 11; i < 17; i++) {
+    for (unsigned int i = 11; i < 16; i++) {
         printf("%c", serial_number[i]);
     }
     printf("\'\n");
 }
 
-static void get_usb_version() {
+static void get_usb_version(const int* mod_num) {
     unsigned long usb_version = 0;
     short rev;
     short major;
@@ -98,8 +81,8 @@ static void get_usb_version() {
     short patch;
     int status;
 
-    status = xiaBoardOperation(0, "get_usb_version", &usb_version);
-    CHECK_ERROR(status);
+    status = xiaBoardOperation(*mod_num, "get_usb_version", &usb_version);
+    xia_error_check(status);
     rev = usb_version & 0xFF;
     patch = (usb_version >> 8) & 0xFF;
     minor = (usb_version >> 16) & 0xFF;
@@ -109,7 +92,7 @@ static void get_usb_version() {
 
 static void get_fippi_variant() {
     unsigned short fippi_var;
-    CHECK_ERROR(xiaGetParameter(0, "FIPPIVAR", &fippi_var));
+    xia_error_check(xiaGetParameter(0, "FIPPIVAR", &fippi_var));
     printf("    variant: %hhu\n", fippi_var);
 }
 
@@ -118,7 +101,7 @@ static void get_fippi_version() {
     short major;
     short minor;
     short patch;
-    CHECK_ERROR(xiaGetParameter(0, "FIPPIREV", &fippi_rev));
+    xia_error_check(xiaGetParameter(0, "FIPPIREV", &fippi_rev));
     major = (fippi_rev >> 12) & 0xF;
     minor = (fippi_rev >> 8) & 0x0F;
     patch = fippi_rev & 0xFF;
@@ -131,24 +114,24 @@ static void get_dsp_version() {
     short minor;
     short patch;
 
-    CHECK_ERROR(xiaGetParameter(0, "CODEREV", &dsp_rev));
+    xia_error_check(xiaGetParameter(0, "CODEREV", &dsp_rev));
     major = (dsp_rev >> 12) & 0xF;
     minor = (dsp_rev >> 8) & 0x0F;
     patch = dsp_rev & 0xFF;
     printf("    coderev: %u.%u.%u\n", major, minor, patch);
 }
 
-static void generate_system_report() {
+static void generate_system_report(const int* mod_num) {
     int status;
     unsigned char board_info[26];
     unsigned short gain_base;
     double gain;
 
-    get_serial_number();
-    get_usb_version();
+    get_serial_number(mod_num);
+    get_usb_version(mod_num);
 
-    status = xiaBoardOperation(0, "get_board_info", &board_info);
-    CHECK_ERROR(status);
+    status = xiaBoardOperation(*mod_num, "get_board_info", &board_info);
+    xia_error_check(status);
     printf("pic:\n"
            "    version: %hhu.%hhu.%hhu\n",
            board_info[0], board_info[1], board_info[2]);
@@ -194,7 +177,6 @@ static void generate_system_report() {
 
 int main(int argc, char* argv[]) {
     int status = XIA_SUCCESS;
-    int i;
 
     double nMCA = 4096.0;
     double thresh = 48.0;
@@ -225,120 +207,115 @@ int main(int argc, char* argv[]) {
 
     printf("Loading the .ini file.\n");
     status = xiaInit(argv[1]);
-    CHECK_ERROR(status);
+    xia_error_check(status);
 
     xiaSetIOPriority(MD_IO_PRI_HIGH);
 
     status = xiaStartSystem();
-    CHECK_ERROR(status);
+    xia_error_check(status);
 
-    /* Print system information to the terminal */
-    printf("******** Begin System Report ************\n");
-    generate_system_report();
-    printf("******** End System Report ***********\n");
+    unsigned int num_mods = 0;
+    xiaGetNumModules(&num_mods);
 
-    /* Modify some acquisition values */
-    status = xiaSetAcquisitionValues(0, "number_mca_channels", &nMCA);
-    CHECK_ERROR(status);
+    for (int mod_num = 0; mod_num < num_mods; mod_num++) {
+        /* Print system information to the terminal */
+        printf("******** Begin Device %i Report ************\n", mod_num);
+        generate_system_report(&mod_num);
+        printf("******** End Device %i Report ***********\n", mod_num);
 
-    status = xiaSetAcquisitionValues(0, "trigger_threshold", &thresh);
-    CHECK_ERROR(status);
+        /* Modify some acquisition values */
+        status = xiaSetAcquisitionValues(mod_num, "number_mca_channels", &nMCA);
+        xia_error_check(status);
 
-    status = xiaSetAcquisitionValues(0, "polarity", &polarity);
-    CHECK_ERROR(status);
+        status = xiaSetAcquisitionValues(mod_num, "trigger_threshold", &thresh);
+        xia_error_check(status);
 
-    status = xiaSetAcquisitionValues(0, "gain", &gain);
-    CHECK_ERROR(status);
+        status = xiaSetAcquisitionValues(mod_num, "polarity", &polarity);
+        xia_error_check(status);
 
-    /* Apply changes to parameters */
-    status = xiaBoardOperation(0, "apply", (void*) &ignored);
+        status = xiaSetAcquisitionValues(mod_num, "gain", &gain);
+        xia_error_check(status);
 
-    /* Save the settings to the current GENSET and PARSET */
-    status = xiaGetAcquisitionValues(0, "genset", &currentGENSET);
-    CHECK_ERROR(status);
+        /* Apply changes to parameters */
+        status = xiaBoardOperation(mod_num, "apply", (void*) &ignored);
 
-    status = xiaGetAcquisitionValues(0, "parset", &currentPARSET);
-    CHECK_ERROR(status);
+        /* Save the settings to the current GENSET and PARSET */
+        status = xiaGetAcquisitionValues(mod_num, "genset", &currentGENSET);
+        xia_error_check(status);
 
-    GENSET = (unsigned short) currentGENSET;
-    status = xiaBoardOperation(0, "save_genset", &GENSET);
-    CHECK_ERROR(status);
+        status = xiaGetAcquisitionValues(mod_num, "parset", &currentPARSET);
+        xia_error_check(status);
 
-    PARSET = (unsigned short) currentPARSET;
-    status = xiaBoardOperation(0, "save_parset", &PARSET);
-    CHECK_ERROR(status);
+        GENSET = (unsigned short) currentGENSET;
+        status = xiaBoardOperation(mod_num, "save_genset", &GENSET);
+        xia_error_check(status);
 
-    /* Read out number of peaking times to pre-allocate peaking time array */
-    status = xiaBoardOperation(0, "get_number_pt_per_fippi", &numberPeakingTimes);
-    CHECK_ERROR(status);
+        PARSET = (unsigned short) currentPARSET;
+        status = xiaBoardOperation(mod_num, "save_parset", &PARSET);
+        xia_error_check(status);
 
-    peakingTimes = (double*) malloc(numberPeakingTimes * sizeof(double));
-    CHECK_MEM(peakingTimes);
+        /* Read out number of peaking times to pre-allocate peaking time array */
+        status =
+            xiaBoardOperation(mod_num, "get_number_pt_per_fippi", &numberPeakingTimes);
+        xia_error_check(status);
 
-    status = xiaBoardOperation(0, "get_current_peaking_times", peakingTimes);
-    CHECK_ERROR(status);
+        peakingTimes = (double*) malloc(numberPeakingTimes * sizeof(double));
+        CHECK_MEM(peakingTimes);
 
-    /* Print out the current peaking times */
-    for (i = 0; i < numberPeakingTimes; i++) {
-        printf("peaking time %d = %lf\n", i, peakingTimes[i]);
+        status = xiaBoardOperation(mod_num, "get_current_peaking_times", peakingTimes);
+        xia_error_check(status);
+        free(peakingTimes);
+
+        /* Read out number of fippis to pre-allocate peaking time array */
+        status = xiaBoardOperation(mod_num, "get_number_of_fippis", &numberFippis);
+        xia_error_check(status);
+
+        peakingTimes =
+            (double*) malloc(numberPeakingTimes * numberFippis * sizeof(double));
+        CHECK_MEM(peakingTimes);
+
+        status = xiaBoardOperation(mod_num, "get_peaking_times", peakingTimes);
+        xia_error_check(status);
+        free(peakingTimes);
+
+        /* Start a run w/ the MCA cleared */
+        status = xiaStartRun(mod_num, 0);
+        xia_error_check(status);
+
+        printf("Started run. Sleeping...\n");
+        xia_sleep(1000);
+
+        status = xiaStopRun(mod_num);
+        xia_error_check(status);
+
+        /* Prepare to read out MCA spectrum */
+        status = xiaGetRunData(mod_num, "mca_length", &mcaLen);
+        xia_error_check(status);
+
+        if (mcaLen > 0) {
+            printf("Got run data\n");
+        }
+
+        /*
+         * If you don't want to dynamically allocate memory here,
+         * then be sure to declare mca as an array of length 8192,
+         * since that is the maximum length of the spectrum.
+         */
+        mca = (unsigned long*) malloc(mcaLen * sizeof(unsigned long));
+        CHECK_MEM(mca);
+
+        status = xiaGetRunData(mod_num, "mca", (void*) mca);
+        xia_error_check(status);
+
+        /* Display the spectrum, write it to a file, etc... */
+
+        xiaSetIOPriority(MD_IO_PRI_NORMAL);
+
+        free(mca);
     }
-
-    free(peakingTimes);
-
-    /* Read out number of fippis to pre-allocate peaking time array */
-    status = xiaBoardOperation(0, "get_number_of_fippis", &numberFippis);
-    CHECK_ERROR(status);
-
-    peakingTimes = (double*) malloc(numberPeakingTimes * numberFippis * sizeof(double));
-    CHECK_MEM(peakingTimes);
-
-    status = xiaBoardOperation(0, "get_peaking_times", peakingTimes);
-    CHECK_ERROR(status);
-
-    /* Print out the current peaking times */
-    for (i = 0; i < numberPeakingTimes * numberFippis; i++) {
-        printf("peaking time %d = %lf\n", i, peakingTimes[i]);
-    }
-
-    free(peakingTimes);
-
-    /* Start a run w/ the MCA cleared */
-    status = xiaStartRun(0, 0);
-    CHECK_ERROR(status);
-
-    printf("Started run. Sleeping...\n");
-    SLEEP(1);
-
-    status = xiaStopRun(0);
-    CHECK_ERROR(status);
-
-    /* Prepare to read out MCA spectrum */
-    status = xiaGetRunData(0, "mca_length", &mcaLen);
-    CHECK_ERROR(status);
-
-    if (mcaLen > 0) {
-        printf("Got run data\n");
-    }
-
-    /**
-     * If you don't want to dynamically allocate memory here,
-     * then be sure to declare mca as an array of length 8192,
-     * since that is the maximum length of the spectrum.
-     */
-    mca = (unsigned long*) malloc(mcaLen * sizeof(unsigned long));
-    CHECK_MEM(mca);
-
-    status = xiaGetRunData(0, "mca", (void*) mca);
-    CHECK_ERROR(status);
-
-    /* Display the spectrum, write it to a file, etc... */
-
-    xiaSetIOPriority(MD_IO_PRI_NORMAL);
-
-    free(mca);
 
     status = xiaExit();
-    CHECK_ERROR(status);
+    xia_error_check(status);
     xiaCloseLog();
 
     return EXIT_SUCCESS;

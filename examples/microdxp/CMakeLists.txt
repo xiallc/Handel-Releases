@@ -24,6 +24,7 @@ install(TARGETS hqsg-microdxp-vega RUNTIME)
 install(FILES
         microdxp-shell/microdxp.py
         microdxp-shell/microdxp_shell.py
+        microdxp-shell/usb_serial_command.py
         microdxp-shell/utils.py
         microdxp-shell/README.md
         DESTINATION microdxp-shell/

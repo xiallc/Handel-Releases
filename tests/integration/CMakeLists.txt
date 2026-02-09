@@ -28,15 +28,5 @@ if (VLD)
     target_link_libraries(test_memory_leaks handel vld)
 endif ()
 
-if (UDXP)
-    add_executable(test_microdxp src/test_microdxp.c)
-    target_link_libraries(test_microdxp handel)
-    target_include_directories(test_microdxp PUBLIC
-            inc/
-            ${PROJECT_SOURCE_DIR}/inc
-            ${PROJECT_SOURCE_DIR}/externals/acutest/
-    )
-endif ()
-
 add_executable(test_preset_run_data src/test_preset_run_data.c)
 target_link_libraries(test_preset_run_data handel)

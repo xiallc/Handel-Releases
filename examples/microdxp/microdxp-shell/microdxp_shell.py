@@ -8,7 +8,6 @@ import json
 import logging
 import os
 import platform
-import pprint
 import time
 
 import microdxp
@@ -86,21 +85,24 @@ class MicroDxpShell(cmd.Cmd):
         for chan in range(cfg.getint('detector definitions', 'number_of_channels')):
             board_info = microdxp.BoardInformation()
             rc = self.handel.xiaBoardOperation(ctypes.c_uint(chan),
-                                               ctypes.c_char_p("get_board_info".encode()),
+                                               ctypes.c_char_p(
+                                                   "get_board_info".encode()),
                                                ctypes.byref(board_info))
             if rc != 0:
                 raise ValueError(f"get_board_info failed with {rc}")
 
             serial_num = microdxp.SerialNumber()
             rc = self.handel.xiaBoardOperation(ctypes.c_uint(chan),
-                                               ctypes.c_char_p("get_serial_number".encode()),
+                                               ctypes.c_char_p(
+                                                   "get_serial_number".encode()),
                                                ctypes.byref(serial_num))
             if rc != 0:
                 raise ValueError(f"get_board_info failed with {rc}")
 
             self.modules.append({
                 "info": utils.cstruct_as_dict(board_info),
-                "sn": {k: v.decode() for k, v in utils.cstruct_as_dict(serial_num).items()},
+                "sn": {k: v.decode() for k, v in
+                       utils.cstruct_as_dict(serial_num).items()},
                 "led": {}
             })
 
@@ -188,41 +190,47 @@ class MicroDxpShell(cmd.Cmd):
 
                     print(f"{device}.{args[2]}: {round(val.value, 3)}")
                 elif opt == 'hv':
-                    cmd = microdxp.UsbSerialCommand(self.handel, device, 0x40)
-                    cmd.append(4, int)
-                    cmd.append(0, bytes)
-                    cmd.append(0x29, bytes)
-                    cmd.append(0, bytes)
-                    cmd.append(2, bytes)
-
-                    # The ADC is a low power device. We need to read it
-                    # once to awaken it, then a second time to get the data.
-                    response_length = 8
-                    cmd.write()
-                    time.sleep(0.1)
-                    cmd.write()
-                    payload = cmd.read(response_length)
-                    print(f"{device_id}.monitor_voltage:",
-                          round(self.cfg.getfloat('udxp.hv', 'monitor') *
-                                int.from_bytes(payload[1:], 'big'), 3))
+                    val = ctypes.c_uint(0)
+                    rc = self.handel.xiaBoardOperation(ctypes.c_uint(device),
+                                                       ctypes.c_char_p(
+                                                           "get_monitor_dac".encode()),
+                                                       ctypes.byref(val))
+                    if rc != 0:
+                        raise ValueError(f"read monitor dac failed with {rc}")
+                    print(f"{device}.monitor_voltage:",
+                          round(self.cfg.getfloat('udxp.hv', 'monitor') * val.value, 3))
                 elif opt == 'info':
                     print(f"{device}.info:", json.dumps(self.modules[device]['info']))
                 elif opt == 'led':
-                    cmd = microdxp.UsbSerialCommand(self.handel, device, 0xC0)
-                    cmd.append(1, int)
-                    cmd.append(1, bytes)
-                    cmd.finalize()
-                    cmd.write()
-                    payload = cmd.read(11)
+                    cmd = bytearray(b'\01')
+                    send_len = ctypes.c_int(len(cmd))
+                    send = ctypes.c_ubyte * send_len.value
+                    send_ary = send.from_buffer(cmd)
+                    receive_len = ctypes.c_ubyte(5)
+                    payload = (ctypes.c_ubyte * receive_len.value)()
+                    value = (ctypes.c_void_p * 4)(ctypes.cast(ctypes.byref(send_ary),
+                                                              ctypes.c_void_p),
+                                                  ctypes.cast(ctypes.byref(send_len),
+                                                              ctypes.c_void_p),
+                                                  ctypes.cast(ctypes.byref(payload),
+                                                              ctypes.c_void_p),
+                                                  ctypes.cast(ctypes.byref(receive_len),
+                                                              ctypes.c_void_p))
+                    rc = self.handel.xiaBoardOperation(ctypes.c_uint(device),
+                                                       ctypes.c_char_p(
+                                                           "passthrough".encode()),
+                                                       value)
+                    if rc != 0:
+                        raise ValueError(f"read led failed with {rc}")
+
                     self.modules[device_id]['led'] = {
-                        "cmd_status": payload[0],
-                        "enabled": bool(payload[1]),
+                        "enabled": bool(payload[0]),
                         "period_us": round(
-                            int.from_bytes(payload[2:4], 'little') *
+                            int.from_bytes(payload[1:3], 'little') *
                             self.cfg.getfloat('udxp.led.period', 'scale') +
                             self.cfg.getfloat('udxp.led.period', 'offset'), 2),
                         "width_ns": round(
-                            int.from_bytes(payload[4:], 'little') *
+                            int.from_bytes(payload[3:], 'little') *
                             self.cfg.getfloat('udxp.led.width', 'scale') +
                             self.cfg.getfloat('udxp.led.width', 'offset'), 2),
                     }
@@ -230,15 +238,14 @@ class MicroDxpShell(cmd.Cmd):
                 elif opt == 'sn':
                     print(f"{device}.sn:", json.dumps(self.modules[device]['sn']))
                 elif opt == 'temp':
-                    cmd = microdxp.UsbSerialCommand(self.handel, device, 0x41)
-                    cmd.append(0, int)
-                    cmd.write()
-                    data = cmd.read(8)
-                    temp = data[1]
-                    for i in range(4, 8):
-                        if data[2] & (1 << i):
-                            temp = temp + 2 ** (i - 8)
-                    print(f'{device}.temp_c: {temp}')
+                    val = ctypes.c_double(0)
+                    rc = self.handel.xiaBoardOperation(ctypes.c_uint(device),
+                                                       ctypes.c_char_p(
+                                                           "get_temperature".encode()),
+                                                       ctypes.byref(val))
+                    if rc != 0:
+                        raise ValueError(f"read temp failed with {rc}")
+                    print(f"{device}.temp_c:", val.value)
                 else:
                     print("unknown operation")
                     self.do_help("read")
@@ -325,7 +332,8 @@ class MicroDxpShell(cmd.Cmd):
                     check_code("get mca_length", rc)
 
                     mca = (ctypes.c_ulong * mca_len.value)()
-                    rc = self.handel.xiaGetRunData(device, ctypes.c_char_p("mca".encode()),
+                    rc = self.handel.xiaGetRunData(device,
+                                                   ctypes.c_char_p("mca".encode()),
                                                    ctypes.byref(mca))
                     check_code("get mca", rc)
 
@@ -371,13 +379,17 @@ class MicroDxpShell(cmd.Cmd):
                         check_code("snapshot", rc)
 
                         for device in device_set:
-                            rc = self.handel.xiaGetSpecialRunData(device, ctypes.c_char_p(
-                                "snapshot_mca".encode()), ctypes.byref(mca))
+                            rc = self.handel.xiaGetSpecialRunData(device,
+                                                                  ctypes.c_char_p(
+                                                                      "snapshot_mca".encode()),
+                                                                  ctypes.byref(mca))
                             check_code("snapshot_mca", rc)
 
                             stats = microdxp.McaStats()
-                            rc = self.handel.xiaGetSpecialRunData(device, ctypes.c_char_p(
-                                "snapshot_statistics".encode()), ctypes.byref(stats))
+                            rc = self.handel.xiaGetSpecialRunData(device,
+                                                                  ctypes.c_char_p(
+                                                                      "snapshot_statistics".encode()),
+                                                                  ctypes.byref(stats))
                             check_code("snapshot_statistics", rc)
 
                             print(run_data_to_json(device, mca, stats))
@@ -494,24 +506,42 @@ class MicroDxpShell(cmd.Cmd):
 
                     period_cfg = (self.cfg.getfloat('udxp.led.period', 'offset'),
                                   self.cfg.getfloat('udxp.led.period', 'scale'))
+                    period = round((period - period_cfg[0]) / period_cfg[1])
+
                     width_cfg = (self.cfg.getfloat('udxp.led.width', 'offset'),
                                  self.cfg.getfloat('udxp.led.width', 'scale'))
+                    width = round((width - width_cfg[0]) / width_cfg[1])
 
-                    cmd = microdxp.UsbSerialCommand(self.handel, device, 0xC0)
-                    cmd.append(6, int)
-                    cmd.append(0, bytes)
-                    cmd.append(enable, bytes)
-                    cmd.append(round((period - period_cfg[0]) / period_cfg[1]), int)
-                    cmd.append(round((width - width_cfg[0]) / width_cfg[1]), int)
-                    cmd.write()
+                    cmd = bytearray(b'\x00')
+                    cmd.extend(bytes([enable]))
+                    cmd.extend(period.to_bytes(2, 'little'))
+                    cmd.extend(width.to_bytes(2, 'little'))
 
-                    payload = cmd.read(11)
+                    send_len = ctypes.c_int(len(cmd))
+                    send = ctypes.c_ubyte * send_len.value
+                    send_ary = send.from_buffer(cmd)
+                    receive_len = ctypes.c_ubyte(5)
+                    receive = (ctypes.c_ubyte * receive_len.value)()
+                    value = (ctypes.c_void_p * 4)(ctypes.cast(ctypes.byref(send_ary),
+                                                              ctypes.c_void_p),
+                                                  ctypes.cast(ctypes.byref(send_len),
+                                                              ctypes.c_void_p),
+                                                  ctypes.cast(ctypes.byref(receive),
+                                                              ctypes.c_void_p),
+                                                  ctypes.cast(ctypes.byref(receive_len),
+                                                              ctypes.c_void_p))
+                    rc = self.handel.xiaBoardOperation(ctypes.c_uint(device),
+                                                       ctypes.c_char_p(
+                                                           "passthrough".encode()),
+                                                       value)
+                    if rc != 0:
+                        raise ValueError(f"set led failed with {rc}")
+
                     self.modules[device]['led'] = {
-                        "cmd_status": payload[0],
-                        "enabled": bool(payload[1]),
-                        "period_us": round(int.from_bytes(payload[2:4], 'little') *
+                        "enabled": bool(receive[0]),
+                        "period_us": round(int.from_bytes(receive[1:2], 'little') *
                                            period_cfg[1] + period_cfg[0], 2),
-                        "width_ns": round(int.from_bytes(payload[4:], 'little') *
+                        "width_ns": round(int.from_bytes(receive[3:4], 'little') *
                                           width_cfg[1] + width_cfg[0], 2),
                     }
                     print(f"{device}.led:", json.dumps(self.modules[device]['led']))
